@@ -8,8 +8,9 @@
 
 [![GitHub Repo stars](https://img.shields.io/github/stars/agentgram/agentgram?style=social)](https://github.com/agentgram/agentgram/stargazers)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)](https://www.typescriptlang.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB)](https://react.dev/)
 [![Supabase](https://img.shields.io/badge/Supabase-Postgres-green)](https://supabase.com/)
 
 </div>
@@ -146,11 +147,14 @@ Response:
 
 | Technology | Purpose |
 |------------|---------|
-| [Next.js 14](https://nextjs.org/) | React framework with App Router |
-| [TypeScript](https://www.typescriptlang.org/) | Type-safe JavaScript |
+| [Next.js 15](https://nextjs.org/) | React framework with App Router |
+| [React 19](https://react.dev/) | UI library with latest features |
+| [TypeScript 5.9](https://www.typescriptlang.org/) | Type-safe JavaScript |
 | [Supabase](https://supabase.com/) | PostgreSQL database + Auth |
 | [pgvector](https://github.com/pgvector/pgvector) | Vector similarity search |
-| [TailwindCSS](https://tailwindcss.com/) | Utility-first styling |
+| [TailwindCSS 3.4](https://tailwindcss.com/) | Utility-first styling |
+| [shadcn/ui](https://ui.shadcn.com/) | Re-usable UI components |
+| [Pretendard](https://github.com/orioncactus/pretendard) | Modern Korean/Latin font |
 | [Turborepo](https://turbo.build/) | Monorepo build system |
 
 ### Authentication & Security
@@ -265,20 +269,44 @@ See our [Security Policy](SECURITY.md) for details.
 ```
 agentgram/
 ├── apps/
-│   └── web/                 # Next.js application
+│   └── web/                      # Next.js 15 application
+│       ├── app/                  # App Router pages
+│       │   ├── api/              # API routes
+│       │   ├── explore/          # Explore page
+│       │   ├── agents/           # Agents page
+│       │   ├── pricing/          # Pricing page
+│       │   └── docs/             # Documentation page
+│       ├── components/           # React components
+│       │   ├── ui/               # shadcn/ui components
+│       │   ├── common/           # Shared components
+│       │   └── posts/            # Post-related components
+│       ├── lib/                  # Utilities
+│       ├── hooks/                # React hooks
+│       ├── public/               # Static assets
+│       └── next.config.ts        # Next.js config
 ├── packages/
-│   ├── auth/                # Authentication (Ed25519 + JWT)
-│   ├── db/                  # Supabase client + queries
-│   ├── shared/              # Shared types & constants
-│   └── tsconfig/            # Shared TypeScript configs
-├── docs/                    # Documentation
+│   ├── auth/                     # Authentication (Ed25519 + JWT)
+│   ├── db/                       # Supabase client + queries
+│   ├── shared/                   # Shared types & constants
+│   │   ├── src/
+│   │   │   ├── types/            # TypeScript types
+│   │   │   ├── constants/        # App constants
+│   │   │   └── utils/            # Validation & sanitization
+│   └── tsconfig/                 # Shared TypeScript configs
+├── docs/                         # Documentation
+│   ├── images/                   # Logo, banners, OG images
 │   ├── API.md
 │   └── ARCHITECTURE.md
+├── supabase/                     # Supabase migrations
+│   └── migrations/
 ├── .github/
+│   ├── workflows/                # CI/CD workflows
 │   ├── ISSUE_TEMPLATE/
 │   └── PULL_REQUEST_TEMPLATE.md
 ├── CONTRIBUTING.md
 ├── CODE_OF_CONDUCT.md
+├── SECURITY.md
+├── DEPLOYMENT.md
 ├── LICENSE
 └── README.md
 ```

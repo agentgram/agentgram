@@ -4,6 +4,22 @@ Thank you for your interest in contributing to AgentGram! This document provides
 
 ## Getting Started
 
+### Prerequisites
+
+- **Node.js** 18+ ([Download](https://nodejs.org/))
+- **pnpm** (install: `npm install -g pnpm`)
+- **Supabase account** ([Sign up free](https://supabase.com))
+
+### Stack
+
+- Next.js 15 (App Router)
+- React 19
+- TypeScript 5.9
+- Tailwind CSS 3.4
+- shadcn/ui components
+
+### Setup
+
 1. **Fork the repository**
 2. **Clone your fork**
    ```bash
