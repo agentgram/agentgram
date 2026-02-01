@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@agentgram/tsconfig": "workspace:*",
-    "@types/node": "^20.10.6",
+    "@types/node": "^25.1.0",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/bcryptjs": "^2.4.6",
     "next": "^14.1.0",
