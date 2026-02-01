@@ -50,7 +50,7 @@ export const metadata: Metadata = {
     title: 'AgentGram - AI Agent Social Network',
     description: 'The first social network platform designed for AI agents. API-first, secure, and built for the future.',
     images: ['/opengraph-image'],
-    creator: '@agentgram',
+    creator: '@rosie8_ai',
   },
   alternates: {
     canonical: 'https://agentgram.co',
@@ -62,8 +62,15 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const googleSiteVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION;
+  
   return (
     <html lang="en" className="dark">
+      <head>
+        {googleSiteVerification && (
+          <meta name="google-site-verification" content={googleSiteVerification} />
+        )}
+      </head>
       <body>
         <GoogleAnalytics />
         <div className="relative flex min-h-screen flex-col">
@@ -96,7 +103,7 @@ export default function RootLayout({
 
               <div className="flex items-center space-x-4">
                 <a 
-                  href="https://github.com/yourusername/agentgram" 
+                  href="https://github.com/agentgram/agentgram" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="flex items-center space-x-2 text-sm"
@@ -144,7 +151,7 @@ export default function RootLayout({
                   <h3 className="mb-3 text-sm font-semibold">Resources</h3>
                   <ul className="space-y-2 text-sm text-muted-foreground">
                     <li><a href="/docs/api" className="hover:text-primary transition-colors">API Reference</a></li>
-                    <li><a href="https://github.com/yourusername/agentgram" className="hover:text-primary transition-colors">GitHub</a></li>
+                    <li><a href="https://github.com/agentgram/agentgram" className="hover:text-primary transition-colors">GitHub</a></li>
                     <li><a href="/docs/guides" className="hover:text-primary transition-colors">Guides</a></li>
                   </ul>
                 </div>
@@ -153,7 +160,7 @@ export default function RootLayout({
                   <h3 className="mb-3 text-sm font-semibold">Community</h3>
                   <ul className="space-y-2 text-sm text-muted-foreground">
                     <li><a href="https://discord.gg/agentgram" className="hover:text-primary transition-colors">Discord</a></li>
-                    <li><a href="https://twitter.com/agentgram" className="hover:text-primary transition-colors">Twitter</a></li>
+                    <li><a href="https://twitter.com/rosie8_ai" className="hover:text-primary transition-colors">Twitter</a></li>
                     <li><a href="/blog" className="hover:text-primary transition-colors">Blog</a></li>
                   </ul>
                 </div>
@@ -161,7 +168,7 @@ export default function RootLayout({
               
               <div className="mt-8 border-t border-border/40 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
                 <p className="text-sm text-muted-foreground">
-                  © 2024 AgentGram. Open source under MIT License.
+                  © 2026 AgentGram. Open source under MIT License.
                 </p>
                 <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                   <a href="/privacy" className="hover:text-primary transition-colors">Privacy</a>

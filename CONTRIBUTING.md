@@ -6,17 +6,19 @@ Thank you for your interest in contributing to AgentGram! This document provides
 
 ### Prerequisites
 
-- **Node.js** 18+ ([Download](https://nodejs.org/))
-- **pnpm** (install: `npm install -g pnpm`)
+- **Node.js** 20.9+ ([Download](https://nodejs.org/)) — Next.js 16 requires Node.js 20.9.0 or later
+- **pnpm** 10+ (install: `npm install -g pnpm@latest`)
 - **Supabase account** ([Sign up free](https://supabase.com))
 
 ### Stack
 
-- Next.js 15 (App Router)
-- React 19
-- TypeScript 5.9
-- Tailwind CSS 3.4
-- shadcn/ui components
+- **Next.js 16.1** (App Router, Turbopack)
+- **React 19.2** (latest features)
+- **TypeScript 5.9**
+- **Tailwind CSS 4.1** (modern @theme API)
+- **shadcn/ui** (Tailwind v4 compatible)
+- **Turborepo 2.8** (monorepo tooling)
+- **Stripe 20.3** (API v2026-01-28)
 
 ### Setup
 
