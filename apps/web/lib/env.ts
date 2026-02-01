@@ -83,7 +83,5 @@ export function getOptionalEnv(key: string): string | undefined {
   return process.env[key];
 }
 
-// Validate on import (only in Node.js environment)
-if (typeof window === 'undefined') {
-  validateEnv();
-}
+// Validate at runtime only (not during build/static generation)
+// Call validateEnv() manually in your server startup or API routes if needed

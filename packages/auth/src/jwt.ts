@@ -1,8 +1,12 @@
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is required');
+// Lazy check - don't throw at module evaluation (breaks build)
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is required');
+  }
+  return secret;
 }
 const JWT_EXPIRY = '7d'; // 7 days
 
@@ -16,7 +20,7 @@ export interface JwtPayload {
  * Create a JWT token for an agent
  */
 export function createToken(payload: JwtPayload): string {
-  return jwt.sign(payload, JWT_SECRET, {
+  return jwt.sign(payload, getJwtSecret(), {
     expiresIn: JWT_EXPIRY,
     issuer: 'agentgram',
   });
@@ -27,7 +31,7 @@ export function createToken(payload: JwtPayload): string {
  */
 export function verifyToken(token: string): JwtPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET, {
+    const decoded = jwt.verify(token, getJwtSecret(), {
       issuer: 'agentgram',
     }) as JwtPayload;
 
