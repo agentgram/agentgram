@@ -1,12 +1,15 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
 import { withAuth, withRateLimit } from '@agentgram/auth';
-import type { ApiResponse, Post, CreatePost, FeedParams } from '@agentgram/shared';
-import { CONTENT_LIMITS } from '@agentgram/shared';
+import type { CreatePost, FeedParams } from '@agentgram/shared';
 import {
   sanitizePostTitle,
   sanitizePostContent,
   validateUrl,
+  ErrorResponses,
+  jsonResponse,
+  createSuccessResponse,
+  PAGINATION,
 } from '@agentgram/shared';
 
 // GET /api/v1/posts - Fetch feed
@@ -16,8 +19,8 @@ export async function GET(req: NextRequest) {
     const sort = (searchParams.get('sort') || 'hot') as FeedParams['sort'];
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = Math.min(
-      parseInt(searchParams.get('limit') || '25', 10),
-      100
+      parseInt(searchParams.get('limit') || String(PAGINATION.DEFAULT_LIMIT), 10),
+      PAGINATION.MAX_LIMIT
     );
     const communityId = searchParams.get('communityId') || undefined;
 
@@ -58,42 +61,20 @@ export async function GET(req: NextRequest) {
 
     if (error) {
       console.error('Posts query error:', error);
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'DATABASE_ERROR',
-            message: 'Failed to fetch posts',
-          },
-        } satisfies ApiResponse,
-        { status: 500 }
-      );
+      return jsonResponse(ErrorResponses.databaseError('Failed to fetch posts'), 500);
     }
 
-    return Response.json(
-      {
-        success: true,
-        data: posts || [],
-        meta: {
-          page,
-          limit,
-          total: count || 0,
-        },
-      } satisfies ApiResponse,
-      { status: 200 }
+    return jsonResponse(
+      createSuccessResponse(posts || [], {
+        page,
+        limit,
+        total: count || 0,
+      }),
+      200
     );
   } catch (error) {
     console.error('Get posts error:', error);
-    return Response.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'An unexpected error occurred',
-        },
-      } satisfies ApiResponse,
-      { status: 500 }
-    );
+    return jsonResponse(ErrorResponses.internalError(), 500);
   }
 }
 
@@ -110,16 +91,8 @@ async function createPostHandler(req: NextRequest) {
     try {
       sanitizedTitle = sanitizePostTitle(title);
     } catch (error) {
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'INVALID_INPUT',
-            message: error instanceof Error ? error.message : 'Invalid title',
-          },
-        } satisfies ApiResponse,
-        { status: 400 }
-      );
+      const message = error instanceof Error ? error.message : 'Invalid title';
+      return jsonResponse(ErrorResponses.invalidInput(message), 400);
     }
 
     let sanitizedContent: string | null = null;
@@ -127,30 +100,16 @@ async function createPostHandler(req: NextRequest) {
       try {
         sanitizedContent = sanitizePostContent(content);
       } catch (error) {
-        return Response.json(
-          {
-            success: false,
-            error: {
-              code: 'INVALID_INPUT',
-              message: error instanceof Error ? error.message : 'Invalid content',
-            },
-          } satisfies ApiResponse,
-          { status: 400 }
-        );
+        const message = error instanceof Error ? error.message : 'Invalid content';
+        return jsonResponse(ErrorResponses.invalidInput(message), 400);
       }
     }
 
     // Validate URL if provided
     if (url && !validateUrl(url)) {
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'INVALID_INPUT',
-            message: 'Invalid URL format (must be http or https)',
-          },
-        } satisfies ApiResponse,
-        { status: 400 }
+      return jsonResponse(
+        ErrorResponses.invalidInput('Invalid URL format (must be http or https)'),
+        400
       );
     }
 
@@ -190,37 +149,13 @@ async function createPostHandler(req: NextRequest) {
 
     if (postError || !post) {
       console.error('Post creation error:', postError);
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'DATABASE_ERROR',
-            message: 'Failed to create post',
-          },
-        } satisfies ApiResponse,
-        { status: 500 }
-      );
+      return jsonResponse(ErrorResponses.databaseError('Failed to create post'), 500);
     }
 
-    return Response.json(
-      {
-        success: true,
-        data: post,
-      } satisfies ApiResponse,
-      { status: 201 }
-    );
+    return jsonResponse(createSuccessResponse(post), 201);
   } catch (error) {
     console.error('Create post error:', error);
-    return Response.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'An unexpected error occurred',
-        },
-      } satisfies ApiResponse,
-      { status: 500 }
-    );
+    return jsonResponse(ErrorResponses.internalError(), 500);
   }
 }
 

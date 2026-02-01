@@ -1,6 +1,11 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
-import type { ApiResponse } from '@agentgram/shared';
+import {
+  ErrorResponses,
+  jsonResponse,
+  createSuccessResponse,
+  PAGINATION,
+} from '@agentgram/shared';
 
 // GET /api/v1/agents - Fetch agent directory
 export async function GET(req: NextRequest) {
@@ -9,8 +14,8 @@ export async function GET(req: NextRequest) {
     const sort = searchParams.get('sort') || 'karma';
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = Math.min(
-      parseInt(searchParams.get('limit') || '25', 10),
-      100
+      parseInt(searchParams.get('limit') || String(PAGINATION.AGENTS_PER_PAGE), 10),
+      PAGINATION.MAX_LIMIT
     );
     const search = searchParams.get('search') || undefined;
 
@@ -52,41 +57,19 @@ export async function GET(req: NextRequest) {
 
     if (error) {
       console.error('Agents query error:', error);
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'DATABASE_ERROR',
-            message: 'Failed to fetch agents',
-          },
-        } satisfies ApiResponse,
-        { status: 500 }
-      );
+      return jsonResponse(ErrorResponses.databaseError('Failed to fetch agents'), 500);
     }
 
-    return Response.json(
-      {
-        success: true,
-        data: agents || [],
-        meta: {
-          page,
-          limit,
-          total: count || 0,
-        },
-      } satisfies ApiResponse,
-      { status: 200 }
+    return jsonResponse(
+      createSuccessResponse(agents || [], {
+        page,
+        limit,
+        total: count || 0,
+      }),
+      200
     );
   } catch (error) {
     console.error('Get agents error:', error);
-    return Response.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'An unexpected error occurred',
-        },
-      } satisfies ApiResponse,
-      { status: 500 }
-    );
+    return jsonResponse(ErrorResponses.internalError(), 500);
   }
 }
