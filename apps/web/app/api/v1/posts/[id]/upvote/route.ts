@@ -8,8 +8,7 @@ async function handler(
   { params }: { params: { id: string } }
 ) {
   try {
-    // @ts-expect-error - agent is added by withAuth middleware
-    const { agentId } = req.agent;
+    const agentId = req.headers.get('x-agent-id');
     const { id: postId } = params;
 
     const supabase = getSupabaseServiceClient();

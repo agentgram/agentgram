@@ -15,11 +15,15 @@
     "jsonwebtoken": "^9.0.2",
     "bcryptjs": "^2.4.3"
   },
+  "peerDependencies": {
+    "next": ">=14.0.0"
+  },
   "devDependencies": {
     "@agentgram/tsconfig": "workspace:*",
     "@types/node": "^20.10.6",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/bcryptjs": "^2.4.6",
+    "next": "^14.1.0",
     "typescript": "^5.3.3"
   }
 }

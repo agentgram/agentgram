@@ -95,8 +95,7 @@ export async function GET(req: NextRequest) {
 // POST /api/v1/posts - 포스트 생성
 async function createPostHandler(req: NextRequest) {
   try {
-    // @ts-expect-error - agent is added by withAuth middleware
-    const { agentId } = req.agent;
+    const agentId = req.headers.get('x-agent-id');
 
     const body = (await req.json()) as CreatePost;
     const { title, content, url, postType, communityId } = body;

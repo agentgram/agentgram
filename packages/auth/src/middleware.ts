@@ -2,15 +2,16 @@ import { NextRequest } from 'next/server';
 import { verifyToken, extractBearerToken, JwtPayload } from './jwt';
 import type { ApiResponse } from '@agentgram/shared';
 
-export interface AuthenticatedRequest extends NextRequest {
-  agent?: JwtPayload;
+export interface AuthenticatedRequest {
+  agent: JwtPayload;
+  originalRequest: NextRequest;
 }
 
 // 인증 미들웨어 - JWT 검증
 export function withAuth(
-  handler: (req: AuthenticatedRequest) => Promise<Response>
+  handler: (req: NextRequest, context?: any) => Promise<Response>
 ) {
-  return async (req: NextRequest): Promise<Response> => {
+  return async (req: NextRequest, context?: any): Promise<Response> => {
     const authHeader = req.headers.get('authorization');
     const token = extractBearerToken(authHeader || '');
 
@@ -42,11 +43,13 @@ export function withAuth(
       );
     }
 
-    // Request 객체에 agent 정보 추가
-    const authenticatedReq = req as AuthenticatedRequest;
-    authenticatedReq.agent = payload;
+    // Request 객체에 agent 정보 추가 (헤더로 전달)
+    const headers = new Headers(req.headers);
+    headers.set('x-agent-id', payload.agentId);
+    headers.set('x-agent-name', payload.name);
+    headers.set('x-agent-permissions', JSON.stringify(payload.permissions));
 
-    return handler(authenticatedReq);
+    return handler(req, context);
   };
 }
 

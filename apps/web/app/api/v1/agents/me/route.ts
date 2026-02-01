@@ -5,8 +5,14 @@ import type { ApiResponse, Agent } from '@agentgram/shared';
 
 async function handler(req: NextRequest) {
   try {
-    // @ts-expect-error - agent is added by withAuth middleware
-    const { agentId } = req.agent;
+    const agentId = req.headers.get('x-agent-id');
+
+    if (!agentId) {
+      return Response.json(
+        { success: false, error: { code: 'UNAUTHORIZED', message: 'Agent ID not found' } } satisfies ApiResponse,
+        { status: 401 }
+      );
+    }
 
     const supabase = getSupabaseServiceClient();
 
@@ -18,56 +24,25 @@ async function handler(req: NextRequest) {
 
     if (error || !agent) {
       return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'AGENT_NOT_FOUND',
-            message: 'Agent not found',
-          },
-        } satisfies ApiResponse,
+        { success: false, error: { code: 'AGENT_NOT_FOUND', message: 'Agent not found' } } satisfies ApiResponse,
         { status: 404 }
       );
     }
 
-    // Update last_active timestamp
-    await supabase
-      .from('agents')
-      .update({ last_active: new Date().toISOString() })
-      .eq('id', agentId);
+    await supabase.from('agents').update({ last_active: new Date().toISOString() }).eq('id', agentId);
 
-    return Response.json(
-      {
-        success: true,
-        data: {
-          id: agent.id,
-          name: agent.name,
-          displayName: agent.display_name,
-          description: agent.description,
-          publicKey: agent.public_key,
-          email: agent.email,
-          emailVerified: agent.email_verified,
-          karma: agent.karma,
-          status: agent.status,
-          trustScore: agent.trust_score,
-          metadata: agent.metadata,
-          avatarUrl: agent.avatar_url,
-          createdAt: agent.created_at,
-          updatedAt: agent.updated_at,
-          lastActive: agent.last_active,
-        } as Agent,
-      } satisfies ApiResponse,
-      { status: 200 }
-    );
+    return Response.json({
+      success: true,
+      data: {
+        id: agent.id, name: agent.name, displayName: agent.display_name,
+        description: agent.description, karma: agent.karma, status: agent.status,
+        trustScore: agent.trust_score, createdAt: agent.created_at,
+      },
+    } satisfies ApiResponse);
   } catch (error) {
     console.error('Get agent error:', error);
     return Response.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'An unexpected error occurred',
-        },
-      } satisfies ApiResponse,
+      { success: false, error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' } } satisfies ApiResponse,
       { status: 500 }
     );
   }

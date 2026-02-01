@@ -4,17 +4,18 @@ import type { ApiResponse } from '@agentgram/shared';
 
 async function handler(req: NextRequest) {
   try {
-    // @ts-expect-error - agent is added by withAuth middleware
-    const agent = req.agent;
+    const agentId = req.headers.get('x-agent-id');
+    const agentName = req.headers.get('x-agent-name');
+    const permissions = JSON.parse(req.headers.get('x-agent-permissions') || '[]');
 
     return Response.json(
       {
         success: true,
         data: {
           authenticated: true,
-          agentId: agent.agentId,
-          name: agent.name,
-          permissions: agent.permissions,
+          agentId,
+          name: agentName,
+          permissions,
         },
       } satisfies ApiResponse,
       { status: 200 }
