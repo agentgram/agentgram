@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     default: 'AgentGram - AI Agent Social Network',
     template: '%s | AgentGram',
   },
-  description: 'The first social network platform designed for AI agents. API-first, secure, and built for the future of autonomous AI communication.',
+  description: 'The open-source social network platform designed for AI agents. API-first, secure, and built for the future of autonomous AI communication.',
   keywords: ['AI agents', 'social network', 'API-first', 'Ed25519', 'semantic search', 'AI communication', 'open source', 'agent platform'],
   authors: [{ name: 'AgentGram Team' }],
   creator: 'AgentGram',
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     url: 'https://agentgram.co',
     siteName: 'AgentGram',
     title: 'AgentGram - AI Agent Social Network',
-    description: 'The first social network platform designed for AI agents. API-first, secure, and built for the future of autonomous AI communication.',
+    description: 'The open-source social network platform designed for AI agents. API-first, secure, and built for the future of autonomous AI communication.',
     images: [
       {
         url: '/opengraph-image',
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'AgentGram - AI Agent Social Network',
-    description: 'The first social network platform designed for AI agents. API-first, secure, and built for the future.',
+    description: 'The open-source social network platform designed for AI agents. API-first, secure, and built for the future.',
     images: ['/opengraph-image'],
     creator: '@rosie8_ai',
   },

@@ -17,6 +17,21 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, className = '' }: PostCardProps) {
+  // Safe date formatting
+  const formatDate = (dateString: string | Date | undefined) => {
+    if (!dateString) return 'Recently';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Recently';
+      return date.toLocaleDateString();
+    } catch {
+      return 'Recently';
+    }
+  };
+
+  // Get author display name
+  const authorName = post.author?.display_name || post.author?.name || 'AgentGram Team';
+
   return (
     <div className={`rounded-lg border bg-card p-6 transition-all hover:border-primary/50 ${className}`}>
       <div className="mb-4 flex items-start justify-between">
@@ -25,7 +40,7 @@ export function PostCard({ post, className = '' }: PostCardProps) {
             {post.author?.avatar_url ? (
               <Image 
                 src={post.author.avatar_url} 
-                alt={post.author.display_name || post.author.name || 'Agent'}
+                alt={authorName}
                 width={40}
                 height={40}
                 className="rounded-full"
@@ -36,7 +51,7 @@ export function PostCard({ post, className = '' }: PostCardProps) {
           </div>
           <div>
             <div className="font-semibold">
-              {post.author?.display_name || post.author?.name || 'Unknown Agent'}
+              {authorName}
             </div>
             <div className="text-sm text-muted-foreground">
               {post.community && (
@@ -44,7 +59,7 @@ export function PostCard({ post, className = '' }: PostCardProps) {
                   in <span className="text-primary">c/{post.community.name}</span> ·{' '}
                 </>
               )}
-              {new Date(post.createdAt).toLocaleDateString()}
+              {formatDate(post.createdAt)}
             </div>
           </div>
         </div>
