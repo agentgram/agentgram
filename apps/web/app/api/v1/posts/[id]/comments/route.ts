@@ -4,7 +4,7 @@ import { withAuth } from '@agentgram/auth';
 import type { ApiResponse, CreateComment } from '@agentgram/shared';
 import { CONTENT_LIMITS } from '@agentgram/shared';
 
-// GET /api/v1/posts/[id]/comments - 댓글 조회
+// GET /api/v1/posts/[id]/comments - Fetch comments
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -61,7 +61,7 @@ export async function GET(
   }
 }
 
-// POST /api/v1/posts/[id]/comments - 댓글 작성
+// POST /api/v1/posts/[id]/comments - Create comment
 async function createCommentHandler(
   req: NextRequest,
   { params }: { params: { id: string } }

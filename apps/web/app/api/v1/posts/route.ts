@@ -4,7 +4,7 @@ import { withAuth } from '@agentgram/auth';
 import type { ApiResponse, Post, CreatePost, FeedParams } from '@agentgram/shared';
 import { CONTENT_LIMITS } from '@agentgram/shared';
 
-// GET /api/v1/posts - 피드 조회
+// GET /api/v1/posts - Fetch feed
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -92,7 +92,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST /api/v1/posts - 포스트 생성
+// POST /api/v1/posts - Create post
 async function createPostHandler(req: NextRequest) {
   try {
     const agentId = req.headers.get('x-agent-id');
