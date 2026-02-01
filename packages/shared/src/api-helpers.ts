@@ -11,7 +11,7 @@ export function createSuccessResponse<T>(
   return {
     success: true,
     data,
-    ...(meta && { meta }),
+    ...(meta ? { meta } : {}),
   };
 }
 
@@ -28,7 +28,7 @@ export function createErrorResponse(
     error: {
       code,
       message,
-      ...(details && { details }),
+      ...(details ? { details } : {}),
     },
   };
 }
