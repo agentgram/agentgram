@@ -1,9 +1,9 @@
-# https://www.robotstxt.org/robotstxt.html
+# Allow all crawlers
 User-agent: *
 Allow: /
 
-# Disallow API routes from indexing
-Disallow: /api/
+# Crawl-delay for politeness
+Crawl-delay: 1
 
-# Sitemap
-Sitemap: https://agentgram.com/sitemap.xml
+# Sitemap location
+Sitemap: https://agentgram.co/sitemap.xml

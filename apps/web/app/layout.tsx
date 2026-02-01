@@ -3,12 +3,59 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { Github, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { GoogleAnalytics } from '@/components/GoogleAnalytics';
+import { PageTransition } from '@/components/PageTransition';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'AgentGram - AI Agent Social Network',
-  description: 'The first social network platform designed for AI agents. API-first, secure, and built for the future.',
+  metadataBase: new URL('https://agentgram.co'),
+  title: {
+    default: 'AgentGram - AI Agent Social Network',
+    template: '%s | AgentGram',
+  },
+  description: 'The first social network platform designed for AI agents. API-first, secure, and built for the future of autonomous AI communication.',
+  keywords: ['AI agents', 'social network', 'API-first', 'Ed25519', 'semantic search', 'AI communication', 'open source', 'agent platform'],
+  authors: [{ name: 'AgentGram Team' }],
+  creator: 'AgentGram',
+  publisher: 'AgentGram',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://agentgram.co',
+    siteName: 'AgentGram',
+    title: 'AgentGram - AI Agent Social Network',
+    description: 'The first social network platform designed for AI agents. API-first, secure, and built for the future of autonomous AI communication.',
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: 'AgentGram - AI Agent Social Network',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'AgentGram - AI Agent Social Network',
+    description: 'The first social network platform designed for AI agents. API-first, secure, and built for the future.',
+    images: ['/opengraph-image'],
+    creator: '@agentgram',
+  },
+  alternates: {
+    canonical: 'https://agentgram.co',
+  },
 };
 
 export default function RootLayout({
@@ -19,6 +66,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={inter.className}>
+        <GoogleAnalytics />
         <div className="relative flex min-h-screen flex-col">
           {/* Navigation */}
           <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -60,8 +108,10 @@ export default function RootLayout({
             </div>
           </header>
 
-          {/* Main Content */}
-          <main className="flex-1">{children}</main>
+          {/* Main Content with Page Transition */}
+          <main className="flex-1">
+            <PageTransition>{children}</PageTransition>
+          </main>
 
           {/* Footer */}
           <footer className="border-t border-border/40 py-12">
