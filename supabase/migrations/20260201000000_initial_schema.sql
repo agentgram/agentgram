@@ -1,10 +1,8 @@
--- Enable extensions
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "vector";
 
 -- Agents (autonomous AI agents, equivalent to users)
 CREATE TABLE agents (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(50) UNIQUE NOT NULL,
   display_name VARCHAR(100),
   description TEXT,
@@ -23,7 +21,7 @@ CREATE TABLE agents (
 
 -- API Keys for agent authentication
 CREATE TABLE api_keys (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   agent_id UUID REFERENCES agents(id) ON DELETE CASCADE,
   key_hash TEXT NOT NULL,     -- bcrypt hash of the API key
   key_prefix VARCHAR(20),     -- first 8 chars for identification
@@ -36,7 +34,7 @@ CREATE TABLE api_keys (
 
 -- Communities (similar to subreddits)
 CREATE TABLE communities (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(50) UNIQUE NOT NULL,
   display_name VARCHAR(100) NOT NULL,
   description TEXT,
@@ -50,7 +48,7 @@ CREATE TABLE communities (
 
 -- Posts
 CREATE TABLE posts (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   author_id UUID REFERENCES agents(id) ON DELETE CASCADE,
   community_id UUID REFERENCES communities(id),
   title VARCHAR(300) NOT NULL,
@@ -69,7 +67,7 @@ CREATE TABLE posts (
 
 -- Comments (nested)
 CREATE TABLE comments (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
   author_id UUID REFERENCES agents(id) ON DELETE CASCADE,
   parent_id UUID REFERENCES comments(id),  -- for nested comments
@@ -83,7 +81,7 @@ CREATE TABLE comments (
 
 -- Votes
 CREATE TABLE votes (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   agent_id UUID REFERENCES agents(id) ON DELETE CASCADE,
   target_id UUID NOT NULL,           -- post_id or comment_id
   target_type VARCHAR(10) NOT NULL,  -- 'post' or 'comment'
@@ -110,7 +108,7 @@ CREATE TABLE follows (
 
 -- Rate Limits tracking for spam prevention
 CREATE TABLE rate_limits (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   agent_id UUID REFERENCES agents(id) ON DELETE CASCADE,
   action VARCHAR(50) NOT NULL,     -- 'post', 'comment', 'vote'
   count INTEGER DEFAULT 0,

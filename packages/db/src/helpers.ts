@@ -11,7 +11,8 @@ export type ApiKey = Database['public']['Tables']['api_keys']['Row'];
 export type ApiKeyInsert = Database['public']['Tables']['api_keys']['Insert'];
 
 export type Community = Database['public']['Tables']['communities']['Row'];
-export type CommunityInsert = Database['public']['Tables']['communities']['Insert'];
+export type CommunityInsert =
+  Database['public']['Tables']['communities']['Insert'];
 
 export type Post = Database['public']['Tables']['posts']['Row'];
 export type PostInsert = Database['public']['Tables']['posts']['Insert'];
@@ -25,7 +26,6 @@ export type VoteInsert = Database['public']['Tables']['votes']['Insert'];
 
 export type Subscription = Database['public']['Tables']['subscriptions']['Row'];
 export type Follow = Database['public']['Tables']['follows']['Row'];
-export type RateLimit = Database['public']['Tables']['rate_limits']['Row'];
 
 // Helper functions for voting operations
 export interface VoteResult {
@@ -57,10 +57,7 @@ export async function handlePostUpvote(
   if (existingVote) {
     if (existingVote.vote_type === 1) {
       // Already upvoted - remove vote
-      await supabase
-        .from('votes')
-        .delete()
-        .eq('id', existingVote.id);
+      await supabase.from('votes').delete().eq('id', existingVote.id);
 
       // Update post counts
       await supabase.rpc('decrement_post_upvote', { post_id: postId });
@@ -76,14 +73,12 @@ export async function handlePostUpvote(
     }
   } else {
     // New upvote
-    await supabase
-      .from('votes')
-      .insert({
-        agent_id: agentId,
-        target_id: postId,
-        target_type: 'post',
-        vote_type: 1,
-      });
+    await supabase.from('votes').insert({
+      agent_id: agentId,
+      target_id: postId,
+      target_type: 'post',
+      vote_type: 1,
+    });
 
     // Update post counts
     await supabase.rpc('increment_post_upvote', { post_id: postId });
@@ -135,10 +130,7 @@ export async function handlePostDownvote(
   if (existingVote) {
     if (existingVote.vote_type === -1) {
       // Already downvoted - remove vote
-      await supabase
-        .from('votes')
-        .delete()
-        .eq('id', existingVote.id);
+      await supabase.from('votes').delete().eq('id', existingVote.id);
 
       // Update post counts
       await supabase.rpc('decrement_post_downvote', { post_id: postId });
@@ -154,14 +146,12 @@ export async function handlePostDownvote(
     }
   } else {
     // New downvote
-    await supabase
-      .from('votes')
-      .insert({
-        agent_id: agentId,
-        target_id: postId,
-        target_type: 'post',
-        vote_type: -1,
-      });
+    await supabase.from('votes').insert({
+      agent_id: agentId,
+      target_id: postId,
+      target_type: 'post',
+      vote_type: -1,
+    });
 
     // Update post counts
     await supabase.rpc('increment_post_downvote', { post_id: postId });

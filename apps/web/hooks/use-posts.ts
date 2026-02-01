@@ -1,6 +1,11 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from '@tanstack/react-query';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
 import type { Post, CreatePost } from '@agentgram/shared';
 
@@ -51,36 +56,38 @@ function transformPost(post: PostResponse): Post {
     metadata: post.metadata,
     createdAt: post.created_at,
     updatedAt: post.updated_at,
-    author: post.author ? {
-      id: post.author.id,
-      name: post.author.name,
-      displayName: post.author.display_name || undefined,
-      description: undefined,
-      publicKey: undefined,
-      email: undefined,
-      emailVerified: false,
-      karma: post.author.karma,
-      status: 'active',
-      trustScore: 0,
-      metadata: {},
-      avatarUrl: post.author.avatar_url || undefined,
-      createdAt: '',
-      updatedAt: '',
-      lastActive: '',
-    } : undefined,
-    community: post.community ? {
-      id: post.community.id,
-      name: post.community.name,
-      displayName: post.community.display_name || undefined,
-      description: undefined,
-      creatorId: '',
-      isDefault: false,
-      memberCount: 0,
-      postCount: 0,
-      metadata: {},
-      createdAt: '',
-      updatedAt: '',
-    } : undefined,
+    author: post.author
+      ? {
+          id: post.author.id,
+          name: post.author.name,
+          displayName: post.author.display_name || undefined,
+          description: undefined,
+          publicKey: undefined,
+          email: undefined,
+          emailVerified: false,
+          karma: post.author.karma,
+          status: 'active',
+          trustScore: 0,
+          metadata: {},
+          avatarUrl: post.author.avatar_url || undefined,
+          createdAt: '',
+          updatedAt: '',
+          lastActive: '',
+        }
+      : undefined,
+    community: post.community
+      ? {
+          id: post.community.id,
+          name: post.community.name,
+          displayName: post.community.display_name || post.community.name,
+          description: undefined,
+          creatorId: '',
+          isDefault: false,
+          memberCount: 0,
+          postCount: 0,
+          createdAt: '',
+        }
+      : undefined,
   };
 }
 
@@ -100,15 +107,13 @@ export function usePostsFeed(params: FeedParams = {}) {
   return useInfiniteQuery({
     queryKey: ['posts', 'feed', { sort, communityId }],
     queryFn: async ({ pageParam = 0 }) => {
-      let query = supabase
-        .from('posts')
-        .select(
-          `
+      let query = supabase.from('posts').select(
+        `
           *,
           author:agents!posts_author_id_fkey(id, name, display_name, avatar_url, karma),
           community:communities(id, name, display_name)
         `
-        );
+      );
 
       if (communityId) {
         query = query.eq('community_id', communityId);
@@ -240,8 +245,14 @@ export function useVote(postId: string) {
       if (previousPost) {
         queryClient.setQueryData<Post>(['posts', postId], {
           ...previousPost,
-          upvotes: voteType === 'upvote' ? previousPost.upvotes + 1 : previousPost.upvotes,
-          downvotes: voteType === 'downvote' ? previousPost.downvotes + 1 : previousPost.downvotes,
+          upvotes:
+            voteType === 'upvote'
+              ? previousPost.upvotes + 1
+              : previousPost.upvotes,
+          downvotes:
+            voteType === 'downvote'
+              ? previousPost.downvotes + 1
+              : previousPost.downvotes,
         });
       }
 

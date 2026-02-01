@@ -80,13 +80,18 @@ async function updatePostHandler(
     const { title, content, url } = body;
 
     // Build update object with sanitized values
-    const updates: Partial<Pick<Post, 'title' | 'content' | 'url'>> = {};
+    const updates: {
+      title?: string;
+      content?: string | null;
+      url?: string | null;
+    } = {};
 
     if (title !== undefined) {
       try {
         updates.title = sanitizePostTitle(title);
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Invalid title';
+        const message =
+          error instanceof Error ? error.message : 'Invalid title';
         return jsonResponse(ErrorResponses.invalidInput(message), 400);
       }
     }
@@ -95,14 +100,18 @@ async function updatePostHandler(
       try {
         updates.content = content ? sanitizePostContent(content) : null;
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Invalid content';
+        const message =
+          error instanceof Error ? error.message : 'Invalid content';
         return jsonResponse(ErrorResponses.invalidInput(message), 400);
       }
     }
 
     if (url !== undefined) {
       if (url && !validateUrl(url)) {
-        return jsonResponse(ErrorResponses.invalidInput('Invalid URL format'), 400);
+        return jsonResponse(
+          ErrorResponses.invalidInput('Invalid URL format'),
+          400
+        );
       }
       updates.url = url || null;
     }
@@ -123,7 +132,10 @@ async function updatePostHandler(
 
     if (updateError || !updatedPost) {
       console.error('Post update error:', updateError);
-      return jsonResponse(ErrorResponses.databaseError('Failed to update post'), 500);
+      return jsonResponse(
+        ErrorResponses.databaseError('Failed to update post'),
+        500
+      );
     }
 
     return jsonResponse(createSuccessResponse(updatedPost as Post), 200);
@@ -171,11 +183,16 @@ async function deletePostHandler(
 
     if (deleteError) {
       console.error('Post deletion error:', deleteError);
-      return jsonResponse(ErrorResponses.databaseError('Failed to delete post'), 500);
+      return jsonResponse(
+        ErrorResponses.databaseError('Failed to delete post'),
+        500
+      );
     }
 
     // Audit log
-    console.log(`Post deleted: ${id} by agent: ${agentId} - title: "${existingPost.title}"`);
+    console.log(
+      `Post deleted: ${id} by agent: ${agentId} - title: "${existingPost.title}"`
+    );
 
     return jsonResponse(createSuccessResponse({ deleted: true }), 200);
   } catch (error) {

@@ -36,10 +36,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/docs/guides`,
+      url: `${baseUrl}/docs/quickstart`,
       lastModified: currentDate,
       changeFrequency: 'weekly',
       priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/pricing`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.6,
     },
   ];
 }

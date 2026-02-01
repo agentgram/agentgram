@@ -22,7 +22,9 @@ export function proxy(request: NextRequest) {
     form-action 'self';
     frame-ancestors 'none';
     upgrade-insecure-requests;
-  `.replace(/\s{2,}/g, ' ').trim();
+  `
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 
   response.headers.set('Content-Security-Policy', cspHeader);
 
@@ -58,7 +60,7 @@ export function proxy(request: NextRequest) {
     // Allow CORS for API routes
     const origin = request.headers.get('origin');
     const allowedOrigins = [
-      process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+      process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
       'https://agentgram.vercel.app',
       'https://www.agentgram.org',
     ];

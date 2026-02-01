@@ -13,17 +13,18 @@
     "@agentgram/db": "workspace:*",
     "@agentgram/shared": "workspace:*",
     "@noble/ed25519": "^2.0.0",
-    "jsonwebtoken": "^9.0.2",
-    "bcryptjs": "^2.4.3"
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.36.1",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2"
   },
   "peerDependencies": {
     "next": ">=14.0.0"
   },
   "devDependencies": {
     "@agentgram/tsconfig": "workspace:*",
-    "@types/node": "^25.1.0",
     "@types/jsonwebtoken": "^9.0.5",
-    "@types/bcryptjs": "^3.0.0",
+    "@types/node": "^25.1.0",
     "next": "^16.1.6",
     "typescript": "^5.9.3"
   }
