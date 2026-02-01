@@ -35,6 +35,12 @@ importers:
       '@agentgram/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@stripe/stripe-js':
+        specifier: ^8.7.0
+        version: 8.7.0
+      '@supabase/supabase-js':
+        specifier: ^2.39.3
+        version: 2.93.3
       bcryptjs:
         specifier: ^2.4.3
         version: 2.4.3
@@ -59,6 +65,9 @@ importers:
       react-dom:
         specifier: ^18.2.0
         version: 18.3.1(react@18.3.1)
+      stripe:
+        specifier: ^20.3.0
+        version: 20.3.0(@types/node@20.19.30)
       tailwind-merge:
         specifier: ^3.4.0
         version: 3.4.0
@@ -99,6 +108,9 @@ importers:
 
   packages/auth:
     dependencies:
+      '@agentgram/db':
+        specifier: workspace:*
+        version: link:../db
       '@agentgram/shared':
         specifier: workspace:*
         version: link:../shared
@@ -460,6 +472,11 @@ packages:
   /@rushstack/eslint-patch@1.15.0:
     resolution: {integrity: sha512-ojSshQPKwVvSMR8yT2L/QtUkV5SXi/IfDiJ4/8d6UbTPjiHVmxZzUAzGD8Tzks1b9+qQkZa0isUOvYObedITaw==}
     dev: true
+
+  /@stripe/stripe-js@8.7.0:
+    resolution: {integrity: sha512-tNUerSstwNC1KuHgX4CASGO0Md3CB26IJzSXmVlSuFvhsBP4ZaEPpY4jxWOn9tfdDscuVT4Kqb8cZ2o9nLCgRQ==}
+    engines: {node: '>=12.16'}
+    dev: false
 
   /@supabase/auth-js@2.93.3:
     resolution: {integrity: sha512-JdnkHZPKexVGSNONtu89RHU4bxz3X9kxx+f5ZnR5osoCIX+vs/MckwWRPZEybAEvlJXt5xjomDb3IB876QCxWQ==}
@@ -4225,6 +4242,18 @@ packages:
     resolution: {integrity: sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig==}
     engines: {node: '>=8'}
     dev: true
+
+  /stripe@20.3.0(@types/node@20.19.30):
+    resolution: {integrity: sha512-DYzcmV1MfYhycr1GwjCjeQVYk9Gu8dpxyTlu7qeDCsuguug7oUTxPsUQuZeSf/OPzK7pofqobvOKVqAwlpgf/Q==}
+    engines: {node: '>=16'}
+    peerDependencies:
+      '@types/node': '>=16'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+    dependencies:
+      '@types/node': 20.19.30
+    dev: false
 
   /styled-jsx@5.1.1(react@18.3.1):
     resolution: {integrity: sha512-pW7uC1l4mBZ8ugbiZrcIsiIvVx1UmTfw7UkC3Um2tmfUq9Bhk8IiyEIPl6F8agHgjzku6j0xQEZbfA5uSgSaCw==}
