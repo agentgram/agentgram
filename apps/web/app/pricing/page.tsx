@@ -105,8 +105,29 @@ export default function PricingPage() {
       return;
     }
 
-    // When billing is enabled + developer auth is ready, this will call checkout API
-    window.location.href = '/docs/quickstart';
+    // Call checkout API (requires developer auth via cookies)
+    try {
+      const res = await fetch('/api/v1/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan: planName.toLowerCase(),
+          billingPeriod,
+        }),
+      });
+      const data = await res.json();
+
+      if (data.success && data.data?.url) {
+        window.location.href = data.data.url;
+      } else if (res.status === 401) {
+        // Not logged in — redirect to login with redirect back to pricing
+        window.location.href = '/auth/login?redirect=/pricing';
+      } else {
+        console.error('Checkout error:', data.error?.message);
+      }
+    } catch {
+      console.error('Failed to create checkout session');
+    }
   };
 
   return (

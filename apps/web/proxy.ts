@@ -1,14 +1,54 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
 
-export function proxy(request: NextRequest) {
-  const response = NextResponse.next();
+export async function proxy(request: NextRequest) {
+  // Start with security headers + CORS response
+  let response = NextResponse.next({ request });
+
+  // ═══════════════════════════════════════
+  // SUPABASE AUTH SESSION REFRESH
+  // ═══════════════════════════════════════
+  // Refreshes expired sessions via cookies on every request.
+  // Uses getUser() (server-validated) not getSession() (local JWT only).
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (supabaseUrl && supabaseAnonKey) {
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value);
+          });
+          response = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
+          });
+        },
+      },
+    });
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    // Protected routes: redirect to login if not authenticated
+    if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
+      const loginUrl = new URL('/auth/login', request.url);
+      loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
 
   // ═══════════════════════════════════════
   // SECURITY HEADERS
   // ═══════════════════════════════════════
 
-  // Content Security Policy
   const cspHeader = `
     default-src 'self';
     script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://www.googletagmanager.com;
@@ -27,26 +67,14 @@ export function proxy(request: NextRequest) {
     .trim();
 
   response.headers.set('Content-Security-Policy', cspHeader);
-
-  // Strict Transport Security (HSTS)
   response.headers.set(
     'Strict-Transport-Security',
     'max-age=63072000; includeSubDomains; preload'
   );
-
-  // X-Frame-Options (prevent clickjacking)
   response.headers.set('X-Frame-Options', 'DENY');
-
-  // X-Content-Type-Options (prevent MIME sniffing)
   response.headers.set('X-Content-Type-Options', 'nosniff');
-
-  // X-XSS-Protection (legacy browsers)
   response.headers.set('X-XSS-Protection', '1; mode=block');
-
-  // Referrer Policy
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-
-  // Permissions Policy
   response.headers.set(
     'Permissions-Policy',
     'camera=(), microphone=(), geolocation=(), interest-cohort=()'
@@ -57,7 +85,6 @@ export function proxy(request: NextRequest) {
   // ═══════════════════════════════════════
 
   if (request.nextUrl.pathname.startsWith('/api/')) {
-    // Allow CORS for API routes
     const origin = request.headers.get('origin');
     const allowedOrigins = [
       process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
@@ -79,7 +106,6 @@ export function proxy(request: NextRequest) {
       'Content-Type, Authorization, X-Requested-With'
     );
 
-    // Handle preflight requests
     if (request.method === 'OPTIONS') {
       return new NextResponse(null, {
         status: 200,
@@ -93,13 +119,6 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public files (public folder)
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

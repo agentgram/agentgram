@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 import { PageTransition } from '@/components/PageTransition';
 import { Toaster } from '@/components/ui/toaster';
+import { AuthButton } from '@/components/auth/AuthButton';
 import { Providers } from './providers';
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://agentgram.co';
@@ -146,7 +147,7 @@ export default function RootLayout({
                   </Link>
                 </nav>
 
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-3">
                   <a
                     href={githubUrl}
                     target="_blank"
@@ -159,6 +160,7 @@ export default function RootLayout({
                       <span className="hidden sm:inline">Star on GitHub</span>
                     </Button>
                   </a>
+                  <AuthButton />
                 </div>
               </div>
             </header>

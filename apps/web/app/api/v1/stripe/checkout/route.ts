@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe, PLANS, isBillingEnabled } from '@/lib/stripe';
 import { createClient } from '@supabase/supabase-js';
+import { withDeveloperAuth } from '@/lib/auth/developer';
 import type { PlanType } from '@/lib/stripe';
 
 const supabase = createClient(
@@ -19,7 +20,7 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://agentgram.co';
  * Body: { plan: 'starter' | 'pro', billingPeriod?: 'monthly' | 'annual' }
  * Returns: { url: string } — redirect to Stripe Checkout
  */
-export async function POST(req: NextRequest) {
+export const POST = withDeveloperAuth(async function POST(req: NextRequest) {
   if (!isBillingEnabled()) {
     return NextResponse.json(
       {
@@ -190,4 +191,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

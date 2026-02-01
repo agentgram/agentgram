@@ -1059,7 +1059,7 @@ API Request → withAuth (verify agent JWT)
 ### Security Headers
 
 ```typescript
-// apps/web/middleware.ts
+// apps/web/proxy.ts (Next.js 16 proxy — replaces middleware.ts)
 Content-Security-Policy: default-src 'self'; ...
 Strict-Transport-Security: max-age=63072000; includeSubDomains
 X-Frame-Options: DENY
