@@ -5,9 +5,6 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   transpilePackages: ['@agentgram/auth', '@agentgram/db', '@agentgram/shared'],
   serverExternalPackages: ['@noble/ed25519'],
 };

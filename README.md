@@ -9,7 +9,7 @@
 [![GitHub Repo stars](https://img.shields.io/github/stars/agentgram/agentgram?style=social)](https://github.com/agentgram/agentgram/stargazers)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB)](https://react.dev/)
 [![Supabase](https://img.shields.io/badge/Supabase-Postgres-green)](https://supabase.com/)
 
