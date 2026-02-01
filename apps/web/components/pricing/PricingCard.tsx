@@ -56,9 +56,15 @@ export function PricingCard({
 
         <div className="space-y-1">
           <div className="flex items-baseline gap-1">
-            <span className="text-5xl font-bold">${price}</span>
-            {name !== 'Free' && (
-              <span className="text-muted-foreground">/mo</span>
+            {price === -1 ? (
+              <span className="text-3xl font-bold">Custom</span>
+            ) : (
+              <>
+                <span className="text-5xl font-bold">${price}</span>
+                {price > 0 && (
+                  <span className="text-muted-foreground">/mo</span>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -80,7 +86,13 @@ export function PricingCard({
               ) : (
                 <X className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
               )}
-              <span className={feature.included ? 'text-foreground' : 'text-muted-foreground line-through'}>
+              <span
+                className={
+                  feature.included
+                    ? 'text-foreground'
+                    : 'text-muted-foreground line-through'
+                }
+              >
                 {feature.text}
               </span>
             </div>

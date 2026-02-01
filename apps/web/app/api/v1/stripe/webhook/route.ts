@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { stripe } from '@/lib/stripe';
+import { stripe, getPlanFromPriceId } from '@/lib/stripe';
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 
@@ -108,32 +108,34 @@ export async function POST(req: NextRequest) {
 }
 
 // ═══════════════════════════════════════════════
-// HANDLER FUNCTIONS
+// HANDLER FUNCTIONS — all target `developers` table
 // ═══════════════════════════════════════════════
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
-  const agentId = session.metadata?.agent_id;
+  const developerId = session.metadata?.developer_id;
   const customerId = session.customer as string;
 
-  if (!agentId) {
-    console.error('No agent_id in checkout session metadata');
+  if (!developerId) {
+    console.error('No developer_id in checkout session metadata');
     return;
   }
 
-  // Link Stripe customer to agent
+  // Link Stripe customer to developer
   const { error } = await supabase
-    .from('agents')
+    .from('developers')
     .update({
       stripe_customer_id: customerId,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', agentId);
+    .eq('id', developerId);
 
   if (error) {
-    console.error('Failed to update agent with customer ID:', error);
+    console.error('Failed to update developer with customer ID:', error);
   }
 
-  console.log(`✅ Checkout completed: agent=${agentId}, customer=${customerId}`);
+  console.log(
+    `Checkout completed: developer=${developerId}, customer=${customerId}`
+  );
 }
 
 async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
@@ -141,7 +143,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
   const plan = getPlanFromSubscription(subscription);
 
   const { error } = await supabase
-    .from('agents')
+    .from('developers')
     .update({
       plan,
       stripe_subscription_id: subscription.id,
@@ -154,7 +156,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
     console.error('Failed to update subscription:', error);
   }
 
-  console.log(`✅ Subscription created: customer=${customerId}, plan=${plan}`);
+  console.log(`Subscription created: customer=${customerId}, plan=${plan}`);
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
@@ -162,12 +164,14 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   const plan = getPlanFromSubscription(subscription);
 
   const { error } = await supabase
-    .from('agents')
+    .from('developers')
     .update({
       plan,
       subscription_status: subscription.status,
       current_period_end: subscription.items.data[0]?.current_period_end
-        ? new Date(subscription.items.data[0].current_period_end * 1000).toISOString()
+        ? new Date(
+            subscription.items.data[0].current_period_end * 1000
+          ).toISOString()
         : null,
       updated_at: new Date().toISOString(),
     })
@@ -177,7 +181,9 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     console.error('Failed to update subscription:', error);
   }
 
-  console.log(`✅ Subscription updated: customer=${customerId}, plan=${plan}, status=${subscription.status}`);
+  console.log(
+    `Subscription updated: customer=${customerId}, plan=${plan}, status=${subscription.status}`
+  );
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
@@ -185,7 +191,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 
   // Downgrade to free plan
   const { error } = await supabase
-    .from('agents')
+    .from('developers')
     .update({
       plan: 'free',
       subscription_status: 'canceled',
@@ -198,14 +204,14 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     console.error('Failed to cancel subscription:', error);
   }
 
-  console.log(`✅ Subscription deleted: customer=${customerId} → free plan`);
+  console.log(`Subscription deleted: customer=${customerId} -> free plan`);
 }
 
 async function handleSubscriptionPaused(subscription: Stripe.Subscription) {
   const customerId = subscription.customer as string;
 
   const { error } = await supabase
-    .from('agents')
+    .from('developers')
     .update({
       subscription_status: 'paused',
       updated_at: new Date().toISOString(),
@@ -216,14 +222,14 @@ async function handleSubscriptionPaused(subscription: Stripe.Subscription) {
     console.error('Failed to pause subscription:', error);
   }
 
-  console.log(`⏸️ Subscription paused: customer=${customerId}`);
+  console.log(`Subscription paused: customer=${customerId}`);
 }
 
 async function handleSubscriptionResumed(subscription: Stripe.Subscription) {
   const customerId = subscription.customer as string;
 
   const { error } = await supabase
-    .from('agents')
+    .from('developers')
     .update({
       subscription_status: subscription.status,
       updated_at: new Date().toISOString(),
@@ -234,15 +240,14 @@ async function handleSubscriptionResumed(subscription: Stripe.Subscription) {
     console.error('Failed to resume subscription:', error);
   }
 
-  console.log(`▶️ Subscription resumed: customer=${customerId}`);
+  console.log(`Subscription resumed: customer=${customerId}`);
 }
 
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
   const customerId = invoice.customer as string;
 
-  // Update last payment info
   const { error } = await supabase
-    .from('agents')
+    .from('developers')
     .update({
       subscription_status: 'active',
       last_payment_at: new Date().toISOString(),
@@ -254,14 +259,16 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     console.error('Failed to update payment status:', error);
   }
 
-  console.log(`💰 Invoice paid: customer=${customerId}, amount=${invoice.amount_paid}`);
+  console.log(
+    `Invoice paid: customer=${customerId}, amount=${invoice.amount_paid}`
+  );
 }
 
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   const customerId = invoice.customer as string;
 
   const { error } = await supabase
-    .from('agents')
+    .from('developers')
     .update({
       subscription_status: 'past_due',
       updated_at: new Date().toISOString(),
@@ -272,7 +279,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     console.error('Failed to update failed payment:', error);
   }
 
-  console.log(`❌ Invoice payment failed: customer=${customerId}`);
+  console.log(`Invoice payment failed: customer=${customerId}`);
 }
 
 // ═══════════════════════════════════════════════
@@ -281,8 +288,6 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 
 function getPlanFromSubscription(subscription: Stripe.Subscription): string {
   const priceId = subscription.items.data[0]?.price?.id;
-
-  if (priceId === process.env.STRIPE_ENTERPRISE_PRICE_ID) return 'enterprise';
-  if (priceId === process.env.STRIPE_PRO_PRICE_ID) return 'pro';
-  return 'free';
+  if (!priceId) return 'free';
+  return getPlanFromPriceId(priceId);
 }
