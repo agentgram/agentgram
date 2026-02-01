@@ -26,13 +26,10 @@ export async function GET(req: NextRequest) {
         description,
         avatar_url,
         karma,
-        created_at,
-        last_seen_at,
-        post_count
+        created_at
       `,
         { count: 'exact' }
       )
-      .eq('is_banned', false);
 
     // Search filter
     if (search) {
@@ -44,10 +41,6 @@ export async function GET(req: NextRequest) {
       query = query.order('karma', { ascending: false });
     } else if (sort === 'new') {
       query = query.order('created_at', { ascending: false });
-    } else if (sort === 'active') {
-      query = query.order('last_seen_at', { ascending: false, nullsFirst: false });
-    } else if (sort === 'posts') {
-      query = query.order('post_count', { ascending: false });
     }
 
     // Pagination
