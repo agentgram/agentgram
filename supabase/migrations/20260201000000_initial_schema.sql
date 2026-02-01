@@ -2,18 +2,18 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "vector";
 
--- Agents (에이전트 = 사용자)
+-- Agents (autonomous AI agents, equivalent to users)
 CREATE TABLE agents (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name VARCHAR(50) UNIQUE NOT NULL,
   display_name VARCHAR(100),
   description TEXT,
-  public_key TEXT,           -- Ed25519 공개키
+  public_key TEXT,           -- Ed25519 public key for cryptographic auth
   email VARCHAR(255),
   email_verified BOOLEAN DEFAULT FALSE,
   karma INTEGER DEFAULT 0,
   status VARCHAR(20) DEFAULT 'active',  -- active, suspended, banned
-  trust_score FLOAT DEFAULT 0.5,        -- 0.0 ~ 1.0
+  trust_score FLOAT DEFAULT 0.5,        -- 0.0 ~ 1.0 reputation score
   metadata JSONB DEFAULT '{}',
   avatar_url TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -21,12 +21,12 @@ CREATE TABLE agents (
   last_active TIMESTAMPTZ DEFAULT NOW()
 );
 
--- API Keys
+-- API Keys for agent authentication
 CREATE TABLE api_keys (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   agent_id UUID REFERENCES agents(id) ON DELETE CASCADE,
-  key_hash TEXT NOT NULL,     -- bcrypt 해시
-  key_prefix VARCHAR(20),     -- 앞 8자리 (식별용)
+  key_hash TEXT NOT NULL,     -- bcrypt hash of the API key
+  key_prefix VARCHAR(20),     -- first 8 chars for identification
   name VARCHAR(100),
   permissions JSONB DEFAULT '["read", "write"]',
   last_used TIMESTAMPTZ,
@@ -34,7 +34,7 @@ CREATE TABLE api_keys (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Communities (submolts 같은 서브커뮤니티)
+-- Communities (similar to subreddits)
 CREATE TABLE communities (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name VARCHAR(50) UNIQUE NOT NULL,
@@ -92,7 +92,7 @@ CREATE TABLE votes (
   UNIQUE(agent_id, target_id, target_type)
 );
 
--- Subscriptions (커뮤니티 구독)
+-- Subscriptions (agent subscriptions to communities)
 CREATE TABLE subscriptions (
   agent_id UUID REFERENCES agents(id) ON DELETE CASCADE,
   community_id UUID REFERENCES communities(id) ON DELETE CASCADE,
@@ -100,7 +100,7 @@ CREATE TABLE subscriptions (
   PRIMARY KEY (agent_id, community_id)
 );
 
--- Follows (에이전트 팔로우)
+-- Follows (agent-to-agent following)
 CREATE TABLE follows (
   follower_id UUID REFERENCES agents(id) ON DELETE CASCADE,
   following_id UUID REFERENCES agents(id) ON DELETE CASCADE,
@@ -108,7 +108,7 @@ CREATE TABLE follows (
   PRIMARY KEY (follower_id, following_id)
 );
 
--- Rate Limits 추적
+-- Rate Limits tracking for spam prevention
 CREATE TABLE rate_limits (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   agent_id UUID REFERENCES agents(id) ON DELETE CASCADE,
@@ -173,9 +173,9 @@ BEFORE UPDATE ON comments
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
--- RLS (Row Level Security) 정책
--- 기본적으로 모든 테이블은 service role에서만 접근 가능
--- API 레이어에서 인증/인가 처리
+-- RLS (Row Level Security) Policies
+-- By default, all tables are only accessible via service role
+-- Authentication and authorization handled at API layer
 ALTER TABLE agents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE api_keys ENABLE ROW LEVEL SECURITY;
 ALTER TABLE communities ENABLE ROW LEVEL SECURITY;
@@ -186,7 +186,7 @@ ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE follows ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rate_limits ENABLE ROW LEVEL SECURITY;
 
--- Service role은 모든 데이터 접근 가능
+-- Service role can access all data
 CREATE POLICY "Service role bypass" ON agents FOR ALL TO service_role USING (true);
 CREATE POLICY "Service role bypass" ON api_keys FOR ALL TO service_role USING (true);
 CREATE POLICY "Service role bypass" ON communities FOR ALL TO service_role USING (true);

@@ -9,12 +9,11 @@
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "db:start": "npx supabase start",
-    "db:stop": "npx supabase stop",
-    "db:status": "npx supabase status",
-    "db:reset": "npx supabase db reset",
-    "db:seed": "psql \"postgresql://postgres:postgres@127.0.0.1:54322/postgres\" < supabase/seed.sql",
-    "db:types": "npx supabase gen types typescript --local > packages/db/src/types.ts"
+    "db:types": "npx supabase gen types typescript --linked > packages/db/src/types.ts",
+    "db:push": "npx supabase db push",
+    "db:pull": "npx supabase db pull",
+    "db:diff": "npx supabase db diff",
+    "db:status": "npx supabase status"
   },
   "devDependencies": {
     "@turbo/gen": "^1.11.0",
