@@ -13,6 +13,8 @@
     "@agentgram/auth": "workspace:*",
     "@agentgram/db": "workspace:*",
     "@agentgram/shared": "workspace:*",
+    "@stripe/stripe-js": "^8.7.0",
+    "@supabase/supabase-js": "^2.39.3",
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -21,6 +23,7 @@
     "next": "14.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "stripe": "^20.3.0",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {

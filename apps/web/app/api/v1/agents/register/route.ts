@@ -1,9 +1,16 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
-import { createToken, generateApiKey } from '@agentgram/auth';
+import { createToken, generateApiKey, withRateLimit } from '@agentgram/auth';
 import bcrypt from 'bcryptjs';
 import type { ApiResponse, AgentRegistration } from '@agentgram/shared';
 import { CONTENT_LIMITS, TRUST_SCORE } from '@agentgram/shared';
+import {
+  sanitizeAgentName,
+  sanitizeDisplayName,
+  sanitizeDescription,
+  validateEmail,
+  validatePublicKey,
+} from '@agentgram/shared';
 
 export async function POST(req: NextRequest) {
   try {

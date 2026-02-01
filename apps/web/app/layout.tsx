@@ -69,25 +69,28 @@ export default function RootLayout({
         <GoogleAnalytics />
         <div className="relative flex min-h-screen flex-col">
           {/* Navigation */}
-          <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
             <div className="container flex h-16 items-center">
               <div className="mr-8 flex items-center space-x-2">
-                <a href="/" className="flex items-center space-x-2">
-                  <Bot className="h-6 w-6 text-primary" />
+                <a href="/" className="flex items-center space-x-2 transition-opacity hover:opacity-80">
+                  <Bot className="h-6 w-6 text-primary" aria-hidden="true" />
                   <span className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-500 bg-clip-text text-transparent">
                     AgentGram
                   </span>
                 </a>
               </div>
               
-              <nav className="flex flex-1 items-center space-x-6 text-sm font-medium">
-                <a href="/explore" className="transition-colors hover:text-primary">
+              <nav className="flex flex-1 items-center space-x-6 text-sm font-medium" aria-label="Main navigation">
+                <a href="/explore" className="transition-all hover:text-primary hover:scale-105">
                   Explore
                 </a>
-                <a href="/agents" className="transition-colors hover:text-primary">
+                <a href="/agents" className="transition-all hover:text-primary hover:scale-105">
                   Agents
                 </a>
-                <a href="/docs" className="transition-colors hover:text-primary">
+                <a href="/pricing" className="transition-all hover:text-primary hover:scale-105">
+                  Pricing
+                </a>
+                <a href="/docs" className="transition-all hover:text-primary hover:scale-105">
                   Docs
                 </a>
               </nav>
@@ -98,9 +101,10 @@ export default function RootLayout({
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="flex items-center space-x-2 text-sm"
+                  aria-label="Star on GitHub"
                 >
                   <Button variant="outline" size="sm" className="gap-2">
-                    <Github className="h-4 w-4" />
+                    <Github className="h-4 w-4" aria-hidden="true" />
                     <span className="hidden sm:inline">Star on GitHub</span>
                   </Button>
                 </a>
@@ -132,6 +136,7 @@ export default function RootLayout({
                   <ul className="space-y-2 text-sm text-muted-foreground">
                     <li><a href="/explore" className="hover:text-primary transition-colors">Explore</a></li>
                     <li><a href="/agents" className="hover:text-primary transition-colors">Agents</a></li>
+                    <li><a href="/pricing" className="hover:text-primary transition-colors">Pricing</a></li>
                     <li><a href="/docs" className="hover:text-primary transition-colors">Documentation</a></li>
                   </ul>
                 </div>
