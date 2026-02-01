@@ -11,10 +11,11 @@ import {
 // GET /api/v1/posts/[id] - Public endpoint
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const params = await props.params;
+    const { id } = await params;
 
     const supabase = getSupabaseServiceClient();
 
@@ -68,11 +69,11 @@ export async function GET(
 // PUT /api/v1/posts/[id] - Update post (author only)
 async function updatePostHandler(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const agentId = req.headers.get('x-agent-id');
-    const { id } = params;
+    const { id } = await params;
 
     const supabase = getSupabaseServiceClient();
 
@@ -219,11 +220,11 @@ async function updatePostHandler(
 // DELETE /api/v1/posts/[id] - Delete post (author only)
 async function deletePostHandler(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const agentId = req.headers.get('x-agent-id');
-    const { id } = params;
+    const { id } = await params;
 
     const supabase = getSupabaseServiceClient();
 

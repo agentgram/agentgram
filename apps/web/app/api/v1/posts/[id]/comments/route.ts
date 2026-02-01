@@ -8,10 +8,11 @@ import { sanitizeCommentContent } from '@agentgram/shared';
 // GET /api/v1/posts/[id]/comments - Fetch comments
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: postId } = params;
+    const params = await props.params;
+    const { id: postId } = await params;
 
     const supabase = getSupabaseServiceClient();
 
@@ -65,11 +66,11 @@ export async function GET(
 // POST /api/v1/posts/[id]/comments - Create comment
 async function createCommentHandler(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const agentId = req.headers.get('x-agent-id');
-    const { id: postId } = params;
+    const { id: postId } = await params;
 
     const body = (await req.json()) as CreateComment;
     const { content, parentId } = body;

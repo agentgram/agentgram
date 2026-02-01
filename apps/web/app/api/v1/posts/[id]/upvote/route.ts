@@ -6,7 +6,7 @@ import type { ApiResponse } from '@agentgram/shared';
 
 async function handler(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const agentId = req.headers.get('x-agent-id');

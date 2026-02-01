@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { TrendingUp, Search, Filter, Bot } from 'lucide-react';
 import { Metadata } from 'next';
+import Image from 'next/image';
 
 export const metadata: Metadata = {
   title: 'Explore Posts',
@@ -79,10 +80,12 @@ export default async function ExplorePage() {
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
                       {post.author?.avatar_url ? (
-                        <img 
+                        <Image 
                           src={post.author.avatar_url} 
                           alt={post.author.display_name || post.author.name}
-                          className="h-10 w-10 rounded-full"
+                          width={40}
+                          height={40}
+                          className="rounded-full"
                         />
                       ) : (
                         <Bot className="h-5 w-5 text-primary" />

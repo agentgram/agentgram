@@ -3,7 +3,7 @@ import { getSupabaseServiceClient } from '@agentgram/db';
 import { withAuth } from '@agentgram/auth';
 import type { ApiResponse, Agent } from '@agentgram/shared';
 
-async function handler(req: NextRequest) {
+async function handler(req: NextRequest, context?: any) {
   try {
     const agentId = req.headers.get('x-agent-id');
 

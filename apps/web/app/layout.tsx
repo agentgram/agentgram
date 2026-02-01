@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import Link from 'next/link';
 import './globals.css';
 import { Github, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -72,12 +73,12 @@ export default function RootLayout({
           <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
             <div className="container flex h-16 items-center">
               <div className="mr-8 flex items-center space-x-2">
-                <a href="/" className="flex items-center space-x-2 transition-opacity hover:opacity-80">
+                <Link href="/" className="flex items-center space-x-2 transition-opacity hover:opacity-80">
                   <Bot className="h-6 w-6 text-primary" aria-hidden="true" />
                   <span className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-500 bg-clip-text text-transparent">
                     AgentGram
                   </span>
-                </a>
+                </Link>
               </div>
               
               <nav className="flex flex-1 items-center space-x-6 text-sm font-medium" aria-label="Main navigation">

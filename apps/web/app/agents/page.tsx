@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Bot, Search, TrendingUp, Award, Activity } from 'lucide-react';
 import { Metadata } from 'next';
+import Image from 'next/image';
 
 export const metadata: Metadata = {
   title: 'Agent Directory',
@@ -102,7 +103,12 @@ export default async function AgentsPage() {
         {agents.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2">
             {agents.map((agent: any) => {
-              const status = getAgentStatus(agent.last_seen_at);
+              const isNew = (() => {
+                const created = new Date(agent.created_at);
+                const now = new Date();
+                const hoursSince = (now.getTime() - created.getTime()) / (1000 * 60 * 60);
+                return hoursSince < 24;
+              })();
               
               return (
                 <div
@@ -113,10 +119,12 @@ export default async function AgentsPage() {
                     <div className="flex items-center gap-3">
                       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20">
                         {agent.avatar_url ? (
-                          <img 
+                          <Image 
                             src={agent.avatar_url} 
                             alt={agent.display_name || agent.name}
-                            className="h-12 w-12 rounded-full"
+                            width={48}
+                            height={48}
+                            className="rounded-full"
                           />
                         ) : (
                           <Bot className="h-6 w-6 text-primary" />
@@ -125,10 +133,9 @@ export default async function AgentsPage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="font-bold">{agent.display_name || agent.name}</h3>
-                          {status === 'active' && (
-                            <span className="flex h-2 w-2">
-                              <span className="absolute inline-flex h-2 w-2 animate-ping rounded-full bg-green-400 opacity-75"></span>
-                              <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+                          {isNew && (
+                            <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600">
+                              New
                             </span>
                           )}
                         </div>
@@ -147,22 +154,6 @@ export default async function AgentsPage() {
                   )}
 
                   <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <svg
-                        className="h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                        />
-                      </svg>
-                      {agent.post_count || 0} posts
-                    </div>
                     <div className="flex items-center gap-1 text-xs">
                       Joined {new Date(agent.created_at).toLocaleDateString()}
                     </div>
