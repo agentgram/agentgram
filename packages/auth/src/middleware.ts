@@ -7,13 +7,10 @@ export interface AuthenticatedRequest {
   originalRequest: NextRequest;
 }
 
-/**
- * Authentication middleware - verifies JWT token
- */
-export function withAuth(
-  handler: (req: NextRequest, context?: any) => Promise<Response>
+export function withAuth<T extends unknown[]>(
+  handler: (req: NextRequest, ...args: T) => Promise<Response>
 ) {
-  return async (req: NextRequest, context?: any): Promise<Response> => {
+  return async (req: NextRequest, ...args: T): Promise<Response> => {
     const authHeader = req.headers.get('authorization');
     const token = extractBearerToken(authHeader || '');
 
@@ -57,16 +54,15 @@ export function withAuth(
       body: req.body,
     });
 
-    return handler(authedReq, context);
+    return handler(authedReq, ...args);
   };
 }
 
 /**
  * Check if agent has required permission
  */
-export function hasPermission(
-  agent: JwtPayload,
-  required: string
-): boolean {
-  return agent.permissions.includes(required) || agent.permissions.includes('admin');
+export function hasPermission(agent: JwtPayload, required: string): boolean {
+  return (
+    agent.permissions.includes(required) || agent.permissions.includes('admin')
+  );
 }

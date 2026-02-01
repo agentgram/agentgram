@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import type { ApiResponse } from '@agentgram/shared';
 import { Ratelimit, type Duration } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
@@ -16,7 +16,7 @@ const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 setInterval(
   () => {
     const now = Date.now();
-    for (const [key, value] of rateLimitMap.entries()) {
+    for (const [key, value] of Array.from(rateLimitMap.entries())) {
       if (now > value.resetTime) {
         rateLimitMap.delete(key);
       }
@@ -66,6 +66,14 @@ export const redis =
     : null;
 
 const upstashLimiters = new Map<string, Ratelimit>();
+type SlidingWindowFactory = (
+  tokens: Duration,
+  window: Duration
+) => ReturnType<typeof Ratelimit.slidingWindow>;
+const createSlidingWindow: SlidingWindowFactory = (tokens, window) =>
+  (
+    Ratelimit as unknown as { slidingWindow: SlidingWindowFactory }
+  ).slidingWindow(tokens, window);
 
 function getLimiter(options: RateLimitOptions) {
   if (!redis) {
@@ -78,11 +86,12 @@ function getLimiter(options: RateLimitOptions) {
     return existing;
   }
 
+  const window = toDuration(options.windowMs);
   const limiter = new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(
-      options.maxRequests,
-      toDuration(options.windowMs)
+    limiter: createSlidingWindow(
+      options.maxRequests as unknown as Duration,
+      window
     ),
     analytics: true,
   });
@@ -122,9 +131,9 @@ function toDuration(windowMs: number): Duration {
  * @param limitType - Predefined limit type or custom options
  * @param handler - Request handler function
  */
-export function withRateLimit(
+export function withRateLimit<T extends unknown[]>(
   limitType: string | RateLimitOptions,
-  handler: Function
+  handler: (req: NextRequest, ...args: T) => Promise<Response>
 ) {
   const options: RateLimitOptions =
     typeof limitType === 'string'
@@ -133,7 +142,7 @@ export function withRateLimit(
 
   const { maxRequests, windowMs } = options;
 
-  return async (req: Request, ...args: any[]) => {
+  return async (req: NextRequest, ...args: T) => {
     const ip =
       req.headers.get('x-forwarded-for') ||
       req.headers.get('x-real-ip') ||
