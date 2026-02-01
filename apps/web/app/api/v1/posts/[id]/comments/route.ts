@@ -1,9 +1,15 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
 import { withAuth, withRateLimit } from '@agentgram/auth';
-import type { ApiResponse, CreateComment } from '@agentgram/shared';
-import { CONTENT_LIMITS } from '@agentgram/shared';
-import { sanitizeCommentContent } from '@agentgram/shared';
+import type { CreateComment } from '@agentgram/shared';
+import {
+  CONTENT_LIMITS,
+  sanitizeCommentContent,
+  ErrorResponses,
+  jsonResponse,
+  createSuccessResponse,
+  createErrorResponse,
+} from '@agentgram/shared';
 
 // GET /api/v1/posts/[id]/comments - Fetch comments
 export async function GET(
@@ -29,37 +35,13 @@ export async function GET(
 
     if (error) {
       console.error('Comments query error:', error);
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'DATABASE_ERROR',
-            message: 'Failed to fetch comments',
-          },
-        } satisfies ApiResponse,
-        { status: 500 }
-      );
+      return jsonResponse(ErrorResponses.databaseError('Failed to fetch comments'), 500);
     }
 
-    return Response.json(
-      {
-        success: true,
-        data: comments || [],
-      } satisfies ApiResponse,
-      { status: 200 }
-    );
+    return jsonResponse(createSuccessResponse(comments || []), 200);
   } catch (error) {
     console.error('Get comments error:', error);
-    return Response.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'An unexpected error occurred',
-        },
-      } satisfies ApiResponse,
-      { status: 500 }
-    );
+    return jsonResponse(ErrorResponses.internalError(), 500);
   }
 }
 
@@ -80,16 +62,8 @@ async function createCommentHandler(
     try {
       sanitizedContent = sanitizeCommentContent(content);
     } catch (error) {
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'INVALID_INPUT',
-            message: error instanceof Error ? error.message : 'Invalid content',
-          },
-        } satisfies ApiResponse,
-        { status: 400 }
-      );
+      const message = error instanceof Error ? error.message : 'Invalid content';
+      return jsonResponse(ErrorResponses.invalidInput(message), 400);
     }
 
     const supabase = getSupabaseServiceClient();
@@ -102,16 +76,7 @@ async function createCommentHandler(
       .single();
 
     if (!post) {
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'POST_NOT_FOUND',
-            message: 'Post not found',
-          },
-        } satisfies ApiResponse,
-        { status: 404 }
-      );
+      return jsonResponse(ErrorResponses.notFound('Post'), 404);
     }
 
     // Calculate depth if this is a reply
@@ -127,15 +92,12 @@ async function createCommentHandler(
         depth = parent.depth + 1;
 
         if (depth > CONTENT_LIMITS.MAX_COMMENT_DEPTH) {
-          return Response.json(
-            {
-              success: false,
-              error: {
-                code: 'MAX_DEPTH_EXCEEDED',
-                message: 'Maximum comment nesting depth exceeded',
-              },
-            } satisfies ApiResponse,
-            { status: 400 }
+          return jsonResponse(
+            createErrorResponse(
+              'MAX_DEPTH_EXCEEDED',
+              'Maximum comment nesting depth exceeded'
+            ),
+            400
           );
         }
       }
@@ -161,16 +123,7 @@ async function createCommentHandler(
 
     if (commentError || !comment) {
       console.error('Comment creation error:', commentError);
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'DATABASE_ERROR',
-            message: 'Failed to create comment',
-          },
-        } satisfies ApiResponse,
-        { status: 500 }
-      );
+      return jsonResponse(ErrorResponses.databaseError('Failed to create comment'), 500);
     }
 
     // Update post comment count
@@ -179,25 +132,10 @@ async function createCommentHandler(
       .update({ comment_count: post.comment_count + 1 })
       .eq('id', postId);
 
-    return Response.json(
-      {
-        success: true,
-        data: comment,
-      } satisfies ApiResponse,
-      { status: 201 }
-    );
+    return jsonResponse(createSuccessResponse(comment), 201);
   } catch (error) {
     console.error('Create comment error:', error);
-    return Response.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'An unexpected error occurred',
-        },
-      } satisfies ApiResponse,
-      { status: 500 }
-    );
+    return jsonResponse(ErrorResponses.internalError(), 500);
   }
 }
 

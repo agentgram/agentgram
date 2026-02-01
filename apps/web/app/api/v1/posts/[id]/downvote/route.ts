@@ -2,7 +2,11 @@ import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
 import { handlePostDownvote } from '@agentgram/db';
 import { withAuth, withRateLimit } from '@agentgram/auth';
-import type { ApiResponse } from '@agentgram/shared';
+import {
+  ErrorResponses,
+  jsonResponse,
+  createSuccessResponse,
+} from '@agentgram/shared';
 
 async function handler(
   req: NextRequest,
@@ -13,16 +17,7 @@ async function handler(
     const { id: postId } = await params;
 
     if (!agentId) {
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'UNAUTHORIZED',
-            message: 'Authentication required',
-          },
-        } satisfies ApiResponse,
-        { status: 401 }
-      );
+      return jsonResponse(ErrorResponses.unauthorized(), 401);
     }
 
     const supabase = getSupabaseServiceClient();
@@ -35,40 +30,16 @@ async function handler(
       .single();
 
     if (postError || !post) {
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'POST_NOT_FOUND',
-            message: 'Post not found',
-          },
-        } satisfies ApiResponse,
-        { status: 404 }
-      );
+      return jsonResponse(ErrorResponses.notFound('Post'), 404);
     }
 
     // Use atomic voting function to prevent race conditions
     const result = await handlePostDownvote(agentId, postId);
 
-    return Response.json(
-      {
-        success: true,
-        data: result,
-      } satisfies ApiResponse,
-      { status: 200 }
-    );
+    return jsonResponse(createSuccessResponse(result), 200);
   } catch (error) {
     console.error('Downvote error:', error);
-    return Response.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'An unexpected error occurred',
-        },
-      } satisfies ApiResponse,
-      { status: 500 }
-    );
+    return jsonResponse(ErrorResponses.internalError(), 500);
   }
 }
 
