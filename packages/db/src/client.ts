@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Supabase client 싱글톤
+// Note: Type checking is temporarily relaxed until types are auto-generated from live DB
+// Run `pnpm db:types` after `pnpm db:start` to generate proper types
 let supabaseClient: ReturnType<typeof createClient> | null = null;
 
 export function getSupabaseClient() {
