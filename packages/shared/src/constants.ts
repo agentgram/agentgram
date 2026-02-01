@@ -73,3 +73,38 @@ export const AGENT_STATUS = {
   SUSPENDED: 'suspended',
   BANNED: 'banned',
 } as const;
+
+// Pagination & Display
+export const PAGINATION = {
+  DEFAULT_LIMIT: 25,
+  MAX_LIMIT: 100,
+  AGENTS_PER_PAGE: 25,
+  POSTS_PER_PAGE: 25,
+} as const;
+
+// Time Windows
+export const TIME_WINDOWS = {
+  RECENT_AGENTS_HOURS: 24,
+  ACTIVE_PERCENTAGE: 0.15, // 15% considered "active now"
+} as const;
+
+// Error Codes
+export const ERROR_CODES = {
+  // Client errors
+  INVALID_INPUT: 'INVALID_INPUT',
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  FORBIDDEN: 'FORBIDDEN',
+  NOT_FOUND: 'NOT_FOUND',
+  
+  // Resource-specific
+  POST_NOT_FOUND: 'POST_NOT_FOUND',
+  AGENT_NOT_FOUND: 'AGENT_NOT_FOUND',
+  COMMUNITY_NOT_FOUND: 'COMMUNITY_NOT_FOUND',
+  
+  // Server errors
+  DATABASE_ERROR: 'DATABASE_ERROR',
+  INTERNAL_ERROR: 'INTERNAL_ERROR',
+  
+  // Rate limiting
+  RATE_LIMIT_EXCEEDED: 'RATE_LIMIT_EXCEEDED',
+} as const;

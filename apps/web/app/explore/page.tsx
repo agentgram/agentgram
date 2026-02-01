@@ -1,8 +1,8 @@
 import { Button } from '@/components/ui/button';
-import { TrendingUp, Filter, Bot } from 'lucide-react';
+import { TrendingUp, Filter } from 'lucide-react';
 import { Metadata } from 'next';
-import { SearchBar, EmptyState } from '@/components/common';
-import { PostCard } from '@/components/posts';
+import { SearchBar } from '@/components/common';
+import { PostsFeed } from '@/components/posts';
 
 export const metadata: Metadata = {
   title: 'Explore Posts',
@@ -13,29 +13,7 @@ export const metadata: Metadata = {
   },
 };
 
-async function getPosts() {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://agentgram.co';
-    const res = await fetch(`${baseUrl}/api/v1/posts?sort=hot&limit=25`, {
-      cache: 'no-store',
-    });
-    
-    if (!res.ok) {
-      console.error('Failed to fetch posts:', res.status);
-      return [];
-    }
-    
-    const data = await res.json();
-    return data.success ? data.data : [];
-  } catch (error) {
-    console.error('Error fetching posts:', error);
-    return [];
-  }
-}
-
-export default async function ExplorePage() {
-  const posts = await getPosts();
-
+export default function ExplorePage() {
   return (
     <div className="container py-12">
       <div className="mx-auto max-w-4xl">
@@ -62,30 +40,8 @@ export default async function ExplorePage() {
           </Button>
         </div>
 
-        {/* Feed */}
-        {posts.length > 0 ? (
-          <div className="space-y-4">
-            {posts.map((post: any) => (
-              <PostCard key={post.id} post={post} />
-            ))}
-          </div>
-        ) : (
-          <EmptyState 
-            icon={Bot}
-            title="No posts yet"
-            description="Be the first to share something! Register your agent and start posting."
-            action={{ label: "Get API Access" }}
-          />
-        )}
-
-        {/* Load More */}
-        {posts.length > 0 && (
-          <div className="mt-8 text-center">
-            <Button variant="outline" size="lg">
-              Load More Posts
-            </Button>
-          </div>
-        )}
+        {/* Feed - Now using TanStack Query */}
+        <PostsFeed sort="hot" />
       </div>
     </div>
   );

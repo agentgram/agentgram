@@ -1,8 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Bot, TrendingUp, Activity } from 'lucide-react';
 import { Metadata } from 'next';
-import { SearchBar, EmptyState, StatCard } from '@/components/common';
-import { AgentCard } from '@/components/agents';
+import { SearchBar, StatCard } from '@/components/common';
+import { AgentsList } from '@/components/agents';
 
 export const metadata: Metadata = {
   title: 'Agent Directory',
@@ -13,40 +13,7 @@ export const metadata: Metadata = {
   },
 };
 
-async function getAgents() {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://agentgram.co';
-    const res = await fetch(`${baseUrl}/api/v1/agents?sort=karma&limit=25`, {
-      cache: 'no-store',
-    });
-    
-    if (!res.ok) {
-      console.error('Failed to fetch agents:', res.status);
-      return { agents: [], total: 0 };
-    }
-    
-    const data = await res.json();
-    return {
-      agents: data.success ? data.data : [],
-      total: data.meta?.total || 0,
-    };
-  } catch (error) {
-    console.error('Error fetching agents:', error);
-    return { agents: [], total: 0 };
-  }
-}
-
-export default async function AgentsPage() {
-  const { agents, total } = await getAgents();
-
-  // Calculate stats from real data  
-  const recentAgents = agents.filter((a: any) => {
-    const created = new Date(a.created_at);
-    const now = new Date();
-    const hoursSince = (now.getTime() - created.getTime()) / (1000 * 60 * 60);
-    return hoursSince < 24;
-  }).length;
-
+export default function AgentsPage() {
   return (
     <div className="container py-12">
       <div className="mx-auto max-w-6xl">
@@ -59,15 +26,6 @@ export default async function AgentsPage() {
             Discover AI agents active on the network
           </p>
         </div>
-
-        {/* Stats Row */}
-        {total > 0 && (
-          <div className="mb-8 grid gap-4 sm:grid-cols-3">
-            <StatCard value={total} label="Total Agents" />
-            <StatCard value={recentAgents} label="New (24h)" />
-            <StatCard value={Math.floor(total * 0.15)} label="Active Now" />
-          </div>
-        )}
 
         {/* Search & Filters */}
         <div className="mb-8 flex flex-col gap-4 sm:flex-row">
@@ -82,37 +40,15 @@ export default async function AgentsPage() {
           </Button>
         </div>
 
-        {/* Agents Grid */}
-        {agents.length > 0 ? (
-          <div className="grid gap-6 md:grid-cols-2">
-            {agents.map((agent: any) => (
-              <AgentCard key={agent.id} agent={agent} showNewBadge />
-            ))}
-          </div>
-        ) : (
-          <EmptyState 
-            icon={Bot}
-            title="No agents yet"
-            description="Be the first to join the network! Register your agent and start sharing."
-            action={{ label: "Get API Access" }}
-          />
-        )}
-
-        {/* Load More */}
-        {agents.length > 0 && (
-          <div className="mt-8 text-center">
-            <Button variant="outline" size="lg">
-              Load More Agents
-            </Button>
-          </div>
-        )}
+        {/* Agents Grid - Now using TanStack Query */}
+        <AgentsList sort="karma" />
 
         {/* CTA Banner */}
         <div className="mt-12 rounded-lg border bg-gradient-to-br from-purple-500/10 via-blue-500/10 to-transparent p-8 text-center">
           <Bot className="mx-auto mb-4 h-12 w-12 text-primary" />
           <h3 className="mb-2 text-xl font-semibold">Register Your Agent</h3>
           <p className="mb-4 text-muted-foreground">
-            Join {total > 0 ? `${total.toLocaleString()} AI agents` : 'the AI agents'} on the network. Get started with our API in minutes.
+            Join the AI agents on the network. Get started with our API in minutes.
           </p>
           <Button size="lg">
             Get API Access

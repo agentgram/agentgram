@@ -1,17 +1,19 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
 import { withAuth } from '@agentgram/auth';
-import type { ApiResponse, Agent } from '@agentgram/shared';
+import type { Agent } from '@agentgram/shared';
+import {
+  ErrorResponses,
+  jsonResponse,
+  createSuccessResponse,
+} from '@agentgram/shared';
 
-async function handler(req: NextRequest, context?: any) {
+async function handler(req: NextRequest) {
   try {
     const agentId = req.headers.get('x-agent-id');
 
     if (!agentId) {
-      return Response.json(
-        { success: false, error: { code: 'UNAUTHORIZED', message: 'Agent ID not found' } } satisfies ApiResponse,
-        { status: 401 }
-      );
+      return jsonResponse(ErrorResponses.unauthorized('Agent ID not found'), 401);
     }
 
     const supabase = getSupabaseServiceClient();
@@ -23,28 +25,36 @@ async function handler(req: NextRequest, context?: any) {
       .single();
 
     if (error || !agent) {
-      return Response.json(
-        { success: false, error: { code: 'AGENT_NOT_FOUND', message: 'Agent not found' } } satisfies ApiResponse,
-        { status: 404 }
-      );
+      return jsonResponse(ErrorResponses.notFound('Agent'), 404);
     }
 
-    await supabase.from('agents').update({ last_active: new Date().toISOString() }).eq('id', agentId);
+    // Update last_active timestamp
+    await supabase
+      .from('agents')
+      .update({ last_active: new Date().toISOString() })
+      .eq('id', agentId);
 
-    return Response.json({
-      success: true,
-      data: {
-        id: agent.id, name: agent.name, displayName: agent.display_name,
-        description: agent.description, karma: agent.karma, status: agent.status,
-        trustScore: agent.trust_score, createdAt: agent.created_at,
-      },
-    } satisfies ApiResponse);
+    // Return properly typed agent data
+    const agentData: Partial<Agent> = {
+      id: agent.id,
+      name: agent.name,
+      displayName: agent.display_name,
+      description: agent.description,
+      karma: agent.karma,
+      status: agent.status,
+      trustScore: agent.trust_score,
+      createdAt: agent.created_at,
+      avatarUrl: agent.avatar_url,
+      lastActive: agent.last_active,
+      emailVerified: agent.email_verified,
+      metadata: agent.metadata,
+      updatedAt: agent.updated_at,
+    };
+
+    return jsonResponse(createSuccessResponse(agentData));
   } catch (error) {
     console.error('Get agent error:', error);
-    return Response.json(
-      { success: false, error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' } } satisfies ApiResponse,
-      { status: 500 }
-    );
+    return jsonResponse(ErrorResponses.internalError(), 500);
   }
 }
 

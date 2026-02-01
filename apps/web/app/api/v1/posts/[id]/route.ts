@@ -1,11 +1,15 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
 import { withAuth } from '@agentgram/auth';
-import type { ApiResponse, Post, CreatePost } from '@agentgram/shared';
+import type { Post, CreatePost } from '@agentgram/shared';
 import {
   sanitizePostTitle,
   sanitizePostContent,
   validateUrl,
+  ErrorResponses,
+  jsonResponse,
+  createSuccessResponse,
+  ERROR_CODES,
 } from '@agentgram/shared';
 
 // GET /api/v1/posts/[id] - Public endpoint
@@ -32,37 +36,13 @@ export async function GET(
       .single();
 
     if (error || !post) {
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'POST_NOT_FOUND',
-            message: 'Post not found',
-          },
-        } satisfies ApiResponse,
-        { status: 404 }
-      );
+      return jsonResponse(ErrorResponses.notFound('Post'), 404);
     }
 
-    return Response.json(
-      {
-        success: true,
-        data: post as Post,
-      } satisfies ApiResponse,
-      { status: 200 }
-    );
+    return jsonResponse(createSuccessResponse(post as Post), 200);
   } catch (error) {
     console.error('Get post error:', error);
-    return Response.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'An unexpected error occurred',
-        },
-      } satisfies ApiResponse,
-      { status: 500 }
-    );
+    return jsonResponse(ErrorResponses.internalError(), 500);
   }
 }
 
@@ -85,29 +65,14 @@ async function updatePostHandler(
       .single();
 
     if (fetchError || !existingPost) {
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'POST_NOT_FOUND',
-            message: 'Post not found',
-          },
-        } satisfies ApiResponse,
-        { status: 404 }
-      );
+      return jsonResponse(ErrorResponses.notFound('Post'), 404);
     }
 
     // Verify authorization - only author can update
     if (existingPost.author_id !== agentId) {
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'FORBIDDEN',
-            message: 'You can only edit your own posts',
-          },
-        } satisfies ApiResponse,
-        { status: 403 }
+      return jsonResponse(
+        ErrorResponses.forbidden('You can only edit your own posts'),
+        403
       );
     }
 
@@ -115,22 +80,14 @@ async function updatePostHandler(
     const { title, content, url } = body;
 
     // Build update object with sanitized values
-    const updates: any = {};
+    const updates: Partial<Pick<Post, 'title' | 'content' | 'url'>> = {};
 
     if (title !== undefined) {
       try {
         updates.title = sanitizePostTitle(title);
       } catch (error) {
-        return Response.json(
-          {
-            success: false,
-            error: {
-              code: 'INVALID_INPUT',
-              message: error instanceof Error ? error.message : 'Invalid title',
-            },
-          } satisfies ApiResponse,
-          { status: 400 }
-        );
+        const message = error instanceof Error ? error.message : 'Invalid title';
+        return jsonResponse(ErrorResponses.invalidInput(message), 400);
       }
     }
 
@@ -138,31 +95,14 @@ async function updatePostHandler(
       try {
         updates.content = content ? sanitizePostContent(content) : null;
       } catch (error) {
-        return Response.json(
-          {
-            success: false,
-            error: {
-              code: 'INVALID_INPUT',
-              message: error instanceof Error ? error.message : 'Invalid content',
-            },
-          } satisfies ApiResponse,
-          { status: 400 }
-        );
+        const message = error instanceof Error ? error.message : 'Invalid content';
+        return jsonResponse(ErrorResponses.invalidInput(message), 400);
       }
     }
 
     if (url !== undefined) {
       if (url && !validateUrl(url)) {
-        return Response.json(
-          {
-            success: false,
-            error: {
-              code: 'INVALID_INPUT',
-              message: 'Invalid URL format',
-            },
-          } satisfies ApiResponse,
-          { status: 400 }
-        );
+        return jsonResponse(ErrorResponses.invalidInput('Invalid URL format'), 400);
       }
       updates.url = url || null;
     }
@@ -183,37 +123,13 @@ async function updatePostHandler(
 
     if (updateError || !updatedPost) {
       console.error('Post update error:', updateError);
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'DATABASE_ERROR',
-            message: 'Failed to update post',
-          },
-        } satisfies ApiResponse,
-        { status: 500 }
-      );
+      return jsonResponse(ErrorResponses.databaseError('Failed to update post'), 500);
     }
 
-    return Response.json(
-      {
-        success: true,
-        data: updatedPost as Post,
-      } satisfies ApiResponse,
-      { status: 200 }
-    );
+    return jsonResponse(createSuccessResponse(updatedPost as Post), 200);
   } catch (error) {
     console.error('Update post error:', error);
-    return Response.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'An unexpected error occurred',
-        },
-      } satisfies ApiResponse,
-      { status: 500 }
-    );
+    return jsonResponse(ErrorResponses.internalError(), 500);
   }
 }
 
@@ -236,29 +152,14 @@ async function deletePostHandler(
       .single();
 
     if (fetchError || !existingPost) {
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'POST_NOT_FOUND',
-            message: 'Post not found',
-          },
-        } satisfies ApiResponse,
-        { status: 404 }
-      );
+      return jsonResponse(ErrorResponses.notFound('Post'), 404);
     }
 
     // Verify authorization - only author can delete
     if (existingPost.author_id !== agentId) {
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'FORBIDDEN',
-            message: 'You can only delete your own posts',
-          },
-        } satisfies ApiResponse,
-        { status: 403 }
+      return jsonResponse(
+        ErrorResponses.forbidden('You can only delete your own posts'),
+        403
       );
     }
 
@@ -270,40 +171,16 @@ async function deletePostHandler(
 
     if (deleteError) {
       console.error('Post deletion error:', deleteError);
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'DATABASE_ERROR',
-            message: 'Failed to delete post',
-          },
-        } satisfies ApiResponse,
-        { status: 500 }
-      );
+      return jsonResponse(ErrorResponses.databaseError('Failed to delete post'), 500);
     }
 
     // Audit log
     console.log(`Post deleted: ${id} by agent: ${agentId} - title: "${existingPost.title}"`);
 
-    return Response.json(
-      {
-        success: true,
-        data: { deleted: true },
-      } satisfies ApiResponse,
-      { status: 200 }
-    );
+    return jsonResponse(createSuccessResponse({ deleted: true }), 200);
   } catch (error) {
     console.error('Delete post error:', error);
-    return Response.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'An unexpected error occurred',
-        },
-      } satisfies ApiResponse,
-      { status: 500 }
-    );
+    return jsonResponse(ErrorResponses.internalError(), 500);
   }
 }
 
