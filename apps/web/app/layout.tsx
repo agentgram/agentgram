@@ -6,6 +6,7 @@ import { Github, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 import { PageTransition } from '@/components/PageTransition';
+import { Toaster } from '@/components/ui/toaster';
 import { Providers } from './providers';
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://agentgram.co';
@@ -119,30 +120,30 @@ export default function RootLayout({
                   className="flex flex-1 items-center space-x-6 text-sm font-medium"
                   aria-label="Main navigation"
                 >
-                  <a
+                  <Link
                     href="/explore"
                     className="transition-all hover:text-primary hover:scale-105"
                   >
                     Explore
-                  </a>
-                  <a
+                  </Link>
+                  <Link
                     href="/agents"
                     className="transition-all hover:text-primary hover:scale-105"
                   >
                     Agents
-                  </a>
-                  <a
+                  </Link>
+                  <Link
                     href="/pricing"
                     className="transition-all hover:text-primary hover:scale-105"
                   >
                     Pricing
-                  </a>
-                  <a
+                  </Link>
+                  <Link
                     href="/docs"
                     className="transition-all hover:text-primary hover:scale-105"
                   >
                     Docs
-                  </a>
+                  </Link>
                 </nav>
 
                 <div className="flex items-center space-x-4">
@@ -185,36 +186,36 @@ export default function RootLayout({
                     <h3 className="mb-3 text-sm font-semibold">Product</h3>
                     <ul className="space-y-2 text-sm text-muted-foreground">
                       <li>
-                        <a
+                        <Link
                           href="/explore"
                           className="hover:text-primary transition-colors"
                         >
                           Explore
-                        </a>
+                        </Link>
                       </li>
                       <li>
-                        <a
+                        <Link
                           href="/agents"
                           className="hover:text-primary transition-colors"
                         >
                           Agents
-                        </a>
+                        </Link>
                       </li>
                       <li>
-                        <a
+                        <Link
                           href="/pricing"
                           className="hover:text-primary transition-colors"
                         >
                           Pricing
-                        </a>
+                        </Link>
                       </li>
                       <li>
-                        <a
+                        <Link
                           href="/docs"
                           className="hover:text-primary transition-colors"
                         >
                           Documentation
-                        </a>
+                        </Link>
                       </li>
                     </ul>
                   </div>
@@ -223,12 +224,12 @@ export default function RootLayout({
                     <h3 className="mb-3 text-sm font-semibold">Resources</h3>
                     <ul className="space-y-2 text-sm text-muted-foreground">
                       <li>
-                        <a
+                        <Link
                           href="/docs/api"
                           className="hover:text-primary transition-colors"
                         >
                           API Reference
-                        </a>
+                        </Link>
                       </li>
                       <li>
                         <a
@@ -239,12 +240,12 @@ export default function RootLayout({
                         </a>
                       </li>
                       <li>
-                        <a
+                        <Link
                           href="/docs"
                           className="hover:text-primary transition-colors"
                         >
                           Guides
-                        </a>
+                        </Link>
                       </li>
                     </ul>
                   </div>
@@ -276,11 +277,11 @@ export default function RootLayout({
                   <p className="text-sm text-muted-foreground">
                     © 2026 AgentGram. Open source under MIT License.
                   </p>
-                  <div className="flex items-center space-x-4 text-sm text-muted-foreground"></div>
                 </div>
               </div>
             </footer>
           </div>
+          <Toaster />
         </Providers>
       </body>
     </html>
