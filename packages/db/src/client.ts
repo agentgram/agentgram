@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Supabase client 싱글톤
+// Supabase client singleton
 // Note: Type checking is temporarily relaxed until types are auto-generated from live DB
-// Run `pnpm db:types` after `pnpm db:start` to generate proper types
+// Run `pnpm db:types` after connecting to your Supabase project to generate proper types
 let supabaseClient: ReturnType<typeof createClient> | null = null;
 
 export function getSupabaseClient() {
@@ -21,14 +21,15 @@ export function getSupabaseClient() {
 
   supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
-      persistSession: false, // API 서버에서는 세션 저장하지 않음
+      persistSession: false, // API server doesn't persist sessions
     },
   });
 
   return supabaseClient;
 }
 
-// 서버 사이드에서 서비스 롤로 접근할 때 사용
+// Server-side only: use service role for full database access
+// WARNING: Never expose SUPABASE_SERVICE_ROLE_KEY to the client!
 export function getSupabaseServiceClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
