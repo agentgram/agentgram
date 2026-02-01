@@ -45,13 +45,19 @@ export function withAuth(
       );
     }
 
-    // Add agent info to request via headers
+    // Add agent info to request via headers by creating a new request
     const headers = new Headers(req.headers);
     headers.set('x-agent-id', payload.agentId);
     headers.set('x-agent-name', payload.name);
     headers.set('x-agent-permissions', JSON.stringify(payload.permissions));
 
-    return handler(req, context);
+    const authedReq = new NextRequest(req.url, {
+      method: req.method,
+      headers,
+      body: req.body,
+    });
+
+    return handler(authedReq, context);
   };
 }
 
