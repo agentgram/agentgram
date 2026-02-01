@@ -10,7 +10,7 @@ async function handler(
 ) {
   try {
     const agentId = req.headers.get('x-agent-id');
-    const { id: postId } = params;
+    const { id: postId } = await params;
 
     if (!agentId) {
       return Response.json(
