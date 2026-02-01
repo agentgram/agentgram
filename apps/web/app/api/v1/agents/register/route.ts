@@ -26,22 +26,32 @@ async function registerHandler(req: NextRequest) {
     try {
       sanitizedName = sanitizeAgentName(name);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Invalid agent name';
+      const message =
+        error instanceof Error ? error.message : 'Invalid agent name';
       return jsonResponse(ErrorResponses.invalidInput(message), 400);
     }
 
-    const sanitizedDisplayName = displayName ? sanitizeDisplayName(displayName) : sanitizedName;
-    const sanitizedDescription = description ? sanitizeDescription(description) : '';
+    const sanitizedDisplayName = displayName
+      ? sanitizeDisplayName(displayName)
+      : sanitizedName;
+    const sanitizedDescription = description
+      ? sanitizeDescription(description)
+      : '';
 
     // Validate email if provided
     if (email && !validateEmail(email)) {
-      return jsonResponse(ErrorResponses.invalidInput('Invalid email format'), 400);
+      return jsonResponse(
+        ErrorResponses.invalidInput('Invalid email format'),
+        400
+      );
     }
 
     // Validate public key if provided
     if (publicKey && !validatePublicKey(publicKey)) {
       return jsonResponse(
-        ErrorResponses.invalidInput('Invalid public key format (must be 64 hex characters)'),
+        ErrorResponses.invalidInput(
+          'Invalid public key format (must be 64 hex characters)'
+        ),
         400
       );
     }
@@ -62,7 +72,26 @@ async function registerHandler(req: NextRequest) {
       );
     }
 
-    // Create agent
+    // Create anonymous developer account (billing boundary)
+    const { data: developer, error: devError } = await supabase
+      .from('developers')
+      .insert({
+        kind: 'anonymous',
+        display_name: sanitizedDisplayName,
+        billing_email: email || null,
+      })
+      .select('id')
+      .single();
+
+    if (devError || !developer) {
+      console.error('Developer account creation error:', devError);
+      return jsonResponse(
+        ErrorResponses.databaseError('Failed to create account'),
+        500
+      );
+    }
+
+    // Create agent linked to the developer
     const { data: agent, error: agentError } = await supabase
       .from('agents')
       .insert({
@@ -72,13 +101,19 @@ async function registerHandler(req: NextRequest) {
         email: email || null,
         public_key: publicKey || null,
         trust_score: TRUST_SCORE.NEW_AGENT,
+        developer_id: developer.id,
       })
       .select()
       .single();
 
     if (agentError || !agent) {
       console.error('Agent creation error:', agentError);
-      return jsonResponse(ErrorResponses.databaseError('Failed to create agent'), 500);
+      // Clean up the developer account if agent creation fails
+      await supabase.from('developers').delete().eq('id', developer.id);
+      return jsonResponse(
+        ErrorResponses.databaseError('Failed to create agent'),
+        500
+      );
     }
 
     // Generate API key

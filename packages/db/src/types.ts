@@ -12,9 +12,115 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      developers: {
+        Row: {
+          id: string;
+          kind: string;
+          display_name: string | null;
+          billing_email: string | null;
+          plan: string;
+          stripe_customer_id: string | null;
+          stripe_subscription_id: string | null;
+          subscription_status: string;
+          current_period_end: string | null;
+          last_payment_at: string | null;
+          metadata: Json;
+          status: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          kind?: string;
+          display_name?: string | null;
+          billing_email?: string | null;
+          plan?: string;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          subscription_status?: string;
+          current_period_end?: string | null;
+          last_payment_at?: string | null;
+          metadata?: Json;
+          status?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          kind?: string;
+          display_name?: string | null;
+          billing_email?: string | null;
+          plan?: string;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          subscription_status?: string;
+          current_period_end?: string | null;
+          last_payment_at?: string | null;
+          metadata?: Json;
+          status?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      developer_members: {
+        Row: {
+          id: string;
+          developer_id: string;
+          user_id: string;
+          role: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          developer_id: string;
+          user_id: string;
+          role?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          developer_id?: string;
+          user_id?: string;
+          role?: string;
+          created_at?: string;
+        };
+      };
+      agent_claim_tokens: {
+        Row: {
+          id: string;
+          agent_id: string;
+          token_hash: string;
+          token_prefix: string | null;
+          expires_at: string;
+          redeemed_at: string | null;
+          redeemed_by_user_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          agent_id: string;
+          token_hash: string;
+          token_prefix?: string | null;
+          expires_at: string;
+          redeemed_at?: string | null;
+          redeemed_by_user_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          agent_id?: string;
+          token_hash?: string;
+          token_prefix?: string | null;
+          expires_at?: string;
+          redeemed_at?: string | null;
+          redeemed_by_user_id?: string | null;
+          created_at?: string;
+        };
+      };
       agents: {
         Row: {
           id: string;
+          developer_id: string | null;
           name: string;
           display_name: string | null;
           description: string | null;
@@ -26,18 +132,13 @@ export interface Database {
           trust_score: number;
           metadata: Json;
           avatar_url: string | null;
-          plan: string;
-          stripe_customer_id: string | null;
-          stripe_subscription_id: string | null;
-          subscription_status: string;
-          current_period_end: string | null;
-          last_payment_at: string | null;
           created_at: string;
           updated_at: string;
           last_active: string;
         };
         Insert: {
           id?: string;
+          developer_id?: string | null;
           name: string;
           display_name?: string | null;
           description?: string | null;
@@ -49,18 +150,13 @@ export interface Database {
           trust_score?: number;
           metadata?: Json;
           avatar_url?: string | null;
-          plan?: string;
-          stripe_customer_id?: string | null;
-          stripe_subscription_id?: string | null;
-          subscription_status?: string;
-          current_period_end?: string | null;
-          last_payment_at?: string | null;
           created_at?: string;
           updated_at?: string;
           last_active?: string;
         };
         Update: {
           id?: string;
+          developer_id?: string | null;
           name?: string;
           display_name?: string | null;
           description?: string | null;
@@ -72,12 +168,6 @@ export interface Database {
           trust_score?: number;
           metadata?: Json;
           avatar_url?: string | null;
-          plan?: string;
-          stripe_customer_id?: string | null;
-          stripe_subscription_id?: string | null;
-          subscription_status?: string;
-          current_period_end?: string | null;
-          last_payment_at?: string | null;
           created_at?: string;
           updated_at?: string;
           last_active?: string;

@@ -277,6 +277,26 @@ export default function RootLayout({
                   <p className="text-sm text-muted-foreground">
                     © 2026 AgentGram. Open source under MIT License.
                   </p>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <Link
+                      href="/terms"
+                      className="hover:text-primary transition-colors"
+                    >
+                      Terms
+                    </Link>
+                    <Link
+                      href="/privacy"
+                      className="hover:text-primary transition-colors"
+                    >
+                      Privacy
+                    </Link>
+                    <Link
+                      href="/refund"
+                      className="hover:text-primary transition-colors"
+                    >
+                      Refund
+                    </Link>
+                  </div>
                 </div>
               </div>
             </footer>
