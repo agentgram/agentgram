@@ -2,14 +2,18 @@ import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
 import { createToken, generateApiKey, withRateLimit } from '@agentgram/auth';
 import bcrypt from 'bcryptjs';
-import type { ApiResponse, AgentRegistration } from '@agentgram/shared';
-import { CONTENT_LIMITS, TRUST_SCORE } from '@agentgram/shared';
+import type { AgentRegistration } from '@agentgram/shared';
 import {
+  TRUST_SCORE,
   sanitizeAgentName,
   sanitizeDisplayName,
   sanitizeDescription,
   validateEmail,
   validatePublicKey,
+  ErrorResponses,
+  jsonResponse,
+  createSuccessResponse,
+  createErrorResponse,
 } from '@agentgram/shared';
 
 async function registerHandler(req: NextRequest) {
@@ -22,16 +26,8 @@ async function registerHandler(req: NextRequest) {
     try {
       sanitizedName = sanitizeAgentName(name);
     } catch (error) {
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'INVALID_INPUT',
-            message: error instanceof Error ? error.message : 'Invalid agent name',
-          },
-        } satisfies ApiResponse,
-        { status: 400 }
-      );
+      const message = error instanceof Error ? error.message : 'Invalid agent name';
+      return jsonResponse(ErrorResponses.invalidInput(message), 400);
     }
 
     const sanitizedDisplayName = displayName ? sanitizeDisplayName(displayName) : sanitizedName;
@@ -39,29 +35,14 @@ async function registerHandler(req: NextRequest) {
 
     // Validate email if provided
     if (email && !validateEmail(email)) {
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'INVALID_INPUT',
-            message: 'Invalid email format',
-          },
-        } satisfies ApiResponse,
-        { status: 400 }
-      );
+      return jsonResponse(ErrorResponses.invalidInput('Invalid email format'), 400);
     }
 
     // Validate public key if provided
     if (publicKey && !validatePublicKey(publicKey)) {
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'INVALID_INPUT',
-            message: 'Invalid public key format (must be 64 hex characters)',
-          },
-        } satisfies ApiResponse,
-        { status: 400 }
+      return jsonResponse(
+        ErrorResponses.invalidInput('Invalid public key format (must be 64 hex characters)'),
+        400
       );
     }
 
@@ -75,15 +56,9 @@ async function registerHandler(req: NextRequest) {
       .single();
 
     if (existing) {
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'AGENT_EXISTS',
-            message: 'Agent name already taken',
-          },
-        } satisfies ApiResponse,
-        { status: 409 }
+      return jsonResponse(
+        createErrorResponse('AGENT_EXISTS', 'Agent name already taken'),
+        409
       );
     }
 
@@ -103,16 +78,7 @@ async function registerHandler(req: NextRequest) {
 
     if (agentError || !agent) {
       console.error('Agent creation error:', agentError);
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'DATABASE_ERROR',
-            message: 'Failed to create agent',
-          },
-        } satisfies ApiResponse,
-        { status: 500 }
-      );
+      return jsonResponse(ErrorResponses.databaseError('Failed to create agent'), 500);
     }
 
     // Generate API key
@@ -140,36 +106,24 @@ async function registerHandler(req: NextRequest) {
       permissions: ['read', 'write'],
     });
 
-    return Response.json(
-      {
-        success: true,
-        data: {
-          agent: {
-            id: agent.id,
-            name: agent.name,
-            displayName: agent.display_name,
-            description: agent.description,
-            trustScore: agent.trust_score,
-            createdAt: agent.created_at,
-          },
-          apiKey: apiKey, // Only shown once!
-          token,
+    return jsonResponse(
+      createSuccessResponse({
+        agent: {
+          id: agent.id,
+          name: agent.name,
+          displayName: agent.display_name,
+          description: agent.description,
+          trustScore: agent.trust_score,
+          createdAt: agent.created_at,
         },
-      } satisfies ApiResponse,
-      { status: 201 }
+        apiKey: apiKey, // Only shown once!
+        token,
+      }),
+      201
     );
   } catch (error) {
     console.error('Registration error:', error);
-    return Response.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'An unexpected error occurred',
-        },
-      } satisfies ApiResponse,
-      { status: 500 }
-    );
+    return jsonResponse(ErrorResponses.internalError(), 500);
   }
 }
 

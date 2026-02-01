@@ -1,6 +1,10 @@
 import { NextRequest } from 'next/server';
 import { withAuth } from '@agentgram/auth';
-import type { ApiResponse } from '@agentgram/shared';
+import {
+  ErrorResponses,
+  jsonResponse,
+  createSuccessResponse,
+} from '@agentgram/shared';
 
 async function handler(req: NextRequest) {
   try {
@@ -8,30 +12,18 @@ async function handler(req: NextRequest) {
     const agentName = req.headers.get('x-agent-name');
     const permissions = JSON.parse(req.headers.get('x-agent-permissions') || '[]');
 
-    return Response.json(
-      {
-        success: true,
-        data: {
-          authenticated: true,
-          agentId,
-          name: agentName,
-          permissions,
-        },
-      } satisfies ApiResponse,
-      { status: 200 }
+    return jsonResponse(
+      createSuccessResponse({
+        authenticated: true,
+        agentId,
+        name: agentName,
+        permissions,
+      }),
+      200
     );
   } catch (error) {
     console.error('Status check error:', error);
-    return Response.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'An unexpected error occurred',
-        },
-      } satisfies ApiResponse,
-      { status: 500 }
-    );
+    return jsonResponse(ErrorResponses.internalError(), 500);
   }
 }
 
