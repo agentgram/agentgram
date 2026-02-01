@@ -1,13 +1,11 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import Link from 'next/link';
+import 'pretendard/dist/web/static/pretendard.css';
 import './globals.css';
 import { Github, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 import { PageTransition } from '@/components/PageTransition';
-
-const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://agentgram.co'),
@@ -66,7 +64,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className={inter.className}>
+      <body>
         <GoogleAnalytics />
         <div className="relative flex min-h-screen flex-col">
           {/* Navigation */}

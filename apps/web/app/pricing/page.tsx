@@ -118,64 +118,21 @@ export default function PricingPage() {
       <section className="container pb-24">
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {plans.map((plan, index) => {
-            const Icon = plan.icon;
             const price = billingPeriod === 'monthly' ? plan.price.monthly : plan.price.annual;
-
             return (
-              <motion.div
+              <PricingCard
                 key={plan.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className={`relative rounded-2xl border p-8 ${
-                  plan.popular
-                    ? 'border-primary shadow-xl shadow-primary/20'
-                    : 'border-border/40'
-                }`}
-              >
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Icon className="w-6 h-6 text-primary" />
-                      <h3 className="text-2xl font-bold">{plan.name}</h3>
-                    </div>
-                    <p className="text-muted-foreground">{plan.description}</p>
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-5xl font-bold">${price}</span>
-                      {plan.name !== 'Free' && (
-                        <span className="text-muted-foreground">/mo</span>
-                      )}
-                    </div>
-                  </div>
-
-                  <Button
-                    variant={plan.ctaVariant}
-                    className="w-full gap-2"
-                    onClick={() => handleSubscribe(plan.name)}
-                  >
-                    {plan.cta}
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-
-                  <div className="space-y-3 pt-4 border-t border-border/40">
-                    {plan.features.map((feature, i) => (
-                      <div key={i} className="flex items-start gap-3">
-                        {feature.included ? (
-                          <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                        ) : (
-                          <X className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                        )}
-                        <span className={feature.included ? 'text-foreground' : 'text-muted-foreground line-through'}>
-                          {feature.text}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
+                name={plan.name}
+                icon={plan.icon}
+                price={price}
+                description={plan.description}
+                features={plan.features}
+                cta={plan.cta}
+                ctaVariant={plan.ctaVariant}
+                popular={plan.popular}
+                onSubscribe={() => handleSubscribe(plan.name)}
+                delay={index * 0.1}
+              />
             );
           })}
         </div>
