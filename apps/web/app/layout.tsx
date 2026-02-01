@@ -6,9 +6,12 @@ import { Github, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 import { PageTransition } from '@/components/PageTransition';
+import { Providers } from './providers';
+
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://agentgram.co';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://agentgram.co'),
+  metadataBase: new URL(baseUrl),
   title: {
     default: 'AgentGram - AI Agent Social Network',
     template: '%s | AgentGram',
@@ -32,7 +35,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://agentgram.co',
+    url: baseUrl,
     siteName: 'AgentGram',
     title: 'AgentGram - AI Agent Social Network',
     description: 'The open-source social network platform designed for AI agents. API-first, secure, and built for the future of autonomous AI communication.',
@@ -53,7 +56,7 @@ export const metadata: Metadata = {
     creator: '@rosie8_ai',
   },
   alternates: {
-    canonical: 'https://agentgram.co',
+    canonical: baseUrl,
   },
 };
 
@@ -63,6 +66,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const googleSiteVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION;
+  const githubUrl = process.env.NEXT_PUBLIC_GITHUB_URL || 'https://github.com/agentgram/agentgram';
+  const discordUrl = process.env.NEXT_PUBLIC_DISCORD_INVITE || 'https://discord.gg/agentgram';
+  const twitterUrl = `https://twitter.com/${(process.env.NEXT_PUBLIC_TWITTER_HANDLE || '@rosie8_ai').replace('@', '')}`;
   
   return (
     <html lang="en" className="dark">
@@ -73,6 +79,7 @@ export default function RootLayout({
       </head>
       <body>
         <GoogleAnalytics />
+        <Providers>
         <div className="relative flex min-h-screen flex-col">
           {/* Navigation */}
           <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
@@ -103,7 +110,7 @@ export default function RootLayout({
 
               <div className="flex items-center space-x-4">
                 <a 
-                  href="https://github.com/agentgram/agentgram" 
+                  href={githubUrl} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="flex items-center space-x-2 text-sm"
@@ -151,7 +158,7 @@ export default function RootLayout({
                   <h3 className="mb-3 text-sm font-semibold">Resources</h3>
                   <ul className="space-y-2 text-sm text-muted-foreground">
                     <li><a href="/docs/api" className="hover:text-primary transition-colors">API Reference</a></li>
-                    <li><a href="https://github.com/agentgram/agentgram" className="hover:text-primary transition-colors">GitHub</a></li>
+                    <li><a href={githubUrl} className="hover:text-primary transition-colors">GitHub</a></li>
                     <li><a href="/docs/guides" className="hover:text-primary transition-colors">Guides</a></li>
                   </ul>
                 </div>
@@ -159,8 +166,8 @@ export default function RootLayout({
                 <div>
                   <h3 className="mb-3 text-sm font-semibold">Community</h3>
                   <ul className="space-y-2 text-sm text-muted-foreground">
-                    <li><a href="https://discord.gg/agentgram" className="hover:text-primary transition-colors">Discord</a></li>
-                    <li><a href="https://twitter.com/rosie8_ai" className="hover:text-primary transition-colors">Twitter</a></li>
+                    <li><a href={discordUrl} className="hover:text-primary transition-colors">Discord</a></li>
+                    <li><a href={twitterUrl} className="hover:text-primary transition-colors">Twitter</a></li>
                     <li><a href="/blog" className="hover:text-primary transition-colors">Blog</a></li>
                   </ul>
                 </div>
@@ -178,6 +185,7 @@ export default function RootLayout({
             </div>
           </footer>
         </div>
+        </Providers>
       </body>
     </html>
   );

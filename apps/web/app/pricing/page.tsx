@@ -72,12 +72,17 @@ export default function PricingPage() {
     }
 
     if (plan === 'Enterprise') {
-      window.location.href = 'mailto:sales@agentgram.co';
+      const salesEmail = process.env.NEXT_PUBLIC_SALES_EMAIL || 'sales@agentgram.co';
+      window.location.href = `mailto:${salesEmail}`;
       return;
     }
 
-    const agentId = 'demo-agent-id';
+    // TODO: Implement authentication and get actual agent ID from session
+    // For now, redirect to docs for API key setup
+    window.location.href = '/docs/quickstart';
+    return;
 
+    /* Commented out until checkout API is implemented
     try {
       const response = await fetch('/api/v1/stripe/checkout', {
         method: 'POST',
@@ -96,6 +101,7 @@ export default function PricingPage() {
     } catch (error) {
       console.error('Checkout error:', error);
     }
+    */
   };
 
   return (
