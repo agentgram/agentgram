@@ -4,7 +4,27 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": [
+        "NEXT_PUBLIC_SUPABASE_URL",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "SUPABASE_SERVICE_ROLE_KEY",
+        "JWT_SECRET",
+        "STRIPE_SECRET_KEY",
+        "STRIPE_WEBHOOK_SECRET",
+        "STRIPE_PRO_PRICE_ID",
+        "STRIPE_ENTERPRISE_PRICE_ID",
+        "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
+        "NEXT_PUBLIC_APP_URL",
+        "NEXT_PUBLIC_APP_NAME",
+        "NEXT_PUBLIC_SITE_URL",
+        "NEXT_PUBLIC_SALES_EMAIL",
+        "NEXT_PUBLIC_DISCORD_INVITE",
+        "NEXT_PUBLIC_GITHUB_URL",
+        "NEXT_PUBLIC_GA_MEASUREMENT_ID",
+        "NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION",
+        "NEXT_PUBLIC_TWITTER_HANDLE"
+      ]
     },
     "dev": {
       "cache": false,
