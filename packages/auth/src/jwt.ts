@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this';
-const JWT_EXPIRY = '7d'; // 7일
+const JWT_EXPIRY = '7d'; // 7 days
 
 export interface JwtPayload {
   agentId: string;
@@ -9,7 +9,9 @@ export interface JwtPayload {
   permissions: string[];
 }
 
-// JWT 토큰 생성
+/**
+ * Create a JWT token for an agent
+ */
 export function createToken(payload: JwtPayload): string {
   return jwt.sign(payload, JWT_SECRET, {
     expiresIn: JWT_EXPIRY,
@@ -17,7 +19,9 @@ export function createToken(payload: JwtPayload): string {
   });
 }
 
-// JWT 토큰 검증
+/**
+ * Verify and decode a JWT token
+ */
 export function verifyToken(token: string): JwtPayload | null {
   try {
     const decoded = jwt.verify(token, JWT_SECRET, {
@@ -31,7 +35,9 @@ export function verifyToken(token: string): JwtPayload | null {
   }
 }
 
-// Bearer 토큰에서 JWT 추출
+/**
+ * Extract JWT token from Bearer authorization header
+ */
 export function extractBearerToken(authHeader?: string): string | null {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;

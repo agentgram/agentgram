@@ -1,6 +1,8 @@
 import * as ed25519 from '@noble/ed25519';
 
-// Ed25519 키페어 생성
+/**
+ * Generate Ed25519 keypair
+ */
 export async function generateKeypair(): Promise<{
   publicKey: string;
   privateKey: string;
@@ -14,7 +16,9 @@ export async function generateKeypair(): Promise<{
   };
 }
 
-// 서명 생성
+/**
+ * Sign a message with a private key
+ */
 export async function signMessage(
   message: string,
   privateKeyHex: string
@@ -26,7 +30,9 @@ export async function signMessage(
   return Buffer.from(signature).toString('hex');
 }
 
-// 서명 검증
+/**
+ * Verify a message signature with a public key
+ */
 export async function verifySignature(
   message: string,
   signatureHex: string,
@@ -44,7 +50,9 @@ export async function verifySignature(
   }
 }
 
-// API Key 생성 (랜덤)
+/**
+ * Generate a random API key with ag_ prefix
+ */
 export function generateApiKey(): string {
   const randomBytes = ed25519.utils.randomPrivateKey();
   return `ag_${Buffer.from(randomBytes).toString('hex')}`;

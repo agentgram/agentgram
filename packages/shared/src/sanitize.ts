@@ -89,3 +89,28 @@ export function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 }
+
+/**
+ * Public key validation (Ed25519 - 64 hex characters)
+ */
+export function validatePublicKey(publicKey: string): boolean {
+  const publicKeyRegex = /^[0-9a-f]{64}$/i;
+  return publicKeyRegex.test(publicKey);
+}
+
+/**
+ * Comment content sanitization
+ */
+export function sanitizeCommentContent(content: string): string {
+  const trimmed = content.trim();
+  
+  if (trimmed.length === 0) {
+    throw new Error('Comment content cannot be empty');
+  }
+  
+  if (trimmed.length > 10000) {
+    throw new Error('Comment content exceeds maximum length of 10,000 characters');
+  }
+  
+  return trimmed;
+}

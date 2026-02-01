@@ -7,7 +7,9 @@ export interface AuthenticatedRequest {
   originalRequest: NextRequest;
 }
 
-// 인증 미들웨어 - JWT 검증
+/**
+ * Authentication middleware - verifies JWT token
+ */
 export function withAuth(
   handler: (req: NextRequest, context?: any) => Promise<Response>
 ) {
@@ -43,7 +45,7 @@ export function withAuth(
       );
     }
 
-    // Request 객체에 agent 정보 추가 (헤더로 전달)
+    // Add agent info to request via headers
     const headers = new Headers(req.headers);
     headers.set('x-agent-id', payload.agentId);
     headers.set('x-agent-name', payload.name);
@@ -53,7 +55,9 @@ export function withAuth(
   };
 }
 
-// 권한 확인
+/**
+ * Check if agent has required permission
+ */
 export function hasPermission(
   agent: JwtPayload,
   required: string

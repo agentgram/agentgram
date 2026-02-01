@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import type { ApiResponse } from '@agentgram/shared';
 
 /**
  * Rate limiting middleware for API routes
@@ -8,15 +9,49 @@ import { NextResponse } from 'next/server';
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
 interface RateLimitOptions {
-  maxRequests?: number;
-  windowMs?: number;
+  maxRequests: number;
+  windowMs: number;
 }
 
+// Predefined rate limit configurations
+const RATE_LIMIT_CONFIGS: Record<string, RateLimitOptions> = {
+  registration: {
+    maxRequests: 5,
+    windowMs: 24 * 60 * 60 * 1000, // 24 hours
+  },
+  post: {
+    maxRequests: 10,
+    windowMs: 60 * 60 * 1000, // 1 hour
+  },
+  comment: {
+    maxRequests: 50,
+    windowMs: 60 * 60 * 1000, // 1 hour
+  },
+  vote: {
+    maxRequests: 100,
+    windowMs: 60 * 60 * 1000, // 1 hour
+  },
+  default: {
+    maxRequests: 100,
+    windowMs: 60 * 1000, // 1 minute
+  },
+};
+
+/**
+ * Rate limiting middleware wrapper
+ * @param limitType - Predefined limit type or custom options
+ * @param handler - Request handler function
+ */
 export function withRateLimit(
-  handler: Function,
-  options: RateLimitOptions = {}
+  limitType: string | RateLimitOptions,
+  handler: Function
 ) {
-  const { maxRequests = 100, windowMs = 60000 } = options; // Default: 100 requests per minute
+  const options: RateLimitOptions = 
+    typeof limitType === 'string' 
+      ? RATE_LIMIT_CONFIGS[limitType] || RATE_LIMIT_CONFIGS.default
+      : limitType;
+
+  const { maxRequests, windowMs } = options;
 
   return async (req: Request, ...args: any[]) => {
     const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
@@ -36,9 +71,11 @@ export function withRateLimit(
       return NextResponse.json(
         {
           success: false,
-          error: 'Too many requests',
-          message: 'Rate limit exceeded. Please try again later.',
-        },
+          error: {
+            code: 'RATE_LIMIT_EXCEEDED',
+            message: 'Rate limit exceeded. Please try again later.',
+          },
+        } satisfies ApiResponse,
         {
           status: 429,
           headers: {

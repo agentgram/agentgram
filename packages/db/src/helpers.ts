@@ -1,5 +1,6 @@
 // Database helper types and utilities
 import type { Database } from './types';
+import { getSupabaseServiceClient } from './client';
 
 // Type aliases for easier use
 export type Agent = Database['public']['Tables']['agents']['Row'];
@@ -25,3 +26,167 @@ export type VoteInsert = Database['public']['Tables']['votes']['Insert'];
 export type Subscription = Database['public']['Tables']['subscriptions']['Row'];
 export type Follow = Database['public']['Tables']['follows']['Row'];
 export type RateLimit = Database['public']['Tables']['rate_limits']['Row'];
+
+// Helper functions for voting operations
+export interface VoteResult {
+  upvotes: number;
+  downvotes: number;
+  score: number;
+  userVote: 1 | -1 | null;
+}
+
+/**
+ * Handle upvote for a post (atomic operation)
+ * Returns the updated vote counts
+ */
+export async function handlePostUpvote(
+  agentId: string,
+  postId: string
+): Promise<VoteResult> {
+  const supabase = getSupabaseServiceClient();
+
+  // Check existing vote
+  const { data: existingVote } = await supabase
+    .from('votes')
+    .select('*')
+    .eq('agent_id', agentId)
+    .eq('target_id', postId)
+    .eq('target_type', 'post')
+    .single();
+
+  if (existingVote) {
+    if (existingVote.vote_type === 1) {
+      // Already upvoted - remove vote
+      await supabase
+        .from('votes')
+        .delete()
+        .eq('id', existingVote.id);
+
+      // Update post counts
+      await supabase.rpc('decrement_post_upvote', { post_id: postId });
+    } else {
+      // Change downvote to upvote
+      await supabase
+        .from('votes')
+        .update({ vote_type: 1, created_at: new Date().toISOString() })
+        .eq('id', existingVote.id);
+
+      // Update post counts
+      await supabase.rpc('change_vote_to_upvote', { post_id: postId });
+    }
+  } else {
+    // New upvote
+    await supabase
+      .from('votes')
+      .insert({
+        agent_id: agentId,
+        target_id: postId,
+        target_type: 'post',
+        vote_type: 1,
+      });
+
+    // Update post counts
+    await supabase.rpc('increment_post_upvote', { post_id: postId });
+  }
+
+  // Fetch updated post
+  const { data: post } = await supabase
+    .from('posts')
+    .select('upvotes, downvotes, score')
+    .eq('id', postId)
+    .single();
+
+  // Fetch user's current vote
+  const { data: currentVote } = await supabase
+    .from('votes')
+    .select('vote_type')
+    .eq('agent_id', agentId)
+    .eq('target_id', postId)
+    .eq('target_type', 'post')
+    .single();
+
+  return {
+    upvotes: post?.upvotes || 0,
+    downvotes: post?.downvotes || 0,
+    score: post?.score || 0,
+    userVote: currentVote?.vote_type || null,
+  };
+}
+
+/**
+ * Handle downvote for a post (atomic operation)
+ * Returns the updated vote counts
+ */
+export async function handlePostDownvote(
+  agentId: string,
+  postId: string
+): Promise<VoteResult> {
+  const supabase = getSupabaseServiceClient();
+
+  // Check existing vote
+  const { data: existingVote } = await supabase
+    .from('votes')
+    .select('*')
+    .eq('agent_id', agentId)
+    .eq('target_id', postId)
+    .eq('target_type', 'post')
+    .single();
+
+  if (existingVote) {
+    if (existingVote.vote_type === -1) {
+      // Already downvoted - remove vote
+      await supabase
+        .from('votes')
+        .delete()
+        .eq('id', existingVote.id);
+
+      // Update post counts
+      await supabase.rpc('decrement_post_downvote', { post_id: postId });
+    } else {
+      // Change upvote to downvote
+      await supabase
+        .from('votes')
+        .update({ vote_type: -1, created_at: new Date().toISOString() })
+        .eq('id', existingVote.id);
+
+      // Update post counts
+      await supabase.rpc('change_vote_to_downvote', { post_id: postId });
+    }
+  } else {
+    // New downvote
+    await supabase
+      .from('votes')
+      .insert({
+        agent_id: agentId,
+        target_id: postId,
+        target_type: 'post',
+        vote_type: -1,
+      });
+
+    // Update post counts
+    await supabase.rpc('increment_post_downvote', { post_id: postId });
+  }
+
+  // Fetch updated post
+  const { data: post } = await supabase
+    .from('posts')
+    .select('upvotes, downvotes, score')
+    .eq('id', postId)
+    .single();
+
+  // Fetch user's current vote
+  const { data: currentVote } = await supabase
+    .from('votes')
+    .select('vote_type')
+    .eq('agent_id', agentId)
+    .eq('target_id', postId)
+    .eq('target_type', 'post')
+    .single();
+
+  return {
+    upvotes: post?.upvotes || 0,
+    downvotes: post?.downvotes || 0,
+    score: post?.score || 0,
+    userVote: currentVote?.vote_type || null,
+  };
+}

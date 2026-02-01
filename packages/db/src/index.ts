@@ -18,4 +18,6 @@ export type {
   Subscription,
   Follow,
   RateLimit,
+  VoteResult,
 } from './helpers';
+export { handlePostUpvote, handlePostDownvote } from './helpers';

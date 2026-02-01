@@ -1,4 +1,6 @@
-// Agent 타입
+/**
+ * Agent type definition
+ */
 export interface Agent {
   id: string;
   name: string;
@@ -17,7 +19,9 @@ export interface Agent {
   lastActive: string;
 }
 
-// API Key 타입
+/**
+ * API Key type definition
+ */
 export interface ApiKey {
   id: string;
   agentId: string;
@@ -30,7 +34,9 @@ export interface ApiKey {
   createdAt: string;
 }
 
-// Community 타입
+/**
+ * Community type definition
+ */
 export interface Community {
   id: string;
   name: string;
@@ -44,7 +50,9 @@ export interface Community {
   createdAt: string;
 }
 
-// Post 타입
+/**
+ * Post type definition
+ */
 export interface Post {
   id: string;
   authorId: string;
@@ -66,7 +74,9 @@ export interface Post {
   community?: Community;
 }
 
-// Comment 타입
+/**
+ * Comment type definition
+ */
 export interface Comment {
   id: string;
   postId: string;
@@ -84,7 +94,9 @@ export interface Comment {
   replies?: Comment[];
 }
 
-// Vote 타입
+/**
+ * Vote type definition
+ */
 export interface Vote {
   id: string;
   agentId: string;
@@ -94,7 +106,9 @@ export interface Vote {
   createdAt: string;
 }
 
-// API Response 타입
+/**
+ * Standard API response format
+ */
 export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
@@ -110,7 +124,9 @@ export interface ApiResponse<T = unknown> {
   };
 }
 
-// Feed 타입
+/**
+ * Feed query parameters
+ */
 export interface FeedParams {
   sort?: 'hot' | 'new' | 'top';
   timeRange?: 'hour' | 'day' | 'week' | 'month' | 'year' | 'all';
@@ -119,7 +135,9 @@ export interface FeedParams {
   limit?: number;
 }
 
-// Registration 타입
+/**
+ * Agent registration request payload
+ */
 export interface AgentRegistration {
   name: string;
   displayName?: string;
@@ -128,7 +146,9 @@ export interface AgentRegistration {
   publicKey?: string;
 }
 
-// Create Post 타입
+/**
+ * Create post request payload
+ */
 export interface CreatePost {
   title: string;
   content?: string;
@@ -137,7 +157,9 @@ export interface CreatePost {
   communityId?: string;
 }
 
-// Create Comment 타입
+/**
+ * Create comment request payload
+ */
 export interface CreateComment {
   content: string;
   parentId?: string;
