@@ -35,6 +35,12 @@ importers:
       '@agentgram/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@stripe/stripe-js':
+        specifier: ^8.7.0
+        version: 8.7.0
+      '@supabase/supabase-js':
+        specifier: ^2.39.3
+        version: 2.93.3
       bcryptjs:
         specifier: ^2.4.3
         version: 2.4.3
@@ -46,19 +52,22 @@ importers:
         version: 2.1.1
       framer-motion:
         specifier: ^12.29.2
-        version: 12.29.2(react-dom@18.3.1)(react@18.3.1)
+        version: 12.29.2(react-dom@19.2.4)(react@18.3.1)
       lucide-react:
         specifier: ^0.563.0
         version: 0.563.0(react@18.3.1)
       next:
         specifier: 14.1.0
-        version: 14.1.0(react-dom@18.3.1)(react@18.3.1)
+        version: 14.1.0(react-dom@19.2.4)(react@18.3.1)
       react:
         specifier: ^18.2.0
         version: 18.3.1
       react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
+        specifier: ^19.2.4
+        version: 19.2.4(react@18.3.1)
+      stripe:
+        specifier: ^20.3.0
+        version: 20.3.0(@types/node@20.19.30)
       tailwind-merge:
         specifier: ^3.4.0
         version: 3.4.0
@@ -76,8 +85,8 @@ importers:
         specifier: ^18.2.47
         version: 18.3.27
       '@types/react-dom':
-        specifier: ^18.2.18
-        version: 18.3.7(@types/react@18.3.27)
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@18.3.27)
       autoprefixer:
         specifier: ^10.4.16
         version: 10.4.24(postcss@8.5.6)
@@ -461,6 +470,11 @@ packages:
     resolution: {integrity: sha512-ojSshQPKwVvSMR8yT2L/QtUkV5SXi/IfDiJ4/8d6UbTPjiHVmxZzUAzGD8Tzks1b9+qQkZa0isUOvYObedITaw==}
     dev: true
 
+  /@stripe/stripe-js@8.7.0:
+    resolution: {integrity: sha512-tNUerSstwNC1KuHgX4CASGO0Md3CB26IJzSXmVlSuFvhsBP4ZaEPpY4jxWOn9tfdDscuVT4Kqb8cZ2o9nLCgRQ==}
+    engines: {node: '>=12.16'}
+    dev: false
+
   /@supabase/auth-js@2.93.3:
     resolution: {integrity: sha512-JdnkHZPKexVGSNONtu89RHU4bxz3X9kxx+f5ZnR5osoCIX+vs/MckwWRPZEybAEvlJXt5xjomDb3IB876QCxWQ==}
     engines: {node: '>=20.0.0'}
@@ -601,7 +615,7 @@ packages:
     resolution: {integrity: sha512-ZUxbzKl0IfJILTS6t7ip5fQQM/J3TJYubDm3nMbgubNNYS62eXeUpoLUC8/7fJNiFYHTrGPQn7hspDUzIHX3UA==}
     dependencies:
       '@types/minimatch': 6.0.0
-      '@types/node': 20.19.30
+      '@types/node': 25.1.0
     dev: true
 
   /@types/inquirer@6.5.0:
@@ -638,6 +652,12 @@ packages:
     dependencies:
       undici-types: 6.21.0
 
+  /@types/node@25.1.0:
+    resolution: {integrity: sha512-t7frlewr6+cbx+9Ohpl0NOTKXZNV9xHRmNOvql47BFJKcEG1CxtxlPEEe+gR9uhVWM4DwhnvTF110mIL4yP9RA==}
+    dependencies:
+      undici-types: 7.16.0
+    dev: true
+
   /@types/phoenix@1.6.7:
     resolution: {integrity: sha512-oN9ive//QSBkf19rfDv45M7eZPi0eEXylht2OLEXicu5b4KoQ1OzXIw+xDSGWxSxe1JmepRR/ZH283vsu518/Q==}
     dev: false
@@ -646,10 +666,10 @@ packages:
     resolution: {integrity: sha512-F6bEyamV9jKGAFBEmlQnesRPGOQqS2+Uwi0Em15xenOxHaf2hv6L8YCVn3rPdPJOiJfPiCnLIRyvwVaqMY3MIw==}
     dev: true
 
-  /@types/react-dom@18.3.7(@types/react@18.3.27):
-    resolution: {integrity: sha512-MEe3UeoENYVFXzoXEWsvcpg6ZvlrFNlOQ7EOsvhI3CfAXwzPfO8Qwuxd40nepsYKqyyVQnTdEfv68q91yLcKrQ==}
+  /@types/react-dom@19.2.3(@types/react@18.3.27):
+    resolution: {integrity: sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==}
     peerDependencies:
-      '@types/react': ^18.0.0
+      '@types/react': ^19.2.0
     dependencies:
       '@types/react': 18.3.27
     dev: true
@@ -664,7 +684,7 @@ packages:
   /@types/through@0.0.33:
     resolution: {integrity: sha512-HsJ+z3QuETzP3cswwtzt2vEIiHBk/dCcHGhbmG5X3ecnwFD/lPrMpliGXxSCg03L9AhrdwA4Oz/qfspkDW+xGQ==}
     dependencies:
-      '@types/node': 20.19.30
+      '@types/node': 25.1.0
     dev: true
 
   /@types/tinycolor2@1.4.6:
@@ -2216,7 +2236,7 @@ packages:
     resolution: {integrity: sha512-1X1NTtiJphryn/uLQz3whtY6jK3fTqoE3ohKs0tT+Ujr1W59oopxmoEh7Lu5p6vBaPbgoM0bzveAW4Qi5RyWDQ==}
     dev: true
 
-  /framer-motion@12.29.2(react-dom@18.3.1)(react@18.3.1):
+  /framer-motion@12.29.2(react-dom@19.2.4)(react@18.3.1):
     resolution: {integrity: sha512-lSNRzBJk4wuIy0emYQ/nfZ7eWhqud2umPKw2QAQki6uKhZPKm2hRQHeQoHTG9MIvfobb+A/LbEWPJU794ZUKrg==}
     peerDependencies:
       '@emotion/is-prop-valid': '*'
@@ -2233,7 +2253,7 @@ packages:
       motion-dom: 12.29.2
       motion-utils: 12.29.2
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      react-dom: 19.2.4(react@18.3.1)
       tslib: 2.8.1
     dev: false
 
@@ -3286,6 +3306,47 @@ packages:
     transitivePeerDependencies:
       - '@babel/core'
       - babel-plugin-macros
+    dev: true
+
+  /next@14.1.0(react-dom@19.2.4)(react@18.3.1):
+    resolution: {integrity: sha512-wlzrsbfeSU48YQBjZhDzOwhWhGsy+uQycR8bHAOt1LY1bn3zZEcDyHQOEoN3aWzQ8LHCAJ1nqrWCc9XF2+O45Q==}
+    engines: {node: '>=18.17.0'}
+    deprecated: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/security-update-2025-12-11 for more details.
+    hasBin: true
+    peerDependencies:
+      '@opentelemetry/api': ^1.1.0
+      react: ^18.2.0
+      react-dom: ^18.2.0
+      sass: ^1.3.0
+    peerDependenciesMeta:
+      '@opentelemetry/api':
+        optional: true
+      sass:
+        optional: true
+    dependencies:
+      '@next/env': 14.1.0
+      '@swc/helpers': 0.5.2
+      busboy: 1.6.0
+      caniuse-lite: 1.0.30001766
+      graceful-fs: 4.2.11
+      postcss: 8.4.31
+      react: 18.3.1
+      react-dom: 19.2.4(react@18.3.1)
+      styled-jsx: 5.1.1(react@18.3.1)
+    optionalDependencies:
+      '@next/swc-darwin-arm64': 14.1.0
+      '@next/swc-darwin-x64': 14.1.0
+      '@next/swc-linux-arm64-gnu': 14.1.0
+      '@next/swc-linux-arm64-musl': 14.1.0
+      '@next/swc-linux-x64-gnu': 14.1.0
+      '@next/swc-linux-x64-musl': 14.1.0
+      '@next/swc-win32-arm64-msvc': 14.1.0
+      '@next/swc-win32-ia32-msvc': 14.1.0
+      '@next/swc-win32-x64-msvc': 14.1.0
+    transitivePeerDependencies:
+      - '@babel/core'
+      - babel-plugin-macros
+    dev: false
 
   /no-case@2.3.2:
     resolution: {integrity: sha512-rmTZ9kz+f3rCvK2TD1Ue/oZlns7OGoIWP4fc3llxxRXlOkHKoWPPWJOfFYpITabSow43QJbRIoHQXtt10VldyQ==}
@@ -3746,6 +3807,16 @@ packages:
       loose-envify: 1.4.0
       react: 18.3.1
       scheduler: 0.23.2
+    dev: true
+
+  /react-dom@19.2.4(react@18.3.1):
+    resolution: {integrity: sha512-AXJdLo8kgMbimY95O2aKQqsz2iWi9jMgKJhRBAxECE4IFxfcazB2LmzloIoibJI3C12IlY20+KFaLv+71bUJeQ==}
+    peerDependencies:
+      react: ^19.2.4
+    dependencies:
+      react: 18.3.1
+      scheduler: 0.27.0
+    dev: false
 
   /react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
@@ -3931,6 +4002,11 @@ packages:
     resolution: {integrity: sha512-UOShsPwz7NrMUqhR6t0hWjFduvOzbtv7toDH1/hIrfRNIDBnnBWd0CwJTGvTpngVlmwGCdP9/Zl/tVrDqcuYzQ==}
     dependencies:
       loose-envify: 1.4.0
+    dev: true
+
+  /scheduler@0.27.0:
+    resolution: {integrity: sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q==}
+    dev: false
 
   /semver@6.3.1:
     resolution: {integrity: sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==}
@@ -4225,6 +4301,18 @@ packages:
     resolution: {integrity: sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig==}
     engines: {node: '>=8'}
     dev: true
+
+  /stripe@20.3.0(@types/node@20.19.30):
+    resolution: {integrity: sha512-DYzcmV1MfYhycr1GwjCjeQVYk9Gu8dpxyTlu7qeDCsuguug7oUTxPsUQuZeSf/OPzK7pofqobvOKVqAwlpgf/Q==}
+    engines: {node: '>=16'}
+    peerDependencies:
+      '@types/node': '>=16'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+    dependencies:
+      '@types/node': 20.19.30
+    dev: false
 
   /styled-jsx@5.1.1(react@18.3.1):
     resolution: {integrity: sha512-pW7uC1l4mBZ8ugbiZrcIsiIvVx1UmTfw7UkC3Um2tmfUq9Bhk8IiyEIPl6F8agHgjzku6j0xQEZbfA5uSgSaCw==}
@@ -4587,6 +4675,10 @@ packages:
 
   /undici-types@6.21.0:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
+
+  /undici-types@7.16.0:
+    resolution: {integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==}
+    dev: true
 
   /universalify@2.0.1:
     resolution: {integrity: sha512-gptHNQghINnc/vTGIk0SOFGFNXw7JVrlRUtConJRlvaw6DuX0wO5Jeko9sWrMBhh+PsYAZ7oXAiOnf/UKogyiw==}
