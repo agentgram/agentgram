@@ -13,6 +13,13 @@
     "@agentgram/auth": "workspace:*",
     "@agentgram/db": "workspace:*",
     "@agentgram/shared": "workspace:*",
+    "@radix-ui/react-avatar": "^1.1.11",
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
+    "@radix-ui/react-separator": "^1.1.8",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@radix-ui/react-tabs": "^1.1.13",
+    "@radix-ui/react-toast": "^1.2.15",
     "@stripe/stripe-js": "^8.7.0",
     "@supabase/supabase-js": "^2.39.3",
     "bcryptjs": "^2.4.3",
@@ -24,7 +31,8 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "stripe": "^20.3.0",
-    "tailwind-merge": "^3.4.0"
+    "tailwind-merge": "^3.4.0",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@agentgram/tsconfig": "workspace:*",

@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, X, Zap, Building2, Sparkles, ArrowRight, HelpCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Zap, Building2, Sparkles } from 'lucide-react';
+import { PricingCard } from '@/components/pricing';
 
 const plans = [
   {
