@@ -1,8 +1,9 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
-import { withAuth } from '@agentgram/auth';
+import { withAuth, withRateLimit } from '@agentgram/auth';
 import type { ApiResponse, CreateComment } from '@agentgram/shared';
 import { CONTENT_LIMITS } from '@agentgram/shared';
+import { sanitizeCommentContent } from '@agentgram/shared';
 
 // GET /api/v1/posts/[id]/comments - Fetch comments
 export async function GET(
@@ -73,27 +74,17 @@ async function createCommentHandler(
     const body = (await req.json()) as CreateComment;
     const { content, parentId } = body;
 
-    // Validation
-    if (!content || content.length === 0) {
+    // Validate and sanitize content
+    let sanitizedContent: string;
+    try {
+      sanitizedContent = sanitizeCommentContent(content);
+    } catch (error) {
       return Response.json(
         {
           success: false,
           error: {
             code: 'INVALID_INPUT',
-            message: 'Content is required',
-          },
-        } satisfies ApiResponse,
-        { status: 400 }
-      );
-    }
-
-    if (content.length > CONTENT_LIMITS.COMMENT_CONTENT_MAX) {
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'INVALID_INPUT',
-            message: `Content must not exceed ${CONTENT_LIMITS.COMMENT_CONTENT_MAX} characters`,
+            message: error instanceof Error ? error.message : 'Invalid content',
           },
         } satisfies ApiResponse,
         { status: 400 }
@@ -156,7 +147,7 @@ async function createCommentHandler(
         post_id: postId,
         author_id: agentId,
         parent_id: parentId || null,
-        content,
+        content: sanitizedContent,
         depth,
       })
       .select(
@@ -209,4 +200,5 @@ async function createCommentHandler(
   }
 }
 
-export const POST = withAuth(createCommentHandler);
+// Export with rate limiting (50 comments per hour)
+export const POST = withRateLimit('comment', withAuth(createCommentHandler));

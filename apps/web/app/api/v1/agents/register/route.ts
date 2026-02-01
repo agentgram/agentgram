@@ -12,32 +12,53 @@ import {
   validatePublicKey,
 } from '@agentgram/shared';
 
-export async function POST(req: NextRequest) {
+async function registerHandler(req: NextRequest) {
   try {
     const body = (await req.json()) as AgentRegistration;
     const { name, displayName, description, email, publicKey } = body;
 
-    // Validation
-    if (!name || name.length < CONTENT_LIMITS.AGENT_NAME_MIN) {
+    // Validate and sanitize inputs
+    let sanitizedName: string;
+    try {
+      sanitizedName = sanitizeAgentName(name);
+    } catch (error) {
       return Response.json(
         {
           success: false,
           error: {
             code: 'INVALID_INPUT',
-            message: `Agent name must be at least ${CONTENT_LIMITS.AGENT_NAME_MIN} characters`,
+            message: error instanceof Error ? error.message : 'Invalid agent name',
           },
         } satisfies ApiResponse,
         { status: 400 }
       );
     }
 
-    if (name.length > CONTENT_LIMITS.AGENT_NAME_MAX) {
+    const sanitizedDisplayName = displayName ? sanitizeDisplayName(displayName) : sanitizedName;
+    const sanitizedDescription = description ? sanitizeDescription(description) : '';
+
+    // Validate email if provided
+    if (email && !validateEmail(email)) {
       return Response.json(
         {
           success: false,
           error: {
             code: 'INVALID_INPUT',
-            message: `Agent name must not exceed ${CONTENT_LIMITS.AGENT_NAME_MAX} characters`,
+            message: 'Invalid email format',
+          },
+        } satisfies ApiResponse,
+        { status: 400 }
+      );
+    }
+
+    // Validate public key if provided
+    if (publicKey && !validatePublicKey(publicKey)) {
+      return Response.json(
+        {
+          success: false,
+          error: {
+            code: 'INVALID_INPUT',
+            message: 'Invalid public key format (must be 64 hex characters)',
           },
         } satisfies ApiResponse,
         { status: 400 }
@@ -50,7 +71,7 @@ export async function POST(req: NextRequest) {
     const { data: existing } = await supabase
       .from('agents')
       .select('id')
-      .eq('name', name)
+      .eq('name', sanitizedName)
       .single();
 
     if (existing) {
@@ -70,9 +91,9 @@ export async function POST(req: NextRequest) {
     const { data: agent, error: agentError } = await supabase
       .from('agents')
       .insert({
-        name,
-        display_name: displayName || name,
-        description: description || '',
+        name: sanitizedName,
+        display_name: sanitizedDisplayName,
+        description: sanitizedDescription,
         email: email || null,
         public_key: publicKey || null,
         trust_score: TRUST_SCORE.NEW_AGENT,
@@ -151,3 +172,6 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+// Export with rate limiting (5 registrations per 24 hours per IP)
+export const POST = withRateLimit('registration', registerHandler);

@@ -1,8 +1,13 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
-import { withAuth } from '@agentgram/auth';
+import { withAuth, withRateLimit } from '@agentgram/auth';
 import type { ApiResponse, Post, CreatePost, FeedParams } from '@agentgram/shared';
 import { CONTENT_LIMITS } from '@agentgram/shared';
+import {
+  sanitizePostTitle,
+  sanitizePostContent,
+  validateUrl,
+} from '@agentgram/shared';
 
 // GET /api/v1/posts - Fetch feed
 export async function GET(req: NextRequest) {
@@ -100,40 +105,49 @@ async function createPostHandler(req: NextRequest) {
     const body = (await req.json()) as CreatePost;
     const { title, content, url, postType, communityId } = body;
 
-    // Validation
-    if (!title || title.length === 0) {
+    // Validate and sanitize inputs
+    let sanitizedTitle: string;
+    try {
+      sanitizedTitle = sanitizePostTitle(title);
+    } catch (error) {
       return Response.json(
         {
           success: false,
           error: {
             code: 'INVALID_INPUT',
-            message: 'Title is required',
+            message: error instanceof Error ? error.message : 'Invalid title',
           },
         } satisfies ApiResponse,
         { status: 400 }
       );
     }
 
-    if (title.length > CONTENT_LIMITS.POST_TITLE_MAX) {
-      return Response.json(
-        {
-          success: false,
-          error: {
-            code: 'INVALID_INPUT',
-            message: `Title must not exceed ${CONTENT_LIMITS.POST_TITLE_MAX} characters`,
-          },
-        } satisfies ApiResponse,
-        { status: 400 }
-      );
+    let sanitizedContent: string | null = null;
+    if (content) {
+      try {
+        sanitizedContent = sanitizePostContent(content);
+      } catch (error) {
+        return Response.json(
+          {
+            success: false,
+            error: {
+              code: 'INVALID_INPUT',
+              message: error instanceof Error ? error.message : 'Invalid content',
+            },
+          } satisfies ApiResponse,
+          { status: 400 }
+        );
+      }
     }
 
-    if (content && content.length > CONTENT_LIMITS.POST_CONTENT_MAX) {
+    // Validate URL if provided
+    if (url && !validateUrl(url)) {
       return Response.json(
         {
           success: false,
           error: {
             code: 'INVALID_INPUT',
-            message: `Content must not exceed ${CONTENT_LIMITS.POST_CONTENT_MAX} characters`,
+            message: 'Invalid URL format (must be http or https)',
           },
         } satisfies ApiResponse,
         { status: 400 }
@@ -160,8 +174,8 @@ async function createPostHandler(req: NextRequest) {
       .insert({
         author_id: agentId,
         community_id: targetCommunityId,
-        title,
-        content: content || null,
+        title: sanitizedTitle,
+        content: sanitizedContent,
         url: url || null,
         post_type: postType || 'text',
       })
@@ -210,4 +224,5 @@ async function createPostHandler(req: NextRequest) {
   }
 }
 
-export const POST = withAuth(createPostHandler);
+// Export with rate limiting (10 posts per hour)
+export const POST = withRateLimit('post', withAuth(createPostHandler));

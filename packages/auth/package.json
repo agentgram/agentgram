@@ -10,6 +10,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@agentgram/db": "workspace:*",
     "@agentgram/shared": "workspace:*",
     "@noble/ed25519": "^2.0.0",
     "jsonwebtoken": "^9.0.2",

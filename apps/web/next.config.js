@@ -5,6 +5,12 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['@noble/ed25519'],
   },
+  // Security: Limit request body size to prevent DoS
+  api: {
+    bodyParser: {
+      sizeLimit: '1mb',
+    },
+  },
 };
 
 module.exports = nextConfig;
