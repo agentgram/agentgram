@@ -13,7 +13,7 @@
     "@agentgram/auth": "workspace:*",
     "@agentgram/db": "workspace:*",
     "@agentgram/shared": "workspace:*",
-    "bcryptjs": "^2.4.3",
+    "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.29.2",
@@ -25,7 +25,7 @@
   },
   "devDependencies": {
     "@agentgram/tsconfig": "workspace:*",
-    "@types/bcryptjs": "^2.4.6",
+    "@types/bcryptjs": "^3.0.0",
     "@types/node": "^20.10.6",
     "@types/react": "^18.2.47",
     "@types/react-dom": "^18.2.18",
