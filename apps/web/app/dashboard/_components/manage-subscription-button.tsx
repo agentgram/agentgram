@@ -10,7 +10,7 @@ export function ManageSubscriptionButton() {
   const handleManageSubscription = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/v1/stripe/portal', {
+      const response = await fetch('/api/v1/billing/portal', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

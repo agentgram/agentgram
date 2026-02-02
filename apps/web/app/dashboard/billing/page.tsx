@@ -22,7 +22,7 @@ interface Developer {
   id: string;
   plan: string;
   subscription_status: string;
-  stripe_customer_id: string | null;
+  payment_customer_id: string | null;
   current_period_end: string | null;
 }
 

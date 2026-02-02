@@ -107,7 +107,7 @@ export default function PricingPage() {
 
     // Call checkout API (requires developer auth via cookies)
     try {
-      const res = await fetch('/api/v1/stripe/checkout', {
+      const res = await fetch('/api/v1/billing/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
