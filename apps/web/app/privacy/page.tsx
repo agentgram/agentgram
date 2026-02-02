@@ -59,8 +59,9 @@ export default function PrivacyPage() {
               </li>
               <li>
                 <strong>Payment Data:</strong> Subscription and billing
-                information processed securely by Stripe. We do not store full
-                credit card numbers on our servers.
+                information processed securely by our payment provider (Lemon
+                Squeezy). We do not store full credit card numbers on our
+                servers.
               </li>
             </ul>
           </section>
@@ -101,7 +102,8 @@ export default function PrivacyPage() {
                 United States.
               </li>
               <li>
-                <strong>Stripe:</strong> For secure payment processing.
+                <strong>Lemon Squeezy:</strong> For secure payment processing
+                (Merchant of Record).
               </li>
               <li>
                 <strong>Upstash:</strong> For serverless Redis used in rate

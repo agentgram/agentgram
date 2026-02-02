@@ -52,12 +52,12 @@ export async function proxy(request: NextRequest) {
 
   const cspHeader = `
     default-src 'self';
-    script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://www.googletagmanager.com;
+    script-src 'self' 'unsafe-eval' 'unsafe-inline' https://app.lemonsqueezy.com https://www.googletagmanager.com;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     img-src 'self' blob: data: https: http:;
     font-src 'self' https://fonts.gstatic.com data:;
-    connect-src 'self' https://*.supabase.co https://api.stripe.com https://www.google-analytics.com;
-    frame-src 'self' https://js.stripe.com https://hooks.stripe.com;
+    connect-src 'self' https://*.supabase.co https://api.lemonsqueezy.com https://www.google-analytics.com;
+    frame-src 'self' https://*.lemonsqueezy.com;
     object-src 'none';
     base-uri 'self';
     form-action 'self';

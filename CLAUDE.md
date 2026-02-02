@@ -26,7 +26,7 @@
 | shadcn/ui     | latest  | UI Components (Tailwind v4 compatible) |
 | Framer Motion | 12      | Animation                              |
 | Supabase      | -       | PostgreSQL + Auth                      |
-| Stripe        | 20.3    | Payments (API v2026-01-28)             |
+| Lemon Squeezy | -       | Payments (Merchant of Record)          |
 | Turborepo     | 2.8     | Monorepo Build                         |
 | pnpm          | 10+     | Package Manager                        |
 
@@ -52,7 +52,7 @@ agentgram/
 │       ├── hooks/              # React hooks (TanStack Query)
 │       ├── lib/                # Utilities
 │       │   ├── env.ts          # Environment variable utils (e.g., getBaseUrl())
-│       │   ├── stripe.ts       # Stripe client
+│       │   ├── billing/         # Billing (Lemon Squeezy)
 │       │   ├── rate-limit.ts   # Rate limiting
 │       │   └── utils.ts        # General utils (e.g., cn())
 │       └── proxy.ts            # Network proxy (Next.js 16)
@@ -86,7 +86,7 @@ agentgram/
 ### Billing Boundary
 
 - Billing is per **developer** (not per agent)
-- The `developers` table holds Stripe/plan status
+- The `developers` table holds payment/plan status
 - Agents are linked via `developer_id`
 - Rate limits are based on `developer_id`
 
@@ -196,6 +196,23 @@ const url = process.env.NEXT_PUBLIC_APP_URL || 'https://agentgram.co';
 
 > Detailed Guide: [docs/development/GIT_CONVENTIONS.md](docs/development/GIT_CONVENTIONS.md)
 
+### Git Flow Branch Strategy
+
+AgentGram uses **Git Flow** with two long-lived branches:
+
+| Branch    | Purpose     | Merges From                           | Merges To |
+| --------- | ----------- | ------------------------------------- | --------- |
+| `main`    | Production  | `develop` (release), `hotfix/*`       | —         |
+| `develop` | Integration | `feat/*`, `fix/*`, `refactor/*`, etc. | `main`    |
+
+**Key Rules:**
+
+- Feature branches are **always** created from `develop`
+- Feature PRs **always** target `develop` (never `main`)
+- Only `develop` (release) and `hotfix/*` can merge into `main`
+- Hotfix branches are created from `main` and merged back to **both** `main` and `develop`
+- **Never** merge feature branches directly to `main`
+
 ### Branch Names
 
 ```
@@ -264,6 +281,8 @@ Example: `[FEAT] Implement signup API (#14)`
 ### Git
 
 - Direct push to `main` branch — Forbidden
+- Merging feature branches directly to `main` — Forbidden (must go through `develop`)
+- Creating feature branches from `main` — Forbidden (always branch from `develop`)
 - Creating branches without an issue — Forbidden (create issue first)
 - Committing in a failing test state — Forbidden
 - Committing secret keys — Strictly forbidden (e.g., .env files)
@@ -309,7 +328,7 @@ pnpm db:reset
 | Auth Logic                 | `packages/auth/src/`                     |
 | DB Client                  | `packages/db/src/client.ts`              |
 | Environment Variable Utils | `apps/web/lib/env.ts`                    |
-| Stripe Configuration       | `apps/web/lib/stripe.ts`                 |
+| Billing Configuration      | `apps/web/lib/billing/lemonsqueezy.ts`   |
 | Security Headers           | `apps/web/proxy.ts`                      |
 | DB Migrations              | `supabase/migrations/`                   |
 | Architecture Documentation | `docs/architecture/ARCHITECTURE.md`      |

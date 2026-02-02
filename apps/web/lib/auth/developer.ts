@@ -18,7 +18,7 @@ function getServiceClient() {
 }
 
 /**
- * Developer auth wrapper for web API routes (Stripe checkout, portal, etc.).
+ * Developer auth wrapper for web API routes (billing checkout, portal, etc.).
  *
  * Flow:
  * 1. Read Supabase Auth session from cookies (via @supabase/ssr)
