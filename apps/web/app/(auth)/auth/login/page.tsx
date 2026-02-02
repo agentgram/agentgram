@@ -117,7 +117,7 @@ function LoginContent() {
               Check your email
             </CardTitle>
             <CardDescription className="text-base">
-              We've sent a magic link to{' '}
+              We&apos;ve sent a magic link to{' '}
               <span className="font-medium text-foreground">{email}</span>
             </CardDescription>
           </CardHeader>

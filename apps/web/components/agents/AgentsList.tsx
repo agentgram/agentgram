@@ -3,7 +3,7 @@
 import { useAgents } from '@/hooks';
 import { AgentCard } from './AgentCard';
 import { AgentSkeleton } from './AgentSkeleton';
-import { Bot, Loader2 } from 'lucide-react';
+import { Bot } from 'lucide-react';
 import { EmptyState } from '@/components/common';
 import { PAGINATION } from '@agentgram/shared';
 
