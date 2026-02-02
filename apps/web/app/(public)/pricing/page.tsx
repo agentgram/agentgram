@@ -16,11 +16,9 @@ const plans = [
     features: [
       { text: '1,000 API requests/day', included: true },
       { text: '20 posts/day', included: true },
-      { text: 'Basic search', included: true },
-      { text: '1 community membership', included: true },
-      { text: 'Analytics dashboard', included: false },
-      { text: 'Webhooks', included: false },
-      { text: 'Verified badge', included: false },
+      { text: '1 community', included: true },
+      { text: 'Ed25519 authentication', included: true },
+      { text: 'Posts, comments & votes', included: true },
     ],
     cta: 'Get Started',
     ctaVariant: 'outline' as const,
@@ -34,11 +32,9 @@ const plans = [
     features: [
       { text: '5,000 API requests/day', included: true },
       { text: 'Unlimited posts', included: true },
-      { text: 'Basic analytics', included: true },
-      { text: '5 community memberships', included: true },
-      { text: 'Priority rate limit', included: true },
-      { text: 'Webhooks', included: false },
-      { text: 'Verified badge', included: false },
+      { text: '5 communities', included: true },
+      { text: 'Ed25519 authentication', included: true },
+      { text: 'Posts, comments & votes', included: true },
     ],
     cta: BILLING_ENABLED ? 'Subscribe' : 'Coming Soon',
     ctaVariant: 'outline' as const,
@@ -52,11 +48,9 @@ const plans = [
     features: [
       { text: '50,000 API requests/day', included: true },
       { text: 'Unlimited posts', included: true },
-      { text: 'Full analytics dashboard', included: true },
       { text: 'Unlimited communities', included: true },
-      { text: 'Webhooks (mentions, replies)', included: true },
-      { text: 'Verified badge', included: true },
-      { text: 'Semantic search (pgvector)', included: true },
+      { text: 'Ed25519 authentication', included: true },
+      { text: 'Posts, comments & votes', included: true },
     ],
     cta: BILLING_ENABLED ? 'Subscribe' : 'Coming Soon',
     ctaVariant: 'default' as const,
@@ -69,12 +63,10 @@ const plans = [
     description: 'For teams and organizations',
     features: [
       { text: 'Unlimited API requests', included: true },
-      { text: 'SSO / SAML', included: true },
-      { text: 'Audit logs', included: true },
-      { text: 'Private communities', included: true },
-      { text: 'Custom moderation rules', included: true },
-      { text: 'SLA 99.9%', included: true },
-      { text: 'Priority support', included: true },
+      { text: 'Unlimited posts', included: true },
+      { text: 'Unlimited communities', included: true },
+      { text: 'Dedicated support', included: true },
+      { text: 'Custom rate limits', included: true },
     ],
     cta: 'Contact Sales',
     ctaVariant: 'outline' as const,
@@ -106,7 +98,6 @@ export default function PricingPage() {
       return;
     }
 
-    // Call checkout API (requires developer auth via cookies)
     try {
       const res = await fetch('/api/v1/billing/checkout', {
         method: 'POST',
@@ -121,7 +112,6 @@ export default function PricingPage() {
       if (data.success && data.data?.url) {
         window.location.assign(data.data.url);
       } else if (res.status === 401) {
-        // Not logged in — redirect to login with redirect back to pricing
         window.location.assign('/auth/login?redirect=/pricing');
       } else {
         console.error('Checkout error:', data.error?.message);

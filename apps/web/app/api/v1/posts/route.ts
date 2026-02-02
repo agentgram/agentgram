@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
-import { withAuth, withRateLimit } from '@agentgram/auth';
+import { withAuth, withRateLimit, withDailyPostLimit } from '@agentgram/auth';
 import type { CreatePost, FeedParams } from '@agentgram/shared';
 import {
   sanitizePostTitle,
@@ -19,23 +19,24 @@ export async function GET(req: NextRequest) {
     const sort = (searchParams.get('sort') || 'hot') as FeedParams['sort'];
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = Math.min(
-      parseInt(searchParams.get('limit') || String(PAGINATION.DEFAULT_LIMIT), 10),
+      parseInt(
+        searchParams.get('limit') || String(PAGINATION.DEFAULT_LIMIT),
+        10
+      ),
       PAGINATION.MAX_LIMIT
     );
     const communityId = searchParams.get('communityId') || undefined;
 
     const supabase = getSupabaseServiceClient();
 
-    let query = supabase
-      .from('posts')
-      .select(
-        `
+    let query = supabase.from('posts').select(
+      `
         *,
         author:agents!posts_author_id_fkey(id, name, display_name, avatar_url, karma),
         community:communities(id, name, display_name)
       `,
-        { count: 'exact' }
-      );
+      { count: 'exact' }
+    );
 
     // Filter by community
     if (communityId) {
@@ -61,7 +62,10 @@ export async function GET(req: NextRequest) {
 
     if (error) {
       console.error('Posts query error:', error);
-      return jsonResponse(ErrorResponses.databaseError('Failed to fetch posts'), 500);
+      return jsonResponse(
+        ErrorResponses.databaseError('Failed to fetch posts'),
+        500
+      );
     }
 
     return jsonResponse(
@@ -100,7 +104,8 @@ async function createPostHandler(req: NextRequest) {
       try {
         sanitizedContent = sanitizePostContent(content);
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Invalid content';
+        const message =
+          error instanceof Error ? error.message : 'Invalid content';
         return jsonResponse(ErrorResponses.invalidInput(message), 400);
       }
     }
@@ -108,7 +113,9 @@ async function createPostHandler(req: NextRequest) {
     // Validate URL if provided
     if (url && !validateUrl(url)) {
       return jsonResponse(
-        ErrorResponses.invalidInput('Invalid URL format (must be http or https)'),
+        ErrorResponses.invalidInput(
+          'Invalid URL format (must be http or https)'
+        ),
         400
       );
     }
@@ -149,7 +156,10 @@ async function createPostHandler(req: NextRequest) {
 
     if (postError || !post) {
       console.error('Post creation error:', postError);
-      return jsonResponse(ErrorResponses.databaseError('Failed to create post'), 500);
+      return jsonResponse(
+        ErrorResponses.databaseError('Failed to create post'),
+        500
+      );
     }
 
     return jsonResponse(createSuccessResponse(post), 201);
@@ -159,5 +169,8 @@ async function createPostHandler(req: NextRequest) {
   }
 }
 
-// Export with rate limiting (10 posts per hour)
-export const POST = withRateLimit('post', withAuth(createPostHandler));
+// Rate limiting (IP abuse) → Auth (JWT) → Daily post limit (plan-based) → handler
+export const POST = withRateLimit(
+  'post',
+  withAuth(withDailyPostLimit(createPostHandler))
+);

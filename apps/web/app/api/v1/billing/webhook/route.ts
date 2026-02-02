@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
+import { invalidateAllPlanCaches } from '@agentgram/auth';
 import {
   getPlanFromSubscription,
   mapSubscriptionStatus,
@@ -40,7 +41,11 @@ interface WebhookPayload {
   };
 }
 
-function verifySignature(rawBody: string, secret: string, signatureHeader: string): boolean {
+function verifySignature(
+  rawBody: string,
+  secret: string,
+  signatureHeader: string
+): boolean {
   const hmac = Buffer.from(
     crypto.createHmac('sha256', secret).update(rawBody).digest('hex'),
     'hex'
@@ -51,11 +56,36 @@ function verifySignature(rawBody: string, secret: string, signatureHeader: strin
   return crypto.timingSafeEqual(hmac, signature);
 }
 
+async function logWebhookEvent(
+  eventName: string,
+  payload: WebhookPayload
+): Promise<void> {
+  try {
+    await getSupabaseServiceClient()
+      .from('webhook_events')
+      .insert({
+        event_name: eventName,
+        subscription_id: payload.data.id,
+        developer_id: payload.meta.custom_data?.developer_id ?? null,
+        payload: JSON.parse(JSON.stringify(payload)),
+      });
+  } catch {
+    // Non-critical: log failure should not block webhook processing
+    console.error('Failed to log webhook event:', eventName);
+  }
+}
+
 export async function POST(req: NextRequest) {
   const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET;
   if (!secret) {
     return NextResponse.json(
-      { success: false, error: { code: 'CONFIG_ERROR', message: 'Webhook secret not configured' } },
+      {
+        success: false,
+        error: {
+          code: 'CONFIG_ERROR',
+          message: 'Webhook secret not configured',
+        },
+      },
       { status: 500 }
     );
   }
@@ -65,13 +95,21 @@ export async function POST(req: NextRequest) {
 
   if (!verifySignature(rawBody, secret, signatureHeader)) {
     return NextResponse.json(
-      { success: false, error: { code: 'INVALID_SIGNATURE', message: 'Invalid webhook signature' } },
+      {
+        success: false,
+        error: {
+          code: 'INVALID_SIGNATURE',
+          message: 'Invalid webhook signature',
+        },
+      },
       { status: 400 }
     );
   }
 
   const payload = JSON.parse(rawBody) as WebhookPayload;
   const eventName = payload.meta.event_name;
+
+  await logWebhookEvent(eventName, payload);
 
   try {
     switch (eventName) {
@@ -103,11 +141,18 @@ export async function POST(req: NextRequest) {
         console.log(`Unhandled Lemon Squeezy event: ${eventName}`);
     }
 
+    // Clear in-memory plan caches so plan-gate picks up changes immediately.
+    // Redis-cached plans expire via TTL (60s) — acceptable for webhook latency.
+    invalidateAllPlanCaches();
+
     return NextResponse.json({ received: true });
   } catch (err) {
     console.error(`Error processing webhook ${eventName}:`, err);
     return NextResponse.json(
-      { success: false, error: { code: 'WEBHOOK_ERROR', message: 'Webhook handler failed' } },
+      {
+        success: false,
+        error: { code: 'WEBHOOK_ERROR', message: 'Webhook handler failed' },
+      },
       { status: 500 }
     );
   }
@@ -122,7 +167,9 @@ async function handleSubscriptionCreated(payload: WebhookPayload) {
     return;
   }
 
-  const plan = getPlanFromSubscription({ data: { attributes: attrs } } as never);
+  const plan = getPlanFromSubscription({
+    data: { attributes: attrs },
+  } as never);
 
   const { error } = await getSupabaseServiceClient()
     .from('developers')
@@ -143,7 +190,9 @@ async function handleSubscriptionCreated(payload: WebhookPayload) {
 
 async function handleSubscriptionUpdated(payload: WebhookPayload) {
   const attrs = payload.data.attributes;
-  const plan = getPlanFromSubscription({ data: { attributes: attrs } } as never);
+  const plan = getPlanFromSubscription({
+    data: { attributes: attrs },
+  } as never);
 
   const { error } = await getSupabaseServiceClient()
     .from('developers')
