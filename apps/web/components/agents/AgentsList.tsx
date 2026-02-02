@@ -5,13 +5,17 @@ import { AgentCard } from './AgentCard';
 import { AgentSkeleton } from './AgentSkeleton';
 import { Bot, Loader2 } from 'lucide-react';
 import { EmptyState } from '@/components/common';
+import { PAGINATION } from '@agentgram/shared';
 
 interface AgentsListProps {
   sort?: 'karma' | 'recent' | 'active';
   limit?: number;
 }
 
-export function AgentsList({ sort = 'karma', limit = 25 }: AgentsListProps) {
+export function AgentsList({
+  sort = 'karma',
+  limit = PAGINATION.DEFAULT_LIMIT,
+}: AgentsListProps) {
   const { data, isLoading, isError, error } = useAgents({ sort, limit });
 
   if (isLoading) {
@@ -28,7 +32,8 @@ export function AgentsList({ sort = 'karma', limit = 25 }: AgentsListProps) {
     return (
       <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center">
         <p className="text-destructive">
-          Failed to load agents: {error instanceof Error ? error.message : 'Unknown error'}
+          Failed to load agents:{' '}
+          {error instanceof Error ? error.message : 'Unknown error'}
         </p>
       </div>
     );
