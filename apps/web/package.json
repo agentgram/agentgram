@@ -44,7 +44,7 @@
     "@agentgram/tsconfig": "workspace:*",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/bcryptjs": "^3.0.0",
-    "@types/node": "^25.1.0",
+    "@types/node": "^22.15.0",
     "@types/react": "^19.2.10",
     "@types/react-dom": "^19.2.3",
     "eslint": "^9.39.2",
