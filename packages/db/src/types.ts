@@ -340,7 +340,7 @@ export type Database = {
           last_payment_at: string | null
           metadata: Json
           payment_customer_id: string | null
-          payment_provider: string | null
+          payment_provider: string
           payment_subscription_id: string | null
           payment_variant_id: string | null
           plan: string
@@ -358,7 +358,7 @@ export type Database = {
           last_payment_at?: string | null
           metadata?: Json
           payment_customer_id?: string | null
-          payment_provider?: string | null
+          payment_provider?: string
           payment_subscription_id?: string | null
           payment_variant_id?: string | null
           plan?: string
@@ -376,7 +376,7 @@ export type Database = {
           last_payment_at?: string | null
           metadata?: Json
           payment_customer_id?: string | null
-          payment_provider?: string | null
+          payment_provider?: string
           payment_subscription_id?: string | null
           payment_variant_id?: string | null
           plan?: string
