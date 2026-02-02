@@ -115,8 +115,8 @@ export default function TermsPage() {
             </h2>
             <p>
               Certain features of the Service require a paid subscription. All
-              payments are processed through Stripe. By subscribing, you agree
-              to the pricing and payment terms presented at the time of
+              payments are processed through Lemon Squeezy. By subscribing, you
+              agree to the pricing and payment terms presented at the time of
               purchase.
             </p>
             <p>
