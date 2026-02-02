@@ -5,14 +5,147 @@
 
 ---
 
-## Branch Structure
+## Git Flow Branch Strategy
+
+AgentGram follows a **Git Flow** branching model with two long-lived branches (`main` and `develop`) and short-lived feature branches.
+
+### Branch Hierarchy
 
 ```
-main                           # Production branch
-<type>/<description>-#<issue_number>   # Work branch
+main (production)
+ │
+ ├── hotfix/*          ← emergency fixes only (branch from main)
+ │
+ └── develop (integration)
+      │
+      ├── feat/*       ← new features
+      ├── fix/*        ← bug fixes
+      ├── refactor/*   ← code refactoring
+      ├── chore/*      ← build/config changes
+      ├── docs/*       ← documentation
+      ├── test/*       ← test code
+      ├── rename/*     ← file rename/move
+      └── remove/*     ← file deletion
 ```
 
-### Branch Name Format
+### Branch Flow Diagram
+
+```
+main     ──●────────────────────●──────────────●──────────
+            \                  / \            / \
+             \    (release)   /   \(hotfix)  /   \
+develop  ─────●──●──●──●──●─●─────●────●───●─────●───●──
+               \   / \   /         \      /
+          feat/  ──   fix/  ──      hotfix/
+          #14          #23          #45
+```
+
+### Merge Rules
+
+| Target Branch  | Allowed Source Branches                                                                | Merge Method        | Who Can Merge                    |
+| -------------- | -------------------------------------------------------------------------------------- | ------------------- | -------------------------------- |
+| `main`         | `develop` (release), `hotfix/*`                                                        | Squash merge via PR | Admin (with 1 reviewer approval) |
+| `develop`      | `feat/*`, `fix/*`, `refactor/*`, `chore/*`, `docs/*`, `test/*`, `rename/*`, `remove/*` | Squash merge via PR | Admin                            |
+| Feature branch | Created from `develop`                                                                 | N/A (work branch)   | Developer                        |
+| `hotfix/*`     | Created from `main`                                                                    | N/A (work branch)   | Developer                        |
+
+### Branch Protection Rules (Current)
+
+| Branch    | PR Required | Approvals  | CI Required          | Admin Bypass          |
+| --------- | ----------- | ---------- | -------------------- | --------------------- |
+| `main`    | Yes         | 1 reviewer | Yes (lint-and-build) | No (`enforce_admins`) |
+| `develop` | Yes         | 0          | Yes (lint-and-build) | Yes                   |
+
+---
+
+## Branch Lifecycle
+
+### Feature Development (Normal Flow)
+
+```bash
+# 1. Create issue on GitHub first (REQUIRED)
+# 2. Create branch from develop
+git checkout develop
+git pull origin develop
+git checkout -b feat/signup-api-#14
+
+# 3. Work and commit
+git add .
+git commit -m "feat: implement agent registration API (#14)"
+
+# 4. Push and create PR targeting develop
+git push -u origin feat/signup-api-#14
+gh pr create --base develop --title "[FEAT] Implement agent registration API (#14)"
+
+# 5. After PR is merged, delete the feature branch
+git checkout develop
+git pull origin develop
+git branch -d feat/signup-api-#14
+```
+
+### Release (develop to main)
+
+```bash
+# 1. Ensure develop is stable and tested
+# 2. Create PR: develop → main
+gh pr create --base main --head develop --title "[RELEASE] Deploy vX.Y.Z"
+
+# 3. After review and approval, merge via GitHub UI
+# 4. Tag the release on main
+git checkout main
+git pull origin main
+git tag vX.Y.Z
+git push origin vX.Y.Z
+```
+
+### Hotfix (Emergency Fix)
+
+Hotfixes are the **only** branches created from `main`. They must be merged back to **both** `main` and `develop`.
+
+```bash
+# 1. Create hotfix branch from main
+git checkout main
+git pull origin main
+git checkout -b hotfix/critical-auth-bug-#45
+
+# 2. Fix the issue and commit
+git add .
+git commit -m "fix: patch critical auth bypass vulnerability (#45)"
+
+# 3. Create PR targeting main
+git push -u origin hotfix/critical-auth-bug-#45
+gh pr create --base main --title "[FIX] Patch critical auth bypass (#45)"
+
+# 4. After merged to main, ALSO merge to develop
+#    Option A: Cherry-pick the commit into develop
+git checkout develop
+git pull origin develop
+git cherry-pick <commit-hash>
+git push origin develop
+
+#    Option B: Create another PR from hotfix branch to develop (before deleting)
+gh pr create --base develop --head hotfix/critical-auth-bug-#45 \
+  --title "[FIX] Backport: Patch critical auth bypass (#45)"
+```
+
+---
+
+## Forbidden Actions
+
+| Action                                  | Why                                                |
+| --------------------------------------- | -------------------------------------------------- |
+| Merge feature branch directly to `main` | Bypasses integration testing on `develop`          |
+| Push directly to `main`                 | Branch protection enforced; all changes require PR |
+| Push directly to `develop`              | Branch protection enforced; all changes require PR |
+| Create feature branch from `main`       | Features must branch from `develop`                |
+| Delete `main` or `develop`              | Long-lived branches; never delete                  |
+| Force push to `main` or `develop`       | Destructive; rewrites shared history               |
+| Merge without CI passing                | Branch protection requires lint-and-build to pass  |
+| Create branch without an issue          | Always create GitHub issue first                   |
+
+---
+
+## Branch Name Format
 
 ```
 <type>/<brief_description>-#<issue_number>
@@ -128,6 +261,13 @@ git commit -m "chore: apply code formatting"
 [RELEASE] Deploy v1.0.0 (#30)
 ```
 
+### PR Rules
+
+- **Feature PRs** must target `develop` (never `main`)
+- **Release PRs** target `main` from `develop`
+- **Hotfix PRs** target `main` from `hotfix/*` branch, then backport to `develop`
+- Include `Closes #<issue>` in PR description to auto-close the issue
+
 ---
 
 ## Release Process
@@ -137,14 +277,16 @@ Manage versions through GitHub Releases. Pushing a tag automatically creates a r
 ### How to Create a Release
 
 ```bash
-# 1. Move to main branch
+# 1. Merge develop → main via PR (see Release flow above)
+
+# 2. Move to main branch
 git checkout main
 git pull origin main
 
-# 2. Create tag (using Semantic Versioning)
+# 3. Create tag (using Semantic Versioning)
 git tag v1.0.0
 
-# 3. Push tag -> GitHub Release is automatically created
+# 4. Push tag → GitHub Release is automatically created
 git push origin v1.0.0
 ```
 
