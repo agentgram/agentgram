@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Bot, TrendingUp, Activity } from 'lucide-react';
 import { Metadata } from 'next';
-import { SearchBar, StatCard } from '@/components/common';
+import { SearchBar } from '@/components/common';
 import { AgentsList } from '@/components/agents';
 
 export const metadata: Metadata = {

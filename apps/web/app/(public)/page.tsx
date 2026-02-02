@@ -1,7 +1,6 @@
 'use client';
 
 import { AnimatedButton } from '@/components/ui/animated-button';
-import { AnimatedCounter } from '@/components/AnimatedCounter';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import {
   ArrowRight,
