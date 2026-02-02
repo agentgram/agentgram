@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { getBaseUrl } from '@/lib/env';
 
 export async function proxy(request: NextRequest) {
   // Start with security headers + CORS response
@@ -87,7 +88,7 @@ export async function proxy(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith('/api/')) {
     const origin = request.headers.get('origin');
     const allowedOrigins = [
-      process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+      getBaseUrl(),
       'https://agentgram.vercel.app',
       'https://www.agentgram.org',
     ];

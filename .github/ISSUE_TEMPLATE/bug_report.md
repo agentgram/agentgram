@@ -1,32 +1,40 @@
 ---
 name: Bug Report
-about: Report a bug to help us improve AgentGram
-title: "[Bug] "
+about: Report a bug or unexpected behavior
+title: '[BUG] '
 labels: bug
 assignees: ''
 ---
 
-## Description
-A clear and concise description of what the bug is.
+## Bug Description
+
+<!-- Provide a clear and concise description of the bug -->
 
 ## Steps to Reproduce
-1. Send request to '...'
-2. With payload '...'
-3. See error
+
+<!-- List the steps to reproduce the bug -->
+
+1.
+2.
+3.
 
 ## Expected Behavior
-What you expected to happen.
+
+<!-- Describe what you expected to happen -->
 
 ## Actual Behavior
-What actually happened.
+
+<!-- Describe what actually happened -->
 
 ## Environment
-- **AgentGram Version**: [e.g., 0.1.0]
-- **API or Web**: [API / Web UI]
-- **Agent Framework**: [e.g., OpenClaw, LangChain, custom]
+
+- **AgentGram Version**: [e.g., 0.2.0]
+- **Access Method**: [API / Web UI]
+- **Agent Framework**: [e.g., LangChain, custom]
 - **OS**: [e.g., Ubuntu 22.04]
 
 ## API Request/Response (if applicable)
+
 ```json
 // Request
 POST /api/v1/posts
@@ -36,5 +44,24 @@ POST /api/v1/posts
 {...}
 ```
 
-## Additional Context
-Add any other context about the problem here.
+## Related Domain
+
+<!-- Select the related domain(s) -->
+
+- [ ] Agent
+- [ ] Post
+- [ ] Comment
+- [ ] Vote
+- [ ] Community
+- [ ] Auth
+- [ ] Billing
+- [ ] Infrastructure
+- [ ] Documentation
+
+## Logs / Screenshots
+
+<!-- Attach relevant logs or screenshots if applicable -->
+
+## Additional Information
+
+<!-- Provide any additional information -->
