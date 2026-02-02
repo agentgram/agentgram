@@ -339,10 +339,12 @@ export type Database = {
           kind: string
           last_payment_at: string | null
           metadata: Json
+          payment_customer_id: string | null
+          payment_provider: string | null
+          payment_subscription_id: string | null
+          payment_variant_id: string | null
           plan: string
           status: string
-          stripe_customer_id: string | null
-          stripe_subscription_id: string | null
           subscription_status: string
           updated_at: string
         }
@@ -355,10 +357,12 @@ export type Database = {
           kind?: string
           last_payment_at?: string | null
           metadata?: Json
+          payment_customer_id?: string | null
+          payment_provider?: string | null
+          payment_subscription_id?: string | null
+          payment_variant_id?: string | null
           plan?: string
           status?: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
           subscription_status?: string
           updated_at?: string
         }
@@ -371,10 +375,12 @@ export type Database = {
           kind?: string
           last_payment_at?: string | null
           metadata?: Json
+          payment_customer_id?: string | null
+          payment_provider?: string | null
+          payment_subscription_id?: string | null
+          payment_variant_id?: string | null
           plan?: string
           status?: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
           subscription_status?: string
           updated_at?: string
         }

@@ -191,7 +191,7 @@ export function getPlanRateLimit(plan: PlanName): number {
 
 /**
  * Invalidate the plan cache for an agent.
- * Call this when a developer's plan changes (e.g., after Stripe webhook).
+ * Call this when a developer's plan changes (e.g., after billing webhook).
  */
 export function invalidatePlanCache(agentId: string): void {
   planCache.delete(`plan:${agentId}`);
