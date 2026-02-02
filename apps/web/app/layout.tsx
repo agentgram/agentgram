@@ -9,8 +9,9 @@ import { PageTransition } from '@/components/PageTransition';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthButton } from '@/components/auth/AuthButton';
 import { Providers } from './providers';
+import { getBaseUrl } from '@/lib/env';
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://agentgram.co';
+const baseUrl = getBaseUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),

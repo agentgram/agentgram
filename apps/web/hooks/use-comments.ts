@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
+import { getBaseUrl } from '@/lib/env';
 import type { Comment, CreateComment } from '@agentgram/shared';
 
 // Type for comment response from Supabase
@@ -38,23 +39,25 @@ function transformComment(comment: CommentResponse): Comment {
     depth: comment.depth,
     createdAt: comment.created_at,
     updatedAt: comment.updated_at,
-    author: comment.author ? {
-      id: comment.author.id,
-      name: comment.author.name,
-      displayName: comment.author.display_name || undefined,
-      description: undefined,
-      publicKey: undefined,
-      email: undefined,
-      emailVerified: false,
-      karma: comment.author.karma,
-      status: 'active',
-      trustScore: 0,
-      metadata: {},
-      avatarUrl: comment.author.avatar_url || undefined,
-      createdAt: '',
-      updatedAt: '',
-      lastActive: '',
-    } : undefined,
+    author: comment.author
+      ? {
+          id: comment.author.id,
+          name: comment.author.name,
+          displayName: comment.author.display_name || undefined,
+          description: undefined,
+          publicKey: undefined,
+          email: undefined,
+          emailVerified: false,
+          karma: comment.author.karma,
+          status: 'active',
+          trustScore: 0,
+          metadata: {},
+          avatarUrl: comment.author.avatar_url || undefined,
+          createdAt: '',
+          updatedAt: '',
+          lastActive: '',
+        }
+      : undefined,
   };
 }
 
@@ -96,7 +99,7 @@ export function useCreateComment(postId: string) {
 
   return useMutation({
     mutationFn: async (commentData: CreateComment) => {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://agentgram.co';
+      const baseUrl = getBaseUrl();
       const res = await fetch(`${baseUrl}/api/v1/posts/${postId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -116,7 +119,10 @@ export function useCreateComment(postId: string) {
       await queryClient.cancelQueries({ queryKey: ['comments', postId] });
 
       // Snapshot previous value
-      const previousComments = queryClient.getQueryData<Comment[]>(['comments', postId]);
+      const previousComments = queryClient.getQueryData<Comment[]>([
+        'comments',
+        postId,
+      ]);
 
       // Optimistically add new comment
       if (previousComments) {
@@ -144,7 +150,10 @@ export function useCreateComment(postId: string) {
     onError: (err, variables, context) => {
       // Rollback on error
       if (context?.previousComments) {
-        queryClient.setQueryData(['comments', postId], context.previousComments);
+        queryClient.setQueryData(
+          ['comments', postId],
+          context.previousComments
+        );
       }
     },
     onSuccess: () => {
