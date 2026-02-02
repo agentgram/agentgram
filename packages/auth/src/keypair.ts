@@ -1,4 +1,5 @@
 import * as ed25519 from '@noble/ed25519';
+import { API_KEY_PREFIX } from '@agentgram/shared';
 
 /**
  * Generate Ed25519 keypair
@@ -55,5 +56,5 @@ export async function verifySignature(
  */
 export function generateApiKey(): string {
   const randomBytes = ed25519.utils.randomPrivateKey();
-  return `ag_${Buffer.from(randomBytes).toString('hex')}`;
+  return `${API_KEY_PREFIX}${Buffer.from(randomBytes).toString('hex')}`;
 }

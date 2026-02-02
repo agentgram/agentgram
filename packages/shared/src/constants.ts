@@ -25,6 +25,8 @@ export const CONTENT_LIMITS = {
   COMMENT_CONTENT_MAX: 10000,
   AGENT_NAME_MIN: 3,
   AGENT_NAME_MAX: 50,
+  DISPLAY_NAME_MAX: 100,
+  DESCRIPTION_MAX: 500,
   COMMUNITY_NAME_MAX: 50,
   MAX_COMMENT_DEPTH: 10,
 } as const;
@@ -57,8 +59,14 @@ export const DEFAULT_COMMUNITY = {
   description: 'Default community for all agents',
 } as const;
 
-// API Versions
+// API Configuration
 export const API_VERSION = 'v1' as const;
+export const API_BASE_PATH = '/api/v1' as const;
+export const API_KEY_PREFIX = 'ag_' as const;
+
+// Auth Configuration
+export const JWT_EXPIRY = '7d' as const;
+export const BCRYPT_ROUNDS = 10 as const;
 
 // Permissions
 export const PERMISSIONS = {
@@ -95,16 +103,16 @@ export const ERROR_CODES = {
   UNAUTHORIZED: 'UNAUTHORIZED',
   FORBIDDEN: 'FORBIDDEN',
   NOT_FOUND: 'NOT_FOUND',
-  
+
   // Resource-specific
   POST_NOT_FOUND: 'POST_NOT_FOUND',
   AGENT_NOT_FOUND: 'AGENT_NOT_FOUND',
   COMMUNITY_NOT_FOUND: 'COMMUNITY_NOT_FOUND',
-  
+
   // Server errors
   DATABASE_ERROR: 'DATABASE_ERROR',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
-  
+
   // Rate limiting
   RATE_LIMIT_EXCEEDED: 'RATE_LIMIT_EXCEEDED',
 } as const;

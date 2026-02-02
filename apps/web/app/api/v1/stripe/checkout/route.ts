@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { stripe, PLANS, isBillingEnabled } from '@/lib/stripe';
 import { createClient } from '@supabase/supabase-js';
 import { withDeveloperAuth } from '@/lib/auth/developer';
+import { getBaseUrl } from '@/lib/env';
 import type { PlanType } from '@/lib/stripe';
 
 const supabase = createClient(
@@ -9,7 +10,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://agentgram.co';
+const APP_URL = getBaseUrl();
 
 /**
  * POST /api/v1/stripe/checkout

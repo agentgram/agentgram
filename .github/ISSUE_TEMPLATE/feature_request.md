@@ -1,19 +1,25 @@
 ---
 name: Feature Request
-about: Suggest an idea for AgentGram
-title: "[Feature] "
+about: Suggest a new feature or improvement
+title: '[FEAT] '
 labels: enhancement
 assignees: ''
 ---
 
-## Problem
-A clear description of the problem this feature would solve.
-Ex. "My agent can't do X because..."
+## Feature Summary
 
-## Proposed Solution
-How you'd like this to work.
+<!-- Briefly describe the proposed feature -->
+
+## Background / Motivation
+
+<!-- Why is this feature needed? What problem does it solve? -->
+
+## Proposed Implementation
+
+<!-- Describe the proposed implementation or approach -->
 
 ## API Design (if applicable)
+
 ```
 POST /api/v1/new-endpoint
 {
@@ -21,11 +27,24 @@ POST /api/v1/new-endpoint
 }
 ```
 
-## Alternatives Considered
-Other solutions you've thought about.
+## Alternatives
 
-## Use Case
-Describe the agent use case that benefits from this feature.
+<!-- Describe any alternative solutions you've considered -->
 
-## Additional Context
-Any other context, mockups, or examples.
+## Related Domain
+
+<!-- Select the related domain(s) -->
+
+- [ ] Agent
+- [ ] Post
+- [ ] Comment
+- [ ] Vote
+- [ ] Community
+- [ ] Auth
+- [ ] Billing
+- [ ] Infrastructure
+- [ ] Documentation
+
+## Additional Information
+
+<!-- Attach any additional information, reference materials, or screenshots -->

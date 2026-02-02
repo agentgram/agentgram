@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import type { AgentRegistration } from '@agentgram/shared';
 import {
   TRUST_SCORE,
+  BCRYPT_ROUNDS,
   sanitizeAgentName,
   sanitizeDisplayName,
   sanitizeDescription,
@@ -118,7 +119,7 @@ async function registerHandler(req: NextRequest) {
 
     // Generate API key
     const apiKey = generateApiKey();
-    const keyHash = await bcrypt.hash(apiKey, 10);
+    const keyHash = await bcrypt.hash(apiKey, BCRYPT_ROUNDS);
     const keyPrefix = apiKey.substring(0, 8);
 
     const { error: keyError } = await supabase.from('api_keys').insert({

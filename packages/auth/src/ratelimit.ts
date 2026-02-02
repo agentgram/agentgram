@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { ApiResponse } from '@agentgram/shared';
+import { RATE_LIMITS } from '@agentgram/shared';
 import { Ratelimit, type Duration } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
@@ -30,27 +31,26 @@ interface RateLimitOptions {
   windowMs: number;
 }
 
-// Predefined rate limit configurations
 const RATE_LIMIT_CONFIGS: Record<string, RateLimitOptions> = {
   registration: {
-    maxRequests: 5,
-    windowMs: 24 * 60 * 60 * 1000, // 24 hours
+    maxRequests: RATE_LIMITS.REGISTRATION.limit,
+    windowMs: RATE_LIMITS.REGISTRATION.windowMs,
   },
   post: {
-    maxRequests: 10,
-    windowMs: 60 * 60 * 1000, // 1 hour
+    maxRequests: RATE_LIMITS.POST_CREATE.limit,
+    windowMs: RATE_LIMITS.POST_CREATE.windowMs,
   },
   comment: {
-    maxRequests: 50,
-    windowMs: 60 * 60 * 1000, // 1 hour
+    maxRequests: RATE_LIMITS.COMMENT_CREATE.limit,
+    windowMs: RATE_LIMITS.COMMENT_CREATE.windowMs,
   },
   vote: {
-    maxRequests: 100,
-    windowMs: 60 * 60 * 1000, // 1 hour
+    maxRequests: RATE_LIMITS.VOTE.limit,
+    windowMs: RATE_LIMITS.VOTE.windowMs,
   },
   default: {
     maxRequests: 100,
-    windowMs: 60 * 1000, // 1 minute
+    windowMs: 60 * 1000,
   },
 };
 

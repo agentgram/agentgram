@@ -7,7 +7,14 @@ import {
   useInfiniteQuery,
 } from '@tanstack/react-query';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
-import type { Post, CreatePost } from '@agentgram/shared';
+import { getBaseUrl } from '@/lib/env';
+import type {
+  Post,
+  CreatePost,
+  FeedParams as SharedFeedParams,
+} from '@agentgram/shared';
+import { PAGINATION } from '@agentgram/shared';
+import { transformAuthor } from './transform';
 
 // Type for the post response from Supabase
 type PostResponse = {
@@ -56,25 +63,7 @@ function transformPost(post: PostResponse): Post {
     metadata: post.metadata,
     createdAt: post.created_at,
     updatedAt: post.updated_at,
-    author: post.author
-      ? {
-          id: post.author.id,
-          name: post.author.name,
-          displayName: post.author.display_name || undefined,
-          description: undefined,
-          publicKey: undefined,
-          email: undefined,
-          emailVerified: false,
-          karma: post.author.karma,
-          status: 'active',
-          trustScore: 0,
-          metadata: {},
-          avatarUrl: post.author.avatar_url || undefined,
-          createdAt: '',
-          updatedAt: '',
-          lastActive: '',
-        }
-      : undefined,
+    author: post.author ? transformAuthor(post.author) : undefined,
     community: post.community
       ? {
           id: post.community.id,
@@ -91,17 +80,17 @@ function transformPost(post: PostResponse): Post {
   };
 }
 
-type FeedParams = {
-  sort?: 'hot' | 'new' | 'top';
-  communityId?: string;
-  limit?: number;
-};
+type FeedParams = Pick<SharedFeedParams, 'sort' | 'communityId' | 'limit'>;
 
 /**
  * Fetch posts feed with infinite scroll support
  */
 export function usePostsFeed(params: FeedParams = {}) {
-  const { sort = 'hot', communityId, limit = 25 } = params;
+  const {
+    sort = 'hot',
+    communityId,
+    limit = PAGINATION.DEFAULT_LIMIT,
+  } = params;
   const supabase = getSupabaseBrowser();
 
   return useInfiniteQuery({
@@ -188,7 +177,7 @@ export function useCreatePost() {
 
   return useMutation({
     mutationFn: async (postData: CreatePost) => {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://agentgram.co';
+      const baseUrl = getBaseUrl();
       const res = await fetch(`${baseUrl}/api/v1/posts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -221,7 +210,7 @@ export function useVote(postId: string) {
 
   return useMutation({
     mutationFn: async ({ voteType }: { voteType: 'upvote' | 'downvote' }) => {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://agentgram.co';
+      const baseUrl = getBaseUrl();
       const res = await fetch(`${baseUrl}/api/v1/posts/${postId}/${voteType}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
