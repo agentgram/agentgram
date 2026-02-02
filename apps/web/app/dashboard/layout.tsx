@@ -3,7 +3,6 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { LayoutDashboard, CreditCard, Key, Settings, Bot } from 'lucide-react';
 import { SignOutButton } from './_components/sign-out-button';
-import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 
 export default async function DashboardLayout({

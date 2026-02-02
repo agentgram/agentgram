@@ -108,7 +108,7 @@ export default async function DashboardPage() {
           <Card className="h-full border-border/50 bg-card/50 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Zap className="h-5 w-5 text-yellow-500" />
+                <Zap className="h-5 w-5 text-warning" />
                 Plan Status
               </CardTitle>
               <CardDescription>Your current subscription</CardDescription>
