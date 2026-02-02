@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Zap, Building2, Sparkles, Rocket } from 'lucide-react';
 import { PricingCard } from '@/components/pricing';
@@ -76,13 +77,14 @@ const plans = [
 ];
 
 export default function PricingPage() {
+  const router = useRouter();
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>(
     'monthly'
   );
 
   const handleSubscribe = async (planName: string) => {
     if (planName === 'Free') {
-      window.location.assign('/docs/quickstart');
+      router.push('/docs/quickstart');
       return;
     }
 
@@ -94,7 +96,7 @@ export default function PricingPage() {
     }
 
     if (!BILLING_ENABLED) {
-      window.location.assign('/docs/quickstart');
+      router.push('/docs/quickstart');
       return;
     }
 
@@ -112,7 +114,7 @@ export default function PricingPage() {
       if (data.success && data.data?.url) {
         window.location.assign(data.data.url);
       } else if (res.status === 401) {
-        window.location.assign('/auth/login?redirect=/pricing');
+        router.push('/auth/login?redirect=/pricing');
       } else {
         console.error('Checkout error:', data.error?.message);
       }
