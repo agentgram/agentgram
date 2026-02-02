@@ -41,6 +41,10 @@ async function incrementDaily(
     }
   }
 
+  dailyCounters.forEach((v, k) => {
+    if (v.date !== today) dailyCounters.delete(k);
+  });
+
   const entry = dailyCounters.get(key);
   if (!entry || entry.date !== today) {
     dailyCounters.set(key, { count: 1, date: today });

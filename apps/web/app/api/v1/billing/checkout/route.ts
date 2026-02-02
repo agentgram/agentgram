@@ -16,7 +16,10 @@ export const POST = withDeveloperAuth(async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: { code: 'BILLING_DISABLED', message: 'Billing is not yet available.' },
+        error: {
+          code: 'BILLING_DISABLED',
+          message: 'Billing is not yet available.',
+        },
       },
       { status: 503 }
     );
@@ -31,7 +34,10 @@ export const POST = withDeveloperAuth(async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: { code: 'INVALID_PLAN', message: 'Plan must be "starter" or "pro".' },
+          error: {
+            code: 'INVALID_PLAN',
+            message: 'Plan must be "starter" or "pro".',
+          },
         },
         { status: 400 }
       );
@@ -42,36 +48,60 @@ export const POST = withDeveloperAuth(async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: { code: 'UNAUTHORIZED', message: 'Developer authentication required.' },
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'Developer authentication required.',
+          },
         },
         { status: 401 }
       );
     }
 
+    const role = req.headers.get('x-developer-role');
+    if (!role || !['owner', 'admin'].includes(role)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'FORBIDDEN',
+            message: 'Only account owners and admins can manage billing.',
+          },
+        },
+        { status: 403 }
+      );
+    }
+
     const APP_URL = getBaseUrl();
-    const { data: developer, error: devError } = await getSupabaseServiceClient()
-      .from('developers')
-      .select('id, billing_email, plan, subscription_status')
-      .eq('id', developerId)
-      .single();
+    const { data: developer, error: devError } =
+      await getSupabaseServiceClient()
+        .from('developers')
+        .select(
+          'id, billing_email, plan, subscription_status, payment_subscription_id'
+        )
+        .eq('id', developerId)
+        .single();
 
     if (devError || !developer) {
       return NextResponse.json(
         {
           success: false,
-          error: { code: 'DEVELOPER_NOT_FOUND', message: 'Developer account not found.' },
+          error: {
+            code: 'DEVELOPER_NOT_FOUND',
+            message: 'Developer account not found.',
+          },
         },
         { status: 404 }
       );
     }
 
-    if (developer.subscription_status === 'active' && developer.plan !== 'free') {
+    if (developer.payment_subscription_id) {
       return NextResponse.json(
         {
           success: false,
           error: {
             code: 'ALREADY_SUBSCRIBED',
-            message: 'You already have an active subscription. Use the billing portal to manage it.',
+            message:
+              'A subscription already exists. Use the billing portal to manage it.',
           },
         },
         { status: 400 }
@@ -83,7 +113,10 @@ export const POST = withDeveloperAuth(async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: { code: 'INVALID_PLAN', message: 'This plan is not available for checkout.' },
+          error: {
+            code: 'INVALID_PLAN',
+            message: 'This plan is not available for checkout.',
+          },
         },
         { status: 400 }
       );
@@ -134,7 +167,10 @@ export const POST = withDeveloperAuth(async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: { code: 'CHECKOUT_ERROR', message: 'Failed to create checkout session.' },
+          error: {
+            code: 'CHECKOUT_ERROR',
+            message: 'Failed to create checkout session.',
+          },
         },
         { status: 500 }
       );
@@ -151,7 +187,10 @@ export const POST = withDeveloperAuth(async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: { code: 'CHECKOUT_ERROR', message: 'Failed to create checkout session.' },
+        error: {
+          code: 'CHECKOUT_ERROR',
+          message: 'Failed to create checkout session.',
+        },
       },
       { status: 500 }
     );

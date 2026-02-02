@@ -98,6 +98,10 @@ function assertUpdate(
   }
 }
 
+function monotonicFilter(eventTimestamp: string): string {
+  return `billing_last_event_at.is.null,billing_last_event_at.lt.${eventTimestamp}`;
+}
+
 export async function POST(req: NextRequest) {
   const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET;
   if (!secret) {
@@ -226,9 +230,11 @@ async function handleSubscriptionCreated(payload: WebhookPayload) {
       plan,
       subscription_status: mapSubscriptionStatus(attrs.status),
       current_period_end: attrs.renews_at,
+      billing_last_event_at: attrs.updated_at,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', developerId);
+    .eq('id', developerId)
+    .or(monotonicFilter(attrs.updated_at));
 
   assertUpdate(result, 'subscription_created');
 }
@@ -246,9 +252,11 @@ async function handleSubscriptionUpdated(payload: WebhookPayload) {
       payment_variant_id: String(attrs.variant_id),
       subscription_status: mapSubscriptionStatus(attrs.status),
       current_period_end: attrs.renews_at,
+      billing_last_event_at: attrs.updated_at,
       updated_at: new Date().toISOString(),
     })
-    .eq('payment_subscription_id', payload.data.id);
+    .eq('payment_subscription_id', payload.data.id)
+    .or(monotonicFilter(attrs.updated_at));
 
   assertUpdate(result, 'subscription_updated');
 }
@@ -261,14 +269,18 @@ async function handleSubscriptionCancelled(payload: WebhookPayload) {
     .update({
       subscription_status: 'canceled',
       current_period_end: attrs.ends_at,
+      billing_last_event_at: attrs.updated_at,
       updated_at: new Date().toISOString(),
     })
-    .eq('payment_subscription_id', payload.data.id);
+    .eq('payment_subscription_id', payload.data.id)
+    .or(monotonicFilter(attrs.updated_at));
 
   assertUpdate(result, 'subscription_cancelled');
 }
 
 async function handleSubscriptionExpired(payload: WebhookPayload) {
+  const attrs = payload.data.attributes;
+
   const result = await getSupabaseServiceClient()
     .from('developers')
     .update({
@@ -277,21 +289,27 @@ async function handleSubscriptionExpired(payload: WebhookPayload) {
       payment_subscription_id: null,
       payment_variant_id: null,
       current_period_end: null,
+      billing_last_event_at: attrs.updated_at,
       updated_at: new Date().toISOString(),
     })
-    .eq('payment_subscription_id', payload.data.id);
+    .eq('payment_subscription_id', payload.data.id)
+    .or(monotonicFilter(attrs.updated_at));
 
   assertUpdate(result, 'subscription_expired');
 }
 
 async function handleSubscriptionPaused(payload: WebhookPayload) {
+  const attrs = payload.data.attributes;
+
   const result = await getSupabaseServiceClient()
     .from('developers')
     .update({
       subscription_status: 'paused',
+      billing_last_event_at: attrs.updated_at,
       updated_at: new Date().toISOString(),
     })
-    .eq('payment_subscription_id', payload.data.id);
+    .eq('payment_subscription_id', payload.data.id)
+    .or(monotonicFilter(attrs.updated_at));
 
   assertUpdate(result, 'subscription_paused');
 }
@@ -303,34 +321,44 @@ async function handleSubscriptionUnpaused(payload: WebhookPayload) {
     .from('developers')
     .update({
       subscription_status: mapSubscriptionStatus(attrs.status),
+      billing_last_event_at: attrs.updated_at,
       updated_at: new Date().toISOString(),
     })
-    .eq('payment_subscription_id', payload.data.id);
+    .eq('payment_subscription_id', payload.data.id)
+    .or(monotonicFilter(attrs.updated_at));
 
   assertUpdate(result, 'subscription_unpaused');
 }
 
 async function handlePaymentSuccess(payload: WebhookPayload) {
+  const attrs = payload.data.attributes;
+
   const result = await getSupabaseServiceClient()
     .from('developers')
     .update({
       subscription_status: 'active',
       last_payment_at: new Date().toISOString(),
+      billing_last_event_at: attrs.updated_at,
       updated_at: new Date().toISOString(),
     })
-    .eq('payment_subscription_id', payload.data.id);
+    .eq('payment_subscription_id', payload.data.id)
+    .or(monotonicFilter(attrs.updated_at));
 
   assertUpdate(result, 'payment_success');
 }
 
 async function handlePaymentFailed(payload: WebhookPayload) {
+  const attrs = payload.data.attributes;
+
   const result = await getSupabaseServiceClient()
     .from('developers')
     .update({
       subscription_status: 'past_due',
+      billing_last_event_at: attrs.updated_at,
       updated_at: new Date().toISOString(),
     })
-    .eq('payment_subscription_id', payload.data.id);
+    .eq('payment_subscription_id', payload.data.id)
+    .or(monotonicFilter(attrs.updated_at));
 
   assertUpdate(result, 'payment_failed');
 }
