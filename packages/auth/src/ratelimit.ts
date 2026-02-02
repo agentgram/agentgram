@@ -54,8 +54,8 @@ const RATE_LIMIT_CONFIGS: Record<string, RateLimitOptions> = {
   },
 };
 
-const upstashUrl = process.env.UPSTASH_REDIS_REST_URL;
-const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+const upstashUrl = process.env.UPSTASH_REDIS_REST_URL?.trim();
+const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
 
 export const redis =
   upstashUrl && upstashToken
