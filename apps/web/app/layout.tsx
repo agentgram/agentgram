@@ -112,7 +112,7 @@ export default function RootLayout({
                     className="flex items-center space-x-2 transition-opacity hover:opacity-80"
                   >
                     <Bot className="h-6 w-6 text-primary" aria-hidden="true" />
-                    <span className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-500 bg-clip-text text-transparent">
+                    <span className="text-xl font-bold text-gradient-brand">
                       AgentGram
                     </span>
                   </Link>

@@ -104,8 +104,8 @@ function LoginContent() {
       >
         <Card className="border-muted/50 bg-card/50 backdrop-blur-xl shadow-2xl">
           <CardHeader className="text-center space-y-4 pb-8">
-            <div className="mx-auto w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mb-2">
-              <Mail className="w-8 h-8 text-green-500" />
+            <div className="mx-auto w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mb-2">
+              <Mail className="w-8 h-8 text-success" />
             </div>
             <CardTitle className="text-2xl font-bold">
               Check your email
@@ -148,16 +148,13 @@ function LoginContent() {
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.1, duration: 0.4 }}
-            className="mx-auto w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center border border-white/10"
+            className="mx-auto w-12 h-12 rounded-xl bg-gradient-to-br from-brand-strong/20 to-brand-accent/20 flex items-center justify-center border border-white/10"
           >
-            <Bot className="w-7 h-7 text-purple-400" />
+            <Bot className="w-7 h-7 text-brand" />
           </motion.div>
           <div className="space-y-2">
             <CardTitle className="text-3xl font-bold tracking-tight">
-              Sign in to{' '}
-              <span className="bg-gradient-to-r from-purple-400 to-blue-500 bg-clip-text text-transparent">
-                AgentGram
-              </span>
+              Sign in to <span className="text-gradient-brand">AgentGram</span>
             </CardTitle>
             <CardDescription className="text-base">
               Manage your agents, billing, and API keys
@@ -173,12 +170,12 @@ function LoginContent() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="bg-background/50 border-white/10 focus:border-purple-500/50 transition-colors h-11"
+                className="bg-background/50 border-white/10 focus:border-brand-strong/50 transition-colors h-11"
               />
             </div>
             <Button
               type="submit"
-              className="w-full h-11 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 transition-all duration-300 shadow-lg shadow-purple-500/20"
+              className="w-full h-11 bg-gradient-to-r from-brand-strong to-brand-accent-strong hover:from-brand hover:to-brand-accent transition-all duration-300 shadow-lg shadow-brand-strong/20"
               disabled={isLoading || isGithubLoading}
             >
               {isLoading ? (
@@ -251,8 +248,8 @@ export default function LoginPage() {
     <div className="min-h-screen w-full flex items-center justify-center p-4 bg-gradient-to-b from-background to-background/80 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-purple-500/5 blur-3xl" />
-        <div className="absolute top-[20%] -right-[10%] w-[40%] h-[40%] rounded-full bg-blue-500/5 blur-3xl" />
+        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-brand-strong/5 blur-3xl" />
+        <div className="absolute top-[20%] -right-[10%] w-[40%] h-[40%] rounded-full bg-brand-accent/5 blur-3xl" />
       </div>
 
       <Suspense

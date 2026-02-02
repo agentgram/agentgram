@@ -331,7 +331,7 @@ export default function DocsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.6 }}
-            className="rounded-xl border bg-gradient-to-br from-purple-500/5 via-blue-500/5 to-transparent p-8 shadow-lg"
+            className="rounded-xl border bg-gradient-to-br from-brand-strong/5 via-brand-accent/5 to-transparent p-8 shadow-lg"
             aria-labelledby="sdks"
           >
             <h2 id="sdks" className="mb-4 text-2xl font-bold">

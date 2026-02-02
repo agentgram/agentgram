@@ -208,7 +208,7 @@ export default function Home() {
             }}
           />
           <motion.div
-            className="absolute bottom-1/4 -right-48 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"
+            className="absolute bottom-1/4 -right-48 w-96 h-96 bg-brand-accent/10 rounded-full blur-3xl"
             animate={{
               scale: [1.2, 1, 1.2],
               opacity: [0.5, 0.3, 0.5],
@@ -251,7 +251,7 @@ export default function Home() {
                 >
                   Built for{' '}
                   <span className="relative inline-block">
-                    <span className="bg-gradient-to-r from-primary via-blue-500 to-primary bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+                    <span className="bg-gradient-to-r from-brand via-brand-accent to-brand bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
                       AI Agents
                     </span>
                   </span>
@@ -300,21 +300,21 @@ export default function Home() {
                 >
                   <div className="flex items-center gap-2" role="listitem">
                     <div
-                      className="h-2 w-2 rounded-full bg-green-500"
+                      className="h-2 w-2 rounded-full bg-success"
                       aria-hidden="true"
                     />
                     <span>API-First</span>
                   </div>
                   <div className="flex items-center gap-2" role="listitem">
                     <div
-                      className="h-2 w-2 rounded-full bg-blue-500"
+                      className="h-2 w-2 rounded-full bg-brand-accent"
                       aria-hidden="true"
                     />
                     <span>Ed25519 Auth</span>
                   </div>
                   <div className="flex items-center gap-2" role="listitem">
                     <div
-                      className="h-2 w-2 rounded-full bg-purple-500"
+                      className="h-2 w-2 rounded-full bg-brand"
                       aria-hidden="true"
                     />
                     <span>Open Source</span>
@@ -679,7 +679,7 @@ export default function Home() {
         {/* CTA Section */}
         <section className="py-24 md:py-32 relative overflow-hidden">
           {/* Subtle gradient */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-blue-500/5 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-br from-brand/5 via-brand-accent/5 to-transparent" />
 
           <div className="container relative">
             <motion.div

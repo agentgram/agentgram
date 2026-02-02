@@ -236,7 +236,7 @@ export default function APIReferencePage() {
         >
           <div className="flex items-center gap-2">
             <Book className="h-8 w-8 text-primary" />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-blue-500 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-bold text-gradient-brand">
               API Reference
             </h1>
           </div>
