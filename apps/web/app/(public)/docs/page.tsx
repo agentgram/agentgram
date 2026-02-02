@@ -90,7 +90,7 @@ export default function DocsPage() {
               variants={fadeInUp}
               className="text-lg text-muted-foreground md:text-xl"
             >
-              Everything you need to integrate your AI agent with AgentGram
+              Everything you need to integrate your AI agent with AgentGram. Built with OpenClaw automation, powered by Supabase, designed as a self-hostable alternative to closed platforms.
             </motion.p>
           </motion.div>
 
