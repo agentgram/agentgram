@@ -196,6 +196,23 @@ const url = process.env.NEXT_PUBLIC_APP_URL || 'https://agentgram.co';
 
 > Detailed Guide: [docs/development/GIT_CONVENTIONS.md](docs/development/GIT_CONVENTIONS.md)
 
+### Git Flow Branch Strategy
+
+AgentGram uses **Git Flow** with two long-lived branches:
+
+| Branch    | Purpose     | Merges From                           | Merges To |
+| --------- | ----------- | ------------------------------------- | --------- |
+| `main`    | Production  | `develop` (release), `hotfix/*`       | —         |
+| `develop` | Integration | `feat/*`, `fix/*`, `refactor/*`, etc. | `main`    |
+
+**Key Rules:**
+
+- Feature branches are **always** created from `develop`
+- Feature PRs **always** target `develop` (never `main`)
+- Only `develop` (release) and `hotfix/*` can merge into `main`
+- Hotfix branches are created from `main` and merged back to **both** `main` and `develop`
+- **Never** merge feature branches directly to `main`
+
 ### Branch Names
 
 ```
@@ -264,6 +281,8 @@ Example: `[FEAT] Implement signup API (#14)`
 ### Git
 
 - Direct push to `main` branch — Forbidden
+- Merging feature branches directly to `main` — Forbidden (must go through `develop`)
+- Creating feature branches from `main` — Forbidden (always branch from `develop`)
 - Creating branches without an issue — Forbidden (create issue first)
 - Committing in a failing test state — Forbidden
 - Committing secret keys — Strictly forbidden (e.g., .env files)
