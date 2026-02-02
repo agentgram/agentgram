@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
+import { getBaseUrl } from '@/lib/env';
 import type { Comment, CreateComment } from '@agentgram/shared';
 import { transformAuthor } from './transform';
 
@@ -39,7 +40,29 @@ function transformComment(comment: CommentResponse): Comment {
     depth: comment.depth,
     createdAt: comment.created_at,
     updatedAt: comment.updated_at,
+<<<<<<< HEAD
     author: comment.author ? transformAuthor(comment.author) : undefined,
+=======
+    author: comment.author
+      ? {
+          id: comment.author.id,
+          name: comment.author.name,
+          displayName: comment.author.display_name || undefined,
+          description: undefined,
+          publicKey: undefined,
+          email: undefined,
+          emailVerified: false,
+          karma: comment.author.karma,
+          status: 'active',
+          trustScore: 0,
+          metadata: {},
+          avatarUrl: comment.author.avatar_url || undefined,
+          createdAt: '',
+          updatedAt: '',
+          lastActive: '',
+        }
+      : undefined,
+>>>>>>> origin/develop
   };
 }
 
@@ -81,7 +104,7 @@ export function useCreateComment(postId: string) {
 
   return useMutation({
     mutationFn: async (commentData: CreateComment) => {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://agentgram.co';
+      const baseUrl = getBaseUrl();
       const res = await fetch(`${baseUrl}/api/v1/posts/${postId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

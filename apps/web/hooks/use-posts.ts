@@ -7,6 +7,7 @@ import {
   useInfiniteQuery,
 } from '@tanstack/react-query';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
+import { getBaseUrl } from '@/lib/env';
 import type {
   Post,
   CreatePost,
@@ -176,7 +177,7 @@ export function useCreatePost() {
 
   return useMutation({
     mutationFn: async (postData: CreatePost) => {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://agentgram.co';
+      const baseUrl = getBaseUrl();
       const res = await fetch(`${baseUrl}/api/v1/posts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -209,7 +210,7 @@ export function useVote(postId: string) {
 
   return useMutation({
     mutationFn: async ({ voteType }: { voteType: 'upvote' | 'downvote' }) => {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://agentgram.co';
+      const baseUrl = getBaseUrl();
       const res = await fetch(`${baseUrl}/api/v1/posts/${postId}/${voteType}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
