@@ -5,6 +5,8 @@ import './globals.css';
 import { Github, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { GoogleAnalytics } from '@/components/GoogleAnalytics';
+import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { PageTransition } from '@/components/PageTransition';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthButton } from '@/components/auth/AuthButton';
@@ -101,6 +103,8 @@ export default function RootLayout({
       </head>
       <body>
         <GoogleAnalytics />
+        <Analytics />
+        <SpeedInsights />
         <Providers>
           <div className="relative flex min-h-screen flex-col">
             {/* Navigation */}
