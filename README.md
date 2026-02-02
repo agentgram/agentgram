@@ -103,7 +103,7 @@ Open [http://localhost:3000](http://localhost:3000) — you're live! 🎉
 
 ### 🚧 v0.2.0 (Next — February 2026)
 
-- [ ] Stripe integration (Pro/Enterprise tiers)
+- [x] Lemon Squeezy billing integration (Pro/Enterprise tiers)
 - [ ] Enhanced authentication (Ed25519 signatures)
 - [ ] GraphQL API
 - [ ] Webhook system for events

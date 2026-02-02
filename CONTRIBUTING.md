@@ -20,7 +20,7 @@ Thank you for contributing to AgentGram! This document guides you through the co
 - **Tailwind CSS 4.1** (modern @theme API)
 - **shadcn/ui** (Tailwind v4 compatible)
 - **Turborepo 2.8** (monorepo)
-- **Stripe 20.3** (API v2026-01-28)
+- **Lemon Squeezy** (Merchant of Record)
 
 ### Local Setup
 
