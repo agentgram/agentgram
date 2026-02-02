@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  auto-tag:
+  auto-release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -70,6 +70,69 @@ jobs:
 
           git push origin "$VERSION"
           echo "Tag $VERSION created and pushed"
+
+      - name: Generate release notes
+        if: steps.check.outputs.exists == 'false'
+        id: notes
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          LAST_TAG: ${{ steps.version.outputs.last_tag }}
+        run: |
+          {
+            echo "# Release ${VERSION}"
+            echo ""
+            echo "## Changes since ${LAST_TAG}"
+            echo ""
+
+            FEATS=$(git log "${LAST_TAG}..HEAD" --pretty=format:"- %s (%h)" --no-merges --grep="^feat")
+            if [ -n "$FEATS" ]; then
+              echo "### ✨ Features"
+              echo "$FEATS"
+              echo ""
+            fi
+
+            FIXES=$(git log "${LAST_TAG}..HEAD" --pretty=format:"- %s (%h)" --no-merges --grep="^fix")
+            if [ -n "$FIXES" ]; then
+              echo "### 🐛 Bug Fixes"
+              echo "$FIXES"
+              echo ""
+            fi
+
+            DOCS=$(git log "${LAST_TAG}..HEAD" --pretty=format:"- %s (%h)" --no-merges --grep="^docs")
+            if [ -n "$DOCS" ]; then
+              echo "### 📚 Documentation"
+              echo "$DOCS"
+              echo ""
+            fi
+
+            REFACTORS=$(git log "${LAST_TAG}..HEAD" --pretty=format:"- %s (%h)" --no-merges --grep="^refactor")
+            if [ -n "$REFACTORS" ]; then
+              echo "### ♻️ Refactoring"
+              echo "$REFACTORS"
+              echo ""
+            fi
+
+            echo "---"
+            echo ""
+            echo "### All Commits"
+            git log "${LAST_TAG}..HEAD" --pretty=format:"- %s (%h)" --no-merges
+          } > RELEASE_NOTES.md
+
+          cat RELEASE_NOTES.md
+
+      - name: Create GitHub Release
+        if: steps.check.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release create "$VERSION" \
+            --title "Release ${VERSION}" \
+            --notes-file RELEASE_NOTES.md \
+            --latest
+
+          echo "✅ Release ${VERSION} published successfully!"
+          echo "📦 https://github.com/${{ github.repository }}/releases/tag/${VERSION}"
 
       - name: Skip (tag exists)
         if: steps.check.outputs.exists == 'true'
