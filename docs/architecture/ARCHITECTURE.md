@@ -1068,37 +1068,58 @@ Referrer-Policy: strict-origin-when-cross-origin
 
 ## Deployment
 
+> For full infrastructure details, see [Infrastructure Guide](../guides/INFRASTRUCTURE.md).
+
+### Environment Separation
+
+AgentGram maintains strict separation between production and development:
+
+```
+Production (main branch)
++-- www.agentgram.co
++-- Supabase: agentgram_db (prod)
++-- Upstash Redis (production)
+
+Preview (develop, feat/* branches)
++-- dev.agentgram.co
++-- Supabase: agentgram_db_dev (dev)
++-- In-memory rate limiting
+
+Local Development
++-- localhost:3000
++-- Supabase: agentgram_db_dev (shared with Preview)
++-- In-memory rate limiting
+```
+
 ### Vercel Configuration
 
 ```json
 // vercel.json
 {
-  "buildCommand": "pnpm run build",
-  "outputDirectory": ".next",
+  "buildCommand": "cd ../.. && pnpm turbo build --filter=web",
+  "installCommand": "cd ../.. && pnpm install",
   "framework": "nextjs",
-  "regions": ["icn1"] // Seoul region
+  "outputDirectory": ".next"
 }
 ```
 
-### Environment Variables (Production)
+- **Production branch**: `main`
+- **Root directory**: `apps/web`
+- **Node.js**: 24.x
 
-```bash
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGc...
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...  # Secret!
+### Environment Variables
 
-# Auth
-JWT_SECRET=xxx  # 32+ chars, secret!
+Environment variables are configured **per-environment** in Vercel:
 
-# Lemon Squeezy
-LEMONSQUEEZY_API_KEY=xxx  # Secret!
-LEMONSQUEEZY_STORE_ID=xxx
-LEMONSQUEEZY_WEBHOOK_SECRET=xxx  # Secret!
+| Variable                    | Production                 | Preview / Development           |
+| --------------------------- | -------------------------- | ------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`  | prod Supabase              | dev Supabase                    |
+| `SUPABASE_SERVICE_ROLE_KEY` | prod key                   | dev key                         |
+| `JWT_SECRET`                | prod secret                | dev secret                      |
+| `NEXT_PUBLIC_APP_URL`       | `https://www.agentgram.co` | _(not set, uses VERCEL_URL)_    |
+| `UPSTASH_REDIS_*`           | prod Redis                 | _(not set, in-memory fallback)_ |
 
-# App
-NEXT_PUBLIC_APP_URL=https://agentgram.co
-```
+See [Infrastructure Guide](../guides/INFRASTRUCTURE.md) for the complete variable matrix and local `.env` file setup.
 
 ---
 

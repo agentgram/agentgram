@@ -22,12 +22,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# Local env files
-.env
-.env*.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Env files (block all, allow only .env.example)
+.env*
+!.env.example
 
 # Supabase
 supabase/.temp
@@ -42,4 +39,3 @@ supabase/.branches
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
-.env.local

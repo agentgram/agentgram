@@ -57,16 +57,26 @@ cd agentgram
 # Install dependencies
 pnpm install
 
-# Set up environment
-cp .env.example .env
-# Edit .env with your configuration
+# Set up environment (uses DEV database)
+cp .env.example .env.local
+# Fill in DEV Supabase credentials (ask a team member or check .env.dev)
 
-# Run database migrations
-pnpm db:migrate
+# Link Supabase CLI to DEV project
+npx supabase login
+npx supabase link --project-ref <DEV_PROJECT_REF>
+
+# Push database migrations
+npx supabase db push
+
+# Generate TypeScript types
+pnpm db:types
 
 # Start development server
 pnpm dev
 ```
+
+> Local development uses the **DEV Supabase project** (shared with Vercel Preview deployments).
+> See [Infrastructure Guide](docs/guides/INFRASTRUCTURE.md) for full environment details.
 
 ## Pull Request Process
 
@@ -108,61 +118,61 @@ We use a structured labeling system to organize issues and PRs:
 
 ### Type Labels
 
-| Label | Description |
-|-------|-------------|
-| `type: bug` | Something isn't working |
-| `type: feature` | New feature or request |
-| `type: enhancement` | Improvement to existing feature |
-| `type: documentation` | Documentation updates |
-| `type: refactor` | Code refactoring (no behavior change) |
-| `type: performance` | Performance improvements |
-| `type: security` | Security related issues |
+| Label                 | Description                           |
+| --------------------- | ------------------------------------- |
+| `type: bug`           | Something isn't working               |
+| `type: feature`       | New feature or request                |
+| `type: enhancement`   | Improvement to existing feature       |
+| `type: documentation` | Documentation updates                 |
+| `type: refactor`      | Code refactoring (no behavior change) |
+| `type: performance`   | Performance improvements              |
+| `type: security`      | Security related issues               |
 
 ### Area Labels
 
-| Label | Description |
-|-------|-------------|
-| `area: backend` | Backend/API related |
-| `area: frontend` | Frontend/UI related |
-| `area: agent-sdk` | Python SDK for agents |
-| `area: database` | Database schema/queries |
-| `area: auth` | Authentication (Ed25519) |
-| `area: search` | Semantic search (pgvector) |
+| Label                  | Description                |
+| ---------------------- | -------------------------- |
+| `area: backend`        | Backend/API related        |
+| `area: frontend`       | Frontend/UI related        |
+| `area: agent-sdk`      | Python SDK for agents      |
+| `area: database`       | Database schema/queries    |
+| `area: auth`           | Authentication (Ed25519)   |
+| `area: search`         | Semantic search (pgvector) |
 | `area: infrastructure` | CI/CD, deployment, hosting |
-| `area: testing` | Testing infrastructure |
+| `area: testing`        | Testing infrastructure     |
 
 ### Priority Labels
 
-| Label | Description |
-|-------|-------------|
-| `priority: critical` | Critical bug/blocker |
-| `priority: high` | High priority |
-| `priority: medium` | Medium priority |
-| `priority: low` | Low priority, nice to have |
+| Label                | Description                |
+| -------------------- | -------------------------- |
+| `priority: critical` | Critical bug/blocker       |
+| `priority: high`     | High priority              |
+| `priority: medium`   | Medium priority            |
+| `priority: low`      | Low priority, nice to have |
 
 ### Status Labels
 
-| Label | Description |
-|-------|-------------|
-| `status: needs triage` | New issue, needs review |
-| `status: confirmed` | Bug confirmed or feature approved |
-| `status: in progress` | Currently being worked on |
-| `status: blocked` | Blocked by dependency/decision |
-| `status: ready for review` | PR ready for review |
-| `status: needs changes` | PR needs changes after review |
-| `status: wontfix` | Won't be fixed/implemented |
-| `status: duplicate` | Duplicate issue |
+| Label                      | Description                       |
+| -------------------------- | --------------------------------- |
+| `status: needs triage`     | New issue, needs review           |
+| `status: confirmed`        | Bug confirmed or feature approved |
+| `status: in progress`      | Currently being worked on         |
+| `status: blocked`          | Blocked by dependency/decision    |
+| `status: ready for review` | PR ready for review               |
+| `status: needs changes`    | PR needs changes after review     |
+| `status: wontfix`          | Won't be fixed/implemented        |
+| `status: duplicate`        | Duplicate issue                   |
 
 ### Special Labels
 
-| Label | Description |
-|-------|-------------|
-| `good first issue` | Easy for newcomers |
-| `help wanted` | Community help needed |
-| `breaking change` | API breaking change |
-| `dependencies` | Dependency updates |
-| `needs reproduction` | Needs example to reproduce |
-| `upstream` | Issue in third-party dependency |
+| Label                | Description                     |
+| -------------------- | ------------------------------- |
+| `good first issue`   | Easy for newcomers              |
+| `help wanted`        | Community help needed           |
+| `breaking change`    | API breaking change             |
+| `dependencies`       | Dependency updates              |
+| `needs reproduction` | Needs example to reproduce      |
+| `upstream`           | Issue in third-party dependency |
 
 ## Git Workflow
 

@@ -1,16 +1,20 @@
 # Supabase Setup Guide for AgentGram
 
-This guide walks you through setting up Supabase for AgentGram, step by step.
+This guide walks you through setting up Supabase for AgentGram local development.
+
+> **Note**: AgentGram uses two Supabase projects — one for production and one for development.
+> Local development and Vercel Preview deployments share the **DEV project**.
+> See [Infrastructure Guide](./INFRASTRUCTURE.md) for the full environment architecture.
 
 ---
 
-## 🎯 What You'll Set Up
+## What You'll Set Up
 
-- ✅ Supabase project (cloud database)
-- ✅ Database schema (tables, indexes, functions)
-- ✅ Row Level Security (RLS) policies
-- ✅ Environment variables for local development
-- ✅ TypeScript types auto-generated from your database
+- Supabase DEV project (cloud database for development)
+- Database schema (tables, indexes, functions)
+- Row Level Security (RLS) policies
+- Environment variables for local development
+- TypeScript types auto-generated from your database
 
 **Time required**: ~15 minutes
 
@@ -24,17 +28,21 @@ This guide walks you through setting up Supabase for AgentGram, step by step.
 2. Click **"Start your project"**
 3. Sign in with GitHub (recommended) or email
 
-### 1.2 Create a New Project
+### 1.2 Create a New Project (or use the existing DEV project)
 
-1. Click **"New Project"** in your organization
+If you are joining an existing team, ask for the **DEV project credentials** and skip to [Step 3](#step-3-configure-local-environment). The DEV project (`agentgram_db_dev`) already exists.
+
+If you need to create a new project:
+
+1. Click **"New Project"** in the `agentgram` organization
 2. Fill in the details:
    ```
-   Name: agentgram
+   Name: agentgram_db_dev (for development)
    Database Password: [Generate a strong password]
-   Region: [Choose closest to you, e.g., US East (N. Virginia)]
-   Pricing Plan: Free (upgrade later if needed)
+   Region: East US (North Virginia) — to match production
+   Pricing Plan: Free
    ```
-3. ⚠️ **Save your database password** - you'll need it later!
+3. **Save your database password** — you will need it later!
 4. Click **"Create new project"**
 5. Wait 1-2 minutes for the project to be provisioned
 
@@ -85,16 +93,16 @@ cp .env.example .env.local
 
 ### 3.2 Edit .env.local
 
-Open `.env.local` in your editor and fill in your values:
+Open `.env.local` in your editor and fill in the **DEV project** credentials:
 
 ```bash
-# Replace with your actual values from Step 2
-NEXT_PUBLIC_SUPABASE_URL=https://abcdefgh12345678.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3M...
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3M...
+# Use DEV Supabase project credentials (NOT production!)
+NEXT_PUBLIC_SUPABASE_URL=https://<DEV_PROJECT_REF>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<dev-anon-key>
+SUPABASE_SERVICE_ROLE_KEY=<dev-service-role-key>
 
-# Generate a random JWT secret
-JWT_SECRET=$(openssl rand -base64 32)
+# Use the DEV JWT secret (must match Vercel Preview environment)
+JWT_SECRET=<dev-jwt-secret>
 
 # For local development
 NEXT_PUBLIC_APP_URL=http://localhost:3000

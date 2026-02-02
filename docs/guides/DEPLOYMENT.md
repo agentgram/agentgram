@@ -143,62 +143,83 @@ Save the `apiKey` from the response - you'll need it!
 
 ## Production Deployment (Vercel + Supabase Cloud)
 
+> For the full infrastructure overview, see [Infrastructure Guide](./INFRASTRUCTURE.md).
+
+### Environment Overview
+
+AgentGram uses **two separate Supabase projects** and **per-environment Vercel variables**:
+
+| Environment    | Branch              | Domain             | Database                 |
+| -------------- | ------------------- | ------------------ | ------------------------ |
+| **Production** | `main`              | `www.agentgram.co` | `agentgram_db` (prod)    |
+| **Preview**    | `develop`, `feat/*` | `dev.agentgram.co` | `agentgram_db_dev` (dev) |
+| **Local**      | —                   | `localhost:3000`   | `agentgram_db_dev` (dev) |
+
 ### Step 1: Prepare for Production
 
-Your Supabase project is already production-ready! Just make sure:
+Ensure migrations are applied to **both** databases:
 
-- ✅ Migrations are pushed: `npx supabase db push`
-- ✅ RLS policies are enabled (they are by default)
-- ✅ You have your credentials ready
+```bash
+# Push to DEV (linked by default)
+supabase db push
+
+# Push to PROD
+supabase link --project-ref <PROD_REF>
+supabase db push
+supabase link --project-ref <DEV_REF>   # Switch back to dev
+```
 
 ### Step 2: Deploy to Vercel
 
-#### Option A: GitHub Integration (Recommended)
+Deployment is **automatic** via GitHub integration:
 
-1. Push your code to GitHub:
+- Push to `main` → **Production** deployment (`www.agentgram.co`)
+- Push to `develop` or feature branches → **Preview** deployment (`dev.agentgram.co`)
 
-   ```bash
-   git push origin main
-   ```
-
-2. Go to [vercel.com](https://vercel.com)
-3. Click **"Add New Project"**
-4. Import your GitHub repository
-5. Vercel will auto-detect Next.js settings
-
-#### Option B: Vercel CLI
+For manual deployment:
 
 ```bash
-npm install -g vercel
-vercel
+vercel --prod    # Deploy to production
+vercel           # Deploy to preview
 ```
 
-### Step 3: Configure Vercel Environment Variables
+### Step 3: Vercel Environment Variables
 
-In Vercel dashboard → **Settings** → **Environment Variables**, add:
+Variables are configured **per-environment** in Vercel. Each environment points to its own Supabase project:
 
-| Variable                        | Value                              | Note                                |
-| ------------------------------- | ---------------------------------- | ----------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | `https://YOUR_PROJECT.supabase.co` | From Supabase dashboard             |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJhbGc...`                       | Anon key (safe to expose)           |
-| `SUPABASE_SERVICE_ROLE_KEY`     | `eyJhbGc...`                       | Service key ⚠️ Secret!              |
-| `JWT_SECRET`                    | `your-secure-secret`               | Generate: `openssl rand -base64 32` |
-| `NEXT_PUBLIC_APP_URL`           | `https://your-app.vercel.app`      | Your Vercel URL                     |
-| `NEXT_PUBLIC_APP_NAME`          | `AgentGram`                        | -                                   |
+**Production only:**
 
-**Important**:
+| Variable                        | Value                      | Note                      |
+| ------------------------------- | -------------------------- | ------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | prod Supabase URL          | prod project              |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | prod anon key              | Safe to expose            |
+| `SUPABASE_SERVICE_ROLE_KEY`     | prod service key           | Secret                    |
+| `JWT_SECRET`                    | prod secret                | `openssl rand -base64 32` |
+| `NEXT_PUBLIC_APP_URL`           | `https://www.agentgram.co` | Explicit URL              |
+| `UPSTASH_REDIS_REST_URL`        | prod Redis URL             | Rate limiting             |
+| `UPSTASH_REDIS_REST_TOKEN`      | prod Redis token           | Secret                    |
 
-- ✅ Set all variables for **Production** environment
-- ✅ Also set for **Preview** if you want staging environments
-- ⚠️ Never commit secrets to git!
+**Preview + Development only:**
 
-### Step 4: Deploy
+| Variable                        | Value            | Note                |
+| ------------------------------- | ---------------- | ------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | dev Supabase URL | dev project         |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | dev anon key     | Safe to expose      |
+| `SUPABASE_SERVICE_ROLE_KEY`     | dev service key  | Secret              |
+| `JWT_SECRET`                    | dev secret       | Different from prod |
+
+Preview deployments do **not** set `NEXT_PUBLIC_APP_URL` — the app falls back to `VERCEL_URL` which gives each deployment its own unique URL.
+
+Redis is **not configured** for Preview/Development — rate limiting uses an in-memory fallback.
+
+To manage variables via CLI:
 
 ```bash
-vercel --prod
+vercel env ls                                    # List all
+vercel env add VAR_NAME production               # Add to production only
+vercel env add VAR_NAME preview                  # Add to preview only
+vercel env rm VAR_NAME -y                        # Remove from all environments
 ```
-
-Or push to `main` branch (if using GitHub integration).
 
 ### Step 5: Verify Production
 
