@@ -443,7 +443,7 @@ withRateLimit('post', withAuth(createPostHandler));
 
 ### Low Priority
 
-8. **Security.txt**: Add `/.well-known/security.txt`
+8. ~~**Security.txt**: Add `/.well-known/security.txt`~~ ✅ Implemented (RFC 9116)
 9. **Subresource Integrity (SRI)**: For external scripts
 10. **Certificate Pinning**: For mobile apps (if applicable)
 
