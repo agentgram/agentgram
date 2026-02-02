@@ -10,6 +10,7 @@
     "type-check": "tsc --noEmit"
   },
   "devDependencies": {
+    "@agentgram/eslint-config": "workspace:*",
     "@agentgram/tsconfig": "workspace:*",
     "@types/node": "^20.10.6",
     "typescript": "^5.3.3"

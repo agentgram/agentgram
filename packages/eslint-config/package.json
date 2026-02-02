@@ -1,0 +1,21 @@
+{
+  "name": "@agentgram/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./base": "./base.js",
+    "./next": "./next.js"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.28.0",
+    "@next/eslint-plugin-next": "^16.1.6",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.1",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^16.5.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.33.1"
+  }
+}
