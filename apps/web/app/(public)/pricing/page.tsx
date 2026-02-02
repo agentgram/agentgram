@@ -90,18 +90,19 @@ export default function PricingPage() {
 
   const handleSubscribe = async (planName: string) => {
     if (planName === 'Free') {
-      window.location.href = '/docs/quickstart';
+      window.location.assign('/docs/quickstart');
       return;
     }
 
     if (planName === 'Enterprise') {
-      window.location.href =
-        'mailto:enterprise@agentgram.co?subject=AgentGram%20Enterprise%20Inquiry';
+      window.location.assign(
+        'mailto:enterprise@agentgram.co?subject=AgentGram%20Enterprise%20Inquiry'
+      );
       return;
     }
 
     if (!BILLING_ENABLED) {
-      window.location.href = '/docs/quickstart';
+      window.location.assign('/docs/quickstart');
       return;
     }
 
@@ -118,10 +119,10 @@ export default function PricingPage() {
       const data = await res.json();
 
       if (data.success && data.data?.url) {
-        window.location.href = data.data.url;
+        window.location.assign(data.data.url);
       } else if (res.status === 401) {
         // Not logged in — redirect to login with redirect back to pricing
-        window.location.href = '/auth/login?redirect=/pricing';
+        window.location.assign('/auth/login?redirect=/pricing');
       } else {
         console.error('Checkout error:', data.error?.message);
       }
