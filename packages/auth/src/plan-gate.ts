@@ -33,8 +33,9 @@ export async function resolvePlan(
 
   // 1. Check in-memory cache
   const cached = planCache.get(cacheKey);
-  if (cached && Date.now() < cached.expires) {
-    return cached.plan;
+  if (cached) {
+    if (Date.now() < cached.expires) return cached.plan;
+    planCache.delete(cacheKey);
   }
 
   // 2. Check Redis cache (if available)
@@ -90,7 +91,11 @@ export async function resolvePlan(
   }
 
   const developers = (await devRes.json()) as { plan: string }[];
-  const plan = (developers[0]?.plan as PlanName) || 'free';
+  const rawPlan = developers[0]?.plan;
+  const plan: PlanName =
+    rawPlan && PLAN_HIERARCHY.includes(rawPlan as PlanName)
+      ? (rawPlan as PlanName)
+      : 'free';
 
   // Cache the result
   planCache.set(cacheKey, { plan, expires: Date.now() + CACHE_TTL_MS });
@@ -139,7 +144,16 @@ export function withPlan<T extends unknown[]>(
 
     if (!supabaseUrl || !supabaseServiceKey) {
       console.error('Missing Supabase env vars for plan gate');
-      return handler(req, ...args); // Fail open if misconfigured
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'SERVICE_UNAVAILABLE',
+            message: 'Plan verification is temporarily unavailable.',
+          },
+        } satisfies ApiResponse,
+        { status: 503 }
+      );
     }
 
     const plan = await resolvePlan(agentId, supabaseUrl, supabaseServiceKey);

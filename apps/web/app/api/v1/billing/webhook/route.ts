@@ -46,6 +46,8 @@ function verifySignature(
   secret: string,
   signatureHeader: string
 ): boolean {
+  if (signatureHeader.length !== 64) return false;
+
   const hmac = Buffer.from(
     crypto.createHmac('sha256', secret).update(rawBody).digest('hex'),
     'hex'
@@ -54,6 +56,12 @@ function verifySignature(
 
   if (hmac.length !== signature.length) return false;
   return crypto.timingSafeEqual(hmac, signature);
+}
+
+function validateStoreId(attrs: SubscriptionAttributes): boolean {
+  const expectedStoreId = process.env.LEMONSQUEEZY_STORE_ID;
+  if (!expectedStoreId) return true;
+  return attrs.store_id === Number(expectedStoreId);
 }
 
 async function logWebhookEvent(
@@ -72,6 +80,21 @@ async function logWebhookEvent(
   } catch {
     // Non-critical: log failure should not block webhook processing
     console.error('Failed to log webhook event:', eventName);
+  }
+}
+
+/**
+ * Throws if a Supabase update fails, so the webhook returns 500
+ * and Lemon Squeezy retries the delivery.
+ */
+function assertUpdate(
+  result: { error: { message: string; code: string } | null },
+  context: string
+): void {
+  if (result.error) {
+    throw new Error(
+      `${context}: ${result.error.message} (${result.error.code})`
+    );
   }
 }
 
@@ -106,8 +129,30 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const payload = JSON.parse(rawBody) as WebhookPayload;
+  let payload: WebhookPayload;
+  try {
+    payload = JSON.parse(rawBody) as WebhookPayload;
+  } catch {
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: 'INVALID_PAYLOAD',
+          message: 'Request body is not valid JSON',
+        },
+      },
+      { status: 400 }
+    );
+  }
+
   const eventName = payload.meta.event_name;
+
+  if (!validateStoreId(payload.data.attributes)) {
+    console.warn(
+      `Webhook store_id mismatch: received ${payload.data.attributes.store_id}`
+    );
+    return NextResponse.json({ received: true });
+  }
 
   await logWebhookEvent(eventName, payload);
 
@@ -171,7 +216,7 @@ async function handleSubscriptionCreated(payload: WebhookPayload) {
     data: { attributes: attrs },
   } as never);
 
-  const { error } = await getSupabaseServiceClient()
+  const result = await getSupabaseServiceClient()
     .from('developers')
     .update({
       payment_customer_id: String(attrs.customer_id),
@@ -185,7 +230,7 @@ async function handleSubscriptionCreated(payload: WebhookPayload) {
     })
     .eq('id', developerId);
 
-  if (error) console.error('Failed to create subscription:', error);
+  assertUpdate(result, 'subscription_created');
 }
 
 async function handleSubscriptionUpdated(payload: WebhookPayload) {
@@ -194,7 +239,7 @@ async function handleSubscriptionUpdated(payload: WebhookPayload) {
     data: { attributes: attrs },
   } as never);
 
-  const { error } = await getSupabaseServiceClient()
+  const result = await getSupabaseServiceClient()
     .from('developers')
     .update({
       plan,
@@ -205,13 +250,13 @@ async function handleSubscriptionUpdated(payload: WebhookPayload) {
     })
     .eq('payment_subscription_id', payload.data.id);
 
-  if (error) console.error('Failed to update subscription:', error);
+  assertUpdate(result, 'subscription_updated');
 }
 
 async function handleSubscriptionCancelled(payload: WebhookPayload) {
   const attrs = payload.data.attributes;
 
-  const { error } = await getSupabaseServiceClient()
+  const result = await getSupabaseServiceClient()
     .from('developers')
     .update({
       subscription_status: 'canceled',
@@ -220,11 +265,11 @@ async function handleSubscriptionCancelled(payload: WebhookPayload) {
     })
     .eq('payment_subscription_id', payload.data.id);
 
-  if (error) console.error('Failed to cancel subscription:', error);
+  assertUpdate(result, 'subscription_cancelled');
 }
 
 async function handleSubscriptionExpired(payload: WebhookPayload) {
-  const { error } = await getSupabaseServiceClient()
+  const result = await getSupabaseServiceClient()
     .from('developers')
     .update({
       plan: 'free',
@@ -236,11 +281,11 @@ async function handleSubscriptionExpired(payload: WebhookPayload) {
     })
     .eq('payment_subscription_id', payload.data.id);
 
-  if (error) console.error('Failed to expire subscription:', error);
+  assertUpdate(result, 'subscription_expired');
 }
 
 async function handleSubscriptionPaused(payload: WebhookPayload) {
-  const { error } = await getSupabaseServiceClient()
+  const result = await getSupabaseServiceClient()
     .from('developers')
     .update({
       subscription_status: 'paused',
@@ -248,13 +293,13 @@ async function handleSubscriptionPaused(payload: WebhookPayload) {
     })
     .eq('payment_subscription_id', payload.data.id);
 
-  if (error) console.error('Failed to pause subscription:', error);
+  assertUpdate(result, 'subscription_paused');
 }
 
 async function handleSubscriptionUnpaused(payload: WebhookPayload) {
   const attrs = payload.data.attributes;
 
-  const { error } = await getSupabaseServiceClient()
+  const result = await getSupabaseServiceClient()
     .from('developers')
     .update({
       subscription_status: mapSubscriptionStatus(attrs.status),
@@ -262,11 +307,11 @@ async function handleSubscriptionUnpaused(payload: WebhookPayload) {
     })
     .eq('payment_subscription_id', payload.data.id);
 
-  if (error) console.error('Failed to unpause subscription:', error);
+  assertUpdate(result, 'subscription_unpaused');
 }
 
 async function handlePaymentSuccess(payload: WebhookPayload) {
-  const { error } = await getSupabaseServiceClient()
+  const result = await getSupabaseServiceClient()
     .from('developers')
     .update({
       subscription_status: 'active',
@@ -275,11 +320,11 @@ async function handlePaymentSuccess(payload: WebhookPayload) {
     })
     .eq('payment_subscription_id', payload.data.id);
 
-  if (error) console.error('Failed to record payment success:', error);
+  assertUpdate(result, 'payment_success');
 }
 
 async function handlePaymentFailed(payload: WebhookPayload) {
-  const { error } = await getSupabaseServiceClient()
+  const result = await getSupabaseServiceClient()
     .from('developers')
     .update({
       subscription_status: 'past_due',
@@ -287,5 +332,5 @@ async function handlePaymentFailed(payload: WebhookPayload) {
     })
     .eq('payment_subscription_id', payload.data.id);
 
-  if (error) console.error('Failed to record payment failure:', error);
+  assertUpdate(result, 'payment_failed');
 }
