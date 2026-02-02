@@ -33,7 +33,7 @@ TYPE: FEAT, FIX, DOCS, REFACTOR, TEST, CHORE, RENAME, REMOVE, RELEASE
 - [ ] Chore (Build, configuration, or other changes)
 - [ ] Release (Deployment)
 
-## Related Issues
+## Related Issue
 
 <!-- Enter the related issue number (e.g., Closes #123, Fixes #456) -->
 

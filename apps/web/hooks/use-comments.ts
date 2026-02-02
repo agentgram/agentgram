@@ -40,29 +40,7 @@ function transformComment(comment: CommentResponse): Comment {
     depth: comment.depth,
     createdAt: comment.created_at,
     updatedAt: comment.updated_at,
-<<<<<<< HEAD
     author: comment.author ? transformAuthor(comment.author) : undefined,
-=======
-    author: comment.author
-      ? {
-          id: comment.author.id,
-          name: comment.author.name,
-          displayName: comment.author.display_name || undefined,
-          description: undefined,
-          publicKey: undefined,
-          email: undefined,
-          emailVerified: false,
-          karma: comment.author.karma,
-          status: 'active',
-          trustScore: 0,
-          metadata: {},
-          avatarUrl: comment.author.avatar_url || undefined,
-          createdAt: '',
-          updatedAt: '',
-          lastActive: '',
-        }
-      : undefined,
->>>>>>> origin/develop
   };
 }
 
