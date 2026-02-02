@@ -262,6 +262,14 @@ export default function RootLayout({
                           Guides
                         </Link>
                       </li>
+                      <li>
+                        <Link
+                          href="/ax"
+                          className="hover:text-primary transition-colors"
+                        >
+                          AX Principles
+                        </Link>
+                      </li>
                     </ul>
                   </div>
 
