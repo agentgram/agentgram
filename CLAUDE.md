@@ -192,7 +192,7 @@ const url = process.env.NEXT_PUBLIC_APP_URL || 'https://agentgram.co';
 
 ---
 
-## Git Conventions
+## Git Workflow (Mandatory)
 
 > Detailed Guide: [docs/development/GIT_CONVENTIONS.md](docs/development/GIT_CONVENTIONS.md)
 
@@ -213,15 +213,75 @@ AgentGram uses **Git Flow** with two long-lived branches:
 - Hotfix branches are created from `main` and merged back to **both** `main` and `develop`
 - **Never** merge feature branches directly to `main`
 
-### Branch Names
+### Step 1: Create Issue First (REQUIRED before any work)
 
+Every task needs an issue. Use `gh issue create` with the appropriate format:
+
+**Feature/Enhancement:**
+
+```bash
+gh issue create \
+  --title "Description of the feature" \
+  --label "type: feature,area: <area>" \
+  --body "## Problem Statement
+<What problem does this solve?>
+
+## Proposed Solution
+<What should be built?>
+
+## Checklist
+- [ ] <task 1>
+- [ ] <task 2>"
 ```
-<type>/<description>-#<issue_number>
+
+**Bug Fix:**
+
+```bash
+gh issue create \
+  --title "Description of the bug" \
+  --label "type: bug,area: <area>" \
+  --body "## Bug Description
+<What is broken?>
+
+## Steps to Reproduce
+1. ...
+
+## Expected Behavior
+<What should happen?>
+
+## Actual Behavior
+<What happens instead?>"
 ```
 
-Example: `feat/signup-api-#14`, `fix/image-upload-#23`
+**Documentation/Infra/Refactor:**
 
-### Commit Messages
+```bash
+gh issue create \
+  --title "Description of the task" \
+  --label "type: documentation,area: <area>" \
+  --body "## Summary
+<What needs to be done and why?>
+
+## Changes
+- [ ] <change 1>
+- [ ] <change 2>"
+```
+
+Available labels — **type**: `type: bug`, `type: feature`, `type: enhancement`, `type: documentation`, `type: refactor`, `type: performance`, `type: security` — **area**: `area: backend`, `area: frontend`, `area: database`, `area: auth`, `area: infrastructure`, `area: testing`
+
+### Step 2: Create Branch from `develop`
+
+```bash
+git checkout develop
+git pull origin develop
+git checkout -b <type>/<description>-#<issue_number>
+```
+
+Branch name format: `<type>/<description>-#<issue_number>`
+
+Examples: `feat/signup-api-#14`, `fix/image-upload-#23`, `docs/infrastructure-guide-#35`
+
+### Step 3: Commit Messages
 
 ```
 <type>: <subject> (#<issue_number>)
@@ -245,15 +305,67 @@ Example: `feat/signup-api-#14`, `fix/image-upload-#23`
 1. type must be lowercase English
 2. subject must be in English, under 50 characters, no period at the end
 3. body should be written in English
-4. Issue number is optional (for reference)
+4. Reference the issue number in parentheses
 
-### PR Title
+### Step 4: Pre-Push Verification
 
+Before pushing, run these checks:
+
+```bash
+pnpm type-check    # TypeScript errors = MUST fix before commit
+pnpm lint           # Lint errors = MUST fix before commit
+pnpm build          # Build failure = MUST fix before commit
 ```
-[TYPE] Description (#IssueNumber)
+
+### Step 5: Create PR (REQUIRED format)
+
+Push the branch and create a PR targeting `develop`:
+
+```bash
+git push -u origin <branch-name>
+
+gh pr create --base develop --head <branch-name> \
+  --title "[TYPE] Description (#IssueNumber)" \
+  --body "$(cat <<'EOF'
+## Description
+
+<Brief description of the changes>
+
+## Type of Change
+
+- [x] <mark the relevant type>
+
+## Changes Made
+
+- <change 1>
+- <change 2>
+
+## Related Issues
+
+Closes #<issue_number>
+
+## Testing
+
+- [ ] Manual testing performed
+- [ ] Type check passes (`pnpm type-check`)
+- [ ] Lint passes (`pnpm lint`)
+- [ ] Build succeeds (`pnpm build`)
+
+## Checklist
+
+- [x] My code follows the project's code style
+- [x] I have performed a self-review of my code
+- [x] I have made corresponding changes to the documentation
+- [x] My changes generate no new warnings
+EOF
+)"
 ```
 
-Example: `[FEAT] Implement signup API (#14)`
+**PR Title format:** `[TYPE] Description (#IssueNumber)`
+
+Examples: `[FEAT] Implement signup API (#14)`, `[DOCS] Add infrastructure guide (#35)`
+
+**TYPE must be UPPERCASE:** `FEAT`, `FIX`, `DOCS`, `REFACTOR`, `TEST`, `CHORE`
 
 ---
 
