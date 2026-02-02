@@ -91,11 +91,7 @@ git branch -d feat/signup-api-#14
 gh pr create --base main --head develop --title "[RELEASE] Deploy vX.Y.Z"
 
 # 3. After review and approval, merge via GitHub UI
-# 4. Tag the release on main
-git checkout main
-git pull origin main
-git tag vX.Y.Z
-git push origin vX.Y.Z
+# 4. Tag + GitHub Release are created automatically by auto-release.yml
 ```
 
 ### Hotfix (Emergency Fix)
@@ -272,22 +268,37 @@ git commit -m "chore: apply code formatting"
 
 ## Release Process
 
-Manage versions through GitHub Releases. Pushing a tag automatically creates a release.
+Releases are **fully automated** via `.github/workflows/auto-release.yml`. When a PR is merged into `main`, the workflow automatically:
 
-### How to Create a Release
+1. Determines the next version (from commit message or auto-increment patch)
+2. Creates and pushes a git tag
+3. Generates categorized release notes
+4. Publishes a GitHub Release
+
+### How Releases Work
+
+```
+PR merged to main
+  → auto-release.yml triggers
+  → Determines version (e.g., v0.1.4)
+  → Creates git tag
+  → Generates release notes from commit history
+  → Publishes GitHub Release
+```
+
+**No manual tagging is needed.** Simply merge a PR to `main` and the release is created automatically.
+
+### Version Detection
+
+The workflow determines the version in this order:
+
+1. **From commit message**: If the first line contains `vX.Y.Z` (e.g., `Release v0.2.0`), that version is used
+2. **Auto-increment**: Otherwise, the patch version is incremented from the last tag (e.g., `v0.1.3` → `v0.1.4`)
+
+To release a specific version (e.g., minor/major bump), include it in the PR title:
 
 ```bash
-# 1. Merge develop → main via PR (see Release flow above)
-
-# 2. Move to main branch
-git checkout main
-git pull origin main
-
-# 3. Create tag (using Semantic Versioning)
-git tag v1.0.0
-
-# 4. Push tag → GitHub Release is automatically created
-git push origin v1.0.0
+gh pr create --base main --head develop --title "[RELEASE] v0.2.0"
 ```
 
 ### Versioning Rules (Semantic Versioning)
@@ -301,13 +312,15 @@ git push origin v1.0.0
 
 ### Automatic Release Notes Generation
 
-Release notes are automatically categorized based on PR labels according to `.github/release.yml` configuration.
+Release notes are automatically categorized based on **commit message prefixes** by `auto-release.yml`.
 
-| Label           | Category      |
-| --------------- | ------------- |
-| `enhancement`   | New Features  |
-| `bug`           | Bug Fixes     |
-| `documentation` | Documentation |
-| `task`          | Tasks         |
+| Commit Prefix | Category         |
+| ------------- | ---------------- |
+| `feat:`       | ✨ Features      |
+| `fix:`        | 🐛 Bug Fixes     |
+| `docs:`       | 📚 Documentation |
+| `refactor:`   | ♻️ Refactoring   |
 
-> **Tip**: Attaching appropriate labels when creating a PR makes the release notes more organized.
+All commits are also listed under an "All Commits" section.
+
+> **Tip**: Using conventional commit prefixes (`feat:`, `fix:`, `docs:`, `refactor:`) ensures your changes are properly categorized in the release notes.
