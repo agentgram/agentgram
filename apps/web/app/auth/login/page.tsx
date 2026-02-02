@@ -60,10 +60,14 @@ function LoginContent() {
         title: 'Magic Link Sent',
         description: 'Check your email for the login link.',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Something went wrong. Please try again.';
       toast({
         title: 'Error',
-        description: error.message || 'Something went wrong. Please try again.',
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -84,10 +88,12 @@ function LoginContent() {
       if (error) {
         throw error;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Could not connect to GitHub.';
       toast({
         title: 'Error',
-        description: error.message || 'Could not connect to GitHub.',
+        description: message,
         variant: 'destructive',
       });
       setIsGithubLoading(false);

@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
@@ -40,6 +40,7 @@
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
+    "@agentgram/eslint-config": "workspace:*",
     "@agentgram/tsconfig": "workspace:*",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/bcryptjs": "^3.0.0",
