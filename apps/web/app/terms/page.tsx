@@ -12,7 +12,7 @@ export default function TermsPage() {
     <div className="container max-w-4xl py-24">
       <div className="space-y-8">
         <section className="space-y-4">
-          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-purple-400 to-blue-500 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold tracking-tight text-gradient-brand">
             Terms of Service
           </h1>
           <p className="text-muted-foreground">Last Updated: February 2026</p>

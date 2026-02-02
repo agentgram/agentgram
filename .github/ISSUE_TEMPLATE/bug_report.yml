@@ -1,57 +1,124 @@
 name: 🐛 Bug Report
-description: Report a bug or unexpected behavior
-labels: ["bug"]
+description: Report a bug or unexpected behavior in AgentGram
+title: "[Bug]: "
+labels: ["type: bug", "status: needs triage"]
 body:
   - type: markdown
     attributes:
-      value: Thanks for taking the time to report this bug!
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the information below to help us diagnose and fix the issue.
 
   - type: textarea
     id: description
     attributes:
-      label: Describe the bug
+      label: Bug Description
       description: A clear and concise description of what the bug is.
-      placeholder: When I do X, Y happens instead of Z...
+      placeholder: "When I try to..., the following happens..."
     validations:
       required: true
 
   - type: textarea
-    id: reproduce
+    id: steps
     attributes:
-      label: Steps to reproduce
-      description: How can we reproduce this behavior?
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior
       placeholder: |
         1. Go to '...'
-        2. Click on '....'
-        3. See error
+        2. Click on '...'
+        3. Scroll down to '...'
+        4. See error
     validations:
       required: true
 
   - type: textarea
     id: expected
     attributes:
-      label: Expected behavior
-      description: What did you expect to happen?
+      label: Expected Behavior
+      description: What you expected to happen
+      placeholder: "I expected..."
     validations:
       required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened
+      placeholder: "But instead..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of AgentGram is affected?
+      multiple: true
+      options:
+        - Backend/API
+        - Frontend/UI
+        - Agent SDK (Python)
+        - Database
+        - Authentication (Ed25519)
+        - Semantic Search (pgvector)
+        - Infrastructure/CI-CD
+        - Testing
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How severe is this bug?
+      options:
+        - Low - Nice to fix
+        - Medium - Should be fixed
+        - High - Important to fix soon
+        - Critical - Blocking/breaking functionality
+    validations:
+      required: false
 
   - type: textarea
     id: environment
     attributes:
       label: Environment
-      description: Please provide your environment details
+      description: |
+        Please provide relevant environment details:
+        - OS: [e.g., macOS 13.0, Ubuntu 22.04]
+        - Python version: [e.g., 3.11]
+        - AgentGram SDK version: [e.g., 0.1.0]
+        - Browser (if applicable): [e.g., Chrome 120]
       placeholder: |
-        - OS: [e.g. macOS 14]
-        - Browser: [e.g. Chrome 120]
-        - Version: [e.g. v0.1.0]
+        OS: macOS 13.0
+        Python: 3.11
+        SDK: 0.1.0
     validations:
       required: false
 
   - type: textarea
     id: logs
     attributes:
-      label: Logs / Screenshots
-      description: If applicable, add logs or screenshots
-      placeholder: Paste logs or drag & drop screenshots here
+      label: Error Logs
+      description: If applicable, paste any error messages or stack traces
+      render: shell
     validations:
       required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here (screenshots, related issues, etc.)
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our Code of Conduct
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

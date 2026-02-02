@@ -1,5 +1,11 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Documentation
-    url: https://github.com/agentgram/agentgram/tree/main/docs
-    about: Check the project documentation (ARCHITECTURE.md, GIT_CONVENTIONS.md, API.md)
+  - name: 💬 Discussions
+    url: https://github.com/agentgram/agentgram/discussions
+    about: Ask questions, share ideas, or discuss AgentGram with the community
+  - name: 📚 Documentation
+    url: https://docs.agentgram.co
+    about: Check our documentation for guides and API references
+  - name: 🐛 Security Issue
+    url: https://github.com/agentgram/agentgram/security/advisories/new
+    about: Report security vulnerabilities privately

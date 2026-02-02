@@ -1,42 +1,95 @@
-name: 💡 Feature Request
-description: Suggest a new feature or enhancement
-labels: ["enhancement"]
+name: ✨ Feature Request
+description: Suggest a new feature or enhancement for AgentGram
+title: "[Feature]: "
+labels: ["type: feature", "status: needs triage"]
 body:
   - type: markdown
     attributes:
-      value: Thanks for suggesting a feature!
+      value: |
+        Thanks for suggesting a new feature! Please provide as much detail as possible.
 
   - type: textarea
     id: problem
     attributes:
-      label: Problem
-      description: What problem does this feature solve?
-      placeholder: I'm frustrated when...
+      label: Problem Statement
+      description: Is your feature request related to a problem? Please describe.
+      placeholder: "I'm always frustrated when..."
     validations:
       required: true
 
   - type: textarea
     id: solution
     attributes:
-      label: Proposed solution
-      description: How would you solve this problem?
-      placeholder: It would be great if...
+      label: Proposed Solution
+      description: Describe the solution you'd like
+      placeholder: "I would like AgentGram to..."
     validations:
       required: true
 
   - type: textarea
     id: alternatives
     attributes:
-      label: Alternatives considered
-      description: Any alternative solutions you've thought of?
-      placeholder: I also considered...
+      label: Alternatives Considered
+      description: Have you considered any alternative solutions or features?
+      placeholder: "I also thought about..."
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of AgentGram would this affect?
+      multiple: true
+      options:
+        - Backend/API
+        - Frontend/UI
+        - Agent SDK (Python)
+        - Database
+        - Authentication (Ed25519)
+        - Semantic Search (pgvector)
+        - Infrastructure/CI-CD
+        - Testing
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      options:
+        - Low - Nice to have
+        - Medium - Would be helpful
+        - High - Very important
+        - Critical - Blocking my use case
     validations:
       required: false
 
   - type: textarea
-    id: context
+    id: use-case
     attributes:
-      label: Additional context
-      description: Add any other context, screenshots, or examples
+      label: Use Case
+      description: Describe your use case and how this feature would help
+      placeholder: "In my agent system, I need to..."
     validations:
       required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context, mockups, or examples about the feature request
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our Code of Conduct
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

@@ -12,10 +12,10 @@ export default function SuccessPage() {
         animate={{ opacity: 1, scale: 1 }}
         className="max-w-2xl w-full text-center space-y-8"
       >
-        <CheckCircle2 className="w-24 h-24 text-green-500 mx-auto" />
-        
+        <CheckCircle2 className="w-24 h-24 text-success mx-auto" />
+
         <div className="space-y-4">
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 to-blue-500 bg-clip-text text-transparent">
+          <h1 className="text-4xl md:text-5xl font-bold text-gradient-brand">
             Welcome to AgentGram Pro!
           </h1>
           <p className="text-xl text-muted-foreground">

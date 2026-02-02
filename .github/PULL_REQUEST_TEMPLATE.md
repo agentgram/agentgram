@@ -1,56 +1,90 @@
-<!--
-## PR Title Convention
-[TYPE] Description (#IssueNumber)
+## Description
 
-Examples:
-- [FEAT] Implement agent registration API (#14)
-- [FIX] Fix NPE on image upload (#23)
-- [REFACTOR] Separate token logic (#8)
-- [DOCS] Update architecture documentation (#6)
-- [CHORE] Add CI/CD pipeline (#3)
-- [RELEASE] Release v1.0.0 (#30)
-
-TYPE: FEAT, FIX, DOCS, REFACTOR, TEST, CHORE, RENAME, REMOVE, RELEASE
--->
-
-## Summary
-
-<!-- Briefly describe the changes -->
-
-## Changes
-
-<!-- List the changes made -->
+<!-- Provide a brief description of the changes in this PR -->
 
 ## Type of Change
 
-<!-- Mark with 'x' in the applicable box -->
+<!-- Mark the relevant option(s) with an "x" -->
 
-- [ ] Bug fix (Fixes a bug without affecting existing functionality)
-- [ ] New feature (Adds a new feature without affecting existing functionality)
-- [ ] Breaking change (Fix that affects existing functionality)
-- [ ] Refactoring (Code improvement without functional changes)
-- [ ] Documentation (Documentation update)
-- [ ] Chore (Build, configuration, or other changes)
-- [ ] Release (Deployment)
+- [ ] 🐛 Bug fix (`type: bug`)
+- [ ] ✨ New feature (`type: feature`)
+- [ ] 🔧 Enhancement (`type: enhancement`)
+- [ ] 📚 Documentation (`type: documentation`)
+- [ ] ♻️ Refactor (`type: refactor`)
+- [ ] ⚡ Performance (`type: performance`)
+- [ ] 🔒 Security (`type: security`)
 
-## Related Issue
+## Area
 
-<!-- Enter the related issue number (e.g., Closes #123, Fixes #456) -->
+<!-- Mark the relevant area(s) with an "x" -->
+
+- [ ] 🔧 Backend (`area: backend`)
+- [ ] 🎨 Frontend (`area: frontend`)
+- [ ] 🤖 Agent SDK (`area: agent-sdk`)
+- [ ] 💾 Database (`area: database`)
+- [ ] 🔐 Authentication (`area: auth`)
+- [ ] 🔍 Search (`area: search`)
+- [ ] 🏗️ Infrastructure (`area: infrastructure`)
+- [ ] 🧪 Testing (`area: testing`)
+
+## Changes Made
+
+<!-- List the main changes in this PR -->
+
+- 
+- 
+- 
+
+## Related Issues
+
+<!-- Link any related issues (e.g., "Closes #123" or "Fixes #456") -->
+
+-
+
+## Testing
+
+<!-- Describe how you tested these changes -->
+
+- [ ] Unit tests added/updated
+- [ ] Integration tests added/updated
+- [ ] Manual testing performed
+- [ ] E2E tests added/updated
+
+### Test Steps
+
+<!-- Provide steps for reviewers to test your changes -->
+
+1. 
+2. 
+3. 
+
+## Breaking Changes
+
+<!-- Does this PR introduce any breaking changes? -->
+
+- [ ] ⚠️ Yes, this PR includes breaking changes (`breaking change`)
+  - **Describe the breaking changes:**
+  - **Migration guide:**
+
+- [ ] ✅ No breaking changes
 
 ## Checklist
 
-<!-- Checklist before submitting the PR -->
+<!-- Mark completed items with an "x" -->
 
-- [ ] Followed code conventions (Refer to [CODE_STYLE.md](docs/development/CODE_STYLE.md))
-- [ ] Build completes successfully locally (`pnpm build`)
-- [ ] Type check passes (`pnpm type-check`)
-- [ ] Lint passes (`pnpm lint`)
-- [ ] Tests written for new features (if applicable)
+- [ ] My code follows the project's code style
+- [ ] I have performed a self-review of my code
+- [ ] I have commented my code, particularly in hard-to-understand areas
+- [ ] I have made corresponding changes to the documentation
+- [ ] My changes generate no new warnings
+- [ ] I have added tests that prove my fix is effective or that my feature works
+- [ ] New and existing unit tests pass locally with my changes
+- [ ] Any dependent changes have been merged and published
 
-## Screenshots (Optional)
+## Screenshots (if applicable)
 
-<!-- If there are UI changes, please attach screenshots -->
+<!-- Add screenshots or GIFs to help explain your changes -->
 
 ## Additional Notes
 
-<!-- Enter any additional information the reviewer should know -->
+<!-- Any additional information for reviewers -->
