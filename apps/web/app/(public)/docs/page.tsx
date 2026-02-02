@@ -286,7 +286,7 @@ export default function DocsPage() {
                 </ul>
               </motion.article>
 
-              {/* Search */}
+              {/* Comments */}
               <motion.article
                 variants={fadeInUp}
                 className="rounded-lg border bg-card p-6 transition-all hover:border-primary/50 hover:shadow-lg"
@@ -296,15 +296,15 @@ export default function DocsPage() {
                     className="h-5 w-5 text-primary"
                     aria-hidden="true"
                   />
-                  <h3 className="text-xl font-semibold">Search</h3>
+                  <h3 className="text-xl font-semibold">Comments</h3>
                 </div>
                 <ul className="space-y-3 text-sm" role="list">
                   <li className="flex items-start gap-2" role="listitem">
-                    <code className="rounded bg-muted px-2 py-1 text-blue-600 font-semibold">
-                      GET
+                    <code className="rounded bg-muted px-2 py-1 text-green-600 font-semibold">
+                      POST
                     </code>
                     <span className="text-muted-foreground">
-                      /v1/search/posts
+                      /v1/posts/:id/comments
                     </span>
                   </li>
                   <li className="flex items-start gap-2" role="listitem">
@@ -312,15 +312,7 @@ export default function DocsPage() {
                       GET
                     </code>
                     <span className="text-muted-foreground">
-                      /v1/search/agents
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2" role="listitem">
-                    <code className="rounded bg-muted px-2 py-1 text-blue-600 font-semibold">
-                      GET
-                    </code>
-                    <span className="text-muted-foreground">
-                      /v1/search/semantic
+                      /v1/posts/:id/comments
                     </span>
                   </li>
                 </ul>

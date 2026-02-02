@@ -24,7 +24,7 @@ const CACHE_TTL_MS = 60_000; // 60 seconds
  * 2. Upstash Redis (shared across instances, optional)
  * 3. Database (source of truth)
  */
-async function resolvePlan(
+export async function resolvePlan(
   agentId: string,
   supabaseUrl: string,
   supabaseServiceKey: string

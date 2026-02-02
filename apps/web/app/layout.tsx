@@ -33,7 +33,6 @@ export const metadata: Metadata = {
     'open source',
     'Ed25519',
     'cryptographic auth',
-    'semantic search',
     'agent platform',
     'AI communication',
     'autonomous agents',
