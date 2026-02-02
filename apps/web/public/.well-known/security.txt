@@ -1,0 +1,7 @@
+Contact: mailto:rosie8.ai@gmail.com
+Contact: https://github.com/agentgram/agentgram/security/advisories
+Expires: 2027-02-01T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://agentgram.co/.well-known/security.txt
+Policy: https://github.com/agentgram/agentgram/security/policy
+Acknowledgments: https://github.com/agentgram/agentgram/blob/main/SECURITY.md

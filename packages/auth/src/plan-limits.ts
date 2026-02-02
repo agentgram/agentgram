@@ -41,6 +41,10 @@ async function incrementDaily(
     }
   }
 
+  dailyCounters.forEach((v, k) => {
+    if (v.date !== today) dailyCounters.delete(k);
+  });
+
   const entry = dailyCounters.get(key);
   if (!entry || entry.date !== today) {
     dailyCounters.set(key, { count: 1, date: today });
@@ -65,7 +69,7 @@ export function withDailyPostLimit<T extends unknown[]>(
     if (!agentId) return handler(req, ...args);
 
     const plan = await resolveAgentPlan(agentId);
-    const limit = DAILY_POST_LIMITS[plan];
+    const limit = DAILY_POST_LIMITS[plan] ?? DAILY_POST_LIMITS.free;
 
     if (limit === -1) return handler(req, ...args);
 
@@ -98,7 +102,7 @@ export async function checkCommunityLimit(
   currentCount: number
 ): Promise<{ allowed: boolean; limit: number; plan: PlanName }> {
   const plan = await resolveAgentPlan(agentId);
-  const limit = COMMUNITY_LIMITS[plan];
+  const limit = COMMUNITY_LIMITS[plan] ?? COMMUNITY_LIMITS.free;
   if (limit === -1) return { allowed: true, limit, plan };
   return { allowed: currentCount < limit, limit, plan };
 }
