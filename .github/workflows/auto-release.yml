@@ -19,66 +19,58 @@ jobs:
 
       - name: Get next version
         id: version
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
-          # Get last tag
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
           echo "Last tag: $LAST_TAG"
-          
-          # Extract version from PR title (e.g., [RELEASE] v1.2.0)
-          COMMIT_MSG="${{ github.event.head_commit.message }}"
-          echo "Commit message: $COMMIT_MSG"
-          
-          if [[ "$COMMIT_MSG" =~ v([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+
+          FIRST_LINE=$(echo "$COMMIT_MSG" | head -1)
+          echo "Commit subject: $FIRST_LINE"
+
+          if [[ "$FIRST_LINE" =~ v([0-9]+\.[0-9]+\.[0-9]+) ]]; then
             VERSION="v${BASH_REMATCH[1]}"
             echo "Version from commit: $VERSION"
           else
-            # Auto-increment MINOR version
             IFS='.' read -ra PARTS <<< "${LAST_TAG//v/}"
             MAJOR=${PARTS[0]}
             MINOR=${PARTS[1]}
-            PATCH=${PARTS[2]}
-            
-            # Increment MINOR, reset PATCH
-            MINOR=$((MINOR + 1))
-            VERSION="v${MAJOR}.${MINOR}.0"
+            PATCH=$((PARTS[2] + 1))
+            VERSION="v${MAJOR}.${MINOR}.${PATCH}"
             echo "Auto-incremented version: $VERSION"
           fi
-          
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "last_tag=$LAST_TAG" >> $GITHUB_OUTPUT
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "last_tag=$LAST_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Check if tag exists
         id: check
         run: |
           if git rev-parse "${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-            echo "Tag ${{ steps.version.outputs.version }} already exists"
+            echo "exists=true" >> "$GITHUB_OUTPUT"
           else
-            echo "exists=false" >> $GITHUB_OUTPUT
-            echo "Tag ${{ steps.version.outputs.version }} does not exist"
+            echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Create & Push Tag
+      - name: Create and push tag
         if: steps.check.outputs.exists == 'false'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          LAST_TAG: ${{ steps.version.outputs.last_tag }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          
-          # Generate changelog since last tag
-          CHANGELOG=$(git log ${{ steps.version.outputs.last_tag }}..HEAD --pretty=format:"- %s (%h)" --no-merges)
-          
-          # Create annotated tag
-          git tag -a ${{ steps.version.outputs.version }} -m "Release ${{ steps.version.outputs.version }}
 
-Changes since ${{ steps.version.outputs.last_tag }}:
-$CHANGELOG"
-          
-          # Push tag (this will trigger release.yml)
-          git push origin ${{ steps.version.outputs.version }}
-          
-          echo "✅ Tag ${{ steps.version.outputs.version }} created and pushed"
+          CHANGELOG=$(git log "${LAST_TAG}..HEAD" --pretty=format:"- %s (%h)" --no-merges)
 
-      - name: Skip if tag exists
+          git tag -a "$VERSION" -m "Release ${VERSION}
+
+          Changes since ${LAST_TAG}:
+          ${CHANGELOG}"
+
+          git push origin "$VERSION"
+          echo "Tag $VERSION created and pushed"
+
+      - name: Skip (tag exists)
         if: steps.check.outputs.exists == 'true'
-        run: |
-          echo "⏭️ Skipping tag creation - ${{ steps.version.outputs.version }} already exists"
+        run: echo "Tag ${{ steps.version.outputs.version }} already exists, skipping"
