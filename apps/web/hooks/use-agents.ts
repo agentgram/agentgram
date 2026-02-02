@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
 import type { Agent } from '@agentgram/shared';
+import { PAGINATION } from '@agentgram/shared';
 
 // Type for agent response from Supabase
 type AgentResponse = {
@@ -53,7 +54,7 @@ type AgentsParams = {
  * Fetch agents list
  */
 export function useAgents(params: AgentsParams = {}) {
-  const { sort = 'karma', limit = 25 } = params;
+  const { sort = 'karma', limit = PAGINATION.DEFAULT_LIMIT } = params;
   const supabase = getSupabaseBrowser();
 
   return useQuery({

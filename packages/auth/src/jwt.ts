@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
+import { JWT_EXPIRY } from '@agentgram/shared';
 
-// Lazy check - don't throw at module evaluation (breaks build)
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
@@ -8,7 +8,6 @@ function getJwtSecret(): string {
   }
   return secret;
 }
-const JWT_EXPIRY = '7d'; // 7 days
 
 export interface JwtPayload {
   agentId: string;

@@ -2,28 +2,25 @@
  * URL validation and sanitization utilities
  */
 
+import { CONTENT_LIMITS } from './constants';
+
 const ALLOWED_PROTOCOLS = ['http:', 'https:'];
-const DANGEROUS_PATTERNS = [
-  /javascript:/i,
-  /data:/i,
-  /vbscript:/i,
-  /file:/i,
-];
+const DANGEROUS_PATTERNS = [/javascript:/i, /data:/i, /vbscript:/i, /file:/i];
 
 export function validateUrl(urlString: string): boolean {
   try {
     const url = new URL(urlString);
-    
+
     // Check protocol
     if (!ALLOWED_PROTOCOLS.includes(url.protocol)) {
       return false;
     }
-    
+
     // Check for dangerous patterns
-    if (DANGEROUS_PATTERNS.some(pattern => pattern.test(urlString))) {
+    if (DANGEROUS_PATTERNS.some((pattern) => pattern.test(urlString))) {
       return false;
     }
-    
+
     return true;
   } catch {
     return false;
@@ -34,7 +31,7 @@ export function sanitizeUrl(urlString: string): string | null {
   if (!validateUrl(urlString)) {
     return null;
   }
-  
+
   try {
     const url = new URL(urlString);
     return url.toString();
@@ -60,26 +57,26 @@ export function sanitizeHtml(html: string): string {
  * Agent-specific sanitization
  */
 export function sanitizeAgentName(name: string): string {
-  return name.trim().slice(0, 50); // Max 50 chars
+  return name.trim().slice(0, CONTENT_LIMITS.AGENT_NAME_MAX);
 }
 
 export function sanitizeDisplayName(name: string): string {
-  return name.trim().slice(0, 100); // Max 100 chars
+  return name.trim().slice(0, CONTENT_LIMITS.DISPLAY_NAME_MAX);
 }
 
 export function sanitizeDescription(description: string): string {
-  return description.trim().slice(0, 500); // Max 500 chars
+  return description.trim().slice(0, CONTENT_LIMITS.DESCRIPTION_MAX);
 }
 
 /**
  * Post content sanitization
  */
 export function sanitizePostTitle(title: string): string {
-  return title.trim().slice(0, 300); // Max 300 chars
+  return title.trim().slice(0, CONTENT_LIMITS.POST_TITLE_MAX);
 }
 
 export function sanitizePostContent(content: string): string {
-  return content.trim().slice(0, 10000); // Max 10k chars
+  return content.trim().slice(0, CONTENT_LIMITS.POST_CONTENT_MAX);
 }
 
 /**
@@ -103,14 +100,16 @@ export function validatePublicKey(publicKey: string): boolean {
  */
 export function sanitizeCommentContent(content: string): string {
   const trimmed = content.trim();
-  
+
   if (trimmed.length === 0) {
     throw new Error('Comment content cannot be empty');
   }
-  
-  if (trimmed.length > 10000) {
-    throw new Error('Comment content exceeds maximum length of 10,000 characters');
+
+  if (trimmed.length > CONTENT_LIMITS.COMMENT_CONTENT_MAX) {
+    throw new Error(
+      `Comment content exceeds maximum length of ${CONTENT_LIMITS.COMMENT_CONTENT_MAX.toLocaleString()} characters`
+    );
   }
-  
+
   return trimmed;
 }

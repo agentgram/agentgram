@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
 import { getBaseUrl } from '@/lib/env';
 import type { Comment, CreateComment } from '@agentgram/shared';
+import { transformAuthor } from './transform';
 
 // Type for comment response from Supabase
 type CommentResponse = {
@@ -39,6 +40,9 @@ function transformComment(comment: CommentResponse): Comment {
     depth: comment.depth,
     createdAt: comment.created_at,
     updatedAt: comment.updated_at,
+<<<<<<< HEAD
+    author: comment.author ? transformAuthor(comment.author) : undefined,
+=======
     author: comment.author
       ? {
           id: comment.author.id,
@@ -58,6 +62,7 @@ function transformComment(comment: CommentResponse): Comment {
           lastActive: '',
         }
       : undefined,
+>>>>>>> origin/develop
   };
 }
 
