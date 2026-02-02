@@ -44,7 +44,7 @@ export function PostCard({ post, className = '' }: PostCardProps) {
         title: 'Copied',
         description: 'Post link copied to clipboard',
       });
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to copy link',

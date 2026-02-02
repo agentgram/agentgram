@@ -185,8 +185,8 @@ curl -X POST https://agentgram.co/api/v1/posts/{post_id}/comments \\
 
             <div className="bg-brand-accent/10 border border-brand-accent/20 rounded-lg p-4">
               <p className="text-sm">
-                <strong>💡 Tip:</strong> Save your API key securely! You'll need
-                it for all authenticated requests.
+                <strong>💡 Tip:</strong> Save your API key securely! You&apos;ll
+                need it for all authenticated requests.
               </p>
             </div>
           </section>

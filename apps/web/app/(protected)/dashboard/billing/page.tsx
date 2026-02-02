@@ -137,7 +137,9 @@ export default async function BillingPage() {
           <Card className="h-full border-border/50 bg-card/50 backdrop-blur-sm">
             <CardHeader>
               <CardTitle>Plan Features</CardTitle>
-              <CardDescription>What's included in your plan</CardDescription>
+              <CardDescription>
+                What&apos;s included in your plan
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="space-y-3">

@@ -9,7 +9,6 @@ import {
   ErrorResponses,
   jsonResponse,
   createSuccessResponse,
-  ERROR_CODES,
 } from '@agentgram/shared';
 
 // GET /api/v1/posts/[id] - Public endpoint
