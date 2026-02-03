@@ -89,6 +89,8 @@ export type Database = {
           display_name: string | null;
           email: string | null;
           email_verified: boolean | null;
+          follower_count: number | null;
+          following_count: number | null;
           id: string;
           karma: number | null;
           last_active: string | null;
@@ -98,6 +100,7 @@ export type Database = {
           status: string | null;
           trust_score: number | null;
           updated_at: string | null;
+          webhook_url: string | null;
         };
         Insert: {
           avatar_url?: string | null;
@@ -107,6 +110,8 @@ export type Database = {
           display_name?: string | null;
           email?: string | null;
           email_verified?: boolean | null;
+          follower_count?: number | null;
+          following_count?: number | null;
           id?: string;
           karma?: number | null;
           last_active?: string | null;
@@ -116,6 +121,7 @@ export type Database = {
           status?: string | null;
           trust_score?: number | null;
           updated_at?: string | null;
+          webhook_url?: string | null;
         };
         Update: {
           avatar_url?: string | null;
@@ -125,6 +131,8 @@ export type Database = {
           display_name?: string | null;
           email?: string | null;
           email_verified?: boolean | null;
+          follower_count?: number | null;
+          following_count?: number | null;
           id?: string;
           karma?: number | null;
           last_active?: string | null;
@@ -134,6 +142,7 @@ export type Database = {
           status?: string | null;
           trust_score?: number | null;
           updated_at?: string | null;
+          webhook_url?: string | null;
         };
         Relationships: [
           {
@@ -195,7 +204,6 @@ export type Database = {
           content: string;
           created_at: string | null;
           depth: number | null;
-          likes: number | null;
           id: string;
           parent_id: string | null;
           post_id: string | null;
@@ -206,7 +214,6 @@ export type Database = {
           content: string;
           created_at?: string | null;
           depth?: number | null;
-          likes?: number | null;
           id?: string;
           parent_id?: string | null;
           post_id?: string | null;
@@ -217,7 +224,6 @@ export type Database = {
           content?: string;
           created_at?: string | null;
           depth?: number | null;
-          likes?: number | null;
           id?: string;
           parent_id?: string | null;
           post_id?: string | null;
@@ -419,6 +425,156 @@ export type Database = {
           },
         ];
       };
+      hashtags: {
+        Row: {
+          created_at: string | null;
+          id: string;
+          last_used_at: string | null;
+          name: string;
+          post_count: number | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string;
+          last_used_at?: string | null;
+          name: string;
+          post_count?: number | null;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string;
+          last_used_at?: string | null;
+          name?: string;
+          post_count?: number | null;
+        };
+        Relationships: [];
+      };
+      mentions: {
+        Row: {
+          created_at: string | null;
+          id: string;
+          mentioned_id: string;
+          mentioner_id: string;
+          source_id: string;
+          source_type: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string;
+          mentioned_id: string;
+          mentioner_id: string;
+          source_id: string;
+          source_type: string;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string;
+          mentioned_id?: string;
+          mentioner_id?: string;
+          source_id?: string;
+          source_type?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'mentions_mentioned_id_fkey';
+            columns: ['mentioned_id'];
+            isOneToOne: false;
+            referencedRelation: 'agents';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'mentions_mentioner_id_fkey';
+            columns: ['mentioner_id'];
+            isOneToOne: false;
+            referencedRelation: 'agents';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      notifications: {
+        Row: {
+          actor_id: string;
+          created_at: string | null;
+          id: string;
+          message: string | null;
+          read: boolean | null;
+          recipient_id: string;
+          target_id: string | null;
+          target_type: string | null;
+          type: string;
+        };
+        Insert: {
+          actor_id: string;
+          created_at?: string | null;
+          id?: string;
+          message?: string | null;
+          read?: boolean | null;
+          recipient_id: string;
+          target_id?: string | null;
+          target_type?: string | null;
+          type: string;
+        };
+        Update: {
+          actor_id?: string;
+          created_at?: string | null;
+          id?: string;
+          message?: string | null;
+          read?: boolean | null;
+          recipient_id?: string;
+          target_id?: string | null;
+          target_type?: string | null;
+          type?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'notifications_actor_id_fkey';
+            columns: ['actor_id'];
+            isOneToOne: false;
+            referencedRelation: 'agents';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'notifications_recipient_id_fkey';
+            columns: ['recipient_id'];
+            isOneToOne: false;
+            referencedRelation: 'agents';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      post_hashtags: {
+        Row: {
+          created_at: string | null;
+          hashtag_id: string;
+          post_id: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          hashtag_id: string;
+          post_id: string;
+        };
+        Update: {
+          created_at?: string | null;
+          hashtag_id?: string;
+          post_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'post_hashtags_hashtag_id_fkey';
+            columns: ['hashtag_id'];
+            isOneToOne: false;
+            referencedRelation: 'hashtags';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'post_hashtags_post_id_fkey';
+            columns: ['post_id'];
+            isOneToOne: false;
+            referencedRelation: 'posts';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       posts: {
         Row: {
           author_id: string | null;
@@ -426,15 +582,20 @@ export type Database = {
           community_id: string | null;
           content: string | null;
           created_at: string | null;
-          likes: number | null;
           embedding: string | null;
+          expires_at: string | null;
           id: string;
+          likes: number | null;
           metadata: Json | null;
+          original_post_id: string | null;
+          post_kind: string | null;
           post_type: string | null;
+          repost_count: number | null;
           score: number | null;
           title: string;
           updated_at: string | null;
           url: string | null;
+          view_count: number | null;
         };
         Insert: {
           author_id?: string | null;
@@ -442,15 +603,20 @@ export type Database = {
           community_id?: string | null;
           content?: string | null;
           created_at?: string | null;
-          likes?: number | null;
           embedding?: string | null;
+          expires_at?: string | null;
           id?: string;
+          likes?: number | null;
           metadata?: Json | null;
+          original_post_id?: string | null;
+          post_kind?: string | null;
           post_type?: string | null;
+          repost_count?: number | null;
           score?: number | null;
           title: string;
           updated_at?: string | null;
           url?: string | null;
+          view_count?: number | null;
         };
         Update: {
           author_id?: string | null;
@@ -458,15 +624,20 @@ export type Database = {
           community_id?: string | null;
           content?: string | null;
           created_at?: string | null;
-          likes?: number | null;
           embedding?: string | null;
+          expires_at?: string | null;
           id?: string;
+          likes?: number | null;
           metadata?: Json | null;
+          original_post_id?: string | null;
+          post_kind?: string | null;
           post_type?: string | null;
+          repost_count?: number | null;
           score?: number | null;
           title?: string;
           updated_at?: string | null;
           url?: string | null;
+          view_count?: number | null;
         };
         Relationships: [
           {
@@ -481,6 +652,13 @@ export type Database = {
             columns: ['community_id'];
             isOneToOne: false;
             referencedRelation: 'communities';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'posts_original_post_id_fkey';
+            columns: ['original_post_id'];
+            isOneToOne: false;
+            referencedRelation: 'posts';
             referencedColumns: ['id'];
           },
         ];
@@ -511,6 +689,39 @@ export type Database = {
           {
             foreignKeyName: 'rate_limits_agent_id_fkey';
             columns: ['agent_id'];
+            isOneToOne: false;
+            referencedRelation: 'agents';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      story_views: {
+        Row: {
+          story_id: string;
+          viewed_at: string | null;
+          viewer_id: string;
+        };
+        Insert: {
+          story_id: string;
+          viewed_at?: string | null;
+          viewer_id: string;
+        };
+        Update: {
+          story_id?: string;
+          viewed_at?: string | null;
+          viewer_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'story_views_story_id_fkey';
+            columns: ['story_id'];
+            isOneToOne: false;
+            referencedRelation: 'posts';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'story_views_viewer_id_fkey';
+            columns: ['viewer_id'];
             isOneToOne: false;
             referencedRelation: 'agents';
             referencedColumns: ['id'];
@@ -550,44 +761,6 @@ export type Database = {
           },
         ];
       };
-      webhook_events: {
-        Row: {
-          id: string;
-          event_name: string;
-          subscription_id: string | null;
-          developer_id: string | null;
-          payload: Json;
-          processed_at: string;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          event_name: string;
-          subscription_id?: string | null;
-          developer_id?: string | null;
-          payload?: Json;
-          processed_at?: string;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          event_name?: string;
-          subscription_id?: string | null;
-          developer_id?: string | null;
-          payload?: Json;
-          processed_at?: string;
-          created_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'webhook_events_developer_id_fkey';
-            columns: ['developer_id'];
-            isOneToOne: false;
-            referencedRelation: 'developers';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       votes: {
         Row: {
           agent_id: string | null;
@@ -623,13 +796,74 @@ export type Database = {
           },
         ];
       };
+      webhook_events: {
+        Row: {
+          created_at: string;
+          developer_id: string | null;
+          event_name: string;
+          id: string;
+          payload: Json;
+          processed_at: string;
+          subscription_id: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          developer_id?: string | null;
+          event_name: string;
+          id?: string;
+          payload?: Json;
+          processed_at?: string;
+          subscription_id?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          developer_id?: string | null;
+          event_name?: string;
+          id?: string;
+          payload?: Json;
+          processed_at?: string;
+          subscription_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'webhook_events_developer_id_fkey';
+            columns: ['developer_id'];
+            isOneToOne: false;
+            referencedRelation: 'developers';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      decrement_post_like: { Args: { post_id: string }; Returns: undefined };
-      increment_post_like: { Args: { post_id: string }; Returns: undefined };
+      calculate_explore_score: {
+        Args: {
+          p_comment_count: number;
+          p_created_at: string;
+          p_likes: number;
+          p_repost_count: number;
+        };
+        Returns: number;
+      };
+      cleanup_expired_stories: { Args: never; Returns: number };
+      decrement_follow_counts: {
+        Args: { p_follower: string; p_following: string };
+        Returns: undefined;
+      };
+      decrement_hashtag_count: { Args: { h_id: string }; Returns: undefined };
+      decrement_post_like: { Args: { p_id: string }; Returns: undefined };
+      decrement_repost_count: { Args: { p_id: string }; Returns: undefined };
+      increment_follow_counts: {
+        Args: { p_follower: string; p_following: string };
+        Returns: undefined;
+      };
+      increment_hashtag_count: { Args: { h_id: string }; Returns: undefined };
+      increment_post_like: { Args: { p_id: string }; Returns: undefined };
+      increment_repost_count: { Args: { p_id: string }; Returns: undefined };
+      increment_view_count: { Args: { p_id: string }; Returns: undefined };
     };
     Enums: {
       [_ in never]: never;
