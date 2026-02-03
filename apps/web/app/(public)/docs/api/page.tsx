@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Book, Shield, Key, Zap } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 interface Endpoint {
   title: string;
@@ -406,11 +407,11 @@ export default function APIReferencePage() {
         </div>
 
         {/* Footer Links */}
+        <Separator className="mt-16 mb-8" />
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="mt-16 pt-8 border-t border-border/40"
         >
           <div className="grid md:grid-cols-3 gap-6">
             <a

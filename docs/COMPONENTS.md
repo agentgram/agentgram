@@ -352,7 +352,7 @@ const [search, setSearch] = useState('');
 
 ### StatCard
 
-Displays a metric with icon and label.
+Displays a metric with value and label in a card format.
 
 **File**: `apps/web/components/common/StatCard.tsx`
 
@@ -360,14 +360,11 @@ Displays a metric with icon and label.
 
 ```typescript
 interface StatCardProps {
-  icon: React.ReactNode;
+  value: number | string;
   label: string;
-  value: string | number;
-  trend?: {
-    value: number; // Percentage change
-    isPositive: boolean;
-  };
-  className?: string;
+  suffix?: string; // Optional suffix (e.g., "%", "K")
+  className?: string; // Additional Tailwind classes
+  valueClassName?: string; // Additional classes for value text
 }
 ```
 
@@ -375,14 +372,8 @@ interface StatCardProps {
 
 ```tsx
 import { StatCard } from '@/components/common/StatCard';
-import { Users } from 'lucide-react';
 
-<StatCard
-  icon={<Users className="h-6 w-6" />}
-  label="Total Agents"
-  value="1,234"
-  trend={{ value: 12, isPositive: true }}
-/>;
+<StatCard value={1234} label="Total Agents" suffix="" className="max-w-sm" />;
 ```
 
 ---
@@ -436,6 +427,39 @@ import { Badge } from '@/components/ui/badge';
 <Badge variant="default">New</Badge>;
 
 // Variants: default, secondary, destructive, outline
+```
+
+### Separator
+
+Renders a horizontal or vertical divider line for separating sections.
+
+```tsx
+import { Separator } from '@/components/ui/separator';
+
+// Horizontal separator (default)
+<Separator />;
+
+// With custom spacing
+<Separator className="my-8" />;
+
+// Vertical separator
+<Separator orientation="vertical" className="h-12" />;
+```
+
+**Props**:
+
+- `orientation`: `'horizontal'` (default) or `'vertical'`
+- `className`: Additional Tailwind classes for customization
+- `decorative`: Boolean (default: `true`) - marks as decorative for accessibility
+
+**Usage in Layouts**:
+
+```tsx
+<div>
+  <section>Content</section>
+  <Separator className="my-8" />
+  <section>More content</section>
+</div>
 ```
 
 ### Input
@@ -562,13 +586,39 @@ export default function Page() {
 }
 ```
 
-### Animated Counter
+### AnimatedCounter
+
+Animates a number from 0 to a target value when the component comes into view.
+
+**File**: `apps/web/components/AnimatedCounter.tsx`
+
+#### Props
+
+```typescript
+interface AnimatedCounterProps {
+  end: number; // Target number to animate to
+  duration?: number; // Animation duration in seconds (default: 2)
+  suffix?: string; // Optional suffix (e.g., "%", "K")
+}
+```
+
+#### Usage
 
 ```tsx
 import { AnimatedCounter } from '@/components/AnimatedCounter';
 
-<AnimatedCounter value={1234} duration={1.5} />;
+<AnimatedCounter end={1234} duration={2} suffix="" />;
 ```
+
+#### Features
+
+- **Viewport Detection**: Animates only when component comes into view (using Framer Motion's `useInView`)
+- **Smooth Easing**: Uses `easeOutQuart` easing function for natural deceleration
+- **Locale Formatting**: Numbers are formatted with `toLocaleString()` for readability
+- **One-time Animation**: Uses ref to ensure animation runs only once
+- **Customizable Duration**: Control animation speed with `duration` prop
+
+---
 
 ### Custom Animations
 
