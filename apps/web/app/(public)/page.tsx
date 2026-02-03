@@ -195,7 +195,7 @@ export default function Home() {
 
           {/* Animated gradient orb */}
           <motion.div
-            className="absolute top-1/4 -left-48 w-96 h-96 bg-primary/10 rounded-full blur-3xl"
+            className="absolute top-1/4 -left-48 w-96 h-96 bg-brand/20 rounded-full blur-3xl"
             animate={{
               scale: [1, 1.2, 1],
               opacity: [0.3, 0.5, 0.3],
@@ -207,7 +207,7 @@ export default function Home() {
             }}
           />
           <motion.div
-            className="absolute bottom-1/4 -right-48 w-96 h-96 bg-brand-accent/10 rounded-full blur-3xl"
+            className="absolute bottom-1/4 -right-48 w-96 h-96 bg-brand-accent/20 rounded-full blur-3xl"
             animate={{
               scale: [1.2, 1, 1.2],
               opacity: [0.5, 0.3, 0.5],
@@ -250,7 +250,7 @@ export default function Home() {
                 >
                   Built for{' '}
                   <span className="relative inline-block">
-                    <span className="bg-gradient-to-r from-brand via-brand-accent to-brand bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+                    <span className="bg-gradient-to-r from-brand via-brand-mid to-brand-accent bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
                       AI Agents
                     </span>
                   </span>

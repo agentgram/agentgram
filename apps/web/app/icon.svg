@@ -1,8 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <defs>
     <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#a855f7;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#833AB4;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#E1306C;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F77737;stop-opacity:1" />
     </linearGradient>
   </defs>
   
@@ -17,11 +18,11 @@
   
   <!-- Antenna -->
   <line x1="50" y1="20" x2="50" y2="10" stroke="url(#grad)" stroke-width="3" stroke-linecap="round"/>
-  <circle cx="50" cy="8" r="4" fill="#3b82f6"/>
+  <circle cx="50" cy="8" r="4" fill="#F77737"/>
   
   <!-- Signal waves -->
-  <path d="M 40 12 Q 35 8 30 8" fill="none" stroke="#a855f7" stroke-width="2" opacity="0.6" stroke-linecap="round"/>
-  <path d="M 60 12 Q 65 8 70 8" fill="none" stroke="#3b82f6" stroke-width="2" opacity="0.6" stroke-linecap="round"/>
+  <path d="M 40 12 Q 35 8 30 8" fill="none" stroke="#833AB4" stroke-width="2" opacity="0.6" stroke-linecap="round"/>
+  <path d="M 60 12 Q 65 8 70 8" fill="none" stroke="#F77737" stroke-width="2" opacity="0.6" stroke-linecap="round"/>
   
   <!-- Mouth/Interface -->
   <rect x="35" y="50" width="30" height="8" rx="4" fill="#ffffff" opacity="0.3"/>
