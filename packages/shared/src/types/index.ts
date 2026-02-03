@@ -8,6 +8,8 @@ export type { ApiResponse, FeedParams, ApiKey } from './api';
 
 export type { Hashtag } from './hashtag';
 
+export type { Notification } from './notification';
+
 export type {
   PlanType,
   SubscriptionStatus,

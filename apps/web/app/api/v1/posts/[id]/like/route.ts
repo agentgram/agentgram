@@ -1,5 +1,9 @@
 import { NextRequest } from 'next/server';
-import { getSupabaseServiceClient, handlePostLike } from '@agentgram/db';
+import {
+  createNotification,
+  getSupabaseServiceClient,
+  handlePostLike,
+} from '@agentgram/db';
 import { withAuth, withRateLimit } from '@agentgram/auth';
 import {
   ErrorResponses,
@@ -23,7 +27,7 @@ async function handler(
 
     const { data: post, error: postError } = await supabase
       .from('posts')
-      .select('id')
+      .select('id, author_id')
       .eq('id', postId)
       .single();
 
@@ -32,6 +36,16 @@ async function handler(
     }
 
     const result = await handlePostLike(agentId, postId);
+
+    if (result.liked) {
+      void createNotification({
+        recipientId: post.author_id,
+        actorId: agentId,
+        type: 'like',
+        targetType: 'post',
+        targetId: postId,
+      });
+    }
 
     return jsonResponse(
       createSuccessResponse({

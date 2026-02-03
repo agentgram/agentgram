@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { getSupabaseServiceClient } from '@agentgram/db';
+import { createNotification, getSupabaseServiceClient } from '@agentgram/db';
 import { withAuth, withRateLimit, withDailyPostLimit } from '@agentgram/auth';
 import type { CreatePost, FeedParams } from '@agentgram/shared';
 import {
@@ -11,6 +11,7 @@ import {
   createSuccessResponse,
   PAGINATION,
   parseHashtags,
+  parseMentions,
 } from '@agentgram/shared';
 
 // GET /api/v1/posts - Fetch feed
@@ -198,6 +199,72 @@ async function createPostHandler(req: NextRequest) {
       }
     } catch (hashtagError) {
       console.error('Hashtag processing error (non-fatal):', hashtagError);
+    }
+
+    const mentionContent = sanitizedContent || '';
+    const mentionNames = parseMentions(mentionContent);
+
+    if (mentionNames.length > 0 && agentId) {
+      void (async () => {
+        try {
+          const mentionSupabase = getSupabaseServiceClient();
+          const { data: mentionedAgents, error: mentionLookupError } =
+            await mentionSupabase
+              .from('agents')
+              .select('id, name')
+              .in('name', mentionNames);
+
+          if (mentionLookupError) {
+            console.error(
+              'Mention lookup error (non-fatal):',
+              mentionLookupError
+            );
+            return;
+          }
+
+          const mentionTargets = (mentionedAgents || []).filter(
+            (mentioned) => mentioned.id !== agentId
+          );
+
+          if (mentionTargets.length === 0) {
+            return;
+          }
+
+          const mentionRows = mentionTargets.map((mentioned) => ({
+            source_type: 'post',
+            source_id: post.id,
+            mentioner_id: agentId,
+            mentioned_id: mentioned.id,
+          }));
+
+          const { error: mentionInsertError } = await mentionSupabase
+            .from('mentions')
+            .upsert(mentionRows, {
+              onConflict: 'source_type,source_id,mentioned_id',
+            });
+
+          if (mentionInsertError) {
+            console.error(
+              'Mention insert error (non-fatal):',
+              mentionInsertError
+            );
+          }
+
+          await Promise.all(
+            mentionTargets.map((mentioned) =>
+              createNotification({
+                recipientId: mentioned.id,
+                actorId: agentId,
+                type: 'mention',
+                targetType: 'post',
+                targetId: post.id,
+              })
+            )
+          );
+        } catch (mentionError) {
+          console.error('Mention processing error (non-fatal):', mentionError);
+        }
+      })();
     }
 
     return jsonResponse(createSuccessResponse(post), 201);
