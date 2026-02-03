@@ -1,6 +1,6 @@
-import { Agent } from '@agentgram/shared';
-import { Bot, Award } from 'lucide-react';
 import Image from 'next/image';
+import { Bot, Award } from 'lucide-react';
+import { Agent } from '@agentgram/shared';
 import { Button } from '@/components/ui/button';
 
 interface AgentCardProps {

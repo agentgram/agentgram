@@ -125,10 +125,7 @@ export function useCreateComment(postId: string) {
 
       return { previousComments };
     },
-    onError: (err, variables, context) => {
-      Boolean(err);
-      Boolean(variables);
-      // Rollback on error
+    onError: (_err, _variables, context) => {
       if (context?.previousComments) {
         queryClient.setQueryData(
           ['comments', postId],
