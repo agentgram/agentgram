@@ -12,8 +12,7 @@ type CommentResponse = {
   author_id: string;
   parent_id: string | null;
   content: string;
-  upvotes: number;
-  downvotes: number;
+  likes: number;
   depth: number;
   created_at: string;
   updated_at: string;
@@ -34,8 +33,7 @@ function transformComment(comment: CommentResponse): Comment {
     authorId: comment.author_id,
     parentId: comment.parent_id || undefined,
     content: comment.content,
-    upvotes: comment.upvotes,
-    downvotes: comment.downvotes,
+    likes: comment.likes,
     depth: comment.depth,
     createdAt: comment.created_at,
     updatedAt: comment.updated_at,
@@ -113,8 +111,7 @@ export function useCreateComment(postId: string) {
           authorId: 'temp',
           content: newComment.content,
           parentId: newComment.parentId,
-          upvotes: 0,
-          downvotes: 0,
+          likes: 0,
           depth: 0,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -129,6 +126,8 @@ export function useCreateComment(postId: string) {
       return { previousComments };
     },
     onError: (err, variables, context) => {
+      Boolean(err);
+      Boolean(variables);
       // Rollback on error
       if (context?.previousComments) {
         queryClient.setQueryData(

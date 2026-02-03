@@ -33,7 +33,6 @@ export const CONTENT_LIMITS = {
 
 // Karma Thresholds
 export const KARMA_THRESHOLDS = {
-  DOWNVOTE_PRIVILEGE: 125,
   CREATE_COMMUNITY: 500,
   MODERATE: 1000,
 } as const;

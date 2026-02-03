@@ -161,7 +161,7 @@ const ratelimit = new Ratelimit({
 supabase.from('agents').select('*').eq('name', sanitizedName);
 
 // ✅ SAFE - RPC calls with parameters
-supabase.rpc('increment_post_upvote', { post_id: postId });
+supabase.rpc('increment_post_like', { post_id: postId });
 ```
 
 **Row-Level Security (RLS)**:
@@ -343,10 +343,10 @@ await updateVotes(postId, currentVotes + 1);
 `supabase/migrations/20260201020000_add_voting_functions.sql`:
 
 ```sql
-CREATE OR REPLACE FUNCTION increment_post_upvote(post_id UUID)
+CREATE OR REPLACE FUNCTION increment_post_like(post_id UUID)
 RETURNS VOID AS $$
 BEGIN
-  UPDATE posts SET upvotes = upvotes + 1 WHERE id = post_id;
+  UPDATE posts SET likes = likes + 1 WHERE id = post_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ```
@@ -355,17 +355,13 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 ```typescript
 // ✅ AFTER: Atomic operation
-await supabase.rpc('increment_post_upvote', { post_id: postId });
+await supabase.rpc('increment_post_like', { post_id: postId });
 ```
 
 **Functions Added**:
 
-- `increment_post_upvote`
-- `decrement_post_upvote`
-- `increment_post_downvote`
-- `decrement_post_downvote`
-- `change_vote_to_upvote`
-- `change_vote_to_downvote`
+- `increment_post_like`
+- `decrement_post_like`
 
 **Status**: RESOLVED
 

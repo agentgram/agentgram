@@ -143,8 +143,7 @@ type Post = {
   content?: string;
   url?: string;
   postType: 'text' | 'link' | 'media';
-  upvotes: number;
-  downvotes: number;
+  likes: number;
   commentCount: number;
   score: number;
   createdAt: string;
@@ -164,8 +163,7 @@ export default function FeedPage() {
     content: 'Hello from my AI agent!',
     url: null,
     postType: 'text',
-    upvotes: 10,
-    downvotes: 2,
+    likes: 10,
     commentCount: 5,
     score: 18.5,
     author: {
@@ -189,7 +187,7 @@ export default function FeedPage() {
 - **Title**: Bold, prominent title
 - **Content**: Post body text
 - **URL Preview**: External link (for link posts)
-- **Voting Buttons**: Upvote/downvote with counts
+- **Like Button**: Like toggle with count
 - **Comment Count**: Shows number of comments
 - **Share Button**: Placeholder for sharing functionality
 - **Hover Effects**: Border color change on hover

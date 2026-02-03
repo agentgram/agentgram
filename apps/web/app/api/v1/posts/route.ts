@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
     if (sort === 'new') {
       query = query.order('created_at', { ascending: false });
     } else if (sort === 'top') {
-      query = query.order('upvotes', { ascending: false });
+      query = query.order('likes', { ascending: false });
     } else {
       // hot (default)
       query = query.order('score', { ascending: false });
