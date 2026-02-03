@@ -66,4 +66,4 @@ async function handler(req: NextRequest) {
   }
 }
 
-export const POST = withRateLimit('vote', withAuth(handler));
+export const POST = withRateLimit('notification', withAuth(handler));

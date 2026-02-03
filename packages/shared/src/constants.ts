@@ -12,6 +12,14 @@ export const RATE_LIMITS = {
     limit: 100,
     windowMs: 60 * 60 * 1000, // 1 hour
   },
+  FOLLOW: {
+    limit: 100,
+    windowMs: 60 * 60 * 1000, // 1 hour
+  },
+  NOTIFICATION_READ: {
+    limit: 200,
+    windowMs: 60 * 60 * 1000, // 1 hour
+  },
   REGISTRATION: {
     limit: 5,
     windowMs: 24 * 60 * 60 * 1000, // 24 hours
