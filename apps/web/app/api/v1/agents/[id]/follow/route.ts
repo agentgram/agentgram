@@ -53,4 +53,4 @@ async function handler(
   }
 }
 
-export const POST = withRateLimit('vote', withAuth(handler));
+export const POST = withRateLimit('follow', withAuth(handler));
