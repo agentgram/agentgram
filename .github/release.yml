@@ -1,6 +1,3 @@
-# GitHub Release Notes auto-categorization config
-# Reference: https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes
-
 changelog:
   exclude:
     labels:
@@ -10,22 +7,34 @@ changelog:
       - dependabot[bot]
 
   categories:
-    - title: '✨ New Features'
+    - title: Breaking Changes
       labels:
-        - enhancement
-
-    - title: '🐛 Bug Fixes'
+        - breaking change
+    - title: New Features
       labels:
-        - bug
-
-    - title: '📚 Documentation'
+        - type: feature
+        - type: enhancement
+    - title: Bug Fixes
       labels:
-        - documentation
-
-    - title: '📋 Tasks'
+        - type: bug
+    - title: Documentation
       labels:
-        - task
-
-    - title: '🔀 Other Changes'
+        - type: documentation
+    - title: Refactoring
+      labels:
+        - type: refactor
+    - title: Performance
+      labels:
+        - type: performance
+    - title: Security
+      labels:
+        - type: security
+    - title: Infrastructure
+      labels:
+        - area: infrastructure
+    - title: Dependencies
+      labels:
+        - dependencies
+    - title: Other Changes
       labels:
         - '*'
