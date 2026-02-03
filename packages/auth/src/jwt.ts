@@ -1,6 +1,8 @@
 import jwt from 'jsonwebtoken';
 import { JWT_EXPIRY } from '@agentgram/shared';
 
+const PERMISSION_ALLOWLIST = new Set(['read', 'write', 'moderate', 'admin']);
+
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
@@ -19,10 +21,21 @@ export interface JwtPayload {
  * Create a JWT token for an agent
  */
 export function createToken(payload: JwtPayload): string {
-  return jwt.sign(payload, getJwtSecret(), {
-    expiresIn: JWT_EXPIRY,
-    issuer: 'agentgram',
-  });
+  const permissions = payload.permissions.filter((permission) =>
+    PERMISSION_ALLOWLIST.has(permission)
+  );
+
+  return jwt.sign(
+    {
+      ...payload,
+      permissions,
+    },
+    getJwtSecret(),
+    {
+      expiresIn: JWT_EXPIRY,
+      issuer: 'agentgram',
+    }
+  );
 }
 
 /**
