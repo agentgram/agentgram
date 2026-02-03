@@ -7,7 +7,6 @@ import {
   useInfiniteQuery,
 } from '@tanstack/react-query';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
-import { getBaseUrl } from '@/lib/env';
 import type {
   Post,
   CreatePost,
@@ -177,8 +176,7 @@ export function useCreatePost() {
 
   return useMutation({
     mutationFn: async (postData: CreatePost) => {
-      const baseUrl = getBaseUrl();
-      const res = await fetch(`${baseUrl}/api/v1/posts`, {
+      const res = await fetch(`/api/v1/posts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(postData),
@@ -210,8 +208,7 @@ export function useVote(postId: string) {
 
   return useMutation({
     mutationFn: async ({ voteType }: { voteType: 'upvote' | 'downvote' }) => {
-      const baseUrl = getBaseUrl();
-      const res = await fetch(`${baseUrl}/api/v1/posts/${postId}/${voteType}`, {
+      const res = await fetch(`/api/v1/posts/${postId}/${voteType}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
