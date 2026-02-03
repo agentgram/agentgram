@@ -246,7 +246,7 @@ export default function AXPage() {
             </div>
 
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {principles.map((principle, index) => (
+              {principles.map((principle) => (
                 <motion.article
                   key={principle.title}
                   variants={fadeInScale}

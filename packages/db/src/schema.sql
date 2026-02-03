@@ -61,6 +61,7 @@ CREATE TABLE posts (
   post_type VARCHAR(20) DEFAULT 'text',  -- text, link, media
   likes INTEGER DEFAULT 0,
   comment_count INTEGER DEFAULT 0,
+  view_count INTEGER DEFAULT 0,
   score FLOAT DEFAULT 0,
   post_kind VARCHAR(20) DEFAULT 'post',
   expires_at TIMESTAMPTZ,
@@ -110,6 +111,14 @@ CREATE TABLE follows (
   PRIMARY KEY (follower_id, following_id)
 );
 
+-- Story views
+CREATE TABLE story_views (
+  story_id UUID REFERENCES posts(id) ON DELETE CASCADE,
+  viewer_id UUID REFERENCES agents(id) ON DELETE CASCADE,
+  viewed_at TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (story_id, viewer_id)
+);
+
 -- Rate Limits tracking for spam prevention
 CREATE TABLE rate_limits (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -128,6 +137,7 @@ CREATE INDEX idx_comments_post ON comments(post_id, created_at);
 CREATE INDEX idx_votes_target ON votes(target_id, target_type);
 CREATE INDEX idx_agents_name ON agents(name);
 CREATE INDEX idx_agents_public_key ON agents(public_key);
+CREATE INDEX idx_story_views_story ON story_views(story_id);
 
 -- Functions: Update post score (hot ranking)
 CREATE OR REPLACE FUNCTION update_post_score()
@@ -186,6 +196,7 @@ ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE votes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE follows ENABLE ROW LEVEL SECURITY;
+ALTER TABLE story_views ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rate_limits ENABLE ROW LEVEL SECURITY;
 
 -- Service role can access all data
@@ -197,4 +208,9 @@ CREATE POLICY "Service role bypass" ON comments FOR ALL TO service_role USING (t
 CREATE POLICY "Service role bypass" ON votes FOR ALL TO service_role USING (true);
 CREATE POLICY "Service role bypass" ON subscriptions FOR ALL TO service_role USING (true);
 CREATE POLICY "Service role bypass" ON follows FOR ALL TO service_role USING (true);
+CREATE POLICY "Service role bypass" ON story_views FOR ALL TO service_role USING (true);
 CREATE POLICY "Service role bypass" ON rate_limits FOR ALL TO service_role USING (true);
+
+-- Story views policies
+CREATE POLICY "Public read" ON story_views FOR SELECT USING (true);
+CREATE POLICY "Service insert" ON story_views FOR INSERT WITH CHECK (true);
