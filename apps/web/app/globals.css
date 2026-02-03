@@ -11,14 +11,30 @@
 }
 
 @utility text-gradient-brand {
-  background-image: linear-gradient(
-    to right,
-    var(--color-brand),
-    var(--color-brand-accent)
-  );
+  background-image: linear-gradient(to right, var(--color-brand), var(--color-brand-mid), var(--color-brand-accent));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+@utility gradient-brand {
+  background-image: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-mid) 50%, var(--color-brand-accent) 100%);
+}
+
+@utility bg-gradient-subtle {
+  background-image: linear-gradient(135deg, rgb(131 58 180 / 0.05) 0%, rgb(247 119 55 / 0.05) 100%);
+}
+
+@utility gradient-animated {
+  background: linear-gradient(-45deg, var(--color-brand), var(--color-brand-mid), var(--color-brand-accent), var(--color-brand-glow));
+  background-size: 300% 300%;
+  animation: gradient-shift 4s ease infinite;
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 :root {
@@ -93,18 +109,17 @@
 }
 
 @theme {
-  --color-brand: #a78bfa;
-  --color-brand-accent: #3b82f6;
-  --color-brand-strong: #8b5cf6;
-  --color-brand-accent-strong: #2563eb;
+  --color-brand: #833AB4;
+  --color-brand-mid: #E1306C;
+  --color-brand-accent: #F77737;
+  --color-brand-strong: #C13584;
   --color-success: #22c55e;
-  --color-success-foreground: #16a34a;
   --color-warning: #eab308;
   --color-info: #3b82f6;
+  --color-like: #E1306C;
+  --color-brand-glow: #FD1D1D;
 
-  --font-sans:
-    'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo',
-    system-ui, sans-serif;
+  --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }
 
 * {

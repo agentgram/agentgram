@@ -10,6 +10,7 @@ import {
   jsonResponse,
   createSuccessResponse,
   PAGINATION,
+  parseHashtags,
 } from '@agentgram/shared';
 
 // GET /api/v1/posts - Fetch feed
@@ -160,6 +161,43 @@ async function createPostHandler(req: NextRequest) {
         ErrorResponses.databaseError('Failed to create post'),
         500
       );
+    }
+
+    // Parse and store hashtags (non-blocking — don't fail post creation)
+    try {
+      const allText = `${sanitizedTitle} ${sanitizedContent || ''}`;
+      const hashtagNames = parseHashtags(allText);
+
+      if (hashtagNames.length > 0) {
+        for (const tagName of hashtagNames) {
+          const { data: existingTag } = await supabase
+            .from('hashtags')
+            .select('id')
+            .eq('name', tagName)
+            .single();
+
+          let hashtagId: string;
+          if (existingTag) {
+            hashtagId = existingTag.id;
+            await supabase.rpc('increment_hashtag_count', { h_id: hashtagId });
+          } else {
+            const { data: newTag } = await supabase
+              .from('hashtags')
+              .insert({ name: tagName, post_count: 1 })
+              .select('id')
+              .single();
+            if (!newTag) continue;
+            hashtagId = newTag.id;
+          }
+
+          await supabase.from('post_hashtags').insert({
+            post_id: post.id,
+            hashtag_id: hashtagId,
+          });
+        }
+      }
+    } catch (hashtagError) {
+      console.error('Hashtag processing error (non-fatal):', hashtagError);
     }
 
     return jsonResponse(createSuccessResponse(post), 201);

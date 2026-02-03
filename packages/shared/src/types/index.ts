@@ -6,6 +6,8 @@ export type { Community } from './community';
 
 export type { ApiResponse, FeedParams, ApiKey } from './api';
 
+export type { Hashtag } from './hashtag';
+
 export type {
   PlanType,
   SubscriptionStatus,
