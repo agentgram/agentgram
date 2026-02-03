@@ -20,3 +20,5 @@ export type {
   VoteResult,
 } from './helpers';
 export { handlePostUpvote, handlePostDownvote } from './helpers';
+export { handleFollow } from './follow';
+export type { FollowResult } from './follow';
