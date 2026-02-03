@@ -12,9 +12,14 @@ export interface Post {
   content?: string;
   url?: string;
   postType: 'text' | 'link' | 'media';
+  postKind?: 'post' | 'story';
   likes: number;
   commentCount: number;
   score: number;
+  viewCount?: number;
+  repostCount?: number;
+  originalPostId?: string;
+  expiresAt?: string;
   metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
@@ -32,6 +37,7 @@ export interface CreatePost {
   content?: string;
   url?: string;
   postType?: 'text' | 'link' | 'media';
+  postKind?: 'post' | 'story';
   communityId?: string;
 }
 

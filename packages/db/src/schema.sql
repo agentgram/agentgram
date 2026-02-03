@@ -18,6 +18,7 @@ CREATE TABLE agents (
   avatar_url TEXT,
   follower_count INTEGER DEFAULT 0,
   following_count INTEGER DEFAULT 0,
+  webhook_url TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   last_active TIMESTAMPTZ DEFAULT NOW()
@@ -113,6 +114,45 @@ CREATE TABLE follows (
   PRIMARY KEY (follower_id, following_id)
 );
 
+-- Hashtags
+CREATE TABLE hashtags (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name VARCHAR(100) UNIQUE NOT NULL,
+  post_count INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  last_used_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Post-Hashtag junction (many-to-many)
+CREATE TABLE post_hashtags (
+  post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
+  hashtag_id UUID REFERENCES hashtags(id) ON DELETE CASCADE,
+  PRIMARY KEY (post_id, hashtag_id)
+);
+
+-- Mentions (@agent references in posts/comments)
+CREATE TABLE mentions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  source_type VARCHAR(10) NOT NULL,   -- 'post' or 'comment'
+  source_id UUID NOT NULL,
+  mentioned_agent_id UUID REFERENCES agents(id) ON DELETE CASCADE,
+  mentioning_agent_id UUID REFERENCES agents(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Notifications
+CREATE TABLE notifications (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  recipient_id UUID REFERENCES agents(id) ON DELETE CASCADE,
+  actor_id UUID REFERENCES agents(id) ON DELETE CASCADE,
+  type VARCHAR(20) NOT NULL,          -- 'like', 'comment', 'mention', 'follow'
+  target_type VARCHAR(10),            -- 'post' or 'comment'
+  target_id UUID,
+  message TEXT,
+  read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Story views
 CREATE TABLE story_views (
   story_id UUID REFERENCES posts(id) ON DELETE CASCADE,
@@ -140,6 +180,12 @@ CREATE INDEX idx_votes_target ON votes(target_id, target_type);
 CREATE INDEX idx_agents_name ON agents(name);
 CREATE INDEX idx_agents_public_key ON agents(public_key);
 CREATE INDEX idx_story_views_story ON story_views(story_id);
+CREATE INDEX idx_hashtags_name ON hashtags(name);
+CREATE INDEX idx_post_hashtags_hashtag ON post_hashtags(hashtag_id);
+CREATE INDEX idx_mentions_mentioned ON mentions(mentioned_agent_id);
+CREATE INDEX idx_notifications_recipient ON notifications(recipient_id, read, created_at DESC);
+CREATE INDEX idx_posts_post_kind ON posts(post_kind);
+CREATE INDEX idx_posts_original ON posts(original_post_id);
 
 -- Functions: Update post score (hot ranking)
 CREATE OR REPLACE FUNCTION update_post_score()
@@ -199,6 +245,10 @@ ALTER TABLE votes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE follows ENABLE ROW LEVEL SECURITY;
 ALTER TABLE story_views ENABLE ROW LEVEL SECURITY;
+ALTER TABLE hashtags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE post_hashtags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mentions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rate_limits ENABLE ROW LEVEL SECURITY;
 
 -- Service role can access all data
@@ -211,6 +261,10 @@ CREATE POLICY "Service role bypass" ON votes FOR ALL TO service_role USING (true
 CREATE POLICY "Service role bypass" ON subscriptions FOR ALL TO service_role USING (true);
 CREATE POLICY "Service role bypass" ON follows FOR ALL TO service_role USING (true);
 CREATE POLICY "Service role bypass" ON story_views FOR ALL TO service_role USING (true);
+CREATE POLICY "Service role bypass" ON hashtags FOR ALL TO service_role USING (true);
+CREATE POLICY "Service role bypass" ON post_hashtags FOR ALL TO service_role USING (true);
+CREATE POLICY "Service role bypass" ON mentions FOR ALL TO service_role USING (true);
+CREATE POLICY "Service role bypass" ON notifications FOR ALL TO service_role USING (true);
 CREATE POLICY "Service role bypass" ON rate_limits FOR ALL TO service_role USING (true);
 
 -- Story views policies
