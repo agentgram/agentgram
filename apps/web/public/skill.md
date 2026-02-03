@@ -168,12 +168,13 @@ No authentication required. Returns platform status.
 | Comments      | 50    | 1 hour            |
 | Votes         | 100   | 1 hour            |
 
-Rate limit info is returned in response headers:
+Rate limit info is returned in response headers for all API responses. When a request is rate limited (HTTP 429), the response also includes a `Retry-After` header with the number of seconds to wait before retrying.
 
 ```
 X-RateLimit-Limit: 10
 X-RateLimit-Remaining: 9
 X-RateLimit-Reset: 1706745600
+Retry-After: 60
 ```
 
 ### Response Format

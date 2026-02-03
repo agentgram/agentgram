@@ -100,9 +100,47 @@ function getLimiter(options: RateLimitOptions) {
   return limiter;
 }
 
-function toResetHeader(reset: number) {
-  const resetMs = reset < 1_000_000_000_000 ? reset * 1000 : reset;
-  return new Date(resetMs).toISOString();
+function toUnixSeconds(reset: number) {
+  return reset < 1_000_000_000_000 ? reset : Math.ceil(reset / 1000);
+}
+
+function getRetryAfterSeconds(resetSeconds: number) {
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  return Math.max(0, resetSeconds - nowSeconds);
+}
+
+function buildRateLimitHeaders(
+  limit: number,
+  remaining: number,
+  resetSeconds: number
+) {
+  return {
+    'X-RateLimit-Limit': limit.toString(),
+    'X-RateLimit-Remaining': remaining.toString(),
+    'X-RateLimit-Reset': resetSeconds.toString(),
+  };
+}
+
+function withRateLimitHeaders(
+  response: Response,
+  headers: Record<string, string>,
+  retryAfterSeconds?: number
+) {
+  const updatedHeaders = new Headers(response.headers);
+
+  for (const [key, value] of Object.entries(headers)) {
+    updatedHeaders.set(key, value);
+  }
+
+  if (retryAfterSeconds !== undefined) {
+    updatedHeaders.set('Retry-After', retryAfterSeconds.toString());
+  }
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: updatedHeaders,
+  });
 }
 
 function toDuration(windowMs: number): Duration {
@@ -134,7 +172,7 @@ function toDuration(windowMs: number): Duration {
 export function withRateLimit<T extends unknown[]>(
   limitType: string | RateLimitOptions,
   handler: (req: NextRequest, ...args: T) => Promise<Response>
-) {
+): (req: NextRequest, ...args: T) => Promise<Response> {
   const options: RateLimitOptions =
     typeof limitType === 'string'
       ? RATE_LIMIT_CONFIGS[limitType] || RATE_LIMIT_CONFIGS.default
@@ -152,7 +190,14 @@ export function withRateLimit<T extends unknown[]>(
 
     if (limiter) {
       const result = await limiter.limit(key);
+      const resetSeconds = toUnixSeconds(result.reset);
+      const rateLimitHeaders = buildRateLimitHeaders(
+        result.limit,
+        result.remaining,
+        resetSeconds
+      );
       if (!result.success) {
+        const retryAfterSeconds = getRetryAfterSeconds(resetSeconds);
         return NextResponse.json(
           {
             success: false,
@@ -164,15 +209,15 @@ export function withRateLimit<T extends unknown[]>(
           {
             status: 429,
             headers: {
-              'X-RateLimit-Limit': result.limit.toString(),
-              'X-RateLimit-Remaining': result.remaining.toString(),
-              'X-RateLimit-Reset': toResetHeader(result.reset),
+              ...rateLimitHeaders,
+              'Retry-After': retryAfterSeconds.toString(),
             },
           }
         );
       }
 
-      return handler(req, ...args);
+      const response = await handler(req, ...args);
+      return withRateLimitHeaders(response, rateLimitHeaders);
     }
 
     const now = Date.now();
@@ -185,7 +230,16 @@ export function withRateLimit<T extends unknown[]>(
 
     limitData.count++;
 
+    const remaining = Math.max(0, maxRequests - limitData.count);
+    const resetSeconds = Math.ceil(limitData.resetTime / 1000);
+    const rateLimitHeaders = buildRateLimitHeaders(
+      maxRequests,
+      remaining,
+      resetSeconds
+    );
+
     if (limitData.count > maxRequests) {
+      const retryAfterSeconds = getRetryAfterSeconds(resetSeconds);
       return NextResponse.json(
         {
           success: false,
@@ -197,14 +251,14 @@ export function withRateLimit<T extends unknown[]>(
         {
           status: 429,
           headers: {
-            'X-RateLimit-Limit': maxRequests.toString(),
-            'X-RateLimit-Remaining': '0',
-            'X-RateLimit-Reset': new Date(limitData.resetTime).toISOString(),
+            ...rateLimitHeaders,
+            'Retry-After': retryAfterSeconds.toString(),
           },
         }
       );
     }
 
-    return handler(req, ...args);
+    const response = await handler(req, ...args);
+    return withRateLimitHeaders(response, rateLimitHeaders);
   };
 }
