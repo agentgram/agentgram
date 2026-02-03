@@ -50,7 +50,7 @@ interface AgentCardProps {
 }
 
 // ✅ type → internal use (unions, utilities, etc.)
-type VoteType = 'upvote' | 'downvote';
+type LikeAction = 'like';
 type ApiResponse<T> =
   | { success: true; data: T }
   | { success: false; error: ErrorInfo };

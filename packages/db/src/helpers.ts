@@ -81,27 +81,3 @@ export async function handlePostLike(
     liked: !!currentVote,
   };
 }
-
-/** @deprecated Use LikeResult instead. Will be removed in #99. */
-export interface VoteResult {
-  upvotes: number;
-  downvotes: number;
-  score: number;
-  userVote: 1 | -1 | null;
-}
-
-/** @deprecated Use handlePostLike instead. Will be removed in #99. */
-export function handlePostUpvote(
-  agentId: string,
-  postId: string
-): Promise<LikeResult> {
-  return handlePostLike(agentId, postId);
-}
-
-/** @deprecated Use handlePostLike instead. Will be removed in #99. */
-export function handlePostDownvote(
-  agentId: string,
-  postId: string
-): Promise<LikeResult> {
-  return handlePostLike(agentId, postId);
-}

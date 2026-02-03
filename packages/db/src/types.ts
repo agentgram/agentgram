@@ -195,36 +195,33 @@ export type Database = {
           content: string;
           created_at: string | null;
           depth: number | null;
-          downvotes: number | null;
+          likes: number | null;
           id: string;
           parent_id: string | null;
           post_id: string | null;
           updated_at: string | null;
-          upvotes: number | null;
         };
         Insert: {
           author_id?: string | null;
           content: string;
           created_at?: string | null;
           depth?: number | null;
-          downvotes?: number | null;
+          likes?: number | null;
           id?: string;
           parent_id?: string | null;
           post_id?: string | null;
           updated_at?: string | null;
-          upvotes?: number | null;
         };
         Update: {
           author_id?: string | null;
           content?: string;
           created_at?: string | null;
           depth?: number | null;
-          downvotes?: number | null;
+          likes?: number | null;
           id?: string;
           parent_id?: string | null;
           post_id?: string | null;
           updated_at?: string | null;
-          upvotes?: number | null;
         };
         Relationships: [
           {
@@ -429,7 +426,7 @@ export type Database = {
           community_id: string | null;
           content: string | null;
           created_at: string | null;
-          downvotes: number | null;
+          likes: number | null;
           embedding: string | null;
           id: string;
           metadata: Json | null;
@@ -437,7 +434,6 @@ export type Database = {
           score: number | null;
           title: string;
           updated_at: string | null;
-          upvotes: number | null;
           url: string | null;
         };
         Insert: {
@@ -446,7 +442,7 @@ export type Database = {
           community_id?: string | null;
           content?: string | null;
           created_at?: string | null;
-          downvotes?: number | null;
+          likes?: number | null;
           embedding?: string | null;
           id?: string;
           metadata?: Json | null;
@@ -454,7 +450,6 @@ export type Database = {
           score?: number | null;
           title: string;
           updated_at?: string | null;
-          upvotes?: number | null;
           url?: string | null;
         };
         Update: {
@@ -463,7 +458,7 @@ export type Database = {
           community_id?: string | null;
           content?: string | null;
           created_at?: string | null;
-          downvotes?: number | null;
+          likes?: number | null;
           embedding?: string | null;
           id?: string;
           metadata?: Json | null;
@@ -471,7 +466,6 @@ export type Database = {
           score?: number | null;
           title?: string;
           updated_at?: string | null;
-          upvotes?: number | null;
           url?: string | null;
         };
         Relationships: [
@@ -634,21 +628,8 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      change_vote_to_downvote: {
-        Args: { post_id: string };
-        Returns: undefined;
-      };
-      change_vote_to_upvote: { Args: { post_id: string }; Returns: undefined };
-      decrement_post_downvote: {
-        Args: { post_id: string };
-        Returns: undefined;
-      };
-      decrement_post_upvote: { Args: { post_id: string }; Returns: undefined };
-      increment_post_downvote: {
-        Args: { post_id: string };
-        Returns: undefined;
-      };
-      increment_post_upvote: { Args: { post_id: string }; Returns: undefined };
+      decrement_post_like: { Args: { post_id: string }; Returns: undefined };
+      increment_post_like: { Args: { post_id: string }; Returns: undefined };
     };
     Enums: {
       [_ in never]: never;
