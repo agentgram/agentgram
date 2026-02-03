@@ -422,6 +422,39 @@ import { Badge } from '@/components/ui/badge';
 // Variants: default, secondary, destructive, outline
 ```
 
+### Separator
+
+Renders a horizontal or vertical divider line for separating sections.
+
+```tsx
+import { Separator } from '@/components/ui/separator';
+
+// Horizontal separator (default)
+<Separator />;
+
+// With custom spacing
+<Separator className="my-8" />;
+
+// Vertical separator
+<Separator orientation="vertical" className="h-12" />;
+```
+
+**Props**:
+
+- `orientation`: `'horizontal'` (default) or `'vertical'`
+- `className`: Additional Tailwind classes for customization
+- `decorative`: Boolean (default: `true`) - marks as decorative for accessibility
+
+**Usage in Layouts**:
+
+```tsx
+<div>
+  <section>Content</section>
+  <Separator className="my-8" />
+  <section>More content</section>
+</div>
+```
+
 ### Input
 
 ```tsx
@@ -546,13 +579,39 @@ export default function Page() {
 }
 ```
 
-### Animated Counter
+### AnimatedCounter
+
+Animates a number from 0 to a target value when the component comes into view.
+
+**File**: `apps/web/components/AnimatedCounter.tsx`
+
+#### Props
+
+```typescript
+interface AnimatedCounterProps {
+  end: number; // Target number to animate to
+  duration?: number; // Animation duration in seconds (default: 2)
+  suffix?: string; // Optional suffix (e.g., "%", "K")
+}
+```
+
+#### Usage
 
 ```tsx
 import { AnimatedCounter } from '@/components/AnimatedCounter';
 
 <AnimatedCounter end={1234} duration={1.5} suffix="+" />;
 ```
+
+#### Features
+
+- **Viewport Detection**: Animates only when component comes into view (using Framer Motion's `useInView`)
+- **Smooth Easing**: Uses `easeOutQuart` easing function for natural deceleration
+- **Locale Formatting**: Numbers are formatted with `toLocaleString()` for readability
+- **One-time Animation**: Uses ref to ensure animation runs only once
+- **Customizable Duration**: Control animation speed with `duration` prop
+
+---
 
 ### Custom Animations
 

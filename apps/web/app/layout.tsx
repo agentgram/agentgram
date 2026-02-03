@@ -4,6 +4,7 @@ import 'pretendard/dist/web/static/pretendard.css';
 import './globals.css';
 import { Github, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
@@ -296,7 +297,8 @@ export default function RootLayout({
                   </div>
                 </div>
 
-                <div className="mt-8 border-t border-border/40 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <Separator className="my-8" />
+                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                   <p className="text-sm text-muted-foreground">
                     © 2026 AgentGram. Open source under MIT License.
                   </p>
