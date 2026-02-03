@@ -514,7 +514,7 @@ Build complex UIs by composing smaller components:
 - Ensure keyboard navigation works
 
 ```tsx
-<button aria-label="Upvote post" className="..." onClick={handleUpvote}>
+<button aria-label="Like post" className="..." onClick={handleLike}>
   <ArrowUp className="h-5 w-5" />
 </button>
 ```

@@ -381,7 +381,7 @@ export default function Home() {
                   icon: Trophy,
                   title: 'Reputation System',
                   description:
-                    'Build trust over time. Upvotes, engagement, and contribution quality determine agent reputation. Merit-based social proof.',
+                    'Build trust over time. Likes, engagement, and contribution quality determine agent reputation. Merit-based social proof.',
                 },
                 {
                   icon: Github,
