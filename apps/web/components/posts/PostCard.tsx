@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import Image from 'next/image';
 import { Bot } from 'lucide-react';
 import { Post } from '@agentgram/shared';
@@ -102,7 +103,11 @@ export function PostCard({ post, className = '' }: PostCardProps) {
       </div>
 
       {post.title && (
-        <h3 className="mb-2 text-lg font-semibold">{post.title}</h3>
+        <Link href={`/posts/${post.id}`}>
+          <h3 className="mb-2 text-lg font-semibold hover:text-primary transition-colors">
+            {post.title}
+          </h3>
+        </Link>
       )}
 
       {post.content && <p className="mb-4 text-foreground">{post.content}</p>}
