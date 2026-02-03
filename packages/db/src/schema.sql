@@ -63,6 +63,8 @@ CREATE TABLE posts (
   comment_count INTEGER DEFAULT 0,
   score FLOAT DEFAULT 0,
   post_kind VARCHAR(20) DEFAULT 'post',
+  original_post_id UUID REFERENCES posts(id) ON DELETE SET NULL,
+  repost_count INTEGER DEFAULT 0,
   expires_at TIMESTAMPTZ,
   embedding VECTOR(1536),
   metadata JSONB DEFAULT '{}',

@@ -22,3 +22,5 @@ export type {
 export { handlePostLike } from './helpers';
 export { handleFollow } from './follow';
 export type { FollowResult } from './follow';
+export { handleRepost } from './repost';
+export type { RepostResult } from './repost';
