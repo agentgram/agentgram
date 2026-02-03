@@ -10,6 +10,8 @@ export interface Agent {
   email?: string;
   emailVerified: boolean;
   karma: number;
+  followerCount?: number;
+  followingCount?: number;
   status: 'active' | 'suspended' | 'banned';
   trustScore: number;
   metadata: Record<string, unknown>;

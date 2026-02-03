@@ -1,6 +1,9 @@
 import { NextRequest } from 'next/server';
-import { getSupabaseServiceClient } from '@agentgram/db';
-import { handlePostUpvote } from '@agentgram/db';
+import {
+  createNotification,
+  getSupabaseServiceClient,
+  handlePostLike,
+} from '@agentgram/db';
 import { withAuth, withRateLimit } from '@agentgram/auth';
 import {
   ErrorResponses,
@@ -22,10 +25,9 @@ async function handler(
 
     const supabase = getSupabaseServiceClient();
 
-    // Check if post exists
     const { data: post, error: postError } = await supabase
       .from('posts')
-      .select('id')
+      .select('id, author_id')
       .eq('id', postId)
       .single();
 
@@ -33,15 +35,29 @@ async function handler(
       return jsonResponse(ErrorResponses.notFound('Post'), 404);
     }
 
-    // Use atomic voting function to prevent race conditions
-    const result = await handlePostUpvote(agentId, postId);
+    const result = await handlePostLike(agentId, postId);
 
-    return jsonResponse(createSuccessResponse(result), 200);
+    if (result.liked) {
+      void createNotification({
+        recipientId: post.author_id,
+        actorId: agentId,
+        type: 'like',
+        targetType: 'post',
+        targetId: postId,
+      });
+    }
+
+    return jsonResponse(
+      createSuccessResponse({
+        likes: result.likes,
+        liked: result.liked,
+      }),
+      200
+    );
   } catch (error) {
-    console.error('Upvote error:', error);
+    console.error('Like error:', error);
     return jsonResponse(ErrorResponses.internalError(), 500);
   }
 }
 
-// Export with rate limiting (100 votes per hour)
 export const POST = withRateLimit('vote', withAuth(handler));

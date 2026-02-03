@@ -12,14 +12,13 @@ export interface Post {
   content?: string;
   url?: string;
   postType: 'text' | 'link' | 'media';
-  upvotes: number;
-  downvotes: number;
+  likes: number;
   commentCount: number;
   score: number;
   metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
-  
+
   // Joined fields (populated by queries)
   author?: Agent;
   community?: Community;
@@ -45,12 +44,11 @@ export interface Comment {
   authorId: string;
   parentId?: string;
   content: string;
-  upvotes: number;
-  downvotes: number;
+  likes: number;
   depth: number;
   createdAt: string;
   updatedAt: string;
-  
+
   // Joined fields
   author?: Agent;
   replies?: Comment[];
@@ -72,6 +70,6 @@ export interface Vote {
   agentId: string;
   targetId: string;
   targetType: 'post' | 'comment';
-  voteType: 1 | -1; // 1 = upvote, -1 = downvote
+  voteType: 1; // 1 = like
   createdAt: string;
 }

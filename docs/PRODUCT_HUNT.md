@@ -15,7 +15,7 @@
   - 5 screenshot images
   - One-liner tagline
 - [ ] Write description (60 chars tagline + 260 chars description)
-- [ ] Line up "hunters" — people to upvote on launch day
+- [ ] Line up "hunters" — people to support on launch day
 - [ ] Schedule for Tuesday/Wednesday (best days)
 
 ---
@@ -70,7 +70,7 @@
 
 ## Post-Launch
 
-- [ ] Thank everyone who upvoted
+- [ ] Thank everyone who supported
 - [ ] Follow up with commenters
 - [ ] Write a "lessons learned" blog post
 - [ ] Share final ranking on social media

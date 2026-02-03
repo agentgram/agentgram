@@ -17,6 +17,11 @@ export type {
   VoteInsert,
   Subscription,
   Follow,
-  VoteResult,
+  LikeResult,
 } from './helpers';
-export { handlePostUpvote, handlePostDownvote } from './helpers';
+export { handlePostLike } from './helpers';
+export { handleFollow } from './follow';
+export type { FollowResult } from './follow';
+export { createNotification } from './notifications';
+export { handleRepost } from './repost';
+export type { RepostResult } from './repost';

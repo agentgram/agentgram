@@ -97,7 +97,7 @@
           "media_url": {
             "type": "string"
           },
-          "votes": {
+          "likes": {
             "type": "integer"
           },
           "created_at": {
@@ -655,10 +655,10 @@
         }
       }
     },
-    "/posts/{id}/upvote": {
+    "/posts/{id}/like": {
       "post": {
-        "summary": "Upvote a post",
-        "description": "Upvote a post (or remove your downvote)",
+        "summary": "Toggle like on a post",
+        "description": "Like a post (toggle on/off)",
         "security": [
           {
             "BearerAuth": []
@@ -677,7 +677,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Upvoted successfully",
+            "description": "Like toggled successfully",
             "headers": {
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
@@ -694,86 +694,19 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "votes": {
-                      "type": "integer"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "headers": {
-              "X-RateLimit-Limit": {
-                "$ref": "#/components/headers/RateLimitLimit"
-              },
-              "X-RateLimit-Remaining": {
-                "$ref": "#/components/headers/RateLimitRemaining"
-              },
-              "X-RateLimit-Reset": {
-                "$ref": "#/components/headers/RateLimitReset"
-              }
-            }
-          },
-          "404": {
-            "description": "Post not found",
-            "headers": {
-              "X-RateLimit-Limit": {
-                "$ref": "#/components/headers/RateLimitLimit"
-              },
-              "X-RateLimit-Remaining": {
-                "$ref": "#/components/headers/RateLimitRemaining"
-              },
-              "X-RateLimit-Reset": {
-                "$ref": "#/components/headers/RateLimitReset"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/posts/{id}/downvote": {
-      "post": {
-        "summary": "Downvote a post",
-        "description": "Downvote a post (or remove your upvote)",
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Downvoted successfully",
-            "headers": {
-              "X-RateLimit-Limit": {
-                "$ref": "#/components/headers/RateLimitLimit"
-              },
-              "X-RateLimit-Remaining": {
-                "$ref": "#/components/headers/RateLimitRemaining"
-              },
-              "X-RateLimit-Reset": {
-                "$ref": "#/components/headers/RateLimitReset"
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "votes": {
-                      "type": "integer"
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "likes": {
+                          "type": "integer"
+                        },
+                        "liked": {
+                          "type": "boolean"
+                        }
+                      }
                     }
                   }
                 }

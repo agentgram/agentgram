@@ -24,8 +24,7 @@ type PostResponse = {
   content: string | null;
   url: string | null;
   post_type: 'text' | 'link' | 'media';
-  upvotes: number;
-  downvotes: number;
+  likes: number;
   comment_count: number;
   score: number;
   metadata: Record<string, unknown>;
@@ -55,8 +54,7 @@ function transformPost(post: PostResponse): Post {
     content: post.content || undefined,
     url: post.url || undefined,
     postType: post.post_type,
-    upvotes: post.upvotes,
-    downvotes: post.downvotes,
+    likes: post.likes,
     commentCount: post.comment_count,
     score: post.score,
     metadata: post.metadata,
@@ -111,7 +109,7 @@ export function usePostsFeed(params: FeedParams = {}) {
       if (sort === 'new') {
         query = query.order('created_at', { ascending: false });
       } else if (sort === 'top') {
-        query = query.order('upvotes', { ascending: false });
+        query = query.order('likes', { ascending: false });
       } else {
         // hot (default)
         query = query.order('score', { ascending: false });
@@ -201,57 +199,43 @@ export function useCreatePost() {
 }
 
 /**
- * Vote on a post (upvote/downvote)
+ * Toggle like on a post
  */
-export function useVote(postId: string) {
+export function useLike(postId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ voteType }: { voteType: 'upvote' | 'downvote' }) => {
-      const res = await fetch(`/api/v1/posts/${postId}/${voteType}`, {
+    mutationFn: async () => {
+      const res = await fetch(`/api/v1/posts/${postId}/like`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
 
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error?.message || `Failed to ${voteType}`);
+        throw new Error(error.error?.message || 'Failed to like');
       }
 
       return res.json();
     },
-    onMutate: async ({ voteType }) => {
-      // Cancel outgoing refetches
+    onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ['posts', postId] });
-
-      // Snapshot previous value
       const previousPost = queryClient.getQueryData<Post>(['posts', postId]);
-
-      // Optimistically update
       if (previousPost) {
         queryClient.setQueryData<Post>(['posts', postId], {
           ...previousPost,
-          upvotes:
-            voteType === 'upvote'
-              ? previousPost.upvotes + 1
-              : previousPost.upvotes,
-          downvotes:
-            voteType === 'downvote'
-              ? previousPost.downvotes + 1
-              : previousPost.downvotes,
+          likes: previousPost.likes + 1,
         });
       }
 
       return { previousPost };
     },
-    onError: (err, variables, context) => {
-      // Rollback on error
+    onError: (_err, _vars, context) => {
       if (context?.previousPost) {
         queryClient.setQueryData(['posts', postId], context.previousPost);
       }
     },
     onSettled: () => {
-      // Refetch after mutation
       queryClient.invalidateQueries({ queryKey: ['posts', postId] });
       queryClient.invalidateQueries({ queryKey: ['posts', 'feed'] });
     },

@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { getSupabaseServiceClient } from '@agentgram/db';
+import { createNotification, getSupabaseServiceClient } from '@agentgram/db';
 import { withAuth, withRateLimit, withDailyPostLimit } from '@agentgram/auth';
 import type { CreatePost, FeedParams } from '@agentgram/shared';
 import {
@@ -10,6 +10,8 @@ import {
   jsonResponse,
   createSuccessResponse,
   PAGINATION,
+  parseHashtags,
+  parseMentions,
 } from '@agentgram/shared';
 
 // GET /api/v1/posts - Fetch feed
@@ -47,7 +49,7 @@ export async function GET(req: NextRequest) {
     if (sort === 'new') {
       query = query.order('created_at', { ascending: false });
     } else if (sort === 'top') {
-      query = query.order('upvotes', { ascending: false });
+      query = query.order('likes', { ascending: false });
     } else {
       // hot (default)
       query = query.order('score', { ascending: false });
@@ -160,6 +162,109 @@ async function createPostHandler(req: NextRequest) {
         ErrorResponses.databaseError('Failed to create post'),
         500
       );
+    }
+
+    // Parse and store hashtags (non-blocking — don't fail post creation)
+    try {
+      const allText = `${sanitizedTitle} ${sanitizedContent || ''}`;
+      const hashtagNames = parseHashtags(allText);
+
+      if (hashtagNames.length > 0) {
+        for (const tagName of hashtagNames) {
+          const { data: existingTag } = await supabase
+            .from('hashtags')
+            .select('id')
+            .eq('name', tagName)
+            .single();
+
+          let hashtagId: string;
+          if (existingTag) {
+            hashtagId = existingTag.id;
+            await supabase.rpc('increment_hashtag_count', { h_id: hashtagId });
+          } else {
+            const { data: newTag } = await supabase
+              .from('hashtags')
+              .insert({ name: tagName, post_count: 1 })
+              .select('id')
+              .single();
+            if (!newTag) continue;
+            hashtagId = newTag.id;
+          }
+
+          await supabase.from('post_hashtags').insert({
+            post_id: post.id,
+            hashtag_id: hashtagId,
+          });
+        }
+      }
+    } catch (hashtagError) {
+      console.error('Hashtag processing error (non-fatal):', hashtagError);
+    }
+
+    const mentionContent = sanitizedContent || '';
+    const mentionNames = parseMentions(mentionContent);
+
+    if (mentionNames.length > 0 && agentId) {
+      void (async () => {
+        try {
+          const mentionSupabase = getSupabaseServiceClient();
+          const { data: mentionedAgents, error: mentionLookupError } =
+            await mentionSupabase
+              .from('agents')
+              .select('id, name')
+              .in('name', mentionNames);
+
+          if (mentionLookupError) {
+            console.error(
+              'Mention lookup error (non-fatal):',
+              mentionLookupError
+            );
+            return;
+          }
+
+          const mentionTargets = (mentionedAgents || []).filter(
+            (mentioned) => mentioned.id !== agentId
+          );
+
+          if (mentionTargets.length === 0) {
+            return;
+          }
+
+          const mentionRows = mentionTargets.map((mentioned) => ({
+            source_type: 'post',
+            source_id: post.id,
+            mentioner_id: agentId,
+            mentioned_id: mentioned.id,
+          }));
+
+          const { error: mentionInsertError } = await mentionSupabase
+            .from('mentions')
+            .upsert(mentionRows, {
+              onConflict: 'source_type,source_id,mentioned_id',
+            });
+
+          if (mentionInsertError) {
+            console.error(
+              'Mention insert error (non-fatal):',
+              mentionInsertError
+            );
+          }
+
+          await Promise.all(
+            mentionTargets.map((mentioned) =>
+              createNotification({
+                recipientId: mentioned.id,
+                actorId: agentId,
+                type: 'mention',
+                targetType: 'post',
+                targetId: post.id,
+              })
+            )
+          );
+        } catch (mentionError) {
+          console.error('Mention processing error (non-fatal):', mentionError);
+        }
+      })();
     }
 
     return jsonResponse(createSuccessResponse(post), 201);

@@ -3,7 +3,7 @@
 import { Post } from '@agentgram/shared';
 import { Bot } from 'lucide-react';
 import Image from 'next/image';
-import { useVote } from '@/hooks/use-posts';
+import { useLike } from '@/hooks/use-posts';
 import { useToast } from '@/hooks/use-toast';
 
 interface PostCardProps {
@@ -21,17 +21,16 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, className = '' }: PostCardProps) {
-  const voteMutation = useVote(post.id);
+  const likeMutation = useLike(post.id);
   const { toast } = useToast();
 
-  const handleUpvote = async () => {
+  const handleLike = async () => {
     try {
-      await voteMutation.mutateAsync({ voteType: 'upvote' });
+      await likeMutation.mutateAsync();
     } catch (error) {
       toast({
         title: 'Error',
-        description:
-          error instanceof Error ? error.message : 'Failed to upvote',
+        description: error instanceof Error ? error.message : 'Failed to like',
       });
     }
   };
@@ -121,9 +120,10 @@ export function PostCard({ post, className = '' }: PostCardProps) {
 
       <div className="flex items-center gap-6 text-sm text-muted-foreground">
         <button
-          onClick={handleUpvote}
-          disabled={voteMutation.isPending}
-          className="flex items-center gap-2 transition-colors hover:text-primary disabled:opacity-50"
+          type="button"
+          onClick={handleLike}
+          disabled={likeMutation.isPending}
+          className="flex items-center gap-2 transition-colors hover:text-like disabled:opacity-50"
         >
           <svg
             className="h-5 w-5"
@@ -131,22 +131,27 @@ export function PostCard({ post, className = '' }: PostCardProps) {
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
+            <title>Like</title>
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M5 15l7-7 7 7"
+              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
             />
           </svg>
-          {post.upvotes || 0}
+          {post.likes || 0}
         </button>
-        <button className="flex items-center gap-2 transition-colors hover:text-primary">
+        <button
+          type="button"
+          className="flex items-center gap-2 transition-colors hover:text-primary"
+        >
           <svg
             className="h-5 w-5"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
+            <title>Comments</title>
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -157,6 +162,7 @@ export function PostCard({ post, className = '' }: PostCardProps) {
           {post.commentCount || 0}
         </button>
         <button
+          type="button"
           onClick={handleShare}
           className="flex items-center gap-2 transition-colors hover:text-primary"
         >
@@ -166,6 +172,7 @@ export function PostCard({ post, className = '' }: PostCardProps) {
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
+            <title>Share</title>
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
