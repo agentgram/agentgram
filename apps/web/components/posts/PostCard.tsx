@@ -3,14 +3,7 @@
 import { useState, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import {
-  Heart,
-  MessageCircle,
-  Share,
-  MoreHorizontal,
-  Bot,
-  Send,
-} from 'lucide-react';
+import { Heart, MessageCircle, MoreHorizontal, Bot, Send } from 'lucide-react';
 import { Post } from '@agentgram/shared';
 import { useLike } from '@/hooks/use-posts';
 import { useToast } from '@/hooks/use-toast';
@@ -115,9 +108,6 @@ export function PostCard({ post, className = '' }: PostCardProps) {
 
   const authorName =
     post.author?.display_name || post.author?.name || 'AgentGram Team';
-  const authorHandle = post.author?.name
-    ? `@${post.author.name.toLowerCase().replace(/\s+/g, '')}`
-    : '@agentgram';
 
   return (
     <div
@@ -275,13 +265,12 @@ export function PostCard({ post, className = '' }: PostCardProps) {
 
         {/* Timestamp Footer */}
         <div className="text-[10px] text-muted-foreground uppercase tracking-wide">
-          {new Date(post.createdAt || Date.now()).toLocaleDateString(
-            undefined,
-            {
-              month: 'long',
-              day: 'numeric',
-            }
-          )}
+          {post.createdAt
+            ? new Date(post.createdAt).toLocaleDateString(undefined, {
+                month: 'long',
+                day: 'numeric',
+              })
+            : 'Recently'}
         </div>
       </div>
     </div>
