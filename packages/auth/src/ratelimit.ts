@@ -13,6 +13,10 @@ import { Redis } from '@upstash/redis';
 
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
+const API_KEY_REGEX = /^ag_[a-f0-9]{32,64}$/;
+const API_KEY_MAX_LENGTH = 67;
+const API_KEY_PREFIX_LENGTH = 8;
+
 // Cleanup old entries every 5 minutes to prevent memory leak
 setInterval(
   () => {
@@ -117,6 +121,42 @@ function getRetryAfterSeconds(resetSeconds: number) {
   return Math.max(0, resetSeconds - nowSeconds);
 }
 
+function getClientIp(req: NextRequest) {
+  const forwardedFor = req.headers.get('x-forwarded-for');
+  if (forwardedFor) {
+    const first = forwardedFor.split(',')[0]?.trim();
+    if (first) {
+      return first;
+    }
+  }
+
+  return req.headers.get('x-real-ip') || 'unknown';
+}
+
+function getApiKeyPrefix(authHeader: string | null): string | null {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+
+  const token = authHeader.substring(7).trim();
+  if (token.length > API_KEY_MAX_LENGTH || !API_KEY_REGEX.test(token)) {
+    return null;
+  }
+
+  return token.substring(0, API_KEY_PREFIX_LENGTH);
+}
+
+function getLimitData(key: string, now: number, windowMs: number) {
+  let limitData = rateLimitMap.get(key);
+
+  if (!limitData || now > limitData.resetTime) {
+    limitData = { count: 0, resetTime: now + windowMs };
+    rateLimitMap.set(key, limitData);
+  }
+
+  return limitData;
+}
+
 function buildRateLimitHeaders(
   limit: number,
   remaining: number,
@@ -189,11 +229,14 @@ export function withRateLimit<T extends unknown[]>(
   const { maxRequests, windowMs } = options;
 
   return async (req: NextRequest, ...args: T) => {
-    const ip =
-      req.headers.get('x-forwarded-for') ||
-      req.headers.get('x-real-ip') ||
-      'unknown';
-    const key = `${ip}:${new URL(req.url).pathname}`;
+    // Vercel sets x-forwarded-for reliably in production.
+    const ip = getClientIp(req);
+    const pathname = new URL(req.url).pathname;
+    const key = `${ip}:${pathname}`;
+    const keyPrefix = getApiKeyPrefix(req.headers.get('authorization'));
+    const keyPrefixKey = keyPrefix
+      ? `key-prefix:${keyPrefix}:${pathname}`
+      : null;
     const limiter = getLimiter(options);
 
     if (limiter) {
@@ -224,18 +267,42 @@ export function withRateLimit<T extends unknown[]>(
         );
       }
 
+      if (keyPrefixKey) {
+        const prefixResult = await limiter.limit(keyPrefixKey);
+        const prefixResetSeconds = toUnixSeconds(prefixResult.reset);
+        const prefixHeaders = buildRateLimitHeaders(
+          prefixResult.limit,
+          prefixResult.remaining,
+          prefixResetSeconds
+        );
+
+        if (!prefixResult.success) {
+          const retryAfterSeconds = getRetryAfterSeconds(prefixResetSeconds);
+          return NextResponse.json(
+            {
+              success: false,
+              error: {
+                code: 'RATE_LIMIT_EXCEEDED',
+                message: 'Rate limit exceeded. Please try again later.',
+              },
+            } satisfies ApiResponse,
+            {
+              status: 429,
+              headers: {
+                ...prefixHeaders,
+                'Retry-After': retryAfterSeconds.toString(),
+              },
+            }
+          );
+        }
+      }
+
       const response = await handler(req, ...args);
       return withRateLimitHeaders(response, rateLimitHeaders);
     }
 
     const now = Date.now();
-    let limitData = rateLimitMap.get(key);
-
-    if (!limitData || now > limitData.resetTime) {
-      limitData = { count: 0, resetTime: now + windowMs };
-      rateLimitMap.set(key, limitData);
-    }
-
+    const limitData = getLimitData(key, now, windowMs);
     limitData.count++;
 
     const remaining = Math.max(0, maxRequests - limitData.count);
@@ -264,6 +331,38 @@ export function withRateLimit<T extends unknown[]>(
           },
         }
       );
+    }
+
+    if (keyPrefixKey) {
+      const prefixLimit = getLimitData(keyPrefixKey, now, windowMs);
+      prefixLimit.count++;
+      const prefixRemaining = Math.max(0, maxRequests - prefixLimit.count);
+      const prefixResetSeconds = Math.ceil(prefixLimit.resetTime / 1000);
+      const prefixHeaders = buildRateLimitHeaders(
+        maxRequests,
+        prefixRemaining,
+        prefixResetSeconds
+      );
+
+      if (prefixLimit.count > maxRequests) {
+        const retryAfterSeconds = getRetryAfterSeconds(prefixResetSeconds);
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: 'RATE_LIMIT_EXCEEDED',
+              message: 'Rate limit exceeded. Please try again later.',
+            },
+          } satisfies ApiResponse,
+          {
+            status: 429,
+            headers: {
+              ...prefixHeaders,
+              'Retry-After': retryAfterSeconds.toString(),
+            },
+          }
+        );
+      }
     }
 
     const response = await handler(req, ...args);

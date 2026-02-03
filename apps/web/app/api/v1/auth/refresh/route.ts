@@ -15,6 +15,12 @@ const REFRESH_RATE_LIMIT = {
   windowMs: 60 * 1000,
 };
 
+const API_KEY_REGEX = /^ag_[a-f0-9]{32,64}$/;
+const API_KEY_MAX_LENGTH = 67;
+const KEY_PREFIX_LENGTH = 8;
+const MAX_PREFIX_MATCHES = 5;
+const GENERIC_UNAUTHORIZED_MESSAGE = 'Invalid or expired API key';
+
 function parseJwtExpiryMs(expiry: string): number | null {
   const match = /^\d+[smhd]$/.exec(expiry);
   if (!match) {
@@ -55,22 +61,39 @@ function extractApiKey(authHeader: string | null): string | null {
   return token;
 }
 
+function isValidApiKeyFormat(apiKey: string): boolean {
+  if (apiKey.length > API_KEY_MAX_LENGTH) {
+    return false;
+  }
+
+  return API_KEY_REGEX.test(apiKey);
+}
+
+function unauthorizedResponse() {
+  return jsonResponse(
+    ErrorResponses.unauthorized(GENERIC_UNAUTHORIZED_MESSAGE),
+    401
+  );
+}
+
 async function refreshHandler(req: NextRequest) {
   try {
     const apiKey = extractApiKey(req.headers.get('authorization'));
-    if (!apiKey || apiKey.length < 8) {
-      return jsonResponse(
-        ErrorResponses.unauthorized('Missing or invalid authorization header'),
-        401
-      );
+    if (!apiKey || !isValidApiKeyFormat(apiKey)) {
+      return unauthorizedResponse();
+    }
+
+    if (apiKey.length < KEY_PREFIX_LENGTH) {
+      return unauthorizedResponse();
     }
 
     const supabase = getSupabaseServiceClient();
-    const keyPrefix = apiKey.substring(0, 8);
+    const keyPrefix = apiKey.substring(0, KEY_PREFIX_LENGTH);
     const { data: apiKeys, error: keyError } = await supabase
       .from('api_keys')
       .select('agent_id, key_hash, expires_at, permissions')
-      .eq('key_prefix', keyPrefix);
+      .eq('key_prefix', keyPrefix)
+      .limit(MAX_PREFIX_MATCHES + 1);
 
     if (keyError) {
       console.error('API key lookup error:', keyError);
@@ -82,45 +105,40 @@ async function refreshHandler(req: NextRequest) {
 
     if (!apiKeys || apiKeys.length === 0) {
       console.warn('JWT refresh failed: API key prefix not found');
-      return jsonResponse(
-        ErrorResponses.unauthorized('Invalid or expired API key'),
-        401
-      );
+      return unauthorizedResponse();
+    }
+
+    if (apiKeys.length > MAX_PREFIX_MATCHES) {
+      console.warn('JWT refresh failed: API key prefix too broad');
+      return unauthorizedResponse();
     }
 
     let matchedKey: (typeof apiKeys)[number] | null = null;
     for (const record of apiKeys) {
+      // bcryptjs is intentionally kept; validate format before hashing to reduce CPU exposure.
       const isMatch = await bcrypt.compare(apiKey, record.key_hash);
       if (isMatch) {
         matchedKey = record;
+        break;
       }
     }
 
     if (!matchedKey) {
       console.warn('JWT refresh failed: API key hash mismatch');
-      return jsonResponse(
-        ErrorResponses.unauthorized('Invalid or expired API key'),
-        401
-      );
+      return unauthorizedResponse();
     }
 
     if (matchedKey.expires_at) {
       const keyExpiry = Date.parse(matchedKey.expires_at);
       if (!isNaN(keyExpiry) && keyExpiry <= Date.now()) {
         console.warn('JWT refresh failed: API key expired');
-        return jsonResponse(
-          ErrorResponses.unauthorized('Invalid or expired API key'),
-          401
-        );
+        return unauthorizedResponse();
       }
     }
 
     if (!matchedKey.agent_id) {
       console.warn('JWT refresh failed: API key missing agent');
-      return jsonResponse(
-        ErrorResponses.unauthorized('Invalid or expired API key'),
-        401
-      );
+      return unauthorizedResponse();
     }
 
     const { data: agent, error: agentError } = await supabase
@@ -133,7 +151,7 @@ async function refreshHandler(req: NextRequest) {
       if (agentError) {
         console.error('Agent lookup error:', agentError);
       }
-      return jsonResponse(ErrorResponses.notFound('Agent'), 404);
+      return unauthorizedResponse();
     }
 
     const permissions = Array.isArray(matchedKey.permissions)

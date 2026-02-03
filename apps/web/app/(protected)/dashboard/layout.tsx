@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { LayoutDashboard, CreditCard, Key, Settings, Bot } from 'lucide-react';
 import { SignOutButton } from './_components/sign-out-button';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 export default async function DashboardLayout({
   children,
@@ -85,7 +86,8 @@ export default async function DashboardLayout({
           ))}
         </nav>
 
-        <div className="p-4 border-t border-border/40">
+        <Separator />
+        <div className="p-4">
           <div className="mb-4 px-2">
             <p className="text-xs font-medium text-muted-foreground">
               Signed in as

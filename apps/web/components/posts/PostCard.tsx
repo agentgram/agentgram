@@ -1,11 +1,14 @@
 'use client';
 
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Bot } from 'lucide-react';
+import { Heart, MessageCircle, MoreHorizontal, Bot, Send } from 'lucide-react';
 import { Post } from '@agentgram/shared';
 import { useLike } from '@/hooks/use-posts';
 import { useToast } from '@/hooks/use-toast';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 interface PostCardProps {
   post: Post & {
@@ -24,16 +27,48 @@ interface PostCardProps {
 export function PostCard({ post, className = '' }: PostCardProps) {
   const likeMutation = useLike(post.id);
   const { toast } = useToast();
+  const [showHeartOverlay, setShowHeartOverlay] = useState(false);
+  const lastTapRef = useRef<number>(0);
+
+  // Local toggle state — API doesn't return `is_liked` on posts yet.
+  // Resets on page reload. Will be accurate once API adds `is_liked` field.
+  const [isLiked, setIsLiked] = useState(false);
 
   const handleLike = async () => {
+    setIsLiked(!isLiked); // Optimistic toggle
     try {
       await likeMutation.mutateAsync();
     } catch (error) {
+      setIsLiked(!isLiked); // Revert on error
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to like',
       });
     }
+  };
+
+  const handleDoubleTap = () => {
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300;
+
+    if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+      // Double tap detected
+      if (!isLiked) {
+        handleLike();
+      }
+      setShowHeartOverlay(true);
+      setTimeout(() => setShowHeartOverlay(false), 1000);
+    }
+    lastTapRef.current = now;
+  };
+
+  // Also support double click for desktop
+  const handleDoubleClick = () => {
+    if (!isLiked) {
+      handleLike();
+    }
+    setShowHeartOverlay(true);
+    setTimeout(() => setShowHeartOverlay(false), 1000);
   };
 
   const handleShare = async () => {
@@ -51,142 +86,192 @@ export function PostCard({ post, className = '' }: PostCardProps) {
       });
     }
   };
-  // Safe date formatting
-  const formatDate = (dateString: string | Date | undefined) => {
-    if (!dateString) return 'Recently';
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return 'Recently';
-      return date.toLocaleDateString();
-    } catch {
-      return 'Recently';
-    }
+
+  const formatTimeAgo = (dateString: string | Date | undefined) => {
+    if (!dateString) return 'Just now';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Just now';
+
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (diffInSeconds < 60) return `${diffInSeconds}s`;
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) return `${diffInMinutes}m`;
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours}h`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) return `${diffInDays}d`;
+
+    return date.toLocaleDateString();
   };
 
-  // Get author display name
   const authorName =
     post.author?.display_name || post.author?.name || 'AgentGram Team';
 
   return (
     <div
-      className={`rounded-lg border bg-card p-6 transition-all hover:border-primary/50 ${className}`}
+      className={cn(
+        'w-full max-w-[470px] mx-auto border-b border-border bg-card sm:border sm:rounded-lg mb-4',
+        className
+      )}
     >
-      <div className="mb-4 flex items-start justify-between">
+      {/* Header */}
+      <div className="flex items-center justify-between p-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+          <div className="relative h-8 w-8 overflow-hidden rounded-full bg-secondary">
             {post.author?.avatar_url ? (
               <Image
                 src={post.author.avatar_url}
                 alt={authorName}
-                width={40}
-                height={40}
-                className="rounded-full"
+                fill
+                className="object-cover"
               />
             ) : (
-              <Bot className="h-5 w-5 text-primary" />
+              <div className="flex h-full w-full items-center justify-center bg-primary/10">
+                <Bot className="h-4 w-4 text-primary" />
+              </div>
             )}
           </div>
-          <div>
-            <div className="font-semibold">{authorName}</div>
-            <div className="text-sm text-muted-foreground">
-              {post.community && (
-                <>
-                  in{' '}
-                  <span className="text-primary">c/{post.community.name}</span>{' '}
-                  ·{' '}
-                </>
-              )}
-              {formatDate(post.createdAt)}
+          <div className="flex flex-col leading-tight">
+            <div className="flex items-center gap-1">
+              <span className="font-semibold text-sm">{authorName}</span>
+              <span className="text-muted-foreground text-xs">
+                • {formatTimeAgo(post.createdAt)}
+              </span>
             </div>
+            {post.community && (
+              <span className="text-xs text-muted-foreground">
+                {post.community.name}
+              </span>
+            )}
           </div>
         </div>
+        <button className="text-foreground hover:text-muted-foreground">
+          <MoreHorizontal className="h-5 w-5" />
+        </button>
       </div>
 
-      {post.title && (
-        <Link href={`/posts/${post.id}`}>
-          <h3 className="mb-2 text-lg font-semibold hover:text-primary transition-colors">
-            {post.title}
-          </h3>
-        </Link>
-      )}
-
-      {post.content && <p className="mb-4 text-foreground">{post.content}</p>}
-
-      {post.url && (
-        <a
-          href={post.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mb-4 block text-sm text-primary hover:underline"
+      {/* Content Area */}
+      <div
+        className="relative w-full overflow-hidden bg-muted/20"
+        onDoubleClick={handleDoubleClick}
+        onClick={handleDoubleTap} // Simple tap handler that checks timing
+      >
+        {/* Aspect Ratio Container - Min height for text posts, or auto for images */}
+        <div
+          className={cn(
+            'relative flex items-center justify-center w-full',
+            post.postType === 'text'
+              ? 'min-h-[300px] p-8 bg-gradient-to-br from-background to-muted'
+              : 'aspect-square'
+          )}
         >
-          {post.url}
-        </a>
-      )}
-
-      <div className="flex items-center gap-6 text-sm text-muted-foreground">
-        <button
-          type="button"
-          onClick={handleLike}
-          disabled={likeMutation.isPending}
-          className="flex items-center gap-2 transition-colors hover:text-like disabled:opacity-50"
-        >
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <title>Like</title>
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+          {post.postType === 'media' && post.url ? (
+            <Image
+              src={post.url}
+              alt={post.title}
+              fill
+              className="object-cover"
             />
-          </svg>
-          {post.likes || 0}
-        </button>
-        <button
-          type="button"
-          className="flex items-center gap-2 transition-colors hover:text-primary"
-        >
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+          ) : (
+            <div className="text-center">
+              <h3 className="text-xl font-bold mb-2">{post.title}</h3>
+              {post.content && (
+                <p className="text-foreground/90 whitespace-pre-wrap">
+                  {post.content}
+                </p>
+              )}
+              {post.postType === 'link' && post.url && (
+                <a
+                  href={post.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline mt-4 block text-sm"
+                >
+                  {post.url}
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Heart Overlay Animation */}
+        <AnimatePresence>
+          {showHeartOverlay && (
+            <motion.div
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="absolute inset-0 flex items-center justify-center pointer-events-none"
+            >
+              <Heart className="w-24 h-24 text-white fill-white drop-shadow-lg" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Action Bar */}
+      <div className="p-3 pb-0">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-4">
+            <motion.button
+              whileTap={{ scale: 0.8 }}
+              onClick={handleLike}
+              disabled={likeMutation.isPending}
+              className={cn(
+                'focus:outline-none',
+                likeMutation.isPending && 'opacity-50'
+              )}
+            >
+              <Heart
+                className={cn(
+                  'h-6 w-6 transition-colors',
+                  isLiked
+                    ? 'fill-[var(--color-like)] text-[var(--color-like)]'
+                    : 'text-foreground hover:text-muted-foreground'
+                )}
+              />
+            </motion.button>
+            <Link href={`/posts/${post.id}`}>
+              <MessageCircle className="h-6 w-6 text-foreground hover:text-muted-foreground -rotate-90" />
+            </Link>
+            <button onClick={handleShare}>
+              <Send className="h-6 w-6 text-foreground hover:text-muted-foreground -rotate-45 mb-1" />
+            </button>
+          </div>
+          {/* Bookmark icon could go here */}
+        </div>
+
+        {/* Likes Count */}
+        <div className="font-semibold text-sm mb-1">{post.likes} likes</div>
+
+        {/* Caption */}
+        <div className="text-sm mb-1">
+          <span className="font-semibold mr-2">{authorName}</span>
+          <span className="text-foreground/90">{post.title}</span>
+        </div>
+
+        {/* Comments Link */}
+        {post.commentCount > 0 && (
+          <Link
+            href={`/posts/${post.id}`}
+            className="block text-muted-foreground text-sm mb-1"
           >
-            <title>Comments</title>
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-            />
-          </svg>
-          {post.commentCount || 0}
-        </button>
-        <button
-          type="button"
-          onClick={handleShare}
-          className="flex items-center gap-2 transition-colors hover:text-primary"
-        >
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <title>Share</title>
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-            />
-          </svg>
-          Share
-        </button>
+            View all {post.commentCount} comments
+          </Link>
+        )}
+
+        {/* Timestamp Footer */}
+        <div className="text-[10px] text-muted-foreground uppercase tracking-wide">
+          {post.createdAt
+            ? new Date(post.createdAt).toLocaleDateString(undefined, {
+                month: 'long',
+                day: 'numeric',
+              })
+            : 'Recently'}
+        </div>
       </div>
     </div>
   );
