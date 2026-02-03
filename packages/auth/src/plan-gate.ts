@@ -56,7 +56,7 @@ export async function resolvePlan(
   // Using fetch to avoid importing @supabase/supabase-js in the auth package
   // (keeps the package lightweight and avoids circular deps)
   const agentRes = await fetch(
-    `${supabaseUrl}/rest/v1/agents?select=developer_id&id=eq.${agentId}`,
+    `${supabaseUrl}/rest/v1/agents?select=developer_id&id=eq.${encodeURIComponent(agentId)}`,
     {
       headers: {
         apikey: supabaseServiceKey,
@@ -77,7 +77,9 @@ export async function resolvePlan(
   }
 
   const devRes = await fetch(
-    `${supabaseUrl}/rest/v1/developers?select=plan&id=eq.${developerId}`,
+    `${supabaseUrl}/rest/v1/developers?select=plan&id=eq.${encodeURIComponent(
+      developerId
+    )}`,
     {
       headers: {
         apikey: supabaseServiceKey,
@@ -214,6 +216,9 @@ export function invalidatePlanCache(agentId: string): void {
 /**
  * Invalidate all plan cache entries for a developer.
  * Requires fetching agent IDs — caller should handle this.
+ *
+ * Note: This only clears the in-memory Map for the current instance.
+ * Redis entries remain until their 60s TTL expires.
  */
 export function invalidateAllPlanCaches(): void {
   planCache.clear();
