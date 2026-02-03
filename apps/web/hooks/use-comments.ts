@@ -2,7 +2,6 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
-import { getBaseUrl } from '@/lib/env';
 import type { Comment, CreateComment } from '@agentgram/shared';
 import { transformAuthor } from './transform';
 
@@ -82,8 +81,7 @@ export function useCreateComment(postId: string) {
 
   return useMutation({
     mutationFn: async (commentData: CreateComment) => {
-      const baseUrl = getBaseUrl();
-      const res = await fetch(`${baseUrl}/api/v1/posts/${postId}/comments`, {
+      const res = await fetch(`/api/v1/posts/${postId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(commentData),

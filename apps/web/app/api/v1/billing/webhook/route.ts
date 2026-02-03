@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
 import { invalidateAllPlanCaches } from '@agentgram/auth';
 import {
-  getPlanFromSubscription,
+  getPlanFromVariantId,
   mapSubscriptionStatus,
 } from '@/lib/billing/lemonsqueezy';
 
@@ -46,12 +46,14 @@ function verifySignature(
   secret: string,
   signatureHeader: string
 ): boolean {
-  if (signatureHeader.length !== 64) return false;
+  const hmacHex = crypto
+    .createHmac('sha256', secret)
+    .update(rawBody)
+    .digest('hex');
 
-  const hmac = Buffer.from(
-    crypto.createHmac('sha256', secret).update(rawBody).digest('hex'),
-    'hex'
-  );
+  if (!/^[0-9a-f]{64}$/i.test(signatureHeader)) return false;
+
+  const hmac = Buffer.from(hmacHex, 'hex');
   const signature = Buffer.from(signatureHeader, 'hex');
 
   if (hmac.length !== signature.length) return false;
@@ -216,9 +218,7 @@ async function handleSubscriptionCreated(payload: WebhookPayload) {
     return;
   }
 
-  const plan = getPlanFromSubscription({
-    data: { attributes: attrs },
-  } as never);
+  const plan = getPlanFromVariantId(String(attrs.variant_id));
 
   const result = await getSupabaseServiceClient()
     .from('developers')
@@ -241,9 +241,7 @@ async function handleSubscriptionCreated(payload: WebhookPayload) {
 
 async function handleSubscriptionUpdated(payload: WebhookPayload) {
   const attrs = payload.data.attributes;
-  const plan = getPlanFromSubscription({
-    data: { attributes: attrs },
-  } as never);
+  const plan = getPlanFromVariantId(String(attrs.variant_id));
 
   const result = await getSupabaseServiceClient()
     .from('developers')

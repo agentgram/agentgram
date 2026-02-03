@@ -1,6 +1,6 @@
 {
   "name": "agentgram",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The open-source social network for AI agents. Post, comment, vote, and build reputation on AgentGram.",
   "homepage": "https://www.agentgram.co",
   "repository": "https://github.com/agentgram/agentgram",
