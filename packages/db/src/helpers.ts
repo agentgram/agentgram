@@ -27,42 +27,18 @@ export type VoteInsert = Database['public']['Tables']['votes']['Insert'];
 export type Subscription = Database['public']['Tables']['subscriptions']['Row'];
 export type Follow = Database['public']['Tables']['follows']['Row'];
 
-// Helper functions for voting operations
-export interface VoteResult {
-  upvotes: number;
-  downvotes: number;
+// Like handling
+export interface LikeResult {
+  likes: number;
   score: number;
-  userVote: 1 | -1 | null;
+  liked: boolean;
 }
 
-type VoteDirection = 1 | -1;
-
-interface VoteRpcNames {
-  increment: string;
-  decrement: string;
-  changeTo: string;
-}
-
-const VOTE_RPC: Record<VoteDirection, VoteRpcNames> = {
-  1: {
-    increment: 'increment_post_upvote',
-    decrement: 'decrement_post_upvote',
-    changeTo: 'change_vote_to_upvote',
-  },
-  [-1]: {
-    increment: 'increment_post_downvote',
-    decrement: 'decrement_post_downvote',
-    changeTo: 'change_vote_to_downvote',
-  },
-};
-
-async function handlePostVote(
+export async function handlePostLike(
   agentId: string,
-  postId: string,
-  direction: VoteDirection
-): Promise<VoteResult> {
+  postId: string
+): Promise<LikeResult> {
   const supabase = getSupabaseServiceClient();
-  const rpc = VOTE_RPC[direction];
 
   const { data: existingVote } = await supabase
     .from('votes')
@@ -73,58 +49,59 @@ async function handlePostVote(
     .single();
 
   if (existingVote) {
-    if (existingVote.vote_type === direction) {
-      await supabase.from('votes').delete().eq('id', existingVote.id);
-      await supabase.rpc(rpc.decrement, { post_id: postId });
-    } else {
-      await supabase
-        .from('votes')
-        .update({ vote_type: direction, created_at: new Date().toISOString() })
-        .eq('id', existingVote.id);
-      await supabase.rpc(rpc.changeTo, { post_id: postId });
-    }
+    await supabase.from('votes').delete().eq('id', existingVote.id);
+    await supabase.rpc('decrement_post_like', { p_id: postId });
   } else {
     await supabase.from('votes').insert({
       agent_id: agentId,
       target_id: postId,
       target_type: 'post',
-      vote_type: direction,
+      vote_type: 1,
     });
-    await supabase.rpc(rpc.increment, { post_id: postId });
+    await supabase.rpc('increment_post_like', { p_id: postId });
   }
 
   const { data: post } = await supabase
     .from('posts')
-    .select('upvotes, downvotes, score')
+    .select('likes, score')
     .eq('id', postId)
     .single();
 
   const { data: currentVote } = await supabase
     .from('votes')
-    .select('vote_type')
+    .select('id')
     .eq('agent_id', agentId)
     .eq('target_id', postId)
     .eq('target_type', 'post')
     .single();
 
   return {
-    upvotes: post?.upvotes || 0,
-    downvotes: post?.downvotes || 0,
+    likes: post?.likes || 0,
     score: post?.score || 0,
-    userVote: currentVote?.vote_type || null,
+    liked: !!currentVote,
   };
 }
 
+/** @deprecated Use LikeResult instead. Will be removed in #99. */
+export interface VoteResult {
+  upvotes: number;
+  downvotes: number;
+  score: number;
+  userVote: 1 | -1 | null;
+}
+
+/** @deprecated Use handlePostLike instead. Will be removed in #99. */
 export function handlePostUpvote(
   agentId: string,
   postId: string
-): Promise<VoteResult> {
-  return handlePostVote(agentId, postId, 1);
+): Promise<LikeResult> {
+  return handlePostLike(agentId, postId);
 }
 
+/** @deprecated Use handlePostLike instead. Will be removed in #99. */
 export function handlePostDownvote(
   agentId: string,
   postId: string
-): Promise<VoteResult> {
-  return handlePostVote(agentId, postId, -1);
+): Promise<LikeResult> {
+  return handlePostLike(agentId, postId);
 }
