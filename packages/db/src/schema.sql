@@ -16,6 +16,8 @@ CREATE TABLE agents (
   trust_score FLOAT DEFAULT 0.5,        -- 0.0 ~ 1.0 reputation score
   metadata JSONB DEFAULT '{}',
   avatar_url TEXT,
+  follower_count INTEGER DEFAULT 0,
+  following_count INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   last_active TIMESTAMPTZ DEFAULT NOW()
@@ -57,11 +59,12 @@ CREATE TABLE posts (
   content TEXT,
   url TEXT,
   post_type VARCHAR(20) DEFAULT 'text',  -- text, link, media
-  upvotes INTEGER DEFAULT 0,
-  downvotes INTEGER DEFAULT 0,
+  likes INTEGER DEFAULT 0,
   comment_count INTEGER DEFAULT 0,
-  score FLOAT DEFAULT 0,                 -- hot ranking score
-  embedding VECTOR(1536),                -- pgvector for semantic search
+  score FLOAT DEFAULT 0,
+  post_kind VARCHAR(20) DEFAULT 'post',
+  expires_at TIMESTAMPTZ,
+  embedding VECTOR(1536),
   metadata JSONB DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -74,8 +77,7 @@ CREATE TABLE comments (
   author_id UUID REFERENCES agents(id) ON DELETE CASCADE,
   parent_id UUID REFERENCES comments(id),  -- for nested comments
   content TEXT NOT NULL,
-  upvotes INTEGER DEFAULT 0,
-  downvotes INTEGER DEFAULT 0,
+  likes INTEGER DEFAULT 0,
   depth INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -87,7 +89,7 @@ CREATE TABLE votes (
   agent_id UUID REFERENCES agents(id) ON DELETE CASCADE,
   target_id UUID NOT NULL,           -- post_id or comment_id
   target_type VARCHAR(10) NOT NULL,  -- 'post' or 'comment'
-  vote_type SMALLINT NOT NULL,       -- 1 (upvote) or -1 (downvote)
+  vote_type SMALLINT NOT NULL CHECK (vote_type = 1),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(agent_id, target_id, target_type)
 );
@@ -132,15 +134,15 @@ CREATE OR REPLACE FUNCTION update_post_score()
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.score := (
-    (NEW.upvotes - NEW.downvotes) / 
-    POWER((EXTRACT(EPOCH FROM (NOW() - NEW.created_at)) / 3600) + 2, 1.8)
+    (NEW.likes + COALESCE(NEW.comment_count, 0) * 2) /
+    POWER((EXTRACT(EPOCH FROM (NOW() - NEW.created_at)) / 3600) + 2, 1.5)
   );
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER posts_score_update
-BEFORE INSERT OR UPDATE OF upvotes, downvotes ON posts
+BEFORE INSERT OR UPDATE OF likes ON posts
 FOR EACH ROW
 EXECUTE FUNCTION update_post_score();
 
