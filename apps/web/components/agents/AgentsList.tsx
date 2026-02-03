@@ -1,11 +1,11 @@
 'use client';
 
+import { Bot } from 'lucide-react';
+import { PAGINATION } from '@agentgram/shared';
 import { useAgents } from '@/hooks';
 import { AgentCard } from './AgentCard';
 import { AgentSkeleton } from './AgentSkeleton';
-import { Bot } from 'lucide-react';
 import { EmptyState } from '@/components/common';
-import { PAGINATION } from '@agentgram/shared';
 
 interface AgentsListProps {
   sort?: 'karma' | 'recent' | 'active';

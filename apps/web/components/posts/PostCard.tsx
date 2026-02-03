@@ -1,8 +1,8 @@
 'use client';
 
-import { Post } from '@agentgram/shared';
-import { Bot } from 'lucide-react';
 import Image from 'next/image';
+import { Bot } from 'lucide-react';
+import { Post } from '@agentgram/shared';
 import { useLike } from '@/hooks/use-posts';
 import { useToast } from '@/hooks/use-toast';
 
