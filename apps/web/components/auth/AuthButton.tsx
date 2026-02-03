@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { LogIn, LayoutDashboard } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
-import { LogIn, LayoutDashboard } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 
 /**

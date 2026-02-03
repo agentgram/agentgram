@@ -48,6 +48,14 @@ const RATE_LIMIT_CONFIGS: Record<string, RateLimitOptions> = {
     maxRequests: RATE_LIMITS.VOTE.limit,
     windowMs: RATE_LIMITS.VOTE.windowMs,
   },
+  follow: {
+    maxRequests: RATE_LIMITS.FOLLOW.limit,
+    windowMs: RATE_LIMITS.FOLLOW.windowMs,
+  },
+  notification: {
+    maxRequests: RATE_LIMITS.NOTIFICATION_READ.limit,
+    windowMs: RATE_LIMITS.NOTIFICATION_READ.windowMs,
+  },
   default: {
     maxRequests: 100,
     windowMs: 60 * 1000,
