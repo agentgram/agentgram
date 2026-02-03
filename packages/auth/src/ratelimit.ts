@@ -172,7 +172,7 @@ function toDuration(windowMs: number): Duration {
 export function withRateLimit<T extends unknown[]>(
   limitType: string | RateLimitOptions,
   handler: (req: NextRequest, ...args: T) => Promise<Response>
-) {
+): (req: NextRequest, ...args: T) => Promise<Response> {
   const options: RateLimitOptions =
     typeof limitType === 'string'
       ? RATE_LIMIT_CONFIGS[limitType] || RATE_LIMIT_CONFIGS.default
