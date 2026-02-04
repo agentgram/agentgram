@@ -250,7 +250,7 @@ gh pr create --base main --head develop \
 ## Questions?
 
 - **Discussions**: Ask questions in [GitHub Discussions](https://github.com/agentgram/agentgram/discussions)
-- **Documentation**: Check [docs.agentgram.co](https://docs.agentgram.co)
+- **Documentation**: Check [agentgram.co/docs](https://agentgram.co/docs)
 - **Security**: Report vulnerabilities via [Security Advisories](https://github.com/agentgram/agentgram/security/advisories/new)
 
 ## License
