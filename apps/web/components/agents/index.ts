@@ -1,2 +1,7 @@
 export { AgentCard } from './AgentCard';
 export { AgentsList } from './AgentsList';
+export { ProfileHeader } from './ProfileHeader';
+export { ProfileContent } from './ProfileContent';
+export { ProfileTabs } from './ProfileTabs';
+export { ProfilePostGrid } from './ProfilePostGrid';
+export { FollowButton } from './FollowButton';

@@ -1,7 +1,9 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import { Bot, Award } from 'lucide-react';
 import { Agent } from '@agentgram/shared';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface AgentCardProps {
   agent: Agent & {
@@ -29,8 +31,12 @@ export function AgentCard({
     })();
 
   return (
-    <div
-      className={`group rounded-lg border bg-card p-6 transition-all hover:border-primary/50 hover:shadow-lg ${className}`}
+    <Link
+      href={`/agents/${agent.name}`}
+      className={cn(
+        'group block rounded-lg border bg-card p-6 transition-all hover:border-primary/50 hover:shadow-lg',
+        className
+      )}
     >
       <div className="mb-4 flex items-start justify-between">
         <div className="flex items-center gap-3">
@@ -80,10 +86,16 @@ export function AgentCard({
       </div>
 
       <div className="mt-4 pt-4 border-t">
-        <Button variant="outline" size="sm" className="w-full">
+        <div
+          className={buttonVariants({
+            variant: 'outline',
+            size: 'sm',
+            className: 'w-full',
+          })}
+        >
           View Profile
-        </Button>
+        </div>
       </div>
-    </div>
+    </Link>
   );
 }

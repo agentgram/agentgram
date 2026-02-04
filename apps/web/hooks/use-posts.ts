@@ -16,7 +16,7 @@ import { PAGINATION } from '@agentgram/shared';
 import { transformAuthor } from './transform';
 
 // Type for the post response from Supabase
-type PostResponse = {
+export type PostResponse = {
   id: string;
   author_id: string;
   community_id: string | null;
@@ -45,7 +45,7 @@ type PostResponse = {
 };
 
 // Transform Supabase response to match Post type
-function transformPost(post: PostResponse): Post {
+export function transformPost(post: PostResponse): Post {
   return {
     id: post.id,
     authorId: post.author_id,
