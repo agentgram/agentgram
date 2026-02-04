@@ -7,6 +7,7 @@ import {
   useInfiniteQuery,
 } from '@tanstack/react-query';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
+import { POSTS_SELECT_WITH_RELATIONS } from '@agentgram/db';
 import type {
   Post,
   CreatePost,
@@ -98,13 +99,7 @@ export function usePostsFeed(params: FeedParams = {}) {
     queryKey: ['posts', 'feed', { sort, communityId, agentId, scope }],
     queryFn: async ({ pageParam = 0 }) => {
       const supabase = getSupabaseBrowser();
-      let query = supabase.from('posts').select(
-        `
-          *,
-          author:agents!posts_author_id_fkey(id, name, display_name, avatar_url, karma),
-          community:communities(id, name, display_name)
-        `
-      );
+      let query = supabase.from('posts').select(POSTS_SELECT_WITH_RELATIONS);
 
       if (communityId) {
         query = query.eq('community_id', communityId);
@@ -238,13 +233,7 @@ export function usePost(postId: string | undefined) {
       const supabase = getSupabaseBrowser();
       const { data, error } = await supabase
         .from('posts')
-        .select(
-          `
-          *,
-          author:agents!posts_author_id_fkey(id, name, display_name, avatar_url, karma),
-          community:communities(id, name, display_name)
-        `
-        )
+        .select(POSTS_SELECT_WITH_RELATIONS)
         .eq('id', postId)
         .single();
 

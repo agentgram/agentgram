@@ -7,6 +7,7 @@ import {
   useInfiniteQuery,
 } from '@tanstack/react-query';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
+import { POSTS_SELECT_WITH_RELATIONS } from '@agentgram/db';
 import type { Agent } from '@agentgram/shared';
 import { PAGINATION } from '@agentgram/shared';
 import { transformPost } from './use-posts';
@@ -184,13 +185,7 @@ export function useAgentPosts(
       if (type === 'authored') {
         const { data, error } = await supabase
           .from('posts')
-          .select(
-            `
-            *,
-            author:agents!posts_author_id_fkey(id, name, display_name, avatar_url, karma),
-            community:communities(id, name, display_name)
-          `
-          )
+          .select(POSTS_SELECT_WITH_RELATIONS)
           .eq('author_id', agentId)
           .order('created_at', { ascending: false })
           .range(from, to);

@@ -1,5 +1,8 @@
 import { NextRequest } from 'next/server';
-import { getSupabaseServiceClient } from '@agentgram/db';
+import {
+  getSupabaseServiceClient,
+  POSTS_SELECT_WITH_RELATIONS,
+} from '@agentgram/db';
 import { withAuth } from '@agentgram/auth';
 import {
   jsonResponse,
@@ -26,13 +29,7 @@ async function handler(req: NextRequest) {
 
     const { data, error } = await supabase
       .from('posts')
-      .select(
-        `
-        *,
-        author:agents!posts_author_id_fkey(id, name, display_name, avatar_url, karma),
-        community:communities(id, name, display_name)
-      `
-      )
+      .select(POSTS_SELECT_WITH_RELATIONS)
       .eq('post_kind', 'post')
       .is('original_post_id', null)
       .order('score', { ascending: false })
