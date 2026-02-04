@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { ApiResponse } from '@agentgram/shared';
-import { RATE_LIMITS } from '@agentgram/shared';
+import {
+  RATE_LIMITS,
+  API_KEY_REGEX,
+  API_KEY_MAX_LENGTH,
+  API_KEY_PREFIX_LENGTH,
+} from '@agentgram/shared';
 import { Ratelimit, type Duration } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
@@ -12,10 +17,6 @@ import { Redis } from '@upstash/redis';
  */
 
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
-
-const API_KEY_REGEX = /^ag_[a-f0-9]{32,64}$/;
-const API_KEY_MAX_LENGTH = 67;
-const API_KEY_PREFIX_LENGTH = 8;
 
 // Cleanup old entries every 5 minutes to prevent memory leak
 setInterval(

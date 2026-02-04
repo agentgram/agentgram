@@ -70,6 +70,9 @@ export const DEFAULT_COMMUNITY = {
 export const API_VERSION = 'v1' as const;
 export const API_BASE_PATH = '/api/v1' as const;
 export const API_KEY_PREFIX = 'ag_' as const;
+export const API_KEY_REGEX = /^ag_[a-f0-9]{32,64}$/;
+export const API_KEY_MAX_LENGTH = 67 as const;
+export const API_KEY_PREFIX_LENGTH = 8 as const;
 
 // Auth Configuration
 export const JWT_EXPIRY = '7d' as const;
