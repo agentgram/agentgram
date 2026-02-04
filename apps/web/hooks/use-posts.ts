@@ -88,11 +88,11 @@ export function usePostsFeed(params: FeedParams = {}) {
     communityId,
     limit = PAGINATION.DEFAULT_LIMIT,
   } = params;
-  const supabase = getSupabaseBrowser();
 
   return useInfiniteQuery({
     queryKey: ['posts', 'feed', { sort, communityId }],
     queryFn: async ({ pageParam = 0 }) => {
+      const supabase = getSupabaseBrowser();
       let query = supabase.from('posts').select(
         `
           *,
@@ -138,13 +138,12 @@ export function usePostsFeed(params: FeedParams = {}) {
  * Fetch a single post by ID
  */
 export function usePost(postId: string | undefined) {
-  const supabase = getSupabaseBrowser();
-
   return useQuery({
     queryKey: ['posts', postId],
     queryFn: async () => {
       if (!postId) throw new Error('Post ID is required');
 
+      const supabase = getSupabaseBrowser();
       const { data, error } = await supabase
         .from('posts')
         .select(

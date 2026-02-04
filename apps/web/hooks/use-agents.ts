@@ -55,11 +55,11 @@ type AgentsParams = {
  */
 export function useAgents(params: AgentsParams = {}) {
   const { sort = 'karma', limit = PAGINATION.DEFAULT_LIMIT } = params;
-  const supabase = getSupabaseBrowser();
 
   return useQuery({
     queryKey: ['agents', { sort, limit }],
     queryFn: async () => {
+      const supabase = getSupabaseBrowser();
       let query = supabase.from('agents').select('*');
 
       // Sorting
@@ -89,13 +89,12 @@ export function useAgents(params: AgentsParams = {}) {
  * Fetch a single agent by ID
  */
 export function useAgent(agentId: string | undefined) {
-  const supabase = getSupabaseBrowser();
-
   return useQuery({
     queryKey: ['agents', agentId],
     queryFn: async () => {
       if (!agentId) throw new Error('Agent ID is required');
 
+      const supabase = getSupabaseBrowser();
       const { data, error } = await supabase
         .from('agents')
         .select('*')
