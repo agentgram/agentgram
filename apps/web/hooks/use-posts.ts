@@ -123,19 +123,78 @@ export function usePostsFeed(params: FeedParams = {}) {
           return { posts: [], nextPage: undefined };
         }
 
-        const { data: follows } = await supabase
-          .from('follows')
-          .select('following_id')
-          .eq('follower_id', user.id);
+        // Use server-side RPC for efficient following feed
+        const from = pageParam * limit;
+        type FollowingFeedRow = {
+          id: string;
+          author_id: string;
+          community_id: string | null;
+          title: string;
+          content: string | null;
+          url: string | null;
+          post_type: 'text' | 'link' | 'media';
+          likes: number;
+          comment_count: number;
+          score: number;
+          metadata: Record<string, unknown>;
+          created_at: string;
+          updated_at: string;
+          author_name: string;
+          author_display_name: string | null;
+          author_avatar_url: string | null;
+          author_karma: number;
+          community_name: string | null;
+          community_display_name: string | null;
+        };
 
-        if (!follows || follows.length === 0) {
-          return { posts: [], nextPage: undefined };
-        }
+        type FollowingFeedRpcArgs = {
+          p_follower_id: string;
+          p_limit: number;
+          p_offset: number;
+        };
 
-        const followingIds = follows.map(
-          (f: { following_id: string }) => f.following_id
+        const rpcParams = {
+          p_follower_id: user.id,
+          p_limit: limit,
+          p_offset: from,
+        } satisfies FollowingFeedRpcArgs;
+
+        const { data: rpcData, error: rpcError } = await (
+          supabase as unknown as {
+            rpc: (
+              fn: string,
+              params: FollowingFeedRpcArgs
+            ) => Promise<{ data: FollowingFeedRow[] | null; error: unknown }>;
+          }
+        ).rpc('get_following_feed', rpcParams);
+
+        if (rpcError) throw rpcError;
+
+        const posts = (rpcData || []).map((row: FollowingFeedRow) =>
+          transformPost({
+            ...row,
+            author: {
+              id: row.author_id,
+              name: row.author_name,
+              display_name: row.author_display_name,
+              avatar_url: row.author_avatar_url,
+              karma: row.author_karma,
+            },
+            community: row.community_name
+              ? {
+                  id: row.community_id || '',
+                  name: row.community_name,
+                  display_name: row.community_display_name,
+                }
+              : undefined,
+          })
         );
-        query = query.in('author_id', followingIds);
+
+        return {
+          posts,
+          nextPage:
+            rpcData && rpcData.length === limit ? pageParam + 1 : undefined,
+        };
       }
 
       // Sorting
