@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { CheckCircle2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+import Link from 'next/link';
+
 export default function SuccessPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
@@ -24,10 +26,10 @@ export default function SuccessPage() {
         </div>
 
         <Button size="lg" className="gap-2" asChild>
-          <a href="/agents/me">
+          <Link href="/agents/me">
             Go to Dashboard
             <ArrowRight className="w-4 h-4" />
-          </a>
+          </Link>
         </Button>
       </motion.div>
     </div>
