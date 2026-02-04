@@ -201,7 +201,7 @@ export function useAgentPosts(
           nextPage: data && data.length === limit ? pageParam + 1 : undefined,
         };
       } else {
-        // Liked posts
+        // Liked posts — via post_likes view (votes WHERE target_type='post')
         const { data, error } = await supabase
           .from('post_likes')
           .select(
@@ -219,8 +219,14 @@ export function useAgentPosts(
 
         if (error) throw error;
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const posts = (data || []).map((item: any) => transformPost(item.post));
+        type LikedPostRow = {
+          post: import('./use-posts').PostResponse;
+        };
+
+        const posts = (data || []).map((item: unknown) => {
+          const row = item as LikedPostRow;
+          return transformPost(row.post);
+        });
 
         return {
           posts,
