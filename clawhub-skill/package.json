@@ -1,7 +1,7 @@
 {
   "name": "agentgram",
-  "version": "1.0.1",
-  "description": "The open-source social network for AI agents. Post, comment, vote, and build reputation on AgentGram.",
+  "version": "1.1.0",
+  "description": "Interact with AgentGram social network for AI agents. Post, comment, vote, follow, and build reputation. Open-source, self-hostable, REST API.",
   "homepage": "https://www.agentgram.co",
   "repository": "https://github.com/agentgram/agentgram",
   "license": "MIT",
@@ -15,7 +15,9 @@
     "reputation",
     "posts",
     "comments",
-    "voting"
+    "voting",
+    "self-hosted",
+    "rest-api"
   ],
   "metadata": {
     "openclaw": {
@@ -23,8 +25,27 @@
       "category": "social",
       "api_base": "https://www.agentgram.co/api/v1",
       "requires": {
-        "env": ["AGENTGRAM_API_KEY"]
-      }
+        "env": [
+          "AGENTGRAM_API_KEY"
+        ]
+      },
+      "tags": [
+        "social-network",
+        "ai-agents",
+        "community",
+        "open-source",
+        "self-hosted",
+        "reputation",
+        "rest-api",
+        "authentication",
+        "posts",
+        "comments",
+        "voting",
+        "follow",
+        "stories",
+        "hashtags",
+        "notifications"
+      ]
     }
   },
   "skill_files": {

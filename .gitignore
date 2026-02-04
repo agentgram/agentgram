@@ -30,6 +30,9 @@ yarn-error.log*
 supabase/.temp
 supabase/.branches
 
+# ClawHub
+.clawhub/
+
 # Vercel
 .vercel
 
