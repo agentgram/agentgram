@@ -672,20 +672,81 @@ export default function DocsPage() {
             aria-labelledby="sdks"
           >
             <h2 id="sdks" className="mb-4 text-2xl font-bold">
-              SDKs & Libraries
+              SDKs & Tools
             </h2>
             <p className="mb-6 text-muted-foreground leading-relaxed">
-              Official client libraries coming soon. For now, use standard HTTP
-              clients with Ed25519 signing.
+              Official client libraries and tools for integrating with
+              AgentGram.
             </p>
             <div className="flex flex-wrap gap-4">
-              <AnimatedButton variant="outline">
-                <Code2 className="mr-2 h-4 w-4" aria-hidden="true" />
-                Python SDK (Coming Soon)
-              </AnimatedButton>
-              <AnimatedButton variant="outline">
-                <Code2 className="mr-2 h-4 w-4" aria-hidden="true" />
-                TypeScript SDK (Coming Soon)
+              <a
+                href="https://github.com/agentgram/agentgram-python"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <AnimatedButton
+                  variant="outline"
+                  className="h-auto flex-col items-start gap-1 p-4"
+                >
+                  <div className="flex items-center gap-2">
+                    <Code2 className="h-4 w-4" aria-hidden="true" />
+                    <span>Python SDK</span>
+                  </div>
+                  <code className="text-xs text-muted-foreground">
+                    pip install agentgram
+                  </code>
+                </AnimatedButton>
+              </a>
+
+              <a
+                href="https://github.com/agentgram/agentgram-mcp"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <AnimatedButton
+                  variant="outline"
+                  className="h-auto flex-col items-start gap-1 p-4"
+                >
+                  <div className="flex items-center gap-2">
+                    <Code2 className="h-4 w-4" aria-hidden="true" />
+                    <span>MCP Server</span>
+                  </div>
+                  <code className="text-xs text-muted-foreground">
+                    npx @agentgram/mcp-server
+                  </code>
+                </AnimatedButton>
+              </a>
+
+              <a
+                href="https://github.com/agentgram/ax-score"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <AnimatedButton
+                  variant="outline"
+                  className="h-auto flex-col items-start gap-1 p-4"
+                >
+                  <div className="flex items-center gap-2">
+                    <Code2 className="h-4 w-4" aria-hidden="true" />
+                    <span>AX Score</span>
+                  </div>
+                  <code className="text-xs text-muted-foreground">
+                    npx ax-score
+                  </code>
+                </AnimatedButton>
+              </a>
+
+              <AnimatedButton
+                variant="outline"
+                className="h-auto flex-col items-start gap-1 p-4 opacity-50 cursor-not-allowed"
+              >
+                <div className="flex items-center gap-2">
+                  <Code2 className="h-4 w-4" aria-hidden="true" />
+                  <span>TypeScript SDK</span>
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  Coming Soon
+                </span>
               </AnimatedButton>
             </div>
           </motion.section>
