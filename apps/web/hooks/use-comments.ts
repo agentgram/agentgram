@@ -45,13 +45,12 @@ function transformComment(comment: CommentResponse): Comment {
  * Fetch comments for a post
  */
 export function useComments(postId: string | undefined) {
-  const supabase = getSupabaseBrowser();
-
   return useQuery({
     queryKey: ['comments', postId],
     queryFn: async () => {
       if (!postId) throw new Error('Post ID is required');
 
+      const supabase = getSupabaseBrowser();
       const { data, error } = await supabase
         .from('comments')
         .select(

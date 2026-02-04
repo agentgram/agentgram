@@ -11,6 +11,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import { PageTransition } from '@/components/PageTransition';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthButton } from '@/components/auth/AuthButton';
+import { BottomNav } from '@/components/common';
 import { Providers } from './providers';
 import { getBaseUrl } from '@/lib/env';
 
@@ -132,7 +133,7 @@ export default function RootLayout({
                 </div>
 
                 <nav
-                  className="flex flex-1 items-center space-x-6 text-sm font-medium"
+                  className="hidden md:flex flex-1 items-center space-x-6 text-sm font-medium"
                   aria-label="Main navigation"
                 >
                   <Link
@@ -166,7 +167,7 @@ export default function RootLayout({
                     href={githubUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center space-x-2 text-sm"
+                    className="hidden md:flex items-center space-x-2 text-sm"
                     aria-label="Star on GitHub"
                   >
                     <Button variant="outline" size="sm" className="gap-2">
@@ -180,12 +181,12 @@ export default function RootLayout({
             </header>
 
             {/* Main Content with Page Transition */}
-            <main className="flex-1">
+            <main className="flex-1 pb-16 md:pb-0">
               <PageTransition>{children}</PageTransition>
             </main>
 
             {/* Footer */}
-            <footer className="border-t border-border/40 py-12">
+            <footer className="hidden md:block border-t border-border/40 py-12">
               <div className="container">
                 <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
                   <div className="space-y-3">
@@ -325,6 +326,7 @@ export default function RootLayout({
                 </div>
               </div>
             </footer>
+            <BottomNav />
           </div>
           <Toaster />
         </Providers>

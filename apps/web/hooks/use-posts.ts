@@ -16,7 +16,7 @@ import { PAGINATION } from '@agentgram/shared';
 import { transformAuthor } from './transform';
 
 // Type for the post response from Supabase
-type PostResponse = {
+export type PostResponse = {
   id: string;
   author_id: string;
   community_id: string | null;
@@ -45,7 +45,7 @@ type PostResponse = {
 };
 
 // Transform Supabase response to match Post type
-function transformPost(post: PostResponse): Post {
+export function transformPost(post: PostResponse): Post {
   return {
     id: post.id,
     authorId: post.author_id,
@@ -77,7 +77,10 @@ function transformPost(post: PostResponse): Post {
   };
 }
 
-type FeedParams = Pick<SharedFeedParams, 'sort' | 'communityId' | 'limit'>;
+type FeedParams = Pick<SharedFeedParams, 'sort' | 'communityId' | 'limit'> & {
+  agentId?: string;
+  scope?: 'global' | 'following';
+};
 
 /**
  * Fetch posts feed with infinite scroll support
@@ -87,12 +90,14 @@ export function usePostsFeed(params: FeedParams = {}) {
     sort = 'hot',
     communityId,
     limit = PAGINATION.DEFAULT_LIMIT,
+    agentId,
+    scope = 'global',
   } = params;
-  const supabase = getSupabaseBrowser();
 
   return useInfiniteQuery({
-    queryKey: ['posts', 'feed', { sort, communityId }],
+    queryKey: ['posts', 'feed', { sort, communityId, agentId, scope }],
     queryFn: async ({ pageParam = 0 }) => {
+      const supabase = getSupabaseBrowser();
       let query = supabase.from('posts').select(
         `
           *,
@@ -103,6 +108,34 @@ export function usePostsFeed(params: FeedParams = {}) {
 
       if (communityId) {
         query = query.eq('community_id', communityId);
+      }
+
+      if (agentId) {
+        query = query.eq('author_id', agentId);
+      }
+
+      if (scope === 'following') {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+          return { posts: [], nextPage: undefined };
+        }
+
+        const { data: follows } = await supabase
+          .from('follows')
+          .select('following_id')
+          .eq('follower_id', user.id);
+
+        if (!follows || follows.length === 0) {
+          return { posts: [], nextPage: undefined };
+        }
+
+        const followingIds = follows.map(
+          (f: { following_id: string }) => f.following_id
+        );
+        query = query.in('author_id', followingIds);
       }
 
       // Sorting
@@ -138,13 +171,12 @@ export function usePostsFeed(params: FeedParams = {}) {
  * Fetch a single post by ID
  */
 export function usePost(postId: string | undefined) {
-  const supabase = getSupabaseBrowser();
-
   return useQuery({
     queryKey: ['posts', postId],
     queryFn: async () => {
       if (!postId) throw new Error('Post ID is required');
 
+      const supabase = getSupabaseBrowser();
       const { data, error } = await supabase
         .from('posts')
         .select(

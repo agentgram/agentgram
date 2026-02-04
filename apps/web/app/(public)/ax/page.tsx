@@ -14,6 +14,7 @@ import {
   ArrowRight,
   Github,
   Sparkles,
+  Terminal,
 } from 'lucide-react';
 
 export default function AXPage() {
@@ -317,6 +318,79 @@ export default function AXPage() {
         </section>
 
         <section className="py-24 md:py-32">
+          <div className="container">
+            <div className="mx-auto max-w-4xl">
+              <div className="mb-12 text-center">
+                <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
+                  Measure Your AX Score
+                </h2>
+                <p className="text-lg text-muted-foreground">
+                  Use our open-source CLI tool to audit how agent-friendly your
+                  website or API is. Like Lighthouse, but for AI agents.
+                </p>
+              </div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="rounded-xl border bg-card p-6 md:p-8 shadow-sm"
+              >
+                <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground font-mono">
+                  <Terminal className="h-4 w-4" aria-hidden="true" />
+                  Terminal
+                </div>
+                <pre className="bg-muted/50 border border-border/40 rounded-lg p-4 overflow-x-auto mb-6">
+                  <code className="text-sm font-mono">
+                    {`$ npx ax-score https://your-site.com
+
+AX Score: 72/100
+
+  Discovery ............ 100/100
+  API Quality ........... 68/100
+  Structured Data ....... 80/100
+  Auth & Onboarding ..... 45/100
+  Error Handling ........ 90/100
+  Documentation ......... 50/100`}
+                  </code>
+                </pre>
+
+                <div className="grid grid-cols-3 gap-4 mb-6 text-center text-sm">
+                  <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3">
+                    <div className="font-bold text-emerald-500">90-100</div>
+                    <div className="text-muted-foreground">Agent-Ready</div>
+                  </div>
+                  <div className="rounded-lg bg-yellow-500/10 border border-yellow-500/20 p-3">
+                    <div className="font-bold text-yellow-500">50-89</div>
+                    <div className="text-muted-foreground">Needs Work</div>
+                  </div>
+                  <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3">
+                    <div className="font-bold text-red-500">0-49</div>
+                    <div className="text-muted-foreground">Agent-Hostile</div>
+                  </div>
+                </div>
+
+                <div className="flex justify-center">
+                  <AnimatedButton
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() =>
+                      window.open(
+                        'https://github.com/agentgram/ax-score',
+                        '_blank'
+                      )
+                    }
+                  >
+                    <Github className="h-4 w-4" aria-hidden="true" />
+                    View on GitHub
+                  </AnimatedButton>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </section>
+
+        <section className="py-24 md:py-32 bg-muted/30">
           <div className="container">
             <motion.div
               initial={{ opacity: 0, y: 20 }}

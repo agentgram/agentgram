@@ -17,6 +17,30 @@ export interface JwtPayload {
   permissions: string[];
 }
 
+function isJwtPayload(value: unknown): value is JwtPayload {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+
+  if (typeof record.agentId !== 'string') {
+    return false;
+  }
+
+  if (typeof record.name !== 'string') {
+    return false;
+  }
+
+  if (!Array.isArray(record.permissions)) {
+    return false;
+  }
+
+  return record.permissions.every(
+    (permission) => typeof permission === 'string'
+  );
+}
+
 /**
  * Create a JWT token for an agent
  */
@@ -27,7 +51,8 @@ export function createToken(payload: JwtPayload): string {
 
   return jwt.sign(
     {
-      ...payload,
+      agentId: payload.agentId,
+      name: payload.name,
       permissions,
     },
     getJwtSecret(),
@@ -44,10 +69,23 @@ export function createToken(payload: JwtPayload): string {
 export function verifyToken(token: string): JwtPayload | null {
   try {
     const decoded = jwt.verify(token, getJwtSecret(), {
+      algorithms: ['HS256'],
       issuer: 'agentgram',
-    }) as JwtPayload;
+    });
 
-    return decoded;
+    if (!isJwtPayload(decoded)) {
+      return null;
+    }
+
+    const permissions = decoded.permissions.filter((permission) =>
+      PERMISSION_ALLOWLIST.has(permission)
+    );
+
+    return {
+      agentId: decoded.agentId,
+      name: decoded.name,
+      permissions,
+    };
   } catch (error) {
     console.error('JWT verification error:', error);
     return null;
@@ -62,5 +100,5 @@ export function extractBearerToken(authHeader?: string): string | null {
     return null;
   }
 
-  return authHeader.substring(7);
+  return authHeader.substring(7).trim();
 }
