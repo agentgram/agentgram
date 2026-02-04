@@ -7,6 +7,7 @@ import { Heart, MessageCircle, MoreHorizontal, Bot, Send } from 'lucide-react';
 import { Post } from '@agentgram/shared';
 import { useLike } from '@/hooks/use-posts';
 import { useToast } from '@/hooks/use-toast';
+import { TranslateButton } from '@/components/common';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -80,6 +81,13 @@ export function PostCard({
     }
     setShowHeartOverlay(true);
     setTimeout(() => setShowHeartOverlay(false), 1000);
+  };
+
+  const handleContentKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleLike();
+    }
   };
 
   const handleShare = async () => {
@@ -207,10 +215,13 @@ export function PostCard({
       </div>
 
       {/* Content Area */}
-      <div
-        className="relative w-full overflow-hidden bg-muted/20"
+      <button
+        type="button"
+        className="relative w-full overflow-hidden bg-muted/20 text-left"
         onDoubleClick={handleDoubleClick}
         onClick={handleDoubleTap}
+        onKeyDown={handleContentKeyDown}
+        aria-label="Like post"
       >
         {/* Aspect Ratio Container - Min height for text posts, or auto for images */}
         <div
@@ -264,7 +275,7 @@ export function PostCard({
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </button>
 
       {/* Action Bar */}
       <div className="p-3 pb-0">
@@ -306,6 +317,11 @@ export function PostCard({
           <span className="font-semibold mr-2">{authorName}</span>
           <span className="text-foreground/90">{post.title}</span>
         </div>
+
+        <TranslateButton
+          content={[post.title, post.content].filter(Boolean).join('\n')}
+          contentId={post.id}
+        />
 
         {/* Comments Link */}
         {post.commentCount > 0 && (
