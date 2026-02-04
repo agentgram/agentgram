@@ -22,9 +22,14 @@ interface PostCardProps {
     };
   };
   className?: string;
+  variant?: 'feed' | 'grid';
 }
 
-export function PostCard({ post, className = '' }: PostCardProps) {
+export function PostCard({
+  post,
+  className = '',
+  variant = 'feed',
+}: PostCardProps) {
   const likeMutation = useLike(post.id);
   const { toast } = useToast();
   const [showHeartOverlay, setShowHeartOverlay] = useState(false);
@@ -34,7 +39,9 @@ export function PostCard({ post, className = '' }: PostCardProps) {
   // Resets on page reload. Will be accurate once API adds `is_liked` field.
   const [isLiked, setIsLiked] = useState(false);
 
-  const handleLike = async () => {
+  const handleLike = async (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
     setIsLiked(!isLiked); // Optimistic toggle
     try {
       await likeMutation.mutateAsync();
@@ -47,7 +54,9 @@ export function PostCard({ post, className = '' }: PostCardProps) {
     }
   };
 
-  const handleDoubleTap = () => {
+  const handleDoubleTap = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     const now = Date.now();
     const DOUBLE_TAP_DELAY = 300;
 
@@ -63,7 +72,9 @@ export function PostCard({ post, className = '' }: PostCardProps) {
   };
 
   // Also support double click for desktop
-  const handleDoubleClick = () => {
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (!isLiked) {
       handleLike();
     }
@@ -109,6 +120,46 @@ export function PostCard({ post, className = '' }: PostCardProps) {
   const authorName =
     post.author?.display_name || post.author?.name || 'AgentGram Team';
 
+  if (variant === 'grid') {
+    return (
+      <Link
+        href={`/posts/${post.id}`}
+        className={cn(
+          'group relative block aspect-square w-full overflow-hidden bg-muted/20',
+          className
+        )}
+      >
+        {post.postType === 'media' && post.url ? (
+          <Image
+            src={post.url}
+            alt={post.title}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-background to-muted p-4 text-center">
+            <h3 className="line-clamp-3 text-sm font-bold">{post.title}</h3>
+          </div>
+        )}
+
+        <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          <div className="p-3 text-white">
+            <div className="flex items-center gap-4 text-sm font-semibold">
+              <div className="flex items-center gap-1">
+                <Heart className="h-4 w-4 fill-white" />
+                <span>{post.likes}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <MessageCircle className="h-4 w-4 fill-white" />
+                <span>{post.commentCount}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Link>
+    );
+  }
+
   return (
     <div
       className={cn(
@@ -147,7 +198,10 @@ export function PostCard({ post, className = '' }: PostCardProps) {
             )}
           </div>
         </div>
-        <button className="text-foreground hover:text-muted-foreground">
+        <button
+          type="button"
+          className="text-foreground hover:text-muted-foreground"
+        >
           <MoreHorizontal className="h-5 w-5" />
         </button>
       </div>
@@ -156,7 +210,7 @@ export function PostCard({ post, className = '' }: PostCardProps) {
       <div
         className="relative w-full overflow-hidden bg-muted/20"
         onDoubleClick={handleDoubleClick}
-        onClick={handleDoubleTap} // Simple tap handler that checks timing
+        onClick={handleDoubleTap}
       >
         {/* Aspect Ratio Container - Min height for text posts, or auto for images */}
         <div
@@ -237,7 +291,7 @@ export function PostCard({ post, className = '' }: PostCardProps) {
             <Link href={`/posts/${post.id}`}>
               <MessageCircle className="h-6 w-6 text-foreground hover:text-muted-foreground -rotate-90" />
             </Link>
-            <button onClick={handleShare}>
+            <button type="button" onClick={handleShare}>
               <Send className="h-6 w-6 text-foreground hover:text-muted-foreground -rotate-45 mb-1" />
             </button>
           </div>
