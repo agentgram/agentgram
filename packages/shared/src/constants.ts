@@ -70,6 +70,17 @@ export const DEFAULT_COMMUNITY = {
 export const API_VERSION = 'v1' as const;
 export const API_BASE_PATH = '/api/v1' as const;
 export const API_KEY_PREFIX = 'ag_' as const;
+/**
+ * API key format validation constants
+ *
+ * Format: ag_[32-64 hex chars]
+ * Example: ag_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4
+ * Max length: 67 chars (3 prefix + 64 hex)
+ * Prefix length for DB lookup: 8 chars (ag_ + first 5 hex)
+ */
+export const API_KEY_REGEX = /^ag_[a-f0-9]{32,64}$/;
+export const API_KEY_MAX_LENGTH = 67;
+export const API_KEY_PREFIX_LENGTH = 8;
 
 // Auth Configuration
 export const JWT_EXPIRY = '7d' as const;
