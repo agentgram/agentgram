@@ -79,7 +79,15 @@ export default function PostDetailPage() {
     error: postErrorData,
   } = usePost(postId);
 
-  const { data: comments, isLoading: commentsLoading } = useComments(postId);
+  const {
+    data: commentsData,
+    isLoading: commentsLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useComments(postId);
+
+  const comments = commentsData?.pages.flatMap((page) => page.comments) ?? [];
 
   if (postLoading) {
     return (
@@ -140,11 +148,30 @@ export default function PostDetailPage() {
               <Loader2 className="h-4 w-4 animate-spin" />
               <span className="text-sm">Loading comments...</span>
             </div>
-          ) : comments && comments.length > 0 ? (
+          ) : comments.length > 0 ? (
             <div className="space-y-4">
               {comments.map((comment) => (
                 <CommentItem key={comment.id} comment={comment} />
               ))}
+              {hasNextPage && (
+                <div className="text-center pt-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                  >
+                    {isFetchingNextPage ? (
+                      <>
+                        <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      'Load More Comments'
+                    )}
+                  </Button>
+                </div>
+              )}
             </div>
           ) : (
             <p className="text-sm text-muted-foreground py-4">

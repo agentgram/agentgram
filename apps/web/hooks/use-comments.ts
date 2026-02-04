@@ -1,6 +1,10 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
 import type { Comment, CreateComment } from '@agentgram/shared';
 import { transformAuthor } from './transform';
@@ -41,16 +45,21 @@ function transformComment(comment: CommentResponse): Comment {
   };
 }
 
+const COMMENTS_LIMIT = 20;
+
 /**
- * Fetch comments for a post
+ * Fetch comments for a post with pagination
  */
 export function useComments(postId: string | undefined) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ['comments', postId],
-    queryFn: async () => {
+    queryFn: async ({ pageParam = 0 }) => {
       if (!postId) throw new Error('Post ID is required');
 
       const supabase = getSupabaseBrowser();
+      const from = pageParam * COMMENTS_LIMIT;
+      const to = from + COMMENTS_LIMIT - 1;
+
       const { data, error } = await supabase
         .from('comments')
         .select(
@@ -60,12 +69,19 @@ export function useComments(postId: string | undefined) {
         `
         )
         .eq('post_id', postId)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true })
+        .range(from, to);
 
       if (error) throw error;
 
-      return (data || []).map(transformComment);
+      return {
+        comments: (data || []).map(transformComment),
+        nextPage:
+          data && data.length === COMMENTS_LIMIT ? pageParam + 1 : undefined,
+      };
     },
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+    initialPageParam: 0,
     enabled: !!postId,
   });
 }
@@ -93,49 +109,66 @@ export function useCreateComment(postId: string) {
       return result.data;
     },
     onMutate: async (newComment) => {
-      // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['comments', postId] });
 
-      // Snapshot previous value
-      const previousComments = queryClient.getQueryData<Comment[]>([
-        'comments',
-        postId,
-      ]);
+      const previousData = queryClient.getQueryData(['comments', postId]);
 
-      // Optimistically add new comment
-      if (previousComments) {
-        const optimisticComment: Comment = {
-          id: `temp-${Date.now()}`,
-          postId,
-          authorId: 'temp',
-          content: newComment.content,
-          parentId: newComment.parentId,
-          likes: 0,
-          depth: 0,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
+      // Optimistically add to the last page
+      queryClient.setQueryData(
+        ['comments', postId],
+        (
+          old:
+            | {
+                pages: Array<{
+                  comments: Comment[];
+                  nextPage: number | undefined;
+                }>;
+                pageParams: number[];
+              }
+            | undefined
+        ) => {
+          if (!old) return old;
 
-        queryClient.setQueryData<Comment[]>(
-          ['comments', postId],
-          [...previousComments, optimisticComment]
-        );
-      }
+          const optimisticComment: Comment = {
+            id: `temp-${Date.now()}`,
+            postId,
+            authorId: 'temp',
+            content: newComment.content,
+            parentId: newComment.parentId,
+            likes: 0,
+            depth: 0,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
 
-      return { previousComments };
+          const lastPageIndex = old.pages.length - 1;
+          const updatedPages = old.pages.map((page, index) => {
+            if (index === lastPageIndex) {
+              return {
+                ...page,
+                comments: [...page.comments, optimisticComment],
+              };
+            }
+            return page;
+          });
+
+          return {
+            ...old,
+            pages: updatedPages,
+          };
+        }
+      );
+
+      return { previousData };
     },
     onError: (_err, _variables, context) => {
-      if (context?.previousComments) {
-        queryClient.setQueryData(
-          ['comments', postId],
-          context.previousComments
-        );
+      if (context?.previousData) {
+        queryClient.setQueryData(['comments', postId], context.previousData);
       }
     },
     onSuccess: () => {
-      // Refetch to get the real comment data
       queryClient.invalidateQueries({ queryKey: ['comments', postId] });
-      queryClient.invalidateQueries({ queryKey: ['posts', postId] }); // Update comment count
+      queryClient.invalidateQueries({ queryKey: ['posts', postId] });
     },
   });
 }
