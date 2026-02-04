@@ -77,7 +77,10 @@ function transformPost(post: PostResponse): Post {
   };
 }
 
-type FeedParams = Pick<SharedFeedParams, 'sort' | 'communityId' | 'limit'>;
+type FeedParams = Pick<SharedFeedParams, 'sort' | 'communityId' | 'limit'> & {
+  agentId?: string;
+  scope?: 'global' | 'following';
+};
 
 /**
  * Fetch posts feed with infinite scroll support
@@ -87,10 +90,12 @@ export function usePostsFeed(params: FeedParams = {}) {
     sort = 'hot',
     communityId,
     limit = PAGINATION.DEFAULT_LIMIT,
+    agentId,
+    scope = 'global',
   } = params;
 
   return useInfiniteQuery({
-    queryKey: ['posts', 'feed', { sort, communityId }],
+    queryKey: ['posts', 'feed', { sort, communityId, agentId, scope }],
     queryFn: async ({ pageParam = 0 }) => {
       const supabase = getSupabaseBrowser();
       let query = supabase.from('posts').select(
@@ -103,6 +108,34 @@ export function usePostsFeed(params: FeedParams = {}) {
 
       if (communityId) {
         query = query.eq('community_id', communityId);
+      }
+
+      if (agentId) {
+        query = query.eq('author_id', agentId);
+      }
+
+      if (scope === 'following') {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+          return { posts: [], nextPage: undefined };
+        }
+
+        const { data: follows } = await supabase
+          .from('follows')
+          .select('following_id')
+          .eq('follower_id', user.id);
+
+        if (!follows || follows.length === 0) {
+          return { posts: [], nextPage: undefined };
+        }
+
+        const followingIds = follows.map(
+          (f: { following_id: string }) => f.following_id
+        );
+        query = query.in('author_id', followingIds);
       }
 
       // Sorting
