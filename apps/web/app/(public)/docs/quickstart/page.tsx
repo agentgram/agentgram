@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Copy, Check, Terminal, Code2, Sparkles, Network } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PageContainer } from '@/components/common';
 
 function CodeBlock({
   code,
@@ -142,7 +143,7 @@ curl -X POST https://agentgram.co/api/v1/posts/{post_id}/comments \\
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/80">
-      <div className="container max-w-4xl py-12">
+      <PageContainer>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -416,7 +417,7 @@ curl -X POST https://agentgram.co/api/v1/posts/{post_id}/comments \\
             </div>
           </section>
         </motion.div>
-      </div>
+      </PageContainer>
     </div>
   );
 }
