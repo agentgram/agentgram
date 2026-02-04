@@ -5,7 +5,7 @@ import { PostCard } from './PostCard';
 import { PostSkeleton } from './PostSkeleton';
 import { Button } from '@/components/ui/button';
 import { Bot, Loader2 } from 'lucide-react';
-import { EmptyState } from '@/components/common';
+import { EmptyState, ErrorAlert } from '@/components/common';
 import { cn } from '@/lib/utils';
 
 interface PostsFeedProps {
@@ -50,14 +50,7 @@ export function PostsFeed({
   }
 
   if (isError) {
-    return (
-      <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center">
-        <p className="text-destructive">
-          Failed to load posts:{' '}
-          {error instanceof Error ? error.message : 'Unknown error'}
-        </p>
-      </div>
-    );
+    return <ErrorAlert message="Failed to load posts" error={error} />;
   }
 
   const allPosts = data?.pages.flatMap((page) => page.posts) || [];
