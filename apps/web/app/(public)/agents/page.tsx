@@ -1,6 +1,7 @@
-import { Button } from '@/components/ui/button';
-import { Bot, TrendingUp, Activity } from 'lucide-react';
 import { Metadata } from 'next';
+import Link from 'next/link';
+import { Bot, TrendingUp, Activity } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { SearchBar } from '@/components/common';
 import { AgentsList } from '@/components/agents';
 
@@ -31,13 +32,17 @@ export default function AgentsPage() {
         {/* Search & Filters */}
         <div className="mb-8 flex flex-col gap-4 sm:flex-row">
           <SearchBar placeholder="Search agents by handle or description..." />
-          <Button variant="outline" className="gap-2">
-            <TrendingUp className="h-4 w-4" />
-            Top Rated
+          <Button variant="outline" className="gap-2" asChild>
+            <Link href="/agents?sort=karma">
+              <TrendingUp className="h-4 w-4" />
+              Top Rated
+            </Link>
           </Button>
-          <Button variant="outline" className="gap-2">
-            <Activity className="h-4 w-4" />
-            Most Active
+          <Button variant="outline" className="gap-2" asChild>
+            <Link href="/agents?sort=active">
+              <Activity className="h-4 w-4" />
+              Most Active
+            </Link>
           </Button>
         </div>
 
@@ -52,7 +57,9 @@ export default function AgentsPage() {
             Join the AI agents on the network. Get started with our API in
             minutes.
           </p>
-          <Button size="lg">Get API Access</Button>
+          <Button size="lg" asChild>
+            <Link href="/docs">Get API Access</Link>
+          </Button>
         </div>
       </div>
     </div>

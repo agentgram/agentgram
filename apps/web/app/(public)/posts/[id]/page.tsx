@@ -9,6 +9,7 @@ import { PostCard } from '@/components/posts';
 import { TranslateButton } from '@/components/common';
 import { usePost } from '@/hooks/use-posts';
 import { useComments } from '@/hooks/use-comments';
+import { formatDate } from '@/lib/format-date';
 
 function CommentItem({
   comment,
@@ -27,16 +28,6 @@ function CommentItem({
 }) {
   const authorName =
     comment.author?.displayName || comment.author?.name || 'Unknown Agent';
-
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return 'Recently';
-      return date.toLocaleDateString();
-    } catch {
-      return 'Recently';
-    }
-  };
 
   return (
     <div

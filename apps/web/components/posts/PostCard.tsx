@@ -9,6 +9,7 @@ import { useLike } from '@/hooks/use-posts';
 import { useToast } from '@/hooks/use-toast';
 import { TranslateButton } from '@/components/common';
 import { motion, AnimatePresence } from 'framer-motion';
+import { formatTimeAgo } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
 
 interface PostCardProps {
@@ -72,17 +73,6 @@ export function PostCard({
     lastTapRef.current = now;
   };
 
-  // Also support double click for desktop
-  const handleDoubleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!isLiked) {
-      handleLike();
-    }
-    setShowHeartOverlay(true);
-    setTimeout(() => setShowHeartOverlay(false), 1000);
-  };
-
   const handleContentKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -104,25 +94,6 @@ export function PostCard({
         description: 'Failed to copy link',
       });
     }
-  };
-
-  const formatTimeAgo = (dateString: string | Date | undefined) => {
-    if (!dateString) return 'Just now';
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return 'Just now';
-
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (diffInSeconds < 60) return `${diffInSeconds}s`;
-    const diffInMinutes = Math.floor(diffInSeconds / 60);
-    if (diffInMinutes < 60) return `${diffInMinutes}m`;
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `${diffInHours}h`;
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 7) return `${diffInDays}d`;
-
-    return date.toLocaleDateString();
   };
 
   const authorName =
@@ -209,8 +180,10 @@ export function PostCard({
         <button
           type="button"
           className="text-foreground hover:text-muted-foreground"
+          onClick={handleShare}
+          aria-label="Share post"
         >
-          <MoreHorizontal className="h-5 w-5" />
+          <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
         </button>
       </div>
 
@@ -218,10 +191,9 @@ export function PostCard({
       <button
         type="button"
         className="relative w-full overflow-hidden bg-muted/20 text-left"
-        onDoubleClick={handleDoubleClick}
         onClick={handleDoubleTap}
         onKeyDown={handleContentKeyDown}
-        aria-label="Like post"
+        aria-label="Double tap to like post"
       >
         {/* Aspect Ratio Container - Min height for text posts, or auto for images */}
         <div
@@ -285,6 +257,7 @@ export function PostCard({
               whileTap={{ scale: 0.8 }}
               onClick={handleLike}
               disabled={likeMutation.isPending}
+              aria-label={isLiked ? 'Unlike post' : 'Like post'}
               className={cn(
                 'focus:outline-none',
                 likeMutation.isPending && 'opacity-50'
@@ -297,13 +270,20 @@ export function PostCard({
                     ? 'fill-[var(--color-like)] text-[var(--color-like)]'
                     : 'text-foreground hover:text-muted-foreground'
                 )}
+                aria-hidden="true"
               />
             </motion.button>
-            <Link href={`/posts/${post.id}`}>
-              <MessageCircle className="h-6 w-6 text-foreground hover:text-muted-foreground -rotate-90" />
+            <Link href={`/posts/${post.id}`} aria-label="View comments">
+              <MessageCircle
+                className="h-6 w-6 text-foreground hover:text-muted-foreground -rotate-90"
+                aria-hidden="true"
+              />
             </Link>
-            <button type="button" onClick={handleShare}>
-              <Send className="h-6 w-6 text-foreground hover:text-muted-foreground -rotate-45 mb-1" />
+            <button type="button" onClick={handleShare} aria-label="Share post">
+              <Send
+                className="h-6 w-6 text-foreground hover:text-muted-foreground"
+                aria-hidden="true"
+              />
             </button>
           </div>
           {/* Bookmark icon could go here */}
