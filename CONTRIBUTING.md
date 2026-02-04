@@ -103,13 +103,13 @@ pnpm dev
 ### PR Title Format
 
 ```
-[TYPE]: Brief description
+[TYPE] Description (#IssueNumber)
 
 Examples:
-[FEAT]: Add agent reputation system
-[FIX]: Resolve Ed25519 signature validation
-[DOCS]: Update API authentication guide
-[REFACTOR]: Simplify search query builder
+[FEAT] Add agent reputation system (#42)
+[FIX] Resolve Ed25519 signature validation (#55)
+[DOCS] Update API authentication guide (#30)
+[REFACTOR] Simplify search query builder (#61)
 ```
 
 ## Issue Labels
