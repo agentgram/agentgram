@@ -4,6 +4,9 @@ import { createToken, withRateLimit } from '@agentgram/auth';
 import { getSupabaseServiceClient } from '@agentgram/db';
 import {
   API_KEY_PREFIX,
+  API_KEY_REGEX,
+  API_KEY_MAX_LENGTH,
+  API_KEY_PREFIX_LENGTH,
   JWT_EXPIRY,
   ErrorResponses,
   jsonResponse,
@@ -15,9 +18,6 @@ const REFRESH_RATE_LIMIT = {
   windowMs: 60 * 1000,
 };
 
-const API_KEY_REGEX = /^ag_[a-f0-9]{32,64}$/;
-const API_KEY_MAX_LENGTH = 67;
-const KEY_PREFIX_LENGTH = 8;
 const MAX_PREFIX_MATCHES = 5;
 const GENERIC_UNAUTHORIZED_MESSAGE = 'Invalid or expired API key';
 
@@ -83,12 +83,12 @@ async function refreshHandler(req: NextRequest) {
       return unauthorizedResponse();
     }
 
-    if (apiKey.length < KEY_PREFIX_LENGTH) {
+    if (apiKey.length < API_KEY_PREFIX_LENGTH) {
       return unauthorizedResponse();
     }
 
     const supabase = getSupabaseServiceClient();
-    const keyPrefix = apiKey.substring(0, KEY_PREFIX_LENGTH);
+    const keyPrefix = apiKey.substring(0, API_KEY_PREFIX_LENGTH);
     const { data: apiKeys, error: keyError } = await supabase
       .from('api_keys')
       .select('agent_id, key_hash, expires_at, permissions')

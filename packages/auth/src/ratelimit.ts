@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { ApiResponse } from '@agentgram/shared';
-import { RATE_LIMITS } from '@agentgram/shared';
+import {
+  RATE_LIMITS,
+  API_KEY_REGEX,
+  API_KEY_MAX_LENGTH,
+  API_KEY_PREFIX_LENGTH,
+} from '@agentgram/shared';
 import { Ratelimit, type Duration } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
@@ -13,22 +18,22 @@ import { Redis } from '@upstash/redis';
 
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
-const API_KEY_REGEX = /^ag_[a-f0-9]{32,64}$/;
-const API_KEY_MAX_LENGTH = 67;
-const API_KEY_PREFIX_LENGTH = 8;
-
 // Cleanup old entries every 5 minutes to prevent memory leak
-setInterval(
-  () => {
-    const now = Date.now();
-    for (const [key, value] of Array.from(rateLimitMap.entries())) {
-      if (now > value.resetTime) {
-        rateLimitMap.delete(key);
+// Only active when in-memory fallback is used (redis === null)
+function startCleanupInterval() {
+  const handle = setInterval(
+    () => {
+      const now = Date.now();
+      for (const [key, value] of Array.from(rateLimitMap.entries())) {
+        if (now > value.resetTime) {
+          rateLimitMap.delete(key);
+        }
       }
-    }
-  },
-  5 * 60 * 1000
-);
+    },
+    5 * 60 * 1000
+  );
+  handle.unref();
+}
 
 interface RateLimitOptions {
   maxRequests: number;
@@ -77,6 +82,18 @@ export const redis =
       })
     : null;
 
+if (!redis && process.env.NODE_ENV === 'production') {
+  console.warn(
+    '[agentgram:ratelimit] Upstash Redis not configured in production. ' +
+      'In-memory rate limiting is ineffective in serverless environments. ' +
+      'Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN.'
+  );
+}
+
+if (!redis) {
+  startCleanupInterval();
+}
+
 const upstashLimiters = new Map<string, Ratelimit>();
 type SlidingWindowFactory = (
   tokens: Duration,
@@ -121,6 +138,13 @@ function getRetryAfterSeconds(resetSeconds: number) {
   return Math.max(0, resetSeconds - nowSeconds);
 }
 
+/**
+ * Extract client IP from request headers.
+ *
+ * On Vercel, x-forwarded-for is set by the platform edge and cannot be
+ * spoofed by end users. For non-Vercel deployments behind untrusted
+ * proxies, consider restricting to x-real-ip or a platform-specific header.
+ */
 function getClientIp(req: NextRequest) {
   const forwardedFor = req.headers.get('x-forwarded-for');
   if (forwardedFor) {
@@ -144,6 +168,20 @@ function getApiKeyPrefix(authHeader: string | null): string | null {
   }
 
   return token.substring(0, API_KEY_PREFIX_LENGTH);
+}
+
+/**
+ * Normalize pathname for rate limiting to prevent cardinality explosion.
+ * Replaces dynamic segments (UUIDs, numeric IDs) with placeholders.
+ */
+function normalizePathname(pathname: string): string {
+  return pathname
+    .replace(
+      /\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
+      '/:id'
+    )
+    .replace(/\/[0-9a-f]{24,}/gi, '/:id')
+    .replace(/\/\d+/g, '/:id');
 }
 
 function getLimitData(key: string, now: number, windowMs: number) {
@@ -231,7 +269,8 @@ export function withRateLimit<T extends unknown[]>(
   return async (req: NextRequest, ...args: T) => {
     // Vercel sets x-forwarded-for reliably in production.
     const ip = getClientIp(req);
-    const pathname = new URL(req.url).pathname;
+    const rawPathname = new URL(req.url).pathname;
+    const pathname = normalizePathname(rawPathname);
     const key = `${ip}:${pathname}`;
     const keyPrefix = getApiKeyPrefix(req.headers.get('authorization'));
     const keyPrefixKey = keyPrefix
