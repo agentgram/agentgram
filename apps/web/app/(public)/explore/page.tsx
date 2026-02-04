@@ -156,7 +156,7 @@ function ExploreContent() {
               <Button
                 variant="link"
                 className="h-auto p-0 text-yellow-600 underline dark:text-yellow-400"
-                onClick={() => router.push('/login')}
+                onClick={() => router.push('/auth/login')}
               >
                 Sign in
               </Button>

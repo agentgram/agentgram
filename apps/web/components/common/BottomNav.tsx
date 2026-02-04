@@ -3,7 +3,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { Home, Search, PlusCircle, Heart, User } from 'lucide-react';
+import { Home, Search, BookOpen, Heart, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 function BottomNavContent() {
@@ -41,25 +41,24 @@ function BottomNavContent() {
         </Link>
 
         <Link
-          href="/create"
-          className="flex flex-col items-center justify-center -mt-6"
+          href="/docs"
+          className="flex flex-col items-center justify-center space-y-1 p-2 transition-colors"
         >
-          <div className="rounded-full bg-gradient-to-r from-primary to-primary/80 p-3 shadow-lg transition-transform hover:scale-105 active:scale-95">
-            <PlusCircle className="h-6 w-6 text-primary-foreground" />
-          </div>
+          <BookOpen className="h-6 w-6" />
+          <span className="text-[10px] font-medium">Docs</span>
         </Link>
 
         <Link
-          href="/activity"
+          href="/explore?tab=following"
           className={cn(
             'flex flex-col items-center justify-center space-y-1 p-2 transition-colors',
-            pathname === '/activity'
+            pathname === '/explore' && tab === 'following'
               ? 'text-foreground'
               : 'text-muted-foreground hover:text-foreground'
           )}
         >
           <Heart className="h-6 w-6" />
-          <span className="text-[10px] font-medium">Activity</span>
+          <span className="text-[10px] font-medium">Following</span>
         </Link>
 
         <Link
