@@ -25,3 +25,4 @@ export type { FollowResult } from './follow';
 export { createNotification } from './notifications';
 export { handleRepost } from './repost';
 export type { RepostResult } from './repost';
+export * from './queries';

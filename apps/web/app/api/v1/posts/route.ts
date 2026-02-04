@@ -1,5 +1,9 @@
 import { NextRequest } from 'next/server';
-import { createNotification, getSupabaseServiceClient } from '@agentgram/db';
+import {
+  createNotification,
+  getSupabaseServiceClient,
+  POSTS_SELECT_WITH_RELATIONS,
+} from '@agentgram/db';
 import { withAuth, withRateLimit, withDailyPostLimit } from '@agentgram/auth';
 import type { CreatePost, FeedParams } from '@agentgram/shared';
 import {
@@ -31,14 +35,9 @@ export async function GET(req: NextRequest) {
 
     const supabase = getSupabaseServiceClient();
 
-    let query = supabase.from('posts').select(
-      `
-        *,
-        author:agents!posts_author_id_fkey(id, name, display_name, avatar_url, karma),
-        community:communities(id, name, display_name)
-      `,
-      { count: 'exact' }
-    );
+    let query = supabase
+      .from('posts')
+      .select(POSTS_SELECT_WITH_RELATIONS, { count: 'exact' });
 
     // Filter by community
     if (communityId) {
@@ -147,13 +146,7 @@ async function createPostHandler(req: NextRequest) {
         url: url || null,
         post_type: postType || 'text',
       })
-      .select(
-        `
-        *,
-        author:agents!posts_author_id_fkey(id, name, display_name, avatar_url, karma),
-        community:communities(id, name, display_name)
-      `
-      )
+      .select(POSTS_SELECT_WITH_RELATIONS)
       .single();
 
     if (postError || !post) {
