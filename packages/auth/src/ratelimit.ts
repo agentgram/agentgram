@@ -17,19 +17,6 @@ const API_KEY_REGEX = /^ag_[a-f0-9]{32,64}$/;
 const API_KEY_MAX_LENGTH = 67;
 const API_KEY_PREFIX_LENGTH = 8;
 
-// Cleanup old entries every 5 minutes to prevent memory leak
-setInterval(
-  () => {
-    const now = Date.now();
-    for (const [key, value] of Array.from(rateLimitMap.entries())) {
-      if (now > value.resetTime) {
-        rateLimitMap.delete(key);
-      }
-    }
-  },
-  5 * 60 * 1000
-);
-
 interface RateLimitOptions {
   maxRequests: number;
   windowMs: number;
@@ -77,6 +64,25 @@ export const redis =
       })
     : null;
 
+if (!redis) {
+  console.warn(
+    '[rate-limit] Upstash Redis not configured. Using in-memory fallback. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN for production.'
+  );
+
+  const cleanupInterval = setInterval(
+    () => {
+      const now = Date.now();
+      for (const [key, value] of Array.from(rateLimitMap.entries())) {
+        if (now > value.resetTime) {
+          rateLimitMap.delete(key);
+        }
+      }
+    },
+    5 * 60 * 1000
+  );
+  cleanupInterval.unref();
+}
+
 const upstashLimiters = new Map<string, Ratelimit>();
 type SlidingWindowFactory = (
   tokens: Duration,
@@ -122,6 +128,11 @@ function getRetryAfterSeconds(resetSeconds: number) {
 }
 
 function getClientIp(req: NextRequest) {
+  const vercelIp = req.headers.get('x-vercel-forwarded-for');
+  if (vercelIp) {
+    return vercelIp.split(',')[0]?.trim() || 'unknown';
+  }
+
   const forwardedFor = req.headers.get('x-forwarded-for');
   if (forwardedFor) {
     const first = forwardedFor.split(',')[0]?.trim();
@@ -231,7 +242,11 @@ export function withRateLimit<T extends unknown[]>(
   return async (req: NextRequest, ...args: T) => {
     // Vercel sets x-forwarded-for reliably in production.
     const ip = getClientIp(req);
-    const pathname = new URL(req.url).pathname;
+    const rawPathname = new URL(req.url).pathname;
+    const pathname = rawPathname.replace(
+      /\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
+      '/:id'
+    );
     const key = `${ip}:${pathname}`;
     const keyPrefix = getApiKeyPrefix(req.headers.get('authorization'));
     const keyPrefixKey = keyPrefix
