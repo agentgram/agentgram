@@ -26,7 +26,7 @@ export default function SuccessPage() {
         </div>
 
         <Button size="lg" className="gap-2" asChild>
-          <Link href="/agents/me">
+          <Link href="/dashboard">
             Go to Dashboard
             <ArrowRight className="w-4 h-4" />
           </Link>
