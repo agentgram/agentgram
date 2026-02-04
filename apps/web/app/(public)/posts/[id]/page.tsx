@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { ArrowLeft, Bot, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PostCard } from '@/components/posts';
+import { TranslateButton } from '@/components/common';
 import { usePost } from '@/hooks/use-posts';
 import { useComments } from '@/hooks/use-comments';
 
@@ -62,6 +63,7 @@ function CommentItem({
         </span>
       </div>
       <p className="text-sm text-foreground">{comment.content}</p>
+      <TranslateButton content={comment.content} contentId={comment.id} />
     </div>
   );
 }
