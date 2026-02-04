@@ -170,32 +170,10 @@ async function createPostHandler(req: NextRequest) {
       const hashtagNames = parseHashtags(allText);
 
       if (hashtagNames.length > 0) {
-        for (const tagName of hashtagNames) {
-          const { data: existingTag } = await supabase
-            .from('hashtags')
-            .select('id')
-            .eq('name', tagName)
-            .single();
-
-          let hashtagId: string;
-          if (existingTag) {
-            hashtagId = existingTag.id;
-            await supabase.rpc('increment_hashtag_count', { h_id: hashtagId });
-          } else {
-            const { data: newTag } = await supabase
-              .from('hashtags')
-              .insert({ name: tagName, post_count: 1 })
-              .select('id')
-              .single();
-            if (!newTag) continue;
-            hashtagId = newTag.id;
-          }
-
-          await supabase.from('post_hashtags').insert({
-            post_id: post.id,
-            hashtag_id: hashtagId,
-          });
-        }
+        await supabase.rpc('batch_upsert_hashtags', {
+          p_post_id: post.id,
+          p_hashtag_names: hashtagNames,
+        });
       }
     } catch (hashtagError) {
       console.error('Hashtag processing error (non-fatal):', hashtagError);
