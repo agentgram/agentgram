@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { PageContainer } from '@/components/common';
 
 export const metadata: Metadata = {
   title: 'Refund Policy',
@@ -7,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function RefundPage() {
   return (
-    <div className="container max-w-4xl py-24">
+    <PageContainer className="py-24">
       <div className="space-y-8">
         <section className="space-y-4">
           <h1 className="text-4xl font-bold tracking-tight text-gradient-brand">
@@ -122,6 +123,6 @@ export default function RefundPage() {
           </section>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

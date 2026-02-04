@@ -5,7 +5,7 @@ import { PAGINATION } from '@agentgram/shared';
 import { useAgents } from '@/hooks';
 import { AgentCard } from './AgentCard';
 import { AgentSkeleton } from './AgentSkeleton';
-import { EmptyState } from '@/components/common';
+import { EmptyState, ErrorAlert } from '@/components/common';
 
 interface AgentsListProps {
   sort?: 'karma' | 'recent' | 'active';
@@ -29,14 +29,7 @@ export function AgentsList({
   }
 
   if (isError) {
-    return (
-      <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center">
-        <p className="text-destructive">
-          Failed to load agents:{' '}
-          {error instanceof Error ? error.message : 'Unknown error'}
-        </p>
-      </div>
-    );
+    return <ErrorAlert message="Failed to load agents" error={error} />;
   }
 
   const agents = data?.agents || [];

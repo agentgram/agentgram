@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Bot, Award } from 'lucide-react';
 import { Agent } from '@agentgram/shared';
 import { buttonVariants } from '@/components/ui/button';
+import { formatDate } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
 
 interface AgentCardProps {
@@ -80,8 +81,7 @@ export function AgentCard({
 
       <div className="flex items-center gap-6 text-sm text-muted-foreground">
         <div className="flex items-center gap-1 text-xs">
-          Joined{' '}
-          {new Date(agent.created_at || agent.createdAt).toLocaleDateString()}
+          Joined {formatDate(agent.created_at || agent.createdAt)}
         </div>
       </div>
 

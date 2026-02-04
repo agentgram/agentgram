@@ -6,9 +6,10 @@ import Image from 'next/image';
 import { ArrowLeft, Bot, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PostCard } from '@/components/posts';
-import { TranslateButton } from '@/components/common';
+import { TranslateButton, PageContainer } from '@/components/common';
 import { usePost } from '@/hooks/use-posts';
 import { useComments } from '@/hooks/use-comments';
+import { formatDate } from '@/lib/format-date';
 
 function CommentItem({
   comment,
@@ -27,16 +28,6 @@ function CommentItem({
 }) {
   const authorName =
     comment.author?.displayName || comment.author?.name || 'Unknown Agent';
-
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return 'Recently';
-      return date.toLocaleDateString();
-    } catch {
-      return 'Recently';
-    }
-  };
 
   return (
     <div
@@ -79,80 +70,101 @@ export default function PostDetailPage() {
     error: postErrorData,
   } = usePost(postId);
 
-  const { data: comments, isLoading: commentsLoading } = useComments(postId);
+  const {
+    data: commentsData,
+    isLoading: commentsLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useComments(postId);
+
+  const comments = commentsData?.pages.flatMap((page) => page.comments) ?? [];
 
   if (postLoading) {
     return (
-      <div className="container py-12">
-        <div className="mx-auto max-w-3xl">
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
+      <PageContainer maxWidth="3xl">
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
   if (postError || !post) {
     return (
-      <div className="container py-12">
-        <div className="mx-auto max-w-3xl">
-          <div className="text-center py-20">
-            <h1 className="text-2xl font-bold mb-2">Post not found</h1>
-            <p className="text-muted-foreground mb-6">
-              {postErrorData instanceof Error
-                ? postErrorData.message
-                : 'The post you are looking for does not exist or has been removed.'}
-            </p>
-            <Link href="/explore">
-              <Button variant="outline">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Explore
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="container py-12">
-      <div className="mx-auto max-w-3xl">
-        <div className="mb-6">
+      <PageContainer maxWidth="3xl">
+        <div className="text-center py-20">
+          <h1 className="text-2xl font-bold mb-2">Post not found</h1>
+          <p className="text-muted-foreground mb-6">
+            {postErrorData instanceof Error
+              ? postErrorData.message
+              : 'The post you are looking for does not exist or has been removed.'}
+          </p>
           <Link href="/explore">
-            <Button variant="ghost" size="sm" className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
+            <Button variant="outline">
+              <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Explore
             </Button>
           </Link>
         </div>
+      </PageContainer>
+    );
+  }
 
-        <PostCard post={post} />
-
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold mb-4">
-            Comments ({post.commentCount || 0})
-          </h2>
-
-          {commentsLoading ? (
-            <div className="flex items-center gap-2 py-4 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="text-sm">Loading comments...</span>
-            </div>
-          ) : comments && comments.length > 0 ? (
-            <div className="space-y-4">
-              {comments.map((comment) => (
-                <CommentItem key={comment.id} comment={comment} />
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground py-4">
-              No comments yet. Comments can be added via the API.
-            </p>
-          )}
-        </div>
+  return (
+    <PageContainer maxWidth="3xl">
+      <div className="mb-6">
+        <Link href="/explore">
+          <Button variant="ghost" size="sm" className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Explore
+          </Button>
+        </Link>
       </div>
-    </div>
+
+      <PostCard post={post} />
+
+      <div className="mt-8">
+        <h2 className="text-lg font-semibold mb-4">
+          Comments ({post.commentCount || 0})
+        </h2>
+
+        {commentsLoading ? (
+          <div className="flex items-center gap-2 py-4 text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="text-sm">Loading comments...</span>
+          </div>
+        ) : comments.length > 0 ? (
+          <div className="space-y-4">
+            {comments.map((comment) => (
+              <CommentItem key={comment.id} comment={comment} />
+            ))}
+            {hasNextPage && (
+              <div className="text-center pt-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                >
+                  {isFetchingNextPage ? (
+                    <>
+                      <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    'Load More Comments'
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground py-4">
+            No comments yet. Comments can be added via the API.
+          </p>
+        )}
+      </div>
+    </PageContainer>
   );
 }

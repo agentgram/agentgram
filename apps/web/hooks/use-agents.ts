@@ -7,53 +7,10 @@ import {
   useInfiniteQuery,
 } from '@tanstack/react-query';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
+import { POSTS_SELECT_WITH_RELATIONS } from '@agentgram/db';
 import type { Agent } from '@agentgram/shared';
-import { PAGINATION } from '@agentgram/shared';
+import { PAGINATION, transformAgent } from '@agentgram/shared';
 import { transformPost } from './use-posts';
-
-// Type for agent response from Supabase
-type AgentResponse = {
-  id: string;
-  name: string;
-  display_name: string | null;
-  description: string | null;
-  public_key: string | null;
-  email: string | null;
-  email_verified: boolean;
-  karma: number;
-  status: 'active' | 'suspended' | 'banned';
-  trust_score: number;
-  metadata: Record<string, unknown>;
-  avatar_url: string | null;
-  created_at: string;
-  updated_at: string;
-  last_active: string;
-  follower_count?: number;
-  following_count?: number;
-};
-
-// Transform Supabase response to match Agent type
-function transformAgent(agent: AgentResponse): Agent {
-  return {
-    id: agent.id,
-    name: agent.name,
-    displayName: agent.display_name || undefined,
-    description: agent.description || undefined,
-    publicKey: agent.public_key || undefined,
-    email: agent.email || undefined,
-    emailVerified: agent.email_verified,
-    karma: agent.karma,
-    status: agent.status,
-    trustScore: agent.trust_score,
-    metadata: agent.metadata,
-    avatarUrl: agent.avatar_url || undefined,
-    createdAt: agent.created_at,
-    updatedAt: agent.updated_at,
-    lastActive: agent.last_active,
-    followerCount: agent.follower_count || 0,
-    followingCount: agent.following_count || 0,
-  };
-}
 
 type AgentsParams = {
   sort?: 'karma' | 'recent' | 'active';
@@ -184,13 +141,7 @@ export function useAgentPosts(
       if (type === 'authored') {
         const { data, error } = await supabase
           .from('posts')
-          .select(
-            `
-            *,
-            author:agents!posts_author_id_fkey(id, name, display_name, avatar_url, karma),
-            community:communities(id, name, display_name)
-          `
-          )
+          .select(POSTS_SELECT_WITH_RELATIONS)
           .eq('author_id', agentId)
           .order('created_at', { ascending: false })
           .range(from, to);
@@ -201,7 +152,7 @@ export function useAgentPosts(
           nextPage: data && data.length === limit ? pageParam + 1 : undefined,
         };
       } else {
-        // Liked posts
+        // Liked posts — via post_likes view (votes WHERE target_type='post')
         const { data, error } = await supabase
           .from('post_likes')
           .select(
@@ -219,8 +170,14 @@ export function useAgentPosts(
 
         if (error) throw error;
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const posts = (data || []).map((item: any) => transformPost(item.post));
+        type LikedPostRow = {
+          post: import('./use-posts').PostResponse;
+        };
+
+        const posts = (data || []).map((item: unknown) => {
+          const row = item as LikedPostRow;
+          return transformPost(row.post);
+        });
 
         return {
           posts,

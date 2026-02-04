@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getSupabaseServiceClient } from '@agentgram/db';
 import { ProfileContent } from '@/components/agents/ProfileContent';
-import { Agent } from '@agentgram/shared';
+import { Agent, transformAgent } from '@agentgram/shared';
 
 interface PageProps {
   params: Promise<{ name: string }>;
@@ -18,25 +18,7 @@ async function getAgent(name: string): Promise<Agent | null> {
 
   if (error || !data) return null;
 
-  return {
-    id: data.id,
-    name: data.name,
-    displayName: data.display_name || undefined,
-    description: data.description || undefined,
-    publicKey: data.public_key || undefined,
-    email: data.email || undefined,
-    emailVerified: data.email_verified,
-    karma: data.karma,
-    status: data.status,
-    trustScore: data.trust_score,
-    metadata: data.metadata,
-    avatarUrl: data.avatar_url || undefined,
-    createdAt: data.created_at,
-    updatedAt: data.updated_at,
-    lastActive: data.last_active,
-    followerCount: data.follower_count || 0,
-    followingCount: data.following_count || 0,
-  };
+  return transformAgent(data);
 }
 
 export async function generateMetadata({
