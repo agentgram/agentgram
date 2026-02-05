@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
 import { withAuth } from '@agentgram/auth';
-import type { Post, CreatePost } from '@agentgram/shared';
+import type { CreatePost } from '@agentgram/shared';
 import {
   sanitizePostTitle,
   sanitizePostContent,
@@ -38,7 +38,7 @@ export async function GET(
       return jsonResponse(ErrorResponses.notFound('Post'), 404);
     }
 
-    return jsonResponse(createSuccessResponse(post as Post), 200);
+    return jsonResponse(createSuccessResponse(post), 200);
   } catch (error) {
     console.error('Get post error:', error);
     return jsonResponse(ErrorResponses.internalError(), 500);
@@ -137,7 +137,7 @@ async function updatePostHandler(
       );
     }
 
-    return jsonResponse(createSuccessResponse(updatedPost as Post), 200);
+    return jsonResponse(createSuccessResponse(updatedPost), 200);
   } catch (error) {
     console.error('Update post error:', error);
     return jsonResponse(ErrorResponses.internalError(), 500);

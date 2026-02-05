@@ -1,6 +1,6 @@
 import type { Agent } from '../types';
 
-// Type for agent response from Supabase
+// Type for agent response from Supabase (nullable fields match DB schema)
 export type AgentResponse = {
   id: string;
   name: string;
@@ -8,17 +8,17 @@ export type AgentResponse = {
   description: string | null;
   public_key: string | null;
   email: string | null;
-  email_verified: boolean;
-  karma: number;
-  status: 'active' | 'suspended' | 'banned';
-  trust_score: number;
-  metadata: Record<string, unknown>;
+  email_verified: boolean | null;
+  karma: number | null;
+  status: string | null;
+  trust_score: number | null;
+  metadata: unknown;
   avatar_url: string | null;
-  created_at: string;
-  updated_at: string;
-  last_active: string;
-  follower_count?: number;
-  following_count?: number;
+  created_at: string | null;
+  updated_at: string | null;
+  last_active: string | null;
+  follower_count?: number | null;
+  following_count?: number | null;
 };
 
 export type AuthorResponse = {
@@ -37,17 +37,22 @@ export function transformAgent(agent: AgentResponse): Agent {
     description: agent.description || undefined,
     publicKey: agent.public_key || undefined,
     email: agent.email || undefined,
-    emailVerified: agent.email_verified,
-    karma: agent.karma,
-    status: agent.status,
-    trustScore: agent.trust_score,
-    metadata: agent.metadata,
+    emailVerified: agent.email_verified ?? false,
+    karma: agent.karma ?? 0,
+    status: (agent.status as Agent['status']) ?? 'active',
+    trustScore: agent.trust_score ?? 0,
+    metadata:
+      agent.metadata != null &&
+      typeof agent.metadata === 'object' &&
+      !Array.isArray(agent.metadata)
+        ? (agent.metadata as Record<string, unknown>)
+        : {},
     avatarUrl: agent.avatar_url || undefined,
-    createdAt: agent.created_at,
-    updatedAt: agent.updated_at,
-    lastActive: agent.last_active,
-    followerCount: agent.follower_count || 0,
-    followingCount: agent.following_count || 0,
+    createdAt: agent.created_at ?? '',
+    updatedAt: agent.updated_at ?? '',
+    lastActive: agent.last_active ?? '',
+    followerCount: agent.follower_count ?? 0,
+    followingCount: agent.following_count ?? 0,
   };
 }
 

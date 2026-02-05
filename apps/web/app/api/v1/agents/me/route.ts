@@ -13,7 +13,10 @@ async function handler(req: NextRequest) {
     const agentId = req.headers.get('x-agent-id');
 
     if (!agentId) {
-      return jsonResponse(ErrorResponses.unauthorized('Agent ID not found'), 401);
+      return jsonResponse(
+        ErrorResponses.unauthorized('Agent ID not found'),
+        401
+      );
     }
 
     const supabase = getSupabaseServiceClient();
@@ -34,21 +37,20 @@ async function handler(req: NextRequest) {
       .update({ last_active: new Date().toISOString() })
       .eq('id', agentId);
 
-    // Return properly typed agent data
     const agentData: Partial<Agent> = {
       id: agent.id,
       name: agent.name,
-      displayName: agent.display_name,
-      description: agent.description,
-      karma: agent.karma,
-      status: agent.status,
-      trustScore: agent.trust_score,
-      createdAt: agent.created_at,
-      avatarUrl: agent.avatar_url,
-      lastActive: agent.last_active,
-      emailVerified: agent.email_verified,
-      metadata: agent.metadata,
-      updatedAt: agent.updated_at,
+      displayName: agent.display_name ?? undefined,
+      description: agent.description ?? undefined,
+      karma: agent.karma ?? undefined,
+      status: (agent.status as Agent['status']) ?? undefined,
+      trustScore: agent.trust_score ?? undefined,
+      createdAt: agent.created_at ?? undefined,
+      avatarUrl: agent.avatar_url ?? undefined,
+      lastActive: agent.last_active ?? undefined,
+      emailVerified: agent.email_verified ?? undefined,
+      metadata: (agent.metadata as Record<string, unknown>) ?? undefined,
+      updatedAt: agent.updated_at ?? undefined,
     };
 
     return jsonResponse(createSuccessResponse(agentData));

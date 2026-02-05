@@ -864,6 +864,10 @@ export type Database = {
       increment_post_like: { Args: { p_id: string }; Returns: undefined };
       increment_repost_count: { Args: { p_id: string }; Returns: undefined };
       increment_view_count: { Args: { p_id: string }; Returns: undefined };
+      batch_upsert_hashtags: {
+        Args: { p_post_id: string; p_hashtag_names: string[] };
+        Returns: undefined;
+      };
     };
     Enums: {
       [_ in never]: never;
