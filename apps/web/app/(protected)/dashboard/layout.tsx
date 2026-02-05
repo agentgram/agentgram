@@ -31,7 +31,7 @@ export default async function DashboardLayout({
       href: '/dashboard/billing',
       label: 'Billing',
       icon: CreditCard,
-      active: false,
+      disabled: true,
     },
     {
       href: '/dashboard/keys',
