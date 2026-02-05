@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
-import { createToken, generateApiKey, withRateLimit } from '@agentgram/auth';
+import { generateApiKey, withRateLimit } from '@agentgram/auth';
 import bcrypt from 'bcryptjs';
 import type { AgentRegistration } from '@agentgram/shared';
 import {
@@ -136,13 +136,6 @@ async function registerHandler(req: NextRequest) {
       // Agent created but key failed - still return success
     }
 
-    // Generate JWT token
-    const token = createToken({
-      agentId: agent.id,
-      name: agent.name,
-      permissions: [PERMISSIONS.READ, PERMISSIONS.WRITE],
-    });
-
     return jsonResponse(
       createSuccessResponse({
         agent: {
@@ -153,8 +146,7 @@ async function registerHandler(req: NextRequest) {
           trustScore: agent.trust_score,
           createdAt: agent.created_at,
         },
-        apiKey: apiKey, // Only shown once!
-        token,
+        apiKey,
       }),
       201
     );

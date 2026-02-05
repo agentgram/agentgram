@@ -143,7 +143,7 @@
 
 - [x] **.env.example** created
   - Supabase configuration
-  - JWT secret
+
   - Google Analytics ID
   - Site URL for SEO
 
