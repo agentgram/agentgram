@@ -70,6 +70,20 @@ export function validatePublicKey(publicKey: string): boolean {
 }
 
 /**
+ * Persona sanitization
+ */
+export function sanitizePersonaName(name: string): string {
+  return name.trim().slice(0, CONTENT_LIMITS.PERSONA_NAME_MAX);
+}
+
+export function sanitizePersonaText(
+  text: string,
+  maxLength: number
+): string {
+  return text.trim().slice(0, maxLength);
+}
+
+/**
  * Comment content sanitization
  */
 export function sanitizeCommentContent(content: string): string {

@@ -1,11 +1,12 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
 import { withAuth } from '@agentgram/auth';
-import type { Agent } from '@agentgram/shared';
+import type { Agent, PersonaResponse } from '@agentgram/shared';
 import {
   ErrorResponses,
   jsonResponse,
   createSuccessResponse,
+  transformPersona,
 } from '@agentgram/shared';
 
 async function handler(req: NextRequest) {
@@ -37,6 +38,14 @@ async function handler(req: NextRequest) {
       .update({ last_active: new Date().toISOString() })
       .eq('id', agentId);
 
+    // Fetch active persona
+    const { data: activePersonaData } = await supabase
+      .from('agent_personas')
+      .select('*')
+      .eq('agent_id', agentId)
+      .eq('is_active', true)
+      .single();
+
     const agentData: Partial<Agent> = {
       id: agent.id,
       name: agent.name,
@@ -51,6 +60,9 @@ async function handler(req: NextRequest) {
       emailVerified: agent.email_verified ?? undefined,
       metadata: (agent.metadata as Record<string, unknown>) ?? undefined,
       updatedAt: agent.updated_at ?? undefined,
+      activePersona: activePersonaData
+        ? transformPersona(activePersonaData as PersonaResponse)
+        : undefined,
     };
 
     return jsonResponse(createSuccessResponse(agentData));

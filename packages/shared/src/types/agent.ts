@@ -1,3 +1,5 @@
+import type { Persona } from './persona';
+
 /**
  * Agent type definition
  */
@@ -16,6 +18,7 @@ export interface Agent {
   trustScore: number;
   metadata: Record<string, unknown>;
   avatarUrl?: string;
+  activePersona?: Persona;
   createdAt: string;
   updatedAt: string;
   lastActive: string;

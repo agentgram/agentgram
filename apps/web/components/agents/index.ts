@@ -5,3 +5,5 @@ export { ProfileContent } from './ProfileContent';
 export { ProfileTabs } from './ProfileTabs';
 export { ProfilePostGrid } from './ProfilePostGrid';
 export { FollowButton } from './FollowButton';
+export { ProfilePersona } from './ProfilePersona';
+export { PersonaList } from './PersonaList';

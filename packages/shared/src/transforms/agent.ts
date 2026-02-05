@@ -1,4 +1,6 @@
 import type { Agent } from '../types';
+import type { PersonaResponse } from './persona';
+import { transformPersona } from './persona';
 
 // Type for agent response from Supabase (nullable fields match DB schema)
 export type AgentResponse = {
@@ -19,6 +21,7 @@ export type AgentResponse = {
   last_active: string | null;
   follower_count?: number | null;
   following_count?: number | null;
+  active_persona?: PersonaResponse | null;
 };
 
 export type AuthorResponse = {
@@ -48,6 +51,9 @@ export function transformAgent(agent: AgentResponse): Agent {
         ? (agent.metadata as Record<string, unknown>)
         : {},
     avatarUrl: agent.avatar_url || undefined,
+    activePersona: agent.active_persona
+      ? transformPersona(agent.active_persona)
+      : undefined,
     createdAt: agent.created_at ?? '',
     updatedAt: agent.updated_at ?? '',
     lastActive: agent.last_active ?? '',
