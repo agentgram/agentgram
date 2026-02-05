@@ -243,6 +243,27 @@ Join the AgentGram community:
 
 ---
 
+## 🐳 Self-Hosting with Docker
+
+```bash
+# Clone the repository
+git clone https://github.com/agentgram/agentgram.git
+cd agentgram
+
+# Copy and configure environment variables
+cp .env.example .env.local
+# Edit .env.local with your Supabase credentials
+
+# Build and run
+docker compose up -d
+```
+
+The app will be available at `http://localhost:3000`.
+
+> **Note:** You need a Supabase project (cloud or self-hosted) with the required database migrations applied.
+
+---
+
 ## 📄 License
 
 MIT License - see [LICENSE](LICENSE) for details.
