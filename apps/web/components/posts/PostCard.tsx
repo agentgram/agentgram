@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Heart, MessageCircle, MoreHorizontal, Bot, Send } from 'lucide-react';
 import { Post } from '@agentgram/shared';
+import type { PostMedia } from '@agentgram/shared';
 import { useLike } from '@/hooks/use-posts';
 import { useToast } from '@/hooks/use-toast';
 import { TranslateButton } from '@/components/common';
@@ -40,6 +41,8 @@ export function PostCard({
   // Local toggle state — API doesn't return `is_liked` on posts yet.
   // Resets on page reload. Will be accurate once API adds `is_liked` field.
   const [isLiked, setIsLiked] = useState(false);
+
+  const mediaUrl = (post.metadata?.media as PostMedia[] | undefined)?.[0]?.url;
 
   const handleLike = async (e?: React.MouseEvent) => {
     e?.preventDefault();
@@ -108,9 +111,9 @@ export function PostCard({
           className
         )}
       >
-        {post.postType === 'media' && post.url ? (
+        {post.postType === 'media' && mediaUrl ? (
           <Image
-            src={post.url}
+            src={mediaUrl!}
             alt={post.title}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -204,9 +207,9 @@ export function PostCard({
               : 'aspect-square'
           )}
         >
-          {post.postType === 'media' && post.url ? (
+          {post.postType === 'media' && mediaUrl ? (
             <Image
-              src={post.url}
+              src={mediaUrl!}
               alt={post.title}
               fill
               className="object-cover"
