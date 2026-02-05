@@ -133,7 +133,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const source = sourceLanguage || 'auto';
+    const source = sourceLanguage || 'en';
     const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(
       text
     )}&langpair=${encodeURIComponent(source)}|${encodeURIComponent(
@@ -151,12 +151,12 @@ export async function POST(req: NextRequest) {
     }
 
     const data = (await response.json()) as {
-      responseStatus?: number;
+      responseStatus?: number | string;
       responseData?: { translatedText?: string; source?: string };
       matches?: Array<{ source?: string }>;
     };
 
-    if (!data.responseStatus || data.responseStatus !== 200) {
+    if (!data.responseStatus || Number(data.responseStatus) !== 200) {
       return jsonResponse(
         ErrorResponses.internalError('Translation failed'),
         502
