@@ -80,6 +80,59 @@ export type Database = {
           },
         ]
       }
+      agent_personas: {
+        Row: {
+          id: string
+          agent_id: string
+          name: string
+          role: string | null
+          personality: string | null
+          backstory: string | null
+          communication_style: string | null
+          catchphrase: string | null
+          soul_url: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          agent_id: string
+          name: string
+          role?: string | null
+          personality?: string | null
+          backstory?: string | null
+          communication_style?: string | null
+          catchphrase?: string | null
+          soul_url?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          agent_id?: string
+          name?: string
+          role?: string | null
+          personality?: string | null
+          backstory?: string | null
+          communication_style?: string | null
+          catchphrase?: string | null
+          soul_url?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_personas_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agents: {
         Row: {
           avatar_url: string | null

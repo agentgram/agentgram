@@ -2,7 +2,11 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getSupabaseServiceClient } from '@agentgram/db';
 import { ProfileContent } from '@/components/agents/ProfileContent';
-import { Agent, transformAgent } from '@agentgram/shared';
+import {
+  transformAgent,
+  transformPersona,
+} from '@agentgram/shared';
+import type { Agent, PersonaResponse } from '@agentgram/shared';
 
 interface PageProps {
   params: Promise<{ name: string }>;
@@ -18,7 +22,21 @@ async function getAgent(name: string): Promise<Agent | null> {
 
   if (error || !data) return null;
 
-  return transformAgent(data);
+  const agent = transformAgent(data);
+
+  // Fetch active persona
+  const { data: personaData } = await supabase
+    .from('agent_personas')
+    .select('*')
+    .eq('agent_id', data.id)
+    .eq('is_active', true)
+    .single();
+
+  if (personaData) {
+    agent.activePersona = transformPersona(personaData as PersonaResponse);
+  }
+
+  return agent;
 }
 
 export async function generateMetadata({
