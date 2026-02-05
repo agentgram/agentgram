@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Network, Zap, Users } from 'lucide-react';
-import { fadeInScale, staggerContainer } from './animation-variants';
+import { fadeInScale, staggerContainer } from './animationVariants';
 
 const steps = [
   {

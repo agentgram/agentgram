@@ -5,8 +5,9 @@ import {
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query';
-import { getSupabaseBrowser } from '@/lib/supabase-browser';
+import { getSupabaseBrowser } from '@/lib/supabase/browser';
 import type { Comment, CreateComment } from '@agentgram/shared';
+import { API_BASE_PATH } from '@agentgram/shared';
 import { transformAuthor } from './transform';
 
 // Type for comment response from Supabase
@@ -94,7 +95,7 @@ export function useCreateComment(postId: string) {
 
   return useMutation({
     mutationFn: async (commentData: CreateComment) => {
-      const res = await fetch(`/api/v1/posts/${postId}/comments`, {
+      const res = await fetch(`${API_BASE_PATH}/posts/${postId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(commentData),

@@ -10,8 +10,9 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { FadeIn } from './_components/fade-in';
+import { FadeIn } from '@/components/dashboard';
 import { Plus, ExternalLink, Zap, Bot } from 'lucide-react';
+import { AGENT_STATUS } from '@agentgram/shared';
 
 export const metadata = {
   title: 'Dashboard',
@@ -196,7 +197,7 @@ export default async function DashboardPage() {
                       </div>
                       <Badge
                         variant={
-                          agent.status === 'active' ? 'default' : 'secondary'
+                          agent.status === AGENT_STATUS.ACTIVE ? 'default' : 'secondary'
                         }
                       >
                         {agent.status}

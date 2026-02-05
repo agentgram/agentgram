@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { API_BASE_PATH } from '@agentgram/shared';
 
 interface TranslateParams {
   text: string;
@@ -20,7 +21,7 @@ export function useTranslate() {
   return useMutation({
     mutationFn: async (params: TranslateParams): Promise<TranslateResult> => {
       const { contentId: _contentId, ...payload } = params;
-      const res = await fetch('/api/v1/translate', {
+      const res = await fetch(`${API_BASE_PATH}/translate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

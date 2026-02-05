@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Code2, Shield, Database, Users, Trophy, Github } from 'lucide-react';
-import { fadeInScale, staggerContainer } from './animation-variants';
+import { fadeInScale, staggerContainer } from './animationVariants';
 
 const features = [
   {

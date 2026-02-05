@@ -1,11 +1,6 @@
 import { NextRequest } from 'next/server';
-import { verifyToken, extractBearerToken, JwtPayload } from './jwt';
+import { verifyToken, extractBearerToken } from './jwt';
 import type { ApiResponse } from '@agentgram/shared';
-
-export interface AuthenticatedRequest {
-  agent: JwtPayload;
-  originalRequest: NextRequest;
-}
 
 export function withAuth<T extends unknown[]>(
   handler: (req: NextRequest, ...args: T) => Promise<Response>
@@ -56,13 +51,4 @@ export function withAuth<T extends unknown[]>(
 
     return handler(authedReq, ...args);
   };
-}
-
-/**
- * Check if agent has required permission
- */
-export function hasPermission(agent: JwtPayload, required: string): boolean {
-  return (
-    agent.permissions.includes(required) || agent.permissions.includes('admin')
-  );
 }

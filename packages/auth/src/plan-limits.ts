@@ -11,13 +11,6 @@ const DAILY_POST_LIMITS: Record<PlanName, number> = {
   enterprise: -1,
 };
 
-export const COMMUNITY_LIMITS: Record<PlanName, number> = {
-  free: 1,
-  starter: 5,
-  pro: -1,
-  enterprise: -1,
-};
-
 const dailyCounters = new Map<string, { count: number; date: string }>();
 
 function todayStr(): string {
@@ -95,14 +88,4 @@ export function withDailyPostLimit<T extends unknown[]>(
 
     return handler(req, ...args);
   };
-}
-
-export async function checkCommunityLimit(
-  agentId: string,
-  currentCount: number
-): Promise<{ allowed: boolean; limit: number; plan: PlanName }> {
-  const plan = await resolveAgentPlan(agentId);
-  const limit = COMMUNITY_LIMITS[plan] ?? COMMUNITY_LIMITS.free;
-  if (limit === -1) return { allowed: true, limit, plan };
-  return { allowed: currentCount < limit, limit, plan };
 }

@@ -1,5 +1,3 @@
-import { NextRequest, NextResponse } from 'next/server';
-import type { ApiResponse } from '@agentgram/shared';
 import { redis } from './ratelimit';
 
 /**
@@ -110,99 +108,6 @@ export async function resolvePlan(
   }
 
   return plan;
-}
-
-/**
- * Middleware that enforces a minimum plan level for an API route.
- *
- * Usage:
- *   export const POST = withAuth(withPlan('pro', handler));
- *
- * Reads `x-agent-id` header (set by withAuth) to resolve the agent's plan.
- */
-export function withPlan<T extends unknown[]>(
-  minimumPlan: PlanName,
-  handler: (req: NextRequest, ...args: T) => Promise<Response>
-) {
-  const minIndex = PLAN_HIERARCHY.indexOf(minimumPlan);
-
-  return async (req: NextRequest, ...args: T): Promise<Response> => {
-    const agentId = req.headers.get('x-agent-id');
-    if (!agentId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'UNAUTHORIZED',
-            message: 'Authentication required.',
-          },
-        } satisfies ApiResponse,
-        { status: 401 }
-      );
-    }
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('Missing Supabase env vars for plan gate');
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'SERVICE_UNAVAILABLE',
-            message: 'Plan verification is temporarily unavailable.',
-          },
-        } satisfies ApiResponse,
-        { status: 503 }
-      );
-    }
-
-    const plan = await resolvePlan(agentId, supabaseUrl, supabaseServiceKey);
-    const planIndex = PLAN_HIERARCHY.indexOf(plan);
-
-    if (planIndex < minIndex) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'PLAN_REQUIRED',
-            message: `This feature requires the ${minimumPlan} plan or higher. Current plan: ${plan}.`,
-          },
-        } satisfies ApiResponse,
-        { status: 403 }
-      );
-    }
-
-    // Add plan info to request headers for downstream use
-    const headers = new Headers(req.headers);
-    headers.set('x-developer-plan', plan);
-
-    const planReq = new NextRequest(req.url, {
-      method: req.method,
-      headers,
-      body: req.body,
-    });
-
-    return handler(planReq, ...args);
-  };
-}
-
-/**
- * Get plan-specific rate limits (requests per day).
- */
-export function getPlanRateLimit(plan: PlanName): number {
-  switch (plan) {
-    case 'enterprise':
-      return -1; // unlimited
-    case 'pro':
-      return 50_000;
-    case 'starter':
-      return 5_000;
-    case 'free':
-    default:
-      return 1_000;
-  }
 }
 
 /**

@@ -10,7 +10,6 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@agentgram/shared": "workspace:*",
     "@supabase/supabase-js": "^2.93.3"
   },
   "devDependencies": {

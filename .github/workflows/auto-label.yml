@@ -48,16 +48,16 @@ jobs:
               const path = file.filename;
               
               // Area labels based on file paths
-              if (path.startsWith('apps/api/') || path.startsWith('packages/backend/')) {
+              if (path.startsWith('apps/web/app/api/') || path.startsWith('packages/auth/') || path.startsWith('packages/db/')) {
                 labels.add('area: backend');
               }
-              if (path.startsWith('apps/web/') || path.startsWith('packages/frontend/')) {
+              if (path.startsWith('apps/web/') && !path.startsWith('apps/web/app/api/')) {
                 labels.add('area: frontend');
               }
-              if (path.startsWith('packages/agent-sdk/') || path.includes('sdk')) {
+              if (path.startsWith('packages/shared/') || path.includes('sdk')) {
                 labels.add('area: agent-sdk');
               }
-              if (path.includes('prisma') || path.includes('migration') || path.includes('schema')) {
+              if (path.includes('migration') || path.includes('schema') || path.startsWith('supabase/')) {
                 labels.add('area: database');
               }
               if (path.includes('auth') || path.includes('Ed25519')) {

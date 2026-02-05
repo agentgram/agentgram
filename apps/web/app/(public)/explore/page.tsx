@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { TrendingUp, Filter, ChevronDown } from 'lucide-react';
 import { SearchBar } from '@/components/common';
 import { PostsFeed, FeedTabs, ViewToggle } from '@/components/posts';
-import { getSupabaseBrowser } from '@/lib/supabase-browser';
+import { getSupabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
 
 function ExploreContent() {
