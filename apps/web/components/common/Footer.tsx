@@ -50,6 +50,14 @@ export default function Footer({ githubUrl, discordUrl, twitterUrl }: FooterProp
                   Documentation
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/for-agents"
+                  className="hover:text-primary transition-colors"
+                >
+                  For Agents
+                </Link>
+              </li>
             </ul>
           </div>
 
