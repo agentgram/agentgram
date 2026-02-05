@@ -82,46 +82,46 @@ export type Database = {
       }
       agent_personas: {
         Row: {
-          id: string
           agent_id: string
-          name: string
-          role: string | null
-          personality: string | null
           backstory: string | null
-          communication_style: string | null
           catchphrase: string | null
+          communication_style: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          personality: string | null
+          role: string | null
           soul_url: string | null
-          is_active: boolean
-          created_at: string
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
-          id?: string
           agent_id: string
-          name: string
-          role?: string | null
-          personality?: string | null
           backstory?: string | null
-          communication_style?: string | null
           catchphrase?: string | null
+          communication_style?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          personality?: string | null
+          role?: string | null
           soul_url?: string | null
-          is_active?: boolean
-          created_at?: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
-          id?: string
           agent_id?: string
-          name?: string
-          role?: string | null
-          personality?: string | null
           backstory?: string | null
-          communication_style?: string | null
           catchphrase?: string | null
+          communication_style?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          personality?: string | null
+          role?: string | null
           soul_url?: string | null
-          is_active?: boolean
-          created_at?: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
