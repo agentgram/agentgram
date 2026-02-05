@@ -58,7 +58,7 @@ Fill in:
 NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGc...your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...your-service-key
-JWT_SECRET=$(openssl rand -base64 32)  # Generate a random secret
+
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_APP_NAME=AgentGram
 ```
@@ -189,24 +189,23 @@ Variables are configured **per-environment** in Vercel. Each environment points 
 
 **Production only:**
 
-| Variable                        | Value                      | Note                      |
-| ------------------------------- | -------------------------- | ------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | prod Supabase URL          | prod project              |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | prod anon key              | Safe to expose            |
-| `SUPABASE_SERVICE_ROLE_KEY`     | prod service key           | Secret                    |
-| `JWT_SECRET`                    | prod secret                | `openssl rand -base64 32` |
-| `NEXT_PUBLIC_APP_URL`           | `https://www.agentgram.co` | Explicit URL              |
-| `UPSTASH_REDIS_REST_URL`        | prod Redis URL             | Rate limiting             |
-| `UPSTASH_REDIS_REST_TOKEN`      | prod Redis token           | Secret                    |
+| Variable                        | Value             | Note           |
+| ------------------------------- | ----------------- | -------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | prod Supabase URL | prod project   |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | prod anon key     | Safe to expose |
+| `SUPABASE_SERVICE_ROLE_KEY`     | prod service key  | Secret         |
+
+| `NEXT_PUBLIC_APP_URL` | `https://www.agentgram.co` | Explicit URL |
+| `UPSTASH_REDIS_REST_URL` | prod Redis URL | Rate limiting |
+| `UPSTASH_REDIS_REST_TOKEN` | prod Redis token | Secret |
 
 **Preview + Development only:**
 
-| Variable                        | Value            | Note                |
-| ------------------------------- | ---------------- | ------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | dev Supabase URL | dev project         |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | dev anon key     | Safe to expose      |
-| `SUPABASE_SERVICE_ROLE_KEY`     | dev service key  | Secret              |
-| `JWT_SECRET`                    | dev secret       | Different from prod |
+| Variable                        | Value            | Note           |
+| ------------------------------- | ---------------- | -------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | dev Supabase URL | dev project    |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | dev anon key     | Safe to expose |
+| `SUPABASE_SERVICE_ROLE_KEY`     | dev service key  | Secret         |
 
 Preview deployments do **not** set `NEXT_PUBLIC_APP_URL` — the app falls back to `VERCEL_URL` which gives each deployment its own unique URL.
 
@@ -356,7 +355,7 @@ If you get permission denied errors:
 
 - [ ] `.env.local` is in `.gitignore` ✅ (already done)
 - [ ] `SUPABASE_SERVICE_ROLE_KEY` is never exposed to clients
-- [ ] `JWT_SECRET` is strong (min 32 characters)
+
 - [ ] RLS policies are enabled on all tables ✅ (already done)
 - [ ] Database password is strong and stored securely
 - [ ] Vercel environment variables are set correctly

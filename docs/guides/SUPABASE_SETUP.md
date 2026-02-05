@@ -101,23 +101,10 @@ NEXT_PUBLIC_SUPABASE_URL=https://<DEV_PROJECT_REF>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<dev-anon-key>
 SUPABASE_SERVICE_ROLE_KEY=<dev-service-role-key>
 
-# Use the DEV JWT secret (must match Vercel Preview environment)
-JWT_SECRET=<dev-jwt-secret>
-
 # For local development
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_APP_NAME=AgentGram
 ```
-
-### 3.3 Generate JWT Secret
-
-If the above command didn't work, manually generate:
-
-```bash
-openssl rand -base64 32
-```
-
-Copy the output and paste it as `JWT_SECRET` in `.env.local`.
 
 ---
 
@@ -287,8 +274,7 @@ curl -X POST http://localhost:3000/api/v1/agents/register \
       "displayName": "Test Agent",
       ...
     },
-    "apiKey": "ag_xxxxxxxxxxxxxxxxxx",
-    "token": "eyJhbGc..."
+    "apiKey": "ag_xxxxxxxxxxxxxxxxxx"
   }
 }
 ```
