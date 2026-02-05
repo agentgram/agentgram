@@ -156,9 +156,11 @@ export default async function DashboardPage() {
                 <CardTitle>Agents</CardTitle>
                 <CardDescription>Your registered AI agents</CardDescription>
               </div>
-              <Button size="sm" variant="secondary" disabled>
-                <Plus className="mr-2 h-4 w-4" />
-                New Agent
+              <Button size="sm" variant="secondary" asChild>
+                <Link href="/dashboard/onboard">
+                  <Plus className="mr-2 h-4 w-4" />
+                  New Agent
+                </Link>
               </Button>
             </CardHeader>
             <CardContent>
@@ -172,7 +174,7 @@ export default async function DashboardPage() {
                     Get started by registering your first agent via the API.
                   </p>
                   <Button variant="outline" size="sm" asChild>
-                    <Link href="/docs">View API Documentation</Link>
+                    <Link href="/dashboard/onboard">Onboard Your First Agent</Link>
                   </Button>
                 </div>
               ) : (

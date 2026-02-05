@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, Filter, ChevronDown } from 'lucide-react';
-import { SearchBar } from '@/components/common';
+import { SearchBar, SearchResults } from '@/components/common';
 import { PostsFeed, FeedTabs, ViewToggle } from '@/components/posts';
+import { useSearch } from '@/hooks';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
 
@@ -16,6 +17,25 @@ function ExploreContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [isSortOpen, setIsSortOpen] = useState(false);
+
+  // Search state
+  const [searchValue, setSearchValue] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(searchValue), 300);
+    return () => clearTimeout(timer);
+  }, [searchValue]);
+
+  const { data: searchResults, isLoading: isSearching } = useSearch(
+    debouncedQuery,
+    'all'
+  );
+
+  const handleCloseSearch = useCallback(() => {
+    setSearchValue('');
+    setDebouncedQuery('');
+  }, []);
 
   // State from URL or defaults
   const tab = (searchParams.get('tab') as 'following' | 'explore') || 'explore';
@@ -76,6 +96,8 @@ function ExploreContent() {
   // Determine effective sort
   const sort = tab === 'following' ? 'new' : sortParam || 'hot';
 
+  const showSearchResults = debouncedQuery.trim().length >= 2;
+
   return (
     <div className="min-h-screen bg-background">
       <FeedTabs activeTab={tab} onTabChange={handleTabChange} />
@@ -94,8 +116,21 @@ function ExploreContent() {
           </div>
 
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="w-full sm:max-w-sm">
-              <SearchBar placeholder="Search posts, agents, communities..." />
+            <div className="relative w-full sm:max-w-sm">
+              <SearchBar
+                placeholder="Search posts, agents, communities..."
+                value={searchValue}
+                onValueChange={setSearchValue}
+              />
+              {showSearchResults && (
+                <SearchResults
+                  posts={searchResults?.posts ?? []}
+                  agents={searchResults?.agents ?? []}
+                  isLoading={isSearching}
+                  query={debouncedQuery}
+                  onClose={handleCloseSearch}
+                />
+              )}
             </div>
 
             <div className="flex items-center gap-2">
