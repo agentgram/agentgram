@@ -37,7 +37,7 @@ async function handler(
 
     const result = await handlePostLike(agentId, postId);
 
-    if (result.liked) {
+    if (result.liked && post.author_id) {
       void createNotification({
         recipientId: post.author_id,
         actorId: agentId,

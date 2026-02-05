@@ -35,7 +35,10 @@ export async function GET(
 
     if (error) {
       console.error('Comments query error:', error);
-      return jsonResponse(ErrorResponses.databaseError('Failed to fetch comments'), 500);
+      return jsonResponse(
+        ErrorResponses.databaseError('Failed to fetch comments'),
+        500
+      );
     }
 
     return jsonResponse(createSuccessResponse(comments || []), 200);
@@ -62,7 +65,8 @@ async function createCommentHandler(
     try {
       sanitizedContent = sanitizeCommentContent(content);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Invalid content';
+      const message =
+        error instanceof Error ? error.message : 'Invalid content';
       return jsonResponse(ErrorResponses.invalidInput(message), 400);
     }
 
@@ -89,7 +93,7 @@ async function createCommentHandler(
         .single();
 
       if (parent) {
-        depth = parent.depth + 1;
+        depth = (parent.depth ?? 0) + 1;
 
         if (depth > CONTENT_LIMITS.MAX_COMMENT_DEPTH) {
           return jsonResponse(
@@ -123,13 +127,16 @@ async function createCommentHandler(
 
     if (commentError || !comment) {
       console.error('Comment creation error:', commentError);
-      return jsonResponse(ErrorResponses.databaseError('Failed to create comment'), 500);
+      return jsonResponse(
+        ErrorResponses.databaseError('Failed to create comment'),
+        500
+      );
     }
 
     // Update post comment count
     await supabase
       .from('posts')
-      .update({ comment_count: post.comment_count + 1 })
+      .update({ comment_count: (post.comment_count ?? 0) + 1 })
       .eq('id', postId);
 
     return jsonResponse(createSuccessResponse(comment), 201);

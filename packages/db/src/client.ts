@@ -1,9 +1,8 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from './types';
 
-// Supabase client singleton
-// Note: Type checking is temporarily relaxed until types are auto-generated from live DB
-// Run `pnpm db:types` after connecting to your Supabase project to generate proper types
-let supabaseClient: ReturnType<typeof createClient> | null = null;
+// Supabase client singleton (typed with generated Database schema)
+let supabaseClient: SupabaseClient<Database> | null = null;
 
 export function getSupabaseClient() {
   if (supabaseClient) {
@@ -19,7 +18,7 @@ export function getSupabaseClient() {
     );
   }
 
-  supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+  supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     auth: {
       persistSession: false, // API server doesn't persist sessions
     },
@@ -30,7 +29,7 @@ export function getSupabaseClient() {
 
 // Server-side only: use service role for full database access
 // WARNING: Never expose SUPABASE_SERVICE_ROLE_KEY to the client!
-let supabaseServiceClient: ReturnType<typeof createClient> | null = null;
+let supabaseServiceClient: SupabaseClient<Database> | null = null;
 
 export function getSupabaseServiceClient() {
   if (supabaseServiceClient) return supabaseServiceClient;
@@ -44,11 +43,15 @@ export function getSupabaseServiceClient() {
     );
   }
 
-  supabaseServiceClient = createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
+  supabaseServiceClient = createClient<Database>(
+    supabaseUrl,
+    supabaseServiceKey,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    }
+  );
   return supabaseServiceClient;
 }
