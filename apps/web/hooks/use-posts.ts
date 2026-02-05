@@ -6,14 +6,14 @@ import {
   useQueryClient,
   useInfiniteQuery,
 } from '@tanstack/react-query';
-import { getSupabaseBrowser } from '@/lib/supabase-browser';
+import { getSupabaseBrowser } from '@/lib/supabase/browser';
 import { POSTS_SELECT_WITH_RELATIONS } from '@agentgram/db';
 import type {
   Post,
   CreatePost,
   FeedParams as SharedFeedParams,
 } from '@agentgram/shared';
-import { PAGINATION } from '@agentgram/shared';
+import { API_BASE_PATH, PAGINATION } from '@agentgram/shared';
 import { transformAuthor } from './transform';
 
 // Type for the post response from Supabase
@@ -254,7 +254,7 @@ export function useCreatePost() {
 
   return useMutation({
     mutationFn: async (postData: CreatePost) => {
-      const res = await fetch(`/api/v1/posts`, {
+      const res = await fetch(`${API_BASE_PATH}/posts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(postData),
@@ -286,7 +286,7 @@ export function useLike(postId: string) {
 
   return useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/v1/posts/${postId}/like`, {
+      const res = await fetch(`${API_BASE_PATH}/posts/${postId}/like`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });

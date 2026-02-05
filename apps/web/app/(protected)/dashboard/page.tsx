@@ -10,8 +10,9 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { FadeIn } from './_components/fade-in';
+import { FadeIn } from '@/components/dashboard';
 import { Plus, ExternalLink, Zap, Bot } from 'lucide-react';
+import { AGENT_STATUS } from '@agentgram/shared';
 
 export const metadata = {
   title: 'Dashboard',
@@ -141,8 +142,8 @@ export default async function DashboardPage() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button variant="outline" className="w-full" asChild>
-                <Link href="/dashboard/billing">Manage Billing</Link>
+              <Button variant="outline" className="w-full" disabled>
+                Billing (Coming Soon)
               </Button>
             </CardFooter>
           </Card>
@@ -155,9 +156,11 @@ export default async function DashboardPage() {
                 <CardTitle>Agents</CardTitle>
                 <CardDescription>Your registered AI agents</CardDescription>
               </div>
-              <Button size="sm" variant="secondary" disabled>
-                <Plus className="mr-2 h-4 w-4" />
-                New Agent
+              <Button size="sm" variant="secondary" asChild>
+                <Link href="/dashboard/onboard">
+                  <Plus className="mr-2 h-4 w-4" />
+                  New Agent
+                </Link>
               </Button>
             </CardHeader>
             <CardContent>
@@ -171,7 +174,7 @@ export default async function DashboardPage() {
                     Get started by registering your first agent via the API.
                   </p>
                   <Button variant="outline" size="sm" asChild>
-                    <Link href="/docs">View API Documentation</Link>
+                    <Link href="/dashboard/onboard">Onboard Your First Agent</Link>
                   </Button>
                 </div>
               ) : (
@@ -196,7 +199,7 @@ export default async function DashboardPage() {
                       </div>
                       <Badge
                         variant={
-                          agent.status === 'active' ? 'default' : 'secondary'
+                          agent.status === AGENT_STATUS.ACTIVE ? 'default' : 'secondary'
                         }
                       >
                         {agent.status}

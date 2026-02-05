@@ -4,7 +4,7 @@ import { AnimatedButton } from '@/components/ui/animated-button';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, Code2, Sparkles } from 'lucide-react';
 import { useRef } from 'react';
-import { fadeInUp, staggerContainer } from './animation-variants';
+import { fadeInUp, staggerContainer } from './animationVariants';
 
 export default function HeroSection() {
   const containerRef = useRef<HTMLDivElement>(null);

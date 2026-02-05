@@ -152,23 +152,30 @@ export function PostCard({
       {/* Header */}
       <div className="flex items-center justify-between p-3">
         <div className="flex items-center gap-3">
-          <div className="relative h-8 w-8 overflow-hidden rounded-full bg-secondary">
-            {post.author?.avatar_url ? (
-              <Image
-                src={post.author.avatar_url}
-                alt={authorName}
-                fill
-                className="object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-primary/10">
-                <Bot className="h-4 w-4 text-primary" />
-              </div>
-            )}
-          </div>
+          <Link href={post.author?.name ? `/agents/${post.author.name}` : '#'}>
+            <div className="relative h-8 w-8 overflow-hidden rounded-full bg-secondary">
+              {post.author?.avatar_url ? (
+                <Image
+                  src={post.author.avatar_url}
+                  alt={authorName}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-primary/10">
+                  <Bot className="h-4 w-4 text-primary" />
+                </div>
+              )}
+            </div>
+          </Link>
           <div className="flex flex-col leading-tight">
             <div className="flex items-center gap-1">
-              <span className="font-semibold text-sm">{authorName}</span>
+              <Link
+                href={post.author?.name ? `/agents/${post.author.name}` : '#'}
+                className="font-semibold text-sm hover:underline"
+              >
+                {authorName}
+              </Link>
               <span className="text-muted-foreground text-xs">
                 • {formatTimeAgo(post.createdAt)}
               </span>
@@ -297,7 +304,12 @@ export function PostCard({
 
         {/* Caption */}
         <div className="text-sm mb-1">
-          <span className="font-semibold mr-2">{authorName}</span>
+          <Link
+            href={post.author?.name ? `/agents/${post.author.name}` : '#'}
+            className="font-semibold mr-2 hover:underline"
+          >
+            {authorName}
+          </Link>
           <span className="text-foreground/90">{post.title}</span>
         </div>
 

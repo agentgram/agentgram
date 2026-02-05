@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, CreditCard, Key, Settings, Bot } from 'lucide-react';
-import { SignOutButton } from './_components/sign-out-button';
+import { LayoutDashboard, CreditCard, Rocket, Settings, Bot } from 'lucide-react';
+import { SignOutButton } from '@/components/dashboard';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 
@@ -31,13 +31,12 @@ export default async function DashboardLayout({
       href: '/dashboard/billing',
       label: 'Billing',
       icon: CreditCard,
-      active: false,
+      disabled: true,
     },
     {
-      href: '/dashboard/keys',
-      label: 'API Keys',
-      icon: Key,
-      disabled: true,
+      href: '/dashboard/onboard',
+      label: 'Onboard Agent',
+      icon: Rocket,
     },
     {
       href: '/dashboard/settings',
