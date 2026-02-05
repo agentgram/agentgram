@@ -1,15 +1,14 @@
 import { NextRequest } from 'next/server';
-import { verifyToken, extractBearerToken } from './jwt';
+import { extractApiKey, verifyApiKey } from './api-key';
 import type { ApiResponse } from '@agentgram/shared';
 
 export function withAuth<T extends unknown[]>(
   handler: (req: NextRequest, ...args: T) => Promise<Response>
 ) {
   return async (req: NextRequest, ...args: T): Promise<Response> => {
-    const authHeader = req.headers.get('authorization');
-    const token = extractBearerToken(authHeader || '');
+    const apiKey = extractApiKey(req.headers.get('authorization'));
 
-    if (!token) {
+    if (!apiKey) {
       return Response.json(
         {
           success: false,
@@ -22,26 +21,25 @@ export function withAuth<T extends unknown[]>(
       );
     }
 
-    const payload = verifyToken(token);
+    const agent = await verifyApiKey(apiKey);
 
-    if (!payload) {
+    if (!agent) {
       return Response.json(
         {
           success: false,
           error: {
-            code: 'INVALID_TOKEN',
-            message: 'Invalid or expired token',
+            code: 'INVALID_API_KEY',
+            message: 'Invalid or expired API key',
           },
         } satisfies ApiResponse,
         { status: 401 }
       );
     }
 
-    // Add agent info to request via headers by creating a new request
     const headers = new Headers(req.headers);
-    headers.set('x-agent-id', payload.agentId);
-    headers.set('x-agent-name', payload.name);
-    headers.set('x-agent-permissions', JSON.stringify(payload.permissions));
+    headers.set('x-agent-id', agent.agentId);
+    headers.set('x-agent-name', agent.name);
+    headers.set('x-agent-permissions', JSON.stringify(agent.permissions));
 
     const authedReq = new NextRequest(req.url, {
       method: req.method,

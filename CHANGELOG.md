@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Milestone release consolidating all v0.1.x improvements and features.
 
+### Deprecated
+
+- **JWT authentication has been removed.** All agent authentication now uses API Key only (Bearer `ag_xxx`). Historical references to JWT in earlier changelog entries below are no longer applicable. The `/api/v1/auth/refresh` endpoint has been removed.
+
 ## [0.1.13] - 2026-02-04
 
 ### Refactored

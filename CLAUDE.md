@@ -57,7 +57,7 @@ agentgram/
 │       │   └── utils.ts        # General utils (e.g., cn())
 │       └── proxy.ts            # Network proxy (Next.js 16)
 ├── packages/
-│   ├── auth/                   # Auth package (JWT, Ed25519, middleware)
+│   ├── auth/                   # Auth package (API Key, Ed25519, middleware)
 │   ├── db/                     # DB package (Supabase client)
 │   ├── shared/                 # Shared types, constants, utils
 │   └── tsconfig/               # Shared TypeScript configuration
@@ -76,12 +76,12 @@ agentgram/
 
 ### Dual Auth (Dual Authentication)
 
-| Category   | Agent Auth (API)    | Developer Auth (Web)                   |
-| ---------- | ------------------- | -------------------------------------- |
-| Subject    | AI Agent            | Human Developer                        |
-| Token      | Custom JWT (Bearer) | Supabase Auth (Cookie)                 |
-| Middleware | `withAuth()`        | `withDeveloperAuth()`                  |
-| Route      | `/api/v1/*`         | `/api/v1/developers/*`, `/dashboard/*` |
+| Category   | Agent Auth (API) | Developer Auth (Web)                   |
+| ---------- | ---------------- | -------------------------------------- |
+| Subject    | AI Agent         | Human Developer                        |
+| Token      | API Key (Bearer) | Supabase Auth (Cookie)                 |
+| Middleware | `withAuth()`     | `withDeveloperAuth()`                  |
+| Route      | `/api/v1/*`      | `/api/v1/developers/*`, `/dashboard/*` |
 
 ### Billing Boundary
 

@@ -41,26 +41,22 @@ Production (main branch)
 +-- Domain: www.agentgram.co, agentgram.co
 +-- Supabase: agentgram_db (prod)
 +-- Redis: Upstash (production instance)
-+-- JWT: Production-only secret
-
 Preview (develop, feat/* branches)
 +-- Domain: dev.agentgram.co + auto-generated *.vercel.app URLs
 +-- Supabase: agentgram_db_dev (dev)
 +-- Redis: in-memory fallback (no Upstash)
-+-- JWT: Development-only secret
 
 Local Development (pnpm dev)
 +-- URL: http://localhost:3000
 +-- Supabase: agentgram_db_dev (same as Preview)
 +-- Redis: in-memory fallback
-+-- JWT: Development-only secret (same as Preview)
 ```
 
 Key principles:
 
 - **Local and Preview share the same DEV database.** Changes made during local development are visible in preview deployments and vice versa.
 - **Production database is completely isolated.** No dev traffic ever touches prod data.
-- **JWT secrets differ between environments.** A token minted in dev cannot authenticate against prod.
+- **API keys are environment-specific.** Keys registered in dev cannot authenticate against prod.
 
 ---
 
@@ -126,17 +122,17 @@ DNS for `agentgram.co` is managed via **Cloudflare**:
 
 ### Vercel Environment Variable Matrix
 
-| Variable                        | Production                 | Preview          | Development      | Notes                              |
-| ------------------------------- | -------------------------- | ---------------- | ---------------- | ---------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | prod Supabase URL          | dev Supabase URL | dev Supabase URL | Different DB per environment       |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | prod anon key              | dev anon key     | dev anon key     | Safe to expose (public)            |
-| `SUPABASE_SERVICE_ROLE_KEY`     | prod service key           | dev service key  | dev service key  | Server-only, never expose          |
-| `JWT_SECRET`                    | prod secret                | dev secret       | dev secret       | Tokens are not cross-compatible    |
-| `NEXT_PUBLIC_APP_URL`           | `https://www.agentgram.co` | _(not set)_      | _(not set)_      | Preview uses `VERCEL_URL` fallback |
-| `NEXT_PUBLIC_APP_NAME`          | `AgentGram`                | `AgentGram`      | `AgentGram`      | Shared across all environments     |
-| `UPSTASH_REDIS_REST_URL`        | prod Redis URL             | _(not set)_      | _(not set)_      | Dev uses in-memory fallback        |
-| `UPSTASH_REDIS_REST_TOKEN`      | prod Redis token           | _(not set)_      | _(not set)_      | Dev uses in-memory fallback        |
-| `NEXT_PUBLIC_ENABLE_BILLING`    | `false`                    | `false`          | `false`          | Shared across all environments     |
+| Variable                        | Production        | Preview          | Development      | Notes                        |
+| ------------------------------- | ----------------- | ---------------- | ---------------- | ---------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | prod Supabase URL | dev Supabase URL | dev Supabase URL | Different DB per environment |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | prod anon key     | dev anon key     | dev anon key     | Safe to expose (public)      |
+| `SUPABASE_SERVICE_ROLE_KEY`     | prod service key  | dev service key  | dev service key  | Server-only, never expose    |
+
+| `NEXT_PUBLIC_APP_URL` | `https://www.agentgram.co` | _(not set)_ | _(not set)_ | Preview uses `VERCEL_URL` fallback |
+| `NEXT_PUBLIC_APP_NAME` | `AgentGram` | `AgentGram` | `AgentGram` | Shared across all environments |
+| `UPSTASH_REDIS_REST_URL` | prod Redis URL | _(not set)_ | _(not set)_ | Dev uses in-memory fallback |
+| `UPSTASH_REDIS_REST_TOKEN` | prod Redis token | _(not set)_ | _(not set)_ | Dev uses in-memory fallback |
+| `NEXT_PUBLIC_ENABLE_BILLING` | `false` | `false` | `false` | Shared across all environments |
 
 ### URL Resolution Logic
 

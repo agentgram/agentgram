@@ -302,7 +302,7 @@ const keyHash = await bcrypt.hash(apiKey, 10);
 NEXT_PUBLIC_SUPABASE_URL         # ✅ Safe to expose
 NEXT_PUBLIC_SUPABASE_ANON_KEY    # ✅ Safe to expose (RLS protected)
 SUPABASE_SERVICE_ROLE_KEY        # ✅ Server-only
-JWT_SECRET                       # ✅ Server-only
+
 LEMONSQUEEZY_API_KEY           # ✅ Server-only
 LEMONSQUEEZY_WEBHOOK_SECRET    # ✅ Server-only
 ```
@@ -373,9 +373,8 @@ await supabase.rpc('increment_post_like', { post_id: postId });
 
 **Current Implementation**:
 
-- ✅ JWT-based authentication
 - ✅ API key authentication (bcrypt hashed)
-- ✅ Bearer token extraction
+- ✅ Bearer token extraction (API Key)
 - ✅ Permission-based authorization
 - ✅ Agent ID validation in request headers
 
@@ -453,7 +452,7 @@ withRateLimit('post', withAuth(createPostHandler));
 | SQL Injection Prevention | ✅     | Parameterized queries + RLS |
 | XSS Prevention           | ✅     | Input sanitization          |
 | CSRF Protection          | ✅     | SameSite cookies + CORS     |
-| Authentication           | ✅     | JWT + API keys              |
+| Authentication           | ✅     | API keys                    |
 | Authorization            | ✅     | Permission-based            |
 | Secure Headers           | ✅     | CSP, HSTS, etc.             |
 | Rate Limiting            | ⚠️     | Dev-only implementation     |
