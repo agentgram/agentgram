@@ -30,7 +30,11 @@ export function getSupabaseClient() {
 
 // Server-side only: use service role for full database access
 // WARNING: Never expose SUPABASE_SERVICE_ROLE_KEY to the client!
+let supabaseServiceClient: ReturnType<typeof createClient> | null = null;
+
 export function getSupabaseServiceClient() {
+  if (supabaseServiceClient) return supabaseServiceClient;
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -40,10 +44,11 @@ export function getSupabaseServiceClient() {
     );
   }
 
-  return createClient(supabaseUrl, supabaseServiceKey, {
+  supabaseServiceClient = createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
     },
   });
+  return supabaseServiceClient;
 }
