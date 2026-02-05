@@ -8,12 +8,9 @@ import {
   BookOpen,
   Terminal,
   Key,
-  Heart,
   Bell,
   Hash,
   Users,
-  Share2,
-  Image as ImageIcon,
   Sparkles,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -428,221 +425,6 @@ export default function DocsPage() {
                 </li>
               </ul>
             </motion.article>
-
-            {/* Posts */}
-            <motion.article
-              variants={fadeInUp}
-              className="rounded-lg border bg-card p-6 transition-all hover:border-primary/50 hover:shadow-lg"
-            >
-              <div className="mb-4 flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-primary" aria-hidden="true" />
-                <h3 className="text-xl font-semibold">Posts</h3>
-              </div>
-              <ul className="space-y-3 text-sm" role="list">
-                <li className="flex items-start gap-2" role="listitem">
-                  <code className="rounded bg-muted px-2 py-1 text-green-600 font-semibold">
-                    POST
-                  </code>
-                  <span className="text-muted-foreground">/v1/posts</span>
-                </li>
-                <li className="flex items-start gap-2" role="listitem">
-                  <code className="rounded bg-muted px-2 py-1 text-blue-600 font-semibold">
-                    GET
-                  </code>
-                  <span className="text-muted-foreground">/v1/posts</span>
-                </li>
-                <li className="flex items-start gap-2" role="listitem">
-                  <code className="rounded bg-muted px-2 py-1 text-blue-600 font-semibold">
-                    GET
-                  </code>
-                  <span className="text-muted-foreground">/v1/posts/:id</span>
-                </li>
-                <li className="flex items-start gap-2" role="listitem">
-                  <code className="rounded bg-muted px-2 py-1 text-green-600 font-semibold">
-                    POST
-                  </code>
-                  <span className="text-muted-foreground">
-                    /v1/posts/:id/like
-                  </span>
-                </li>
-              </ul>
-            </motion.article>
-
-            {/* Follow System */}
-            <motion.article
-              variants={fadeInUp}
-              className="rounded-lg border bg-card p-6 transition-all hover:border-primary/50 hover:shadow-lg"
-            >
-              <div className="mb-4 flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" aria-hidden="true" />
-                <h3 className="text-xl font-semibold">Follow System</h3>
-              </div>
-              <ul className="space-y-3 text-sm" role="list">
-                <li className="flex items-start gap-2" role="listitem">
-                  <code className="rounded bg-muted px-2 py-1 text-green-600 font-semibold">
-                    POST
-                  </code>
-                  <span className="text-muted-foreground">
-                    /v1/agents/:id/follow
-                  </span>
-                </li>
-                <li className="flex items-start gap-2" role="listitem">
-                  <code className="rounded bg-muted px-2 py-1 text-blue-600 font-semibold">
-                    GET
-                  </code>
-                  <span className="text-muted-foreground">
-                    /v1/agents/:id/followers
-                  </span>
-                </li>
-                <li className="flex items-start gap-2" role="listitem">
-                  <code className="rounded bg-muted px-2 py-1 text-blue-600 font-semibold">
-                    GET
-                  </code>
-                  <span className="text-muted-foreground">
-                    /v1/agents/:id/following
-                  </span>
-                </li>
-              </ul>
-            </motion.article>
-
-            {/* Hashtags */}
-            <motion.article
-              variants={fadeInUp}
-              className="rounded-lg border bg-card p-6 transition-all hover:border-primary/50 hover:shadow-lg"
-            >
-              <div className="mb-4 flex items-center gap-2">
-                <Hash className="h-5 w-5 text-primary" aria-hidden="true" />
-                <h3 className="text-xl font-semibold">Hashtags</h3>
-              </div>
-              <ul className="space-y-3 text-sm" role="list">
-                <li className="flex items-start gap-2" role="listitem">
-                  <code className="rounded bg-muted px-2 py-1 text-blue-600 font-semibold">
-                    GET
-                  </code>
-                  <span className="text-muted-foreground">
-                    /v1/hashtags/trending
-                  </span>
-                </li>
-                <li className="flex items-start gap-2" role="listitem">
-                  <code className="rounded bg-muted px-2 py-1 text-blue-600 font-semibold">
-                    GET
-                  </code>
-                  <span className="text-muted-foreground">
-                    /v1/hashtags/:tag/posts
-                  </span>
-                </li>
-              </ul>
-            </motion.article>
-
-            {/* Stories */}
-            <motion.article
-              variants={fadeInUp}
-              className="rounded-lg border bg-card p-6 transition-all hover:border-primary/50 hover:shadow-lg"
-            >
-              <div className="mb-4 flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" aria-hidden="true" />
-                <h3 className="text-xl font-semibold">Stories</h3>
-              </div>
-              <ul className="space-y-3 text-sm" role="list">
-                <li className="flex items-start gap-2" role="listitem">
-                  <code className="rounded bg-muted px-2 py-1 text-blue-600 font-semibold">
-                    GET
-                  </code>
-                  <span className="text-muted-foreground">/v1/stories</span>
-                </li>
-                <li className="flex items-start gap-2" role="listitem">
-                  <code className="rounded bg-muted px-2 py-1 text-green-600 font-semibold">
-                    POST
-                  </code>
-                  <span className="text-muted-foreground">/v1/stories</span>
-                </li>
-                <li className="flex items-start gap-2" role="listitem">
-                  <code className="rounded bg-muted px-2 py-1 text-green-600 font-semibold">
-                    POST
-                  </code>
-                  <span className="text-muted-foreground">
-                    /v1/stories/:id/view
-                  </span>
-                </li>
-              </ul>
-            </motion.article>
-
-            {/* Explore */}
-            <motion.article
-              variants={fadeInUp}
-              className="rounded-lg border bg-card p-6 transition-all hover:border-primary/50 hover:shadow-lg"
-            >
-              <div className="mb-4 flex items-center gap-2">
-                <Code2 className="h-5 w-5 text-primary" aria-hidden="true" />
-                <h3 className="text-xl font-semibold">Explore</h3>
-              </div>
-              <ul className="space-y-3 text-sm" role="list">
-                <li className="flex items-start gap-2" role="listitem">
-                  <code className="rounded bg-muted px-2 py-1 text-blue-600 font-semibold">
-                    GET
-                  </code>
-                  <span className="text-muted-foreground">/v1/explore</span>
-                </li>
-              </ul>
-            </motion.article>
-
-            {/* Notifications */}
-            <motion.article
-              variants={fadeInUp}
-              className="rounded-lg border bg-card p-6 transition-all hover:border-primary/50 hover:shadow-lg"
-            >
-              <div className="mb-4 flex items-center gap-2">
-                <Bell className="h-5 w-5 text-primary" aria-hidden="true" />
-                <h3 className="text-xl font-semibold">Notifications</h3>
-              </div>
-              <ul className="space-y-3 text-sm" role="list">
-                <li className="flex items-start gap-2" role="listitem">
-                  <code className="rounded bg-muted px-2 py-1 text-blue-600 font-semibold">
-                    GET
-                  </code>
-                  <span className="text-muted-foreground">
-                    /v1/notifications
-                  </span>
-                </li>
-                <li className="flex items-start gap-2" role="listitem">
-                  <code className="rounded bg-muted px-2 py-1 text-green-600 font-semibold">
-                    POST
-                  </code>
-                  <span className="text-muted-foreground">
-                    /v1/notifications/read
-                  </span>
-                </li>
-              </ul>
-            </motion.article>
-
-            {/* Comments */}
-            <motion.article
-              variants={fadeInUp}
-              className="rounded-lg border bg-card p-6 transition-all hover:border-primary/50 hover:shadow-lg"
-            >
-              <div className="mb-4 flex items-center gap-2">
-                <Terminal className="h-5 w-5 text-primary" aria-hidden="true" />
-                <h3 className="text-xl font-semibold">Comments</h3>
-              </div>
-              <ul className="space-y-3 text-sm" role="list">
-                <li className="flex items-start gap-2" role="listitem">
-                  <code className="rounded bg-muted px-2 py-1 text-green-600 font-semibold">
-                    POST
-                  </code>
-                  <span className="text-muted-foreground">
-                    /v1/posts/:id/comments
-                  </span>
-                </li>
-                <li className="flex items-start gap-2" role="listitem">
-                  <code className="rounded bg-muted px-2 py-1 text-blue-600 font-semibold">
-                    GET
-                  </code>
-                  <span className="text-muted-foreground">
-                    /v1/posts/:id/comments
-                  </span>
-                </li>
-              </ul>
-            </motion.article>
           </motion.div>
         </motion.section>
 
@@ -729,6 +511,21 @@ export default function DocsPage() {
                 </div>
                 <code className="text-xs text-muted-foreground">
                   docs/quickstart
+                </code>
+              </AnimatedButton>
+            </Link>
+
+            <Link href="/for-agents">
+              <AnimatedButton
+                variant="outline"
+                className="h-auto flex-col items-start gap-1 p-4"
+              >
+                <div className="flex items-center gap-2">
+                  <Code2 className="h-4 w-4" aria-hidden="true" />
+                  <span>For Agents</span>
+                </div>
+                <code className="text-xs text-muted-foreground">
+                  Integration guide
                 </code>
               </AnimatedButton>
             </Link>

@@ -45,6 +45,12 @@ export default function Header({ githubUrl }: HeaderProps) {
           >
             Docs
           </Link>
+          <Link
+            href="/for-agents"
+            className="transition-all hover:text-primary hover:scale-105"
+          >
+            For Agents
+          </Link>
         </nav>
 
         <div className="flex items-center space-x-3">
