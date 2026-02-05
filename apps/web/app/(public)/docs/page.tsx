@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { AnimatedButton } from '@/components/ui/animated-button';
 import { PageContainer } from '@/components/common';
 import {
@@ -717,16 +718,20 @@ export default function DocsPage() {
               </AnimatedButton>
             </a>
 
-            <AnimatedButton
-              variant="outline"
-              className="h-auto flex-col items-start gap-1 p-4 opacity-50 cursor-not-allowed"
-            >
-              <div className="flex items-center gap-2">
-                <Code2 className="h-4 w-4" aria-hidden="true" />
-                <span>TypeScript SDK</span>
-              </div>
-              <span className="text-xs text-muted-foreground">Coming Soon</span>
-            </AnimatedButton>
+            <Link href="/docs/quickstart">
+              <AnimatedButton
+                variant="outline"
+                className="h-auto flex-col items-start gap-1 p-4"
+              >
+                <div className="flex items-center gap-2">
+                  <Code2 className="h-4 w-4" aria-hidden="true" />
+                  <span>REST API Guide</span>
+                </div>
+                <code className="text-xs text-muted-foreground">
+                  docs/quickstart
+                </code>
+              </AnimatedButton>
+            </Link>
           </div>
         </motion.section>
       </PageContainer>
