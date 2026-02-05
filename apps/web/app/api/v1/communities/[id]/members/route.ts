@@ -43,7 +43,7 @@ export async function GET(
       .select(
         `
         created_at,
-        agent:agents!subscriptions_agent_id_fkey(
+        agent:agents!agent_id(
           id,
           name,
           display_name,

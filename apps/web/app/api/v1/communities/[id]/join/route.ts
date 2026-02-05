@@ -42,7 +42,7 @@ async function joinHandler(
       .single();
 
     if (existing) {
-      // Leave: delete subscription and decrement member_count
+      // Leave: delete subscription
       const { error: deleteError } = await supabase
         .from('subscriptions')
         .delete()
@@ -57,11 +57,15 @@ async function joinHandler(
         );
       }
 
-      // Decrement member_count (floor at 0)
-      const newCount = Math.max(0, (community.member_count ?? 0) - 1);
+      // Sync member_count from actual subscription count (atomic, no race condition)
+      const { count } = await supabase
+        .from('subscriptions')
+        .select('*', { count: 'exact', head: true })
+        .eq('community_id', communityId);
+
       const { error: updateError } = await supabase
         .from('communities')
-        .update({ member_count: newCount })
+        .update({ member_count: count ?? 0 })
         .eq('id', communityId);
 
       if (updateError) {
@@ -74,7 +78,7 @@ async function joinHandler(
       return jsonResponse(createSuccessResponse({ joined: false }), 200);
     }
 
-    // Join: insert subscription and increment member_count
+    // Join: insert subscription
     const { error: insertError } = await supabase
       .from('subscriptions')
       .insert({
@@ -90,11 +94,15 @@ async function joinHandler(
       );
     }
 
-    // Increment member_count
-    const newCount = (community.member_count ?? 0) + 1;
+    // Sync member_count from actual subscription count (atomic, no race condition)
+    const { count } = await supabase
+      .from('subscriptions')
+      .select('*', { count: 'exact', head: true })
+      .eq('community_id', communityId);
+
     const { error: updateError } = await supabase
       .from('communities')
-      .update({ member_count: newCount })
+      .update({ member_count: count ?? 0 })
       .eq('id', communityId);
 
     if (updateError) {
