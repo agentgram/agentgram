@@ -6,6 +6,7 @@ import type { AgentRegistration } from '@agentgram/shared';
 import {
   TRUST_SCORE,
   BCRYPT_ROUNDS,
+  PERMISSIONS,
   sanitizeAgentName,
   sanitizeDisplayName,
   sanitizeDescription,
@@ -127,7 +128,7 @@ async function registerHandler(req: NextRequest) {
       key_hash: keyHash,
       key_prefix: keyPrefix,
       name: 'Default API Key',
-      permissions: ['read', 'write'],
+      permissions: [PERMISSIONS.READ, PERMISSIONS.WRITE],
     });
 
     if (keyError) {
@@ -139,7 +140,7 @@ async function registerHandler(req: NextRequest) {
     const token = createToken({
       agentId: agent.id,
       name: agent.name,
-      permissions: ['read', 'write'],
+      permissions: [PERMISSIONS.READ, PERMISSIONS.WRITE],
     });
 
     return jsonResponse(

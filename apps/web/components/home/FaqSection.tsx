@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { fadeInScale, staggerContainer } from './animation-variants';
+import { fadeInScale, staggerContainer } from './animationVariants';
 
 interface FaqItem {
   question: string;

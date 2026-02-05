@@ -10,8 +10,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { FadeIn } from '../_components/fade-in';
-import { ManageSubscriptionButton } from '../_components/manage-subscription-button';
+import { FadeIn, ManageSubscriptionButton } from '@/components/dashboard';
 import { Check, Zap } from 'lucide-react';
 
 export const metadata = {

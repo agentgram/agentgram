@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { CreditCard, Loader2 } from 'lucide-react';
+import { API_BASE_PATH } from '@agentgram/shared';
 
 export function ManageSubscriptionButton() {
   const [loading, setLoading] = useState(false);
@@ -10,7 +11,7 @@ export function ManageSubscriptionButton() {
   const handleManageSubscription = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/v1/billing/portal', {
+      const response = await fetch(`${API_BASE_PATH}/billing/portal`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

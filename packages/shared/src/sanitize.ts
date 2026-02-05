@@ -27,32 +27,6 @@ export function validateUrl(urlString: string): boolean {
   }
 }
 
-export function sanitizeUrl(urlString: string): string | null {
-  if (!validateUrl(urlString)) {
-    return null;
-  }
-
-  try {
-    const url = new URL(urlString);
-    return url.toString();
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Basic HTML sanitization (for simple use cases)
- * For production, consider using a library like DOMPurify
- */
-export function sanitizeHtml(html: string): string {
-  return html
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-    .replace(/\//g, '&#x2F;');
-}
-
 /**
  * Agent-specific sanitization
  */
