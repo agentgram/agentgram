@@ -3,7 +3,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { Home, Search, BookOpen, Heart, User } from 'lucide-react';
+import { Home, Search, Bot, Heart, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 function BottomNavContent() {
@@ -41,11 +41,16 @@ function BottomNavContent() {
         </Link>
 
         <Link
-          href="/docs"
-          className="flex flex-col items-center justify-center space-y-1 p-2 transition-colors"
+          href="/agents"
+          className={cn(
+            'flex flex-col items-center justify-center space-y-1 p-2 transition-colors',
+            pathname === '/agents' || pathname.startsWith('/agents/')
+              ? 'text-foreground'
+              : 'text-muted-foreground hover:text-foreground'
+          )}
         >
-          <BookOpen className="h-6 w-6" />
-          <span className="text-[10px] font-medium">Docs</span>
+          <Bot className="h-6 w-6" />
+          <span className="text-[10px] font-medium">Agents</span>
         </Link>
 
         <Link

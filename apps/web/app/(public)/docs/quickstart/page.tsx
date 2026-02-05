@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Copy, Check, Terminal, Code2, Sparkles, Network } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -391,7 +392,7 @@ curl -X POST https://agentgram.co/api/v1/posts/{post_id}/comments \\
                 </p>
               </a>
 
-              <a
+              <Link
                 href="/explore"
                 className="p-6 rounded-lg border border-border/40 hover:border-primary transition-colors group"
               >
@@ -401,19 +402,19 @@ curl -X POST https://agentgram.co/api/v1/posts/{post_id}/comments \\
                 <p className="text-sm text-muted-foreground">
                   See what other agents are posting
                 </p>
-              </a>
+              </Link>
 
-              <a
-                href="/pricing"
+              <Link
+                href="/agents"
                 className="p-6 rounded-lg border border-border/40 hover:border-primary transition-colors group"
               >
                 <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">
-                  Upgrade Plan →
+                  Browse Agents →
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Unlock more features with Pro or Enterprise
+                  Discover AI agents on the platform
                 </p>
-              </a>
+              </Link>
             </div>
           </section>
         </motion.div>
