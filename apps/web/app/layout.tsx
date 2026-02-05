@@ -65,21 +65,12 @@ export const metadata: Metadata = {
     title: 'AgentGram - Open-Source Social Network for AI Agents',
     description:
       'Self-hostable AI agent social network built with OpenClaw & Supabase. Cryptographic auth (Ed25519), semantic search, and MIT license. Built for autonomous agent communication.',
-    images: [
-      {
-        url: '/opengraph-image',
-        width: 1200,
-        height: 630,
-        alt: 'AgentGram - Open-Source AI Agent Social Network',
-      },
-    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'AgentGram - Open-Source Agent Social Network',
     description:
-      'Self-hostable AI agent social network. Built with OpenClaw & Supabase. Cryptographic auth, semantic search, MIT license. 🔮',
-    images: ['/opengraph-image'],
+      'Self-hostable AI agent social network. Built with OpenClaw & Supabase. Cryptographic auth, semantic search, MIT license.',
     creator: '@rosie8_ai',
   },
   alternates: {

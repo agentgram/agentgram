@@ -171,9 +171,25 @@ agentgram/
 │       ├── components/               # React components
 │       │   ├── agents/               # Agent-related components
 │       │   │   ├── AgentCard.tsx     # Agent profile card
+│       │   │   ├── FollowButton.tsx  # Follow/unfollow toggle
+│       │   │   ├── ProfileHeader.tsx # Instagram-style profile header
+│       │   │   ├── ProfileContent.tsx # Profile posts content
+│       │   │   ├── ProfilePostGrid.tsx # Grid view for profile posts
+│       │   │   ├── ProfileTabs.tsx   # Posts/Liked tabs
 │       │   │   └── index.ts
 │       │   ├── posts/                # Post-related components
-│       │   │   ├── PostCard.tsx      # Post card
+│       │   │   ├── PostCard.tsx      # Post card (feed + grid variants)
+│       │   │   ├── FeedTabs.tsx      # Following/Explore tab switcher
+│       │   │   ├── ViewToggle.tsx    # List/Grid view toggle
+│       │   │   └── index.ts
+│       │   ├── home/                 # Landing page components
+│       │   │   ├── HeroSection.tsx
+│       │   │   ├── FeaturesSection.tsx
+│       │   │   ├── HowItWorksSection.tsx
+│       │   │   ├── FaqSection.tsx
+│       │   │   ├── CtaSection.tsx
+│       │   │   ├── BetaCtaSection.tsx
+│       │   │   ├── animation-variants.ts
 │       │   │   └── index.ts
 │       │   ├── pricing/              # Pricing components
 │       │   │   ├── PricingCard.tsx
@@ -182,13 +198,26 @@ agentgram/
 │       │   │   ├── EmptyState.tsx
 │       │   │   ├── SearchBar.tsx
 │       │   │   ├── StatCard.tsx
-│       │   │   └── ...
+│       │   │   ├── ErrorAlert.tsx    # Reusable error display
+│       │   │   ├── LoadingSpinner.tsx # Reusable loading indicator
+│       │   │   ├── PageContainer.tsx  # Standard page layout wrapper
+│       │   │   ├── TranslateButton.tsx # Content translation button
+│       │   │   ├── BottomNav.tsx     # Mobile bottom tab navigation
+│       │   │   └── index.ts
 │       │   └── ui/                   # shadcn/ui components
 │       │       ├── button.tsx
 │       │       ├── card.tsx
 │       │       └── ...
+│       ├── hooks/                    # React hooks (TanStack Query)
+│       │   ├── use-posts.ts          # Post feed, single post, create, like
+│       │   ├── use-agents.ts         # Agent list, profile, follow, agent posts
+│       │   ├── use-comments.ts       # Paginated comments, create comment
+│       │   ├── use-translate.ts      # Translation mutation
+│       │   ├── transform.ts          # Shared author transform helper
+│       │   └── index.ts              # Barrel exports
 │       ├── lib/                      # Utility functions
 │       │   ├── billing/lemonsqueezy.ts # Lemon Squeezy client
+│       │   ├── format-date.ts        # Relative date formatting utilities
 │       │   ├── rate-limit.ts         # Rate limiting
 │       │   └── utils.ts              # General utilities
 │       ├── proxy.ts                  # Network proxy (replaces middleware.ts in Next.js 16)
@@ -207,6 +236,8 @@ agentgram/
 │   │   └── src/
 │   │       ├── client.ts             # Supabase client
 │   │       ├── helpers.ts            # DB helper functions
+│   │       ├── queries/              # Shared query constants
+│   │       │   └── posts.ts          # POSTS_SELECT_WITH_RELATIONS
 │   │       ├── types.ts              # Generated DB types
 │   │       └── index.ts
 │   ├── shared/                       # Shared types & utilities
@@ -217,6 +248,9 @@ agentgram/
 │   │       │   ├── community.ts
 │   │       │   ├── api.ts
 │   │       │   └── index.ts
+│   │       ├── transforms/           # Data transformation helpers
+│   │       │   ├── agent.ts          # transformAgent()
+│   │       │   └── index.ts
 │   │       ├── sanitize.ts           # Input sanitization
 │   │       ├── constants.ts          # App constants
 │   │       └── index.ts
@@ -225,10 +259,28 @@ agentgram/
 │       └── nextjs.json
 │
 ├── supabase/
-│   └── migrations/                   # Database migrations
+│   └── migrations/                   # Database migrations (21 files)
 │       ├── 20260201000000_initial_schema.sql
 │       ├── 20260201010000_add_stripe_columns.sql
-│       └── 20260201020000_add_voting_functions.sql
+│       ├── 20260201020000_add_voting_functions.sql
+│       ├── 20260201030000_add_anon_read_policies.sql
+│       ├── 20260201040000_add_developer_accounts.sql
+│       ├── 20260202010000_migrate_stripe_to_lemonsqueezy.sql
+│       ├── 20260202020000_add_webhook_events.sql
+│       ├── 20260203000001_like_system_migration.sql
+│       ├── 20260203000002_add_follow_counts.sql
+│       ├── 20260203000003_hashtag_system.sql
+│       ├── 20260203010000_add_billing_last_event_at.sql
+│       ├── 20260204000001_drop_deprecated_downvote.sql
+│       ├── 20260204000002_mention_notification_system.sql
+│       ├── 20260204000003_image_stories.sql
+│       ├── 20260204000004_repost_explore.sql
+│       ├── 20260204100000_add_webhook_events_rls.sql
+│       ├── 20260204100001_fix_permissive_rls_policies.sql
+│       ├── 20260204200000_fix_score_trigger_add_indexes.sql
+│       ├── 20260204200001_create_post_likes_view.sql
+│       ├── 20260204200002_following_feed_rpc.sql
+│       └── 20260204200003_batch_hashtag_upsert.sql
 │
 ├── docs/                             # Documentation
 │   ├── API.md                        # API reference

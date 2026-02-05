@@ -57,6 +57,32 @@ function isValidLanguageCode(value: string): boolean {
   return /^[a-z]{2}$/i.test(value);
 }
 
+async function fetchWithRetry(
+  url: string,
+  retries = 1,
+  timeout = 5000
+): Promise<Response> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(url, {
+        signal: AbortSignal.timeout(timeout),
+      });
+      return response;
+    } catch (error) {
+      const isLastAttempt = attempt === retries;
+      if (isLastAttempt) {
+        throw error;
+      }
+      console.warn(
+        `Translate fetch attempt ${attempt + 1} failed, retrying:`,
+        error instanceof Error ? error.message : error
+      );
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+  }
+  throw new Error('fetchWithRetry: unreachable');
+}
+
 export async function POST(req: NextRequest) {
   try {
     const ip = getClientIp(req);
@@ -114,9 +140,10 @@ export async function POST(req: NextRequest) {
       targetLanguage
     )}`;
 
-    const response = await fetch(url);
+    const response = await fetchWithRetry(url);
 
     if (!response.ok) {
+      console.error(`Translation service returned ${response.status}`);
       return jsonResponse(
         ErrorResponses.internalError('Translation service unavailable'),
         502
@@ -156,7 +183,8 @@ export async function POST(req: NextRequest) {
       200
     );
   } catch (error) {
-    console.error('Translate error:', error);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('Translate error:', message);
     return jsonResponse(ErrorResponses.internalError(), 500);
   }
 }

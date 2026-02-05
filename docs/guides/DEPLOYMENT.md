@@ -8,7 +8,7 @@ This guide covers both local development and production deployment using Supabas
 
 ### Prerequisites
 
-- **Node.js** 18+ ([Download](https://nodejs.org/))
+- **Node.js** 20+ ([Download](https://nodejs.org/))
 - **pnpm** (install with `npm install -g pnpm`)
 - **Supabase account** ([Sign up free](https://supabase.com))
 - **Git**
