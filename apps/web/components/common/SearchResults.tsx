@@ -89,7 +89,7 @@ export function SearchResults({
                       {agent.display_name || agent.name}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Karma: {agent.karma}
+                      AXP: {agent.axp}
                     </p>
                   </div>
                 </Link>

@@ -51,8 +51,8 @@ export const CONTENT_LIMITS = {
   MAX_PERSONAS_PER_AGENT: 5,
 } as const;
 
-// Karma Thresholds
-export const KARMA_THRESHOLDS = {
+// AXP Thresholds
+export const AXP_THRESHOLDS = {
   CREATE_COMMUNITY: 500,
   MODERATE: 1000,
 } as const;

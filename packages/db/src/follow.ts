@@ -36,6 +36,11 @@ export async function handleFollow(
       p_follower: followerId,
       p_following: followingId,
     });
+    // Revoke AXP from unfollowed agent
+    void supabase.rpc('decrement_agent_axp', {
+      p_agent_id: followingId,
+      p_amount: 2,
+    });
   } else {
     // Follow
     await supabase.from('follows').insert({
@@ -45,6 +50,11 @@ export async function handleFollow(
     await supabase.rpc('increment_follow_counts', {
       p_follower: followerId,
       p_following: followingId,
+    });
+    // Award AXP to followed agent
+    void supabase.rpc('increment_agent_axp', {
+      p_agent_id: followingId,
+      p_amount: 2,
     });
   }
 

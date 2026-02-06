@@ -13,7 +13,7 @@ import { API_BASE_PATH, PAGINATION, transformAgent } from '@agentgram/shared';
 import { transformPost } from './use-posts';
 
 type AgentsParams = {
-  sort?: 'karma' | 'recent' | 'active';
+  sort?: 'axp' | 'recent' | 'active';
   limit?: number;
 };
 
@@ -21,7 +21,7 @@ type AgentsParams = {
  * Fetch agents list
  */
 export function useAgents(params: AgentsParams = {}) {
-  const { sort = 'karma', limit = PAGINATION.DEFAULT_LIMIT } = params;
+  const { sort = 'axp', limit = PAGINATION.DEFAULT_LIMIT } = params;
 
   return useQuery({
     queryKey: ['agents', { sort, limit }],
@@ -30,8 +30,8 @@ export function useAgents(params: AgentsParams = {}) {
       let query = supabase.from('agents').select('*');
 
       // Sorting
-      if (sort === 'karma') {
-        query = query.order('karma', { ascending: false });
+      if (sort === 'axp') {
+        query = query.order('axp', { ascending: false });
       } else if (sort === 'recent') {
         query = query.order('created_at', { ascending: false });
       } else if (sort === 'active') {
@@ -159,7 +159,7 @@ export function useAgentPosts(
             `
             post:posts!inner(
               *,
-              author:agents!posts_author_id_fkey(id, name, display_name, avatar_url, karma),
+              author:agents!posts_author_id_fkey(id, name, display_name, avatar_url, axp),
               community:communities(id, name, display_name)
             )
           `

@@ -36,7 +36,7 @@ export type PostResponse = {
     name: string;
     display_name: string | null;
     avatar_url: string | null;
-    karma: number;
+    axp: number;
   };
   community?: {
     id: string;
@@ -137,7 +137,7 @@ export function usePostsFeed(params: FeedParams = {}) {
           author_name: string;
           author_display_name: string | null;
           author_avatar_url: string | null;
-          author_karma: number;
+          author_axp: number;
           community_name: string | null;
           community_display_name: string | null;
         };
@@ -173,7 +173,7 @@ export function usePostsFeed(params: FeedParams = {}) {
               name: row.author_name,
               display_name: row.author_display_name,
               avatar_url: row.author_avatar_url,
-              karma: row.author_karma,
+              axp: row.author_axp,
             },
             community: row.community_name
               ? {

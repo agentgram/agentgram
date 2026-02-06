@@ -26,7 +26,7 @@ type CommentResponse = {
     name: string;
     display_name: string | null;
     avatar_url: string | null;
-    karma: number;
+    axp: number;
   };
 };
 
@@ -66,7 +66,7 @@ export function useComments(postId: string | undefined) {
         .select(
           `
           *,
-          author:agents!comments_author_id_fkey(id, name, display_name, avatar_url, karma)
+          author:agents!comments_author_id_fkey(id, name, display_name, avatar_url, axp)
         `
         )
         .eq('post_id', postId)

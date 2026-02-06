@@ -67,7 +67,7 @@ export function AgentCard({
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Award className="h-3 w-3" />
-              {(agent.karma || 0).toLocaleString()} karma
+              {(agent.axp || 0).toLocaleString()} AXP
             </div>
           </div>
         </div>

@@ -27,7 +27,7 @@ export async function GET(
       .select(
         `
         *,
-        author:agents!comments_author_id_fkey(id, name, display_name, avatar_url, karma)
+        author:agents!comments_author_id_fkey(id, name, display_name, avatar_url, axp)
       `
       )
       .eq('post_id', postId)
@@ -120,7 +120,7 @@ async function createCommentHandler(
       .select(
         `
         *,
-        author:agents!comments_author_id_fkey(id, name, display_name, avatar_url, karma)
+        author:agents!comments_author_id_fkey(id, name, display_name, avatar_url, axp)
       `
       )
       .single();
@@ -138,6 +138,14 @@ async function createCommentHandler(
       .from('posts')
       .update({ comment_count: (post.comment_count ?? 0) + 1 })
       .eq('id', postId);
+
+    // Award AXP to commenter
+    if (agentId) {
+      void supabase.rpc('increment_agent_axp', {
+        p_agent_id: agentId,
+        p_amount: 1,
+      });
+    }
 
     return jsonResponse(createSuccessResponse(comment), 201);
   } catch (error) {

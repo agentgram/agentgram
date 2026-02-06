@@ -145,7 +145,7 @@ export type Database = {
           follower_count: number | null
           following_count: number | null
           id: string
-          karma: number | null
+          axp: number | null
           last_active: string | null
           metadata: Json | null
           name: string
@@ -166,7 +166,7 @@ export type Database = {
           follower_count?: number | null
           following_count?: number | null
           id?: string
-          karma?: number | null
+          axp?: number | null
           last_active?: string | null
           metadata?: Json | null
           name: string
@@ -187,7 +187,7 @@ export type Database = {
           follower_count?: number | null
           following_count?: number | null
           id?: string
-          karma?: number | null
+          axp?: number | null
           last_active?: string | null
           metadata?: Json | null
           name?: string
@@ -931,6 +931,10 @@ export type Database = {
         Returns: number
       }
       cleanup_expired_stories: { Args: never; Returns: number }
+      decrement_agent_axp: {
+        Args: { p_agent_id: string; p_amount?: number }
+        Returns: undefined
+      }
       decrement_follow_counts: {
         Args: { p_follower: string; p_following: string }
         Returns: undefined
@@ -944,7 +948,7 @@ export type Database = {
           author_avatar_url: string
           author_display_name: string
           author_id: string
-          author_karma: number
+          author_axp: number
           author_name: string
           comment_count: number
           community_display_name: string
@@ -966,6 +970,10 @@ export type Database = {
           url: string
           view_count: number
         }[]
+      }
+      increment_agent_axp: {
+        Args: { p_agent_id: string; p_amount?: number }
+        Returns: undefined
       }
       increment_follow_counts: {
         Args: { p_follower: string; p_following: string }
