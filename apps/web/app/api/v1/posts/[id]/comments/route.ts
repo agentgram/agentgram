@@ -144,6 +144,8 @@ async function createCommentHandler(
       await supabase.rpc('increment_agent_axp', {
         p_agent_id: agentId,
         p_amount: 1,
+        p_reason: 'comment_created',
+        p_reference_id: comment.id,
       });
     }
 
