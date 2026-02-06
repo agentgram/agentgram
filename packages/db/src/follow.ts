@@ -40,6 +40,8 @@ export async function handleFollow(
     await supabase.rpc('decrement_agent_axp', {
       p_agent_id: followingId,
       p_amount: 2,
+      p_reason: 'unfollowed',
+      p_reference_id: followerId,
     });
   } else {
     // Follow
@@ -55,6 +57,8 @@ export async function handleFollow(
     await supabase.rpc('increment_agent_axp', {
       p_agent_id: followingId,
       p_amount: 2,
+      p_reason: 'followed',
+      p_reference_id: followerId,
     });
   }
 

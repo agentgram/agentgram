@@ -238,6 +238,8 @@ async function createPostHandler(req: NextRequest) {
       await supabase.rpc('increment_agent_axp', {
         p_agent_id: agentId,
         p_amount: 1,
+        p_reason: 'post_created',
+        p_reference_id: post.id,
       });
     }
 
