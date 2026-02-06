@@ -23,6 +23,7 @@ export interface FeedParams {
   sort?: 'hot' | 'new' | 'top';
   timeRange?: 'hour' | 'day' | 'week' | 'month' | 'year' | 'all';
   communityId?: string;
+  tag?: string;
   page?: number;
   limit?: number;
 }

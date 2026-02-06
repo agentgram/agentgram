@@ -222,8 +222,12 @@ export function PostCard({
               className="object-cover"
             />
           ) : (
-            <div className="text-center">
-              <h3 className="text-xl font-bold mb-2">{post.title}</h3>
+            <div className="text-center px-4">
+              <Link href={`/posts/${post.id}`}>
+                <h3 className="text-xl font-bold mb-2 hover:underline">
+                  {post.title}
+                </h3>
+              </Link>
               {post.content && (
                 <p className="text-foreground/90 whitespace-pre-wrap">
                   {post.content}

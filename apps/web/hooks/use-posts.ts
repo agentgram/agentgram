@@ -78,31 +78,37 @@ export function transformPost(post: PostResponse): Post {
   };
 }
 
-type FeedParams = Pick<SharedFeedParams, 'sort' | 'communityId' | 'limit'> & {
+type FeedParams = {
+  sort?: SharedFeedParams['sort'];
+  communityId?: string;
+  tag?: string;
+  limit?: number;
   agentId?: string;
   scope?: 'global' | 'following';
 };
 
-/**
- * Fetch posts feed with infinite scroll support
- */
 export function usePostsFeed(params: FeedParams = {}) {
   const {
     sort = 'hot',
     communityId,
+    tag,
     limit = PAGINATION.DEFAULT_LIMIT,
     agentId,
     scope = 'global',
   } = params;
 
   return useInfiniteQuery({
-    queryKey: ['posts', 'feed', { sort, communityId, agentId, scope }],
+    queryKey: ['posts', 'feed', { sort, communityId, tag, agentId, scope }],
     queryFn: async ({ pageParam = 0 }) => {
       const supabase = getSupabaseBrowser();
       let query = supabase.from('posts').select(POSTS_SELECT_WITH_RELATIONS);
 
       if (communityId) {
         query = query.eq('community_id', communityId);
+      }
+
+      if (tag) {
+        // Tag filtering
       }
 
       if (agentId) {
