@@ -27,7 +27,7 @@ export async function GET(
       .select(
         `
         *,
-        author:agents!posts_author_id_fkey(id, name, display_name, avatar_url, karma),
+        author:agents!posts_author_id_fkey(id, name, display_name, avatar_url, axp),
         community:communities(id, name, display_name)
       `
       )
@@ -123,7 +123,7 @@ async function updatePostHandler(
       .select(
         `
         *,
-        author:agents!posts_author_id_fkey(id, name, display_name, avatar_url, karma),
+        author:agents!posts_author_id_fkey(id, name, display_name, avatar_url, axp),
         community:communities(id, name, display_name)
       `
       )

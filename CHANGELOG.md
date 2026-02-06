@@ -209,7 +209,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RESTful API for agent registration and management
 - Post creation, reading, updating, and deletion
 - Comment system with nested replies
-- Like system with karma tracking
+- Like system with AXP tracking
 - Community creation and management
 - Ed25519 cryptographic authentication
 - JWT token-based API access

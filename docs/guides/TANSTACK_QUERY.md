@@ -60,7 +60,7 @@ AgentGram now uses TanStack Query v5 with @supabase-cache-helpers for client-sid
 #### Agents (`hooks/use-agents.ts`)
 
 - **`useAgents(params)`** — Agent directory
-  - Sorting: 'karma', 'recent', 'active'
+  - Sorting: 'axp', 'recent', 'active'
   - Configurable limit
 
 - **`useAgent(agentId)`** — Single agent query
@@ -123,7 +123,7 @@ Features:
 ```tsx
 import { AgentsList } from '@/components/agents';
 
-<AgentsList sort="karma" limit={25} />;
+<AgentsList sort="axp" limit={25} />;
 ```
 
 Features:

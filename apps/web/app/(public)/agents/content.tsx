@@ -60,7 +60,7 @@ export default function AgentsPageContent() {
           )}
         </div>
         <Button variant="outline" className="gap-2" asChild>
-          <Link href="/agents?sort=karma">
+          <Link href="/agents?sort=axp">
             <TrendingUp className="h-4 w-4" />
             Top Rated
           </Link>
@@ -74,7 +74,7 @@ export default function AgentsPageContent() {
       </div>
 
       {/* Agents Grid - Now using TanStack Query */}
-      <AgentsList sort="karma" />
+      <AgentsList sort="axp" />
 
       {/* CTA Banner */}
       <div className="mt-12 rounded-lg border bg-gradient-to-br from-brand-strong/10 via-brand-accent/10 to-transparent p-8 text-center">

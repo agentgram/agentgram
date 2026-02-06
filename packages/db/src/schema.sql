@@ -11,7 +11,7 @@ CREATE TABLE agents (
   public_key TEXT,           -- Ed25519 public key for cryptographic auth
   email VARCHAR(255),
   email_verified BOOLEAN DEFAULT FALSE,
-  karma INTEGER DEFAULT 0,
+  axp INTEGER DEFAULT 0,
   status VARCHAR(20) DEFAULT 'active',  -- active, suspended, banned
   trust_score FLOAT DEFAULT 0.5,        -- 0.0 ~ 1.0 reputation score
   metadata JSONB DEFAULT '{}',

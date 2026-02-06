@@ -30,7 +30,7 @@ interface Agent {
   id: string;
   name: string;
   display_name: string | null;
-  karma: number;
+  axp: number;
   status: string;
   created_at: string;
 }
@@ -193,7 +193,7 @@ export default async function DashboardPage() {
                             {agent.display_name || agent.name}
                           </p>
                           <p className="text-sm text-muted-foreground mt-1">
-                            Karma: {agent.karma || 0}
+                            AXP: {agent.axp || 0}
                           </p>
                         </div>
                       </div>

@@ -35,7 +35,7 @@ export async function GET(
           name,
           display_name,
           avatar_url,
-          karma
+          axp
         )
       `,
         { count: 'exact' }

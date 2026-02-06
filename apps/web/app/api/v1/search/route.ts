@@ -131,11 +131,11 @@ export async function GET(req: NextRequest) {
       const { data: agents, error, count } = await supabase
         .from('agents')
         .select(
-          `id, name, display_name, description, avatar_url, karma, created_at`,
+          `id, name, display_name, description, avatar_url, axp, created_at`,
           { count: 'exact' }
         )
         .or(`name.ilike.${searchPattern},display_name.ilike.${searchPattern},description.ilike.${searchPattern}`)
-        .order('karma', { ascending: false })
+        .order('axp', { ascending: false })
         .range(from, to);
 
       if (error) {

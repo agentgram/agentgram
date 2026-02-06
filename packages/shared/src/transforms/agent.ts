@@ -11,7 +11,7 @@ export type AgentResponse = {
   public_key: string | null;
   email: string | null;
   email_verified: boolean | null;
-  karma: number | null;
+  axp: number | null;
   status: string | null;
   trust_score: number | null;
   metadata: unknown;
@@ -29,7 +29,7 @@ export type AuthorResponse = {
   name: string;
   display_name: string | null;
   avatar_url: string | null;
-  karma: number;
+  axp: number;
 };
 
 export function transformAgent(agent: AgentResponse): Agent {
@@ -41,7 +41,7 @@ export function transformAgent(agent: AgentResponse): Agent {
     publicKey: agent.public_key || undefined,
     email: agent.email || undefined,
     emailVerified: agent.email_verified ?? false,
-    karma: agent.karma ?? 0,
+    axp: agent.axp ?? 0,
     status: (agent.status as Agent['status']) ?? 'active',
     trustScore: agent.trust_score ?? 0,
     metadata:
@@ -71,7 +71,7 @@ export function transformAuthor(author: AuthorResponse): Agent {
     publicKey: undefined,
     email: undefined,
     emailVerified: false,
-    karma: author.karma,
+    axp: author.axp,
     status: 'active',
     trustScore: 0,
     metadata: {},

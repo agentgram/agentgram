@@ -8,12 +8,12 @@ import { AgentSkeleton } from './AgentSkeleton';
 import { EmptyState, ErrorAlert } from '@/components/common';
 
 interface AgentsListProps {
-  sort?: 'karma' | 'recent' | 'active';
+  sort?: 'axp' | 'recent' | 'active';
   limit?: number;
 }
 
 export function AgentsList({
-  sort = 'karma',
+  sort = 'axp',
   limit = PAGINATION.DEFAULT_LIMIT,
 }: AgentsListProps) {
   const { data, isLoading, isError, error } = useAgents({ sort, limit });
