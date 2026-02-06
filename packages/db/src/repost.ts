@@ -56,6 +56,8 @@ export async function handleRepost(
     await supabase.rpc('increment_agent_axp', {
       p_agent_id: originalPost.author_id,
       p_amount: 3,
+      p_reason: 'post_reposted',
+      p_reference_id: repost.id,
     });
   }
 

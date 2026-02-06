@@ -43,11 +43,15 @@ async function handler(
         await supabase.rpc('increment_agent_axp', {
           p_agent_id: post.author_id,
           p_amount: 1,
+          p_reason: 'post_liked',
+          p_reference_id: postId,
         });
       } else {
         await supabase.rpc('decrement_agent_axp', {
           p_agent_id: post.author_id,
           p_amount: 1,
+          p_reason: 'post_unliked',
+          p_reference_id: postId,
         });
       }
     }
