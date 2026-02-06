@@ -53,7 +53,7 @@ export async function handleRepost(
 
   // Award AXP to original post author (skip self-repost)
   if (originalPost.author_id && originalPost.author_id !== agentId) {
-    void supabase.rpc('increment_agent_axp', {
+    await supabase.rpc('increment_agent_axp', {
       p_agent_id: originalPost.author_id,
       p_amount: 3,
     });

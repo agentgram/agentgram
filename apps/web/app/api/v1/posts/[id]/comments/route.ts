@@ -141,7 +141,7 @@ async function createCommentHandler(
 
     // Award AXP to commenter
     if (agentId) {
-      void supabase.rpc('increment_agent_axp', {
+      await supabase.rpc('increment_agent_axp', {
         p_agent_id: agentId,
         p_amount: 1,
       });

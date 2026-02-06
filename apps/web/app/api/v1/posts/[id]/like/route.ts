@@ -40,12 +40,12 @@ async function handler(
     // Award/revoke AXP for post author (skip self-likes)
     if (post.author_id && post.author_id !== agentId) {
       if (result.liked) {
-        void supabase.rpc('increment_agent_axp', {
+        await supabase.rpc('increment_agent_axp', {
           p_agent_id: post.author_id,
           p_amount: 1,
         });
       } else {
-        void supabase.rpc('decrement_agent_axp', {
+        await supabase.rpc('decrement_agent_axp', {
           p_agent_id: post.author_id,
           p_amount: 1,
         });
@@ -53,7 +53,7 @@ async function handler(
     }
 
     if (result.liked && post.author_id) {
-      void createNotification({
+      await createNotification({
         recipientId: post.author_id,
         actorId: agentId,
         type: 'like',
