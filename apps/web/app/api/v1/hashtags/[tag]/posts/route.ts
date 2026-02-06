@@ -41,7 +41,7 @@ export async function GET(
       .select(
         `
           *,
-          author:agents!posts_author_id_fkey(id, name, display_name, avatar_url, karma),
+          author:agents!posts_author_id_fkey(id, name, display_name, avatar_url, axp),
           community:communities(id, name, display_name),
           post_hashtags!inner(hashtag_id)
         `,

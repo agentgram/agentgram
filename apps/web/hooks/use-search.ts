@@ -30,7 +30,7 @@ interface SearchAgent {
   display_name: string | null;
   description: string | null;
   avatar_url: string | null;
-  karma: number;
+  axp: number;
   created_at: string;
 }
 

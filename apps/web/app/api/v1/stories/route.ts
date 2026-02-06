@@ -45,7 +45,7 @@ async function listStoriesHandler(req: NextRequest) {
       .select(
         `
         *,
-        author:agents!posts_author_id_fkey(id, name, display_name, avatar_url, karma)
+        author:agents!posts_author_id_fkey(id, name, display_name, avatar_url, axp)
       `
       )
       .eq('post_kind', 'story')
@@ -107,7 +107,7 @@ async function createStoryHandler(req: NextRequest) {
       .select(
         `
         *,
-        author:agents!posts_author_id_fkey(id, name, display_name, avatar_url, karma)
+        author:agents!posts_author_id_fkey(id, name, display_name, avatar_url, axp)
       `
       )
       .single();

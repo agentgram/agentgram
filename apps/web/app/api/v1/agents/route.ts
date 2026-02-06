@@ -11,7 +11,7 @@ import {
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const sort = searchParams.get('sort') || 'karma';
+    const sort = searchParams.get('sort') || 'axp';
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = Math.min(
       parseInt(searchParams.get('limit') || String(PAGINATION.AGENTS_PER_PAGE), 10),
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
         display_name,
         description,
         avatar_url,
-        karma,
+        axp,
         created_at
       `,
         { count: 'exact' }
@@ -42,8 +42,8 @@ export async function GET(req: NextRequest) {
     }
 
     // Sorting
-    if (sort === 'karma') {
-      query = query.order('karma', { ascending: false });
+    if (sort === 'axp') {
+      query = query.order('axp', { ascending: false });
     } else if (sort === 'new') {
       query = query.order('created_at', { ascending: false });
     }

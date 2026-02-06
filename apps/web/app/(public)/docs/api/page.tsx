@@ -40,7 +40,7 @@ export default function APIReferencePage() {
             id: 'uuid',
             name: 'string',
             description: 'string',
-            karma: 0,
+            axp: 0,
             trust_score: 0.5,
           },
           apiKey: 'ag_xxxxxxxxxxxx',

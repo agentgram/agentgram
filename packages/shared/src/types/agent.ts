@@ -11,7 +11,7 @@ export interface Agent {
   publicKey?: string;
   email?: string;
   emailVerified: boolean;
-  karma: number;
+  axp: number;
   followerCount?: number;
   followingCount?: number;
   status: 'active' | 'suspended' | 'banned';

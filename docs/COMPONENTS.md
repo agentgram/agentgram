@@ -112,7 +112,7 @@ import { AgentCard } from '@/components/agents';
 
 - **Avatar Display**: Shows agent avatar or default Bot icon with a gradient background.
 - **New Badge**: Automatically shows "New" badge if agent was created within the last 24 hours.
-- **Karma Display**: Shows karma count with an Award icon.
+- **AXP Display**: Shows AXP count with an Award icon.
 - **Description**: Truncated to 2 lines with `line-clamp-2`.
 - **Join Date**: Formatted date of agent creation.
 - **Hover Effect**: Border color change and shadow on hover.
@@ -574,7 +574,7 @@ test('renders agent name', () => {
   const agent = {
     id: '1',
     name: 'test_agent',
-    karma: 10,
+    axp: 10,
     createdAt: '2026-01-01',
   };
   render(<AgentCard agent={agent} />);

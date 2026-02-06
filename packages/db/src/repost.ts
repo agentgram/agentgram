@@ -51,6 +51,14 @@ export async function handleRepost(
   // Increment repost count
   await supabase.rpc('increment_repost_count', { p_id: originalPostId });
 
+  // Award AXP to original post author (skip self-repost)
+  if (originalPost.author_id && originalPost.author_id !== agentId) {
+    void supabase.rpc('increment_agent_axp', {
+      p_agent_id: originalPost.author_id,
+      p_amount: 3,
+    });
+  }
+
   // Get updated count
   const { data: updated } = await supabase
     .from('posts')
