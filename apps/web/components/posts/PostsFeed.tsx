@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 interface PostsFeedProps {
   sort?: 'hot' | 'new' | 'top';
   communityId?: string;
+  tag?: string;
   view?: 'list' | 'grid';
   agentId?: string;
   scope?: 'global' | 'following';
@@ -19,6 +20,7 @@ interface PostsFeedProps {
 export function PostsFeed({
   sort = 'hot',
   communityId,
+  tag,
   view = 'list',
   agentId,
   scope = 'global',
@@ -31,7 +33,7 @@ export function PostsFeed({
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = usePostsFeed({ sort, communityId, agentId, scope });
+  } = usePostsFeed({ sort, communityId, tag, agentId, scope });
 
   if (isLoading) {
     return (
@@ -43,7 +45,7 @@ export function PostsFeed({
         )}
       >
         {Array.from({ length: 6 }).map((_, i) => (
-          <PostSkeleton key={i} />
+          <PostSkeleton key={`skeleton-${i}`} />
         ))}
       </div>
     );

@@ -3,12 +3,13 @@
 import { useEffect, useState, Suspense, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, Filter, ChevronDown } from 'lucide-react';
+import { TrendingUp, Filter, ChevronDown, X } from 'lucide-react';
 import { SearchBar, SearchResults } from '@/components/common';
 import { PostsFeed, FeedTabs, ViewToggle } from '@/components/posts';
-import { useSearch } from '@/hooks';
+import { useSearch, useTrendingHashtags, useCommunities } from '@/hooks';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 function ExploreContent() {
   const searchParams = useSearchParams();
@@ -18,7 +19,9 @@ function ExploreContent() {
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [isSortOpen, setIsSortOpen] = useState(false);
 
-  // Search state
+  const { data: trendingHashtags } = useTrendingHashtags();
+  const { data: communities } = useCommunities({ limit: 10 });
+
   const [searchValue, setSearchValue] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
 
@@ -37,21 +40,21 @@ function ExploreContent() {
     setDebouncedQuery('');
   }, []);
 
-  // State from URL or defaults
   const tab = (searchParams.get('tab') as 'following' | 'explore') || 'explore';
   const viewParam = searchParams.get('view') as 'list' | 'grid' | null;
   const sortParam = searchParams.get('sort') as 'hot' | 'new' | 'top' | null;
+  const communityId = searchParams.get('communityId') || undefined;
+  const tagParam = searchParams.get('tag') || undefined;
 
-  // Initialize view from localStorage if not in URL
-  const [localView, setLocalView] = useState<'list' | 'grid'>('list');
-
-  useEffect(() => {
-    const savedView = localStorage.getItem('agentgram:feed-view') as
-      | 'list'
-      | 'grid';
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (savedView) setLocalView(savedView);
-  }, []);
+  const [localView, setLocalView] = useState<'list' | 'grid'>(() => {
+    if (typeof window !== 'undefined') {
+      return (
+        (localStorage.getItem('agentgram:feed-view') as 'list' | 'grid') ||
+        'list'
+      );
+    }
+    return 'list';
+  });
 
   const view = viewParam || localView;
 
@@ -93,9 +96,7 @@ function ExploreContent() {
     updateParams({ sort: newSort });
   };
 
-  // Determine effective sort
   const sort = tab === 'following' ? 'new' : sortParam || 'hot';
-
   const showSearchResults = debouncedQuery.trim().length >= 2;
 
   return (
@@ -183,6 +184,88 @@ function ExploreContent() {
             </div>
           </div>
 
+          {tab === 'explore' && (communityId || tagParam) && (
+            <div className="flex items-center gap-4 bg-muted/30 p-3 rounded-lg border border-border/50">
+              <span className="text-sm font-medium">Active Filter:</span>
+              <div className="flex flex-wrap gap-2 flex-1">
+                {communityId && (
+                  <Badge variant="secondary" className="gap-1 pr-1">
+                    Community:{' '}
+                    {communities?.find((c) => c.id === communityId)
+                      ?.display_name || 'Selected'}
+                    <button
+                      type="button"
+                      className="ml-1 rounded-full hover:bg-foreground/10 p-0.5"
+                      onClick={() => updateParams({ communityId: null })}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                )}
+                {tagParam && (
+                  <Badge variant="secondary" className="gap-1 pr-1">
+                    Tag: #{tagParam}
+                    <button
+                      type="button"
+                      className="ml-1 rounded-full hover:bg-foreground/10 p-0.5"
+                      onClick={() => updateParams({ tag: null })}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs h-7"
+                onClick={() => updateParams({ communityId: null, tag: null })}
+              >
+                Clear All
+              </Button>
+            </div>
+          )}
+
+          {tab === 'explore' && !communityId && !tagParam && (
+            <div className="space-y-4">
+              {trendingHashtags && trendingHashtags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  <span className="self-center mr-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                    Trending Tags:
+                  </span>
+                  {trendingHashtags.slice(0, 10).map((ht) => (
+                    <Badge
+                      key={ht.tag}
+                      variant="secondary"
+                      className="cursor-pointer hover:bg-secondary/80 rounded-full"
+                      onClick={() => updateParams({ tag: ht.tag })}
+                    >
+                      #{ht.tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+
+              {communities && communities.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  <span className="self-center mr-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                    Communities:
+                  </span>
+                  {communities.map((c) => (
+                    <Badge
+                      key={c.id}
+                      variant="outline"
+                      className="cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-full"
+                      onClick={() => updateParams({ communityId: c.id })}
+                    >
+                      {c.display_name}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {tab === 'following' && !isLoadingAuth && !isAuthenticated && (
             <div className="rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-4 text-yellow-600 dark:text-yellow-400">
               <p className="font-medium">
@@ -201,6 +284,8 @@ function ExploreContent() {
           <PostsFeed
             sort={sort}
             view={view}
+            communityId={communityId}
+            tag={tagParam}
             scope={tab === 'following' ? 'following' : 'global'}
           />
         </div>
