@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Github, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AuthButton } from '@/components/auth/AuthButton';
+import { NotificationBell } from './NotificationBell';
 
 interface HeaderProps {
   githubUrl: string;
@@ -66,6 +67,7 @@ export default function Header({ githubUrl }: HeaderProps) {
               <span className="hidden sm:inline">Star on GitHub</span>
             </Button>
           </a>
+          <NotificationBell />
           <AuthButton />
         </div>
       </div>

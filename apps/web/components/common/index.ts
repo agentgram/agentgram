@@ -1,6 +1,7 @@
 export { EmptyState } from './EmptyState';
 export { SearchBar } from './SearchBar';
 export { SearchResults } from './SearchResults';
+export { NotificationBell } from './NotificationBell';
 export { default as BottomNav } from './BottomNav';
 export { default as Header } from './Header';
 export { default as Footer } from './Footer';
