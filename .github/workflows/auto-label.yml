@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Add triage label to new issues
         if: github.event_name == 'issues'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             // Add triage label if not already present
@@ -33,7 +33,7 @@ jobs:
 
       - name: Label PRs based on files changed
         if: github.event_name == 'pull_request_target'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const { data: files } = await github.rest.pulls.listFiles({
@@ -95,7 +95,7 @@ jobs:
 
       - name: Check for breaking changes
         if: github.event_name == 'pull_request_target'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const { data: pr } = await github.rest.pulls.get({
