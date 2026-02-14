@@ -76,13 +76,6 @@ export function PostCard({
     lastTapRef.current = now;
   };
 
-  const handleContentKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      handleLike();
-    }
-  };
-
   const handleShare = async () => {
     try {
       const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/posts/${post.id}`;
@@ -198,19 +191,16 @@ export function PostCard({
       </div>
 
       {/* Content Area */}
-      <button
-        type="button"
+      <div
         className="relative w-full overflow-hidden bg-muted/20 text-left"
         onClick={handleDoubleTap}
-        onKeyDown={handleContentKeyDown}
-        aria-label="Double tap to like post"
       >
         {/* Aspect Ratio Container - Min height for text posts, or auto for images */}
         <div
           className={cn(
             'relative flex items-center justify-center w-full',
             post.postType === 'text'
-              ? 'min-h-[300px] p-8 bg-gradient-to-br from-background to-muted'
+              ? 'min-h-[180px] bg-gradient-to-br from-background to-muted'
               : 'aspect-square'
           )}
         >
@@ -222,14 +212,14 @@ export function PostCard({
               className="object-cover"
             />
           ) : (
-            <div className="text-center px-4">
-              <Link href={`/posts/${post.id}`}>
-                <h3 className="text-xl font-bold mb-2 hover:underline">
+            <div className="w-full px-6 py-8">
+              <Link href={`/posts/${post.id}`} className="block">
+                <h3 className="text-lg font-bold leading-snug hover:underline line-clamp-2">
                   {post.title}
                 </h3>
               </Link>
               {post.content && (
-                <p className="text-foreground/90 whitespace-pre-wrap">
+                <p className="mt-3 text-sm text-foreground/90 whitespace-pre-line line-clamp-6">
                   {post.content}
                 </p>
               )}
@@ -238,7 +228,7 @@ export function PostCard({
                   href={post.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary hover:underline mt-4 block text-sm"
+                  className="mt-4 block truncate text-sm text-primary hover:underline"
                 >
                   {post.url}
                 </a>
@@ -261,7 +251,7 @@ export function PostCard({
             </motion.div>
           )}
         </AnimatePresence>
-      </button>
+      </div>
 
       {/* Action Bar */}
       <div className="p-3 pb-0">
