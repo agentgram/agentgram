@@ -85,6 +85,7 @@ type FeedParams = {
   limit?: number;
   agentId?: string;
   scope?: 'global' | 'following';
+  enabled?: boolean;
 };
 
 export function usePostsFeed(params: FeedParams = {}) {
@@ -95,10 +96,12 @@ export function usePostsFeed(params: FeedParams = {}) {
     limit = PAGINATION.DEFAULT_LIMIT,
     agentId,
     scope = 'global',
+    enabled = true,
   } = params;
 
   return useInfiniteQuery({
     queryKey: ['posts', 'feed', { sort, communityId, tag, agentId, scope }],
+    enabled,
     queryFn: async ({ pageParam = 0 }) => {
       const supabase = getSupabaseBrowser();
       let query = supabase.from('posts').select(POSTS_SELECT_WITH_RELATIONS);

@@ -11,6 +11,12 @@ import { getSupabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
+function parsePage(value: string | null): number {
+  const parsed = Number.parseInt(value || '1', 10);
+  if (!Number.isFinite(parsed) || parsed < 1) return 1;
+  return parsed;
+}
+
 function ExploreContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -45,6 +51,7 @@ function ExploreContent() {
   const sortParam = searchParams.get('sort') as 'hot' | 'new' | 'top' | null;
   const communityId = searchParams.get('communityId') || undefined;
   const tagParam = searchParams.get('tag') || undefined;
+  const pageParam = parsePage(searchParams.get('page'));
 
   const [localView, setLocalView] = useState<'list' | 'grid'>(() => {
     if (typeof window !== 'undefined') {
@@ -83,7 +90,7 @@ function ExploreContent() {
   };
 
   const handleTabChange = (newTab: 'following' | 'explore') => {
-    updateParams({ tab: newTab });
+    updateParams({ tab: newTab, page: null });
   };
 
   const handleViewChange = (newView: 'list' | 'grid') => {
@@ -93,7 +100,7 @@ function ExploreContent() {
   };
 
   const handleSortChange = (newSort: 'hot' | 'new' | 'top') => {
-    updateParams({ sort: newSort });
+    updateParams({ sort: newSort, page: null });
   };
 
   const sort = tab === 'following' ? 'new' : sortParam || 'hot';
@@ -196,7 +203,9 @@ function ExploreContent() {
                     <button
                       type="button"
                       className="ml-1 rounded-full hover:bg-foreground/10 p-0.5"
-                      onClick={() => updateParams({ communityId: null })}
+                      onClick={() =>
+                        updateParams({ communityId: null, page: null })
+                      }
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -208,7 +217,7 @@ function ExploreContent() {
                     <button
                       type="button"
                       className="ml-1 rounded-full hover:bg-foreground/10 p-0.5"
-                      onClick={() => updateParams({ tag: null })}
+                      onClick={() => updateParams({ tag: null, page: null })}
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -219,7 +228,9 @@ function ExploreContent() {
                 variant="ghost"
                 size="sm"
                 className="text-xs h-7"
-                onClick={() => updateParams({ communityId: null, tag: null })}
+                onClick={() =>
+                  updateParams({ communityId: null, tag: null, page: null })
+                }
               >
                 Clear All
               </Button>
@@ -238,7 +249,7 @@ function ExploreContent() {
                       key={ht.tag}
                       variant="secondary"
                       className="cursor-pointer hover:bg-secondary/80 rounded-full"
-                      onClick={() => updateParams({ tag: ht.tag })}
+                      onClick={() => updateParams({ tag: ht.tag, page: null })}
                     >
                       #{ht.tag}
                     </Badge>
@@ -256,7 +267,9 @@ function ExploreContent() {
                       key={c.id}
                       variant="outline"
                       className="cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-full"
-                      onClick={() => updateParams({ communityId: c.id })}
+                      onClick={() =>
+                        updateParams({ communityId: c.id, page: null })
+                      }
                     >
                       {c.display_name}
                     </Badge>
@@ -287,6 +300,7 @@ function ExploreContent() {
             communityId={communityId}
             tag={tagParam}
             scope={tab === 'following' ? 'following' : 'global'}
+            page={tab === 'explore' ? pageParam : undefined}
           />
         </div>
       </div>

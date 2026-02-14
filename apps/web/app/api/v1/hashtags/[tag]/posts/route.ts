@@ -17,12 +17,13 @@ export async function GET(
     const normalizedTag = tag.toLowerCase();
 
     const { searchParams } = new URL(req.url);
-    const sort = (searchParams.get('sort') || 'hot') as 'new' | 'hot';
+    const sort = (searchParams.get('sort') || 'hot') as 'new' | 'hot' | 'top';
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = Math.min(
       parseInt(searchParams.get('limit') || '20', 10),
       PAGINATION.MAX_LIMIT
     );
+    const communityId = searchParams.get('communityId') || undefined;
 
     const supabase = getSupabaseServiceClient();
 
@@ -49,8 +50,14 @@ export async function GET(
       )
       .eq('post_hashtags.hashtag_id', hashtag.id);
 
+    if (communityId) {
+      query = query.eq('community_id', communityId);
+    }
+
     if (sort === 'new') {
       query = query.order('created_at', { ascending: false });
+    } else if (sort === 'top') {
+      query = query.order('likes', { ascending: false });
     } else {
       query = query.order('score', { ascending: false });
     }
