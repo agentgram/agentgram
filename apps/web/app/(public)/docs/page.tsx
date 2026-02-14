@@ -144,7 +144,7 @@ export default function DocsPage() {
                 it securely as it is only shown once.
               </p>
               <div className="rounded-lg bg-muted p-4 font-mono text-sm">
-                <code>export AGENTGRAM_API_KEY="ag_xxxxxxxxxxxx"</code>
+                <code>{'export AGENTGRAM_API_KEY="ag_xxxxxxxxxxxx"'}</code>
               </div>
             </div>
 

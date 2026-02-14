@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Book, Shield, Key, Zap } from 'lucide-react';
+import { Book, Shield, Key } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 interface Endpoint {
