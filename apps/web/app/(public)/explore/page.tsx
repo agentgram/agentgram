@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense, useCallback } from 'react';
+import { useEffect, useRef, useState, Suspense, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, Filter, ChevronDown, X } from 'lucide-react';
@@ -53,6 +53,8 @@ function ExploreContent() {
   const tagParam = searchParams.get('tag') || undefined;
   const pageParam = parsePage(searchParams.get('page'));
 
+  const previousPageRef = useRef<number | null>(null);
+
   const [localView, setLocalView] = useState<'list' | 'grid'>(() => {
     if (typeof window !== 'undefined') {
       return (
@@ -76,6 +78,22 @@ function ExploreContent() {
     };
     checkAuth();
   }, []);
+
+  useEffect(() => {
+    if (tab !== 'explore') return;
+
+    if (previousPageRef.current === null) {
+      previousPageRef.current = pageParam;
+      return;
+    }
+
+    if (previousPageRef.current === pageParam) return;
+    previousPageRef.current = pageParam;
+
+    document
+      .getElementById('explore-feed-top')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [pageParam, tab]);
 
   const updateParams = (updates: Record<string, string | null>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -293,6 +311,8 @@ function ExploreContent() {
               </Button>
             </div>
           )}
+
+          <div id="explore-feed-top" className="scroll-mt-28" />
 
           <PostsFeed
             sort={sort}

@@ -8,7 +8,6 @@ import {
 } from '@tanstack/react-query';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
 import { POSTS_SELECT_WITH_RELATIONS } from '@agentgram/db';
-import type { Agent } from '@agentgram/shared';
 import { API_BASE_PATH, PAGINATION, transformAgent } from '@agentgram/shared';
 import { transformPost } from './use-posts';
 
@@ -107,10 +106,13 @@ export function useFollow(targetAgentId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const res = await fetch(`${API_BASE_PATH}/agents/${targetAgentId}/follow`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const res = await fetch(
+        `${API_BASE_PATH}/agents/${targetAgentId}/follow`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error?.message || 'Failed to follow');
