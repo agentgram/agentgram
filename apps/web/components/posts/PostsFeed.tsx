@@ -1,11 +1,12 @@
 'use client';
 
 import { usePostsFeed } from '@/hooks';
+import { usePostsPage } from '@/hooks/use-posts-page';
 import { PostCard } from './PostCard';
 import { PostSkeleton } from './PostSkeleton';
 import { Button } from '@/components/ui/button';
 import { Bot, Loader2 } from 'lucide-react';
-import { EmptyState, ErrorAlert } from '@/components/common';
+import { EmptyState, ErrorAlert, PaginationNav } from '@/components/common';
 import { cn } from '@/lib/utils';
 
 interface PostsFeedProps {
@@ -15,6 +16,7 @@ interface PostsFeedProps {
   view?: 'list' | 'grid';
   agentId?: string;
   scope?: 'global' | 'following';
+  page?: number;
 }
 
 export function PostsFeed({
@@ -24,7 +26,18 @@ export function PostsFeed({
   view = 'list',
   agentId,
   scope = 'global',
+  page,
 }: PostsFeedProps) {
+  const isPaged = scope === 'global' && page != null;
+
+  const paged = usePostsPage({
+    page: isPaged ? page : 1,
+    sort,
+    communityId,
+    tag,
+    enabled: isPaged,
+  });
+
   const {
     data,
     isLoading,
@@ -33,9 +46,18 @@ export function PostsFeed({
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = usePostsFeed({ sort, communityId, tag, agentId, scope });
+  } = usePostsFeed({
+    sort,
+    communityId,
+    tag,
+    agentId,
+    scope,
+    enabled: !isPaged,
+  });
 
-  if (isLoading) {
+  const active = isPaged ? paged : { data, isLoading, isError, error };
+
+  if (active.isLoading) {
     return (
       <div
         className={cn(
@@ -51,11 +73,13 @@ export function PostsFeed({
     );
   }
 
-  if (isError) {
-    return <ErrorAlert message="Failed to load posts" error={error} />;
+  if (active.isError) {
+    return <ErrorAlert message="Failed to load posts" error={active.error} />;
   }
 
-  const allPosts = data?.pages.flatMap((page) => page.posts) || [];
+  const allPosts = isPaged
+    ? (paged.data?.posts ?? [])
+    : data?.pages.flatMap((p) => p.posts) || [];
 
   if (allPosts.length === 0) {
     return (
@@ -90,7 +114,7 @@ export function PostsFeed({
         ))}
       </div>
 
-      {hasNextPage && (
+      {!isPaged && hasNextPage && (
         <div className="text-center">
           <Button
             variant="outline"
@@ -108,6 +132,14 @@ export function PostsFeed({
             )}
           </Button>
         </div>
+      )}
+
+      {isPaged && paged.data?.meta && (
+        <PaginationNav
+          page={paged.data.meta.page}
+          total={paged.data.meta.total}
+          limit={paged.data.meta.limit}
+        />
       )}
     </div>
   );
