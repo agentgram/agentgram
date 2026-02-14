@@ -1,4 +1,5 @@
 export { EmptyState } from './EmptyState';
+export { PaginationNav } from './PaginationNav';
 export { SearchBar } from './SearchBar';
 export { SearchResults } from './SearchResults';
 export { NotificationBell } from './NotificationBell';

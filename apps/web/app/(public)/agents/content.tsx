@@ -1,33 +1,80 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Bot, TrendingUp, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { SearchBar, SearchResults, PageContainer } from '@/components/common';
+import { SearchBar, PageContainer } from '@/components/common';
 import { AgentsList } from '@/components/agents';
-import { useSearch } from '@/hooks';
+
+type AgentsSort = 'axp' | 'active' | 'new';
+
+function parseSort(value: string | null): AgentsSort {
+  if (value === 'active') return 'active';
+  if (value === 'new') return 'new';
+  return 'axp';
+}
+
+function parsePage(value: string | null): number {
+  const parsed = Number.parseInt(value || '1', 10);
+  if (!Number.isFinite(parsed) || parsed < 1) return 1;
+  return parsed;
+}
 
 export default function AgentsPageContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const sort = useMemo(
+    () => parseSort(searchParams.get('sort')),
+    [searchParams]
+  );
+  const page = useMemo(
+    () => parsePage(searchParams.get('page')),
+    [searchParams]
+  );
+  const search = searchParams.get('search') || '';
+
   const [searchValue, setSearchValue] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
 
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedQuery(searchValue), 300);
+    setSearchValue(search);
+  }, [search]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      const trimmed = searchValue.trim();
+
+      if (trimmed.length > 0) {
+        params.set('search', trimmed);
+      } else {
+        params.delete('search');
+      }
+
+      params.delete('page');
+
+      const next = params.toString();
+      if (next === searchParams.toString()) return;
+      router.replace(next.length > 0 ? `${pathname}?${next}` : pathname);
+    }, 300);
     return () => clearTimeout(timer);
-  }, [searchValue]);
+  }, [pathname, router, searchParams, searchValue]);
 
-  const { data: searchResults, isLoading: isSearching } = useSearch(
-    debouncedQuery,
-    'agents'
-  );
-
-  const handleCloseSearch = useCallback(() => {
-    setSearchValue('');
-    setDebouncedQuery('');
-  }, []);
-
-  const showSearchResults = debouncedQuery.trim().length >= 2;
+  const createHref = (updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null) {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
+    const next = params.toString();
+    return next.length > 0 ? `${pathname}?${next}` : pathname;
+  };
 
   return (
     <PageContainer maxWidth="6xl">
@@ -49,32 +96,38 @@ export default function AgentsPageContent() {
             value={searchValue}
             onValueChange={setSearchValue}
           />
-          {showSearchResults && (
-            <SearchResults
-              posts={[]}
-              agents={searchResults?.agents ?? []}
-              isLoading={isSearching}
-              query={debouncedQuery}
-              onClose={handleCloseSearch}
-            />
-          )}
         </div>
-        <Button variant="outline" className="gap-2" asChild>
-          <Link href="/agents?sort=axp">
+        <Button
+          variant={sort === 'axp' ? 'default' : 'outline'}
+          className="gap-2"
+          asChild
+        >
+          <Link href={createHref({ sort: 'axp', page: null })}>
             <TrendingUp className="h-4 w-4" />
             Top Rated
           </Link>
         </Button>
-        <Button variant="outline" className="gap-2" asChild>
-          <Link href="/agents?sort=active">
+        <Button
+          variant={sort === 'active' ? 'default' : 'outline'}
+          className="gap-2"
+          asChild
+        >
+          <Link href={createHref({ sort: 'active', page: null })}>
             <Activity className="h-4 w-4" />
             Most Active
           </Link>
         </Button>
+        <Button
+          variant={sort === 'new' ? 'default' : 'outline'}
+          className="gap-2"
+          asChild
+        >
+          <Link href={createHref({ sort: 'new', page: null })}>New</Link>
+        </Button>
       </div>
 
       {/* Agents Grid - Now using TanStack Query */}
-      <AgentsList sort="axp" />
+      <AgentsList sort={sort} page={page} search={search} />
 
       {/* CTA Banner */}
       <div className="mt-12 rounded-lg border bg-gradient-to-br from-brand-strong/10 via-brand-accent/10 to-transparent p-8 text-center">

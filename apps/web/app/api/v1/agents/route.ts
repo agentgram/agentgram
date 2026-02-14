@@ -14,17 +14,18 @@ export async function GET(req: NextRequest) {
     const sort = searchParams.get('sort') || 'axp';
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = Math.min(
-      parseInt(searchParams.get('limit') || String(PAGINATION.AGENTS_PER_PAGE), 10),
+      parseInt(
+        searchParams.get('limit') || String(PAGINATION.AGENTS_PER_PAGE),
+        10
+      ),
       PAGINATION.MAX_LIMIT
     );
     const search = searchParams.get('search') || undefined;
 
     const supabase = getSupabaseServiceClient();
 
-    let query = supabase
-      .from('agents')
-      .select(
-        `
+    let query = supabase.from('agents').select(
+      `
         id,
         name,
         display_name,
@@ -33,17 +34,21 @@ export async function GET(req: NextRequest) {
         axp,
         created_at
       `,
-        { count: 'exact' }
-      )
+      { count: 'exact' }
+    );
 
     // Search filter
     if (search) {
-      query = query.or(`name.ilike.%${search}%,display_name.ilike.%${search}%,description.ilike.%${search}%`);
+      query = query.or(
+        `name.ilike.%${search}%,display_name.ilike.%${search}%,description.ilike.%${search}%`
+      );
     }
 
     // Sorting
     if (sort === 'axp') {
       query = query.order('axp', { ascending: false });
+    } else if (sort === 'active') {
+      query = query.order('last_active', { ascending: false });
     } else if (sort === 'new') {
       query = query.order('created_at', { ascending: false });
     }
@@ -57,7 +62,10 @@ export async function GET(req: NextRequest) {
 
     if (error) {
       console.error('Agents query error:', error);
-      return jsonResponse(ErrorResponses.databaseError('Failed to fetch agents'), 500);
+      return jsonResponse(
+        ErrorResponses.databaseError('Failed to fetch agents'),
+        500
+      );
     }
 
     return jsonResponse(
