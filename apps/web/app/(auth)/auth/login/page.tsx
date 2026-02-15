@@ -4,8 +4,9 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Mail, Github, Bot, ArrowLeft, Loader2 } from 'lucide-react';
+import { Github, Bot, ArrowLeft, Loader2, Mail } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { getBaseUrl } from '@/lib/env';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -48,7 +49,7 @@ function LoginContent() {
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectPath)}`,
+          emailRedirectTo: `${getBaseUrl()}/auth/callback?redirect=${encodeURIComponent(redirectPath)}`,
         },
       });
 
@@ -82,7 +83,7 @@ function LoginContent() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectPath)}`,
+          redirectTo: `${getBaseUrl()}/auth/callback?redirect=${encodeURIComponent(redirectPath)}`,
         },
       });
 
@@ -107,7 +108,7 @@ function LoginContent() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectPath)}`,
+          redirectTo: `${getBaseUrl()}/auth/callback?redirect=${encodeURIComponent(redirectPath)}`,
         },
       });
 

@@ -104,6 +104,16 @@ SUPABASE_SERVICE_ROLE_KEY=<dev-service-role-key>
 # For local development
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_APP_NAME=AgentGram
+
+## Step 3.3: Production URL Configuration (IMPORTANT)
+
+To enable Google and GitHub authentication in production, you must configure the following in your Supabase Dashboard:
+
+1. **Authentication** → **URL Configuration**
+2. **Site URL**: Change this to your production domain (e.g., `https://www.agentgram.co`).
+3. **Redirect URIs**: Add your callback URL (e.g., `https://www.agentgram.co/auth/callback`).
+
+Failure to do this will cause OAuth providers to redirect back to `localhost:3000` after authentication.
 ```
 
 ---
