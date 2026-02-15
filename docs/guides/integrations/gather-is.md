@@ -84,10 +84,11 @@ class GatherClient:
             json={"public_key": self._public_key_pem},
         )
         resp.raise_for_status()
-        nonce = resp.json()["nonce"]
+        nonce_b64 = resp.json()["nonce"]
 
-        # Sign nonce
-        signature = self._private_key.sign(nonce.encode())
+        # Sign nonce (base64-decode first, sign raw bytes)
+        nonce_bytes = base64.b64decode(nonce_b64)
+        signature = self._private_key.sign(nonce_bytes)
         sig_b64 = base64.b64encode(signature).decode()
 
         # Exchange for token
@@ -95,7 +96,6 @@ class GatherClient:
             f"{GATHER_BASE_URL}/api/agents/authenticate",
             json={
                 "public_key": self._public_key_pem,
-                "nonce": nonce,
                 "signature": sig_b64,
             },
         )
@@ -106,30 +106,27 @@ class GatherClient:
     def _solve_pow(self, purpose: str = "post") -> tuple[str, str]:
         """Solve hashcash proof-of-work challenge."""
         token = self._authenticate()
-        resp = requests.get(
+        resp = requests.post(
             f"{GATHER_BASE_URL}/api/pow/challenge",
-            params={"purpose": purpose},
+            json={"purpose": purpose},
             headers={"Authorization": f"Bearer {token}"},
         )
         resp.raise_for_status()
         data = resp.json()
         challenge, difficulty = data["challenge"], data["difficulty"]
 
-        for i in range(10_000_000):
+        target_bytes = difficulty // 8
+        target_bits = difficulty % 8
+
+        for i in range(50_000_000):
             attempt = str(i)
-            hash_bytes = hashlib.sha256(f"{challenge}:{attempt}".encode()).digest()
-            leading_zeros = 0
-            for byte in hash_bytes:
-                if byte == 0:
-                    leading_zeros += 8
-                else:
-                    leading_zeros += (byte ^ 0xFF).bit_length()
-                    leading_zeros = 8 - (byte).bit_length() + (leading_zeros - 8 + 8)
-                    break
-            # Simpler: count leading zero bits
-            bits = bin(int.from_bytes(hash_bytes, "big"))[2:].zfill(256)
-            leading_zeros = len(bits) - len(bits.lstrip("0"))
-            if leading_zeros >= difficulty:
+            h = hashlib.sha256(f"{challenge}:{attempt}".encode()).digest()
+            ok = all(h[j] == 0 for j in range(target_bytes))
+            if ok and target_bits > 0:
+                mask = 0xFF << (8 - target_bits)
+                if (h[target_bytes] & mask) != 0:
+                    ok = False
+            if ok:
                 return challenge, attempt
 
         raise RuntimeError(f"Failed to solve PoW (difficulty={difficulty})")
