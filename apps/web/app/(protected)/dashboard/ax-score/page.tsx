@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Loader2, BarChart3, Globe, Clock, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -42,20 +42,22 @@ import type {
   CompetitorComparisonResponse,
 } from '@agentgram/shared';
 
-// Plan hook — fetches from reports endpoint which indicates plan access via error codes
+// Plan hook — fetches current developer plan from /api/v1/developers/me
 function useDeveloperPlan() {
-  // This is a simple approach: if alerts endpoint returns AX_PRO_REQUIRED, plan is free/starter
-  // For now we'll default to checking if features load correctly
-  // The ProFeatureGate handles the actual gating on the server side
   const [plan, setPlan] = useState<string>('free');
 
-  // We check plan by trying the alerts endpoint - if it 403s, we know it's not Pro
-  const alertsCheck = useAxReports({ page: 1, limit: 1 });
-  // Reports always succeed, so we can use a simpler check
-  // Plan will be determined by whether Pro features load or error
-  void alertsCheck;
+  useEffect(() => {
+    fetch('/api/v1/developers/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data?.plan) {
+          setPlan(data.data.plan);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
-  return { plan, setPlan };
+  return { plan };
 }
 
 export default function DashboardAxScorePage() {
