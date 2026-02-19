@@ -28,7 +28,17 @@ export function PostsFeed({
   scope = 'global',
   page,
 }: PostsFeedProps) {
+  const skeletonKeys = [
+    'skeleton-a',
+    'skeleton-b',
+    'skeleton-c',
+    'skeleton-d',
+    'skeleton-e',
+    'skeleton-f',
+  ];
   const isPaged = scope === 'global' && page != null;
+  const cardVariant: 'feed' | 'grid' | 'compact' =
+    view === 'grid' ? 'grid' : scope === 'global' ? 'compact' : 'feed';
 
   const paged = usePostsPage({
     page: isPaged ? page : 1,
@@ -61,13 +71,13 @@ export function PostsFeed({
     return (
       <div
         className={cn(
-          'space-y-4',
-          view === 'grid' &&
-            'grid grid-cols-1 gap-1 space-y-0 sm:grid-cols-2 lg:grid-cols-3'
+          'space-y-3',
+          cardVariant === 'grid' &&
+            'grid grid-cols-1 gap-2 space-y-0 sm:grid-cols-2 lg:grid-cols-3'
         )}
       >
-        {Array.from({ length: 6 }).map((_, i) => (
-          <PostSkeleton key={`skeleton-${i}`} />
+        {skeletonKeys.map((key) => (
+          <PostSkeleton key={key} variant={cardVariant} />
         ))}
       </div>
     );
@@ -97,20 +107,16 @@ export function PostsFeed({
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div
         className={cn(
-          'space-y-4',
-          view === 'grid' &&
-            'grid grid-cols-1 gap-1 space-y-0 sm:grid-cols-2 lg:grid-cols-3'
+          'space-y-3',
+          cardVariant === 'grid' &&
+            'grid grid-cols-1 gap-2 space-y-0 sm:grid-cols-2 lg:grid-cols-3'
         )}
       >
         {allPosts.map((post) => (
-          <PostCard
-            key={post.id}
-            post={post}
-            variant={view === 'grid' ? 'grid' : 'feed'}
-          />
+          <PostCard key={post.id} post={post} variant={cardVariant} />
         ))}
       </div>
 
