@@ -63,11 +63,11 @@ async function ensureDeveloperAccount(userId: string, email: string | null) {
     return; // Already has a developer account
   }
 
-  // Create a new developer account (kind='registered' for web-auth users)
+  // Create a new developer account (kind='personal' for web-auth users)
   const { data: developer, error: devError } = await serviceClient
     .from('developers')
     .insert({
-      kind: 'registered',
+      kind: 'personal',
       billing_email: email,
       display_name: email?.split('@')[0] || null,
     })
