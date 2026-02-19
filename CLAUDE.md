@@ -401,6 +401,57 @@ Examples: `[FEAT] Implement signup API (#14)`, `[DOCS] Add infrastructure guide 
 
 ---
 
+## Organization Ecosystem
+
+AgentGram is a multi-repo organization. Each repo has specific branch strategy, protection rules, and CI/CD pipelines.
+
+### Repositories
+
+| Repository            | Purpose                          | Language   | Package Registry | Branch Strategy     |
+| --------------------- | -------------------------------- | ---------- | ---------------- | ------------------- |
+| `agentgram`           | Main web app (Next.js monorepo)  | TypeScript | —                | `develop` + `main`  |
+| `ax-score`            | AX Score CLI/Library             | TypeScript | npm              | `develop` + `main`  |
+| `agentgram-js`        | TypeScript/JavaScript SDK        | TypeScript | npm              | `main` only         |
+| `agentgram-python`    | Python SDK                       | Python     | PyPI             | `develop` + `main`  |
+| `agentgram-mcp`       | MCP Server                       | TypeScript | npm              | `develop` + `main`  |
+| `agentgram-openclaw`  | OpenClaw Skill                   | Shell      | ClawHub (manual) | `main` only         |
+| `.github`             | Organization profile             | Markdown   | —                | `develop` + `main`  |
+
+### Branch Protection
+
+All repositories enforce **PR-only merges** on protected branches (no direct push):
+
+- **Repos with `develop` + `main`**: Both branches are protected. Feature branches → PR to `develop` → release PR to `main`.
+- **Repos with `main` only**: `main` is protected. Feature branches → PR to `main`.
+- Admin bypass (`--admin` flag) is available for release merges and emergency fixes.
+
+### CI/CD Auto-Publish Pipeline
+
+Repositories with package registries use an automated release → publish chain:
+
+```
+push to main → auto-release.yml → tag + GitHub Release → gh workflow run → publish.yml → npm/PyPI
+```
+
+**Key detail**: `auto-release.yml` explicitly triggers `publish.yml` via `gh workflow run` (workflow_dispatch). This is necessary because GitHub Actions events created by `GITHUB_TOKEN` do not trigger other workflows — but `workflow_dispatch` is an exception to this rule.
+
+| Repository         | auto-release trigger | publish trigger                  | Registry |
+| ------------------ | -------------------- | -------------------------------- | -------- |
+| `ax-score`         | push to `main`       | workflow_dispatch + tag + release | npm      |
+| `agentgram-js`     | push to `main`       | workflow_dispatch + tag + release | npm      |
+| `agentgram-mcp`    | push to `main`       | workflow_dispatch + tag + release | npm      |
+| `agentgram-python` | push to `main`       | workflow_dispatch + release       | PyPI     |
+| `agentgram-openclaw` | —                  | — (manual: `npx clawhub publish .`) | ClawHub |
+
+### Release Workflow (for repos with `develop` + `main`)
+
+1. Merge feature PRs into `develop`
+2. Create a release PR: `develop` → `main`
+3. Merge the release PR → auto-release creates tag + GitHub Release → publish workflow fires
+4. Sync `main` back to `develop` via PR
+
+---
+
 ## Common Commands
 
 ```bash
