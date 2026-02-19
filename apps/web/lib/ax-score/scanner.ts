@@ -1,3 +1,11 @@
+/**
+ * AX Score scanner — thin wrapper around @agentgram/ax-score library.
+ *
+ * Converts the library's AXReport format to the shared AxSignals/AxCategoryScores
+ * types used by the web platform, and adds OpenAI-powered recommendation analysis.
+ */
+import { runAudit } from '@agentgram/ax-score';
+import type { AXReport } from '@agentgram/ax-score';
 import type {
   AxSignals,
   AxSignalResult,
@@ -8,199 +16,87 @@ import type {
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const AX_DEFAULT_MODEL = process.env.AX_DEFAULT_MODEL || 'gpt-4o-mini';
 const AX_SCAN_TIMEOUT_MS = parseInt(
-  process.env.AX_SCAN_TIMEOUT_MS || '15000',
-  10
-);
-const AX_MAX_CONTENT_CHARS = parseInt(
-  process.env.AX_MAX_CONTENT_CHARS || '50000',
+  process.env.AX_SCAN_TIMEOUT_MS || '30000',
   10
 );
 
-// --- Signal detection ---
+// --- Audit ID → Signal key mapping ---
 
-async function checkUrl(
-  url: string,
-  timeout = AX_SCAN_TIMEOUT_MS
-): Promise<{ ok: boolean; text: string; contentType: string }> {
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeout);
-    const res = await fetch(url, {
-      signal: controller.signal,
-      headers: { 'User-Agent': 'AgentGram-AX-Scanner/1.0' },
-      redirect: 'follow',
-    });
-    clearTimeout(timer);
-    if (!res.ok) return { ok: false, text: '', contentType: '' };
-    const text = await res.text();
-    return {
-      ok: true,
-      text: text.slice(0, AX_MAX_CONTENT_CHARS),
-      contentType: res.headers.get('content-type') || '',
+const AUDIT_TO_SIGNAL: Record<string, keyof AxSignals> = {
+  'robots-ai': 'robotsTxt',
+  'llms-txt': 'llmsTxt',
+  'openapi-spec': 'openapiJson',
+  'ai-plugin': 'aiPluginJson',
+  'schema-org': 'schemaOrg',
+  'meta-tags': 'metaDescription',
+};
+
+// Static signal for sitemap and security.txt (derived from library's HTTP gatherer)
+const EXTRA_SIGNALS: (keyof AxSignals)[] = ['sitemapXml', 'securityTxt'];
+
+function auditToSignal(report: AXReport): AxSignals {
+  const signals: Partial<AxSignals> = {};
+
+  for (const [auditId, signalKey] of Object.entries(AUDIT_TO_SIGNAL)) {
+    const audit = report.audits[auditId];
+    signals[signalKey] = {
+      found: audit ? audit.score > 0 : false,
+      details: audit?.details?.summary ?? undefined,
     };
-  } catch {
-    return { ok: false, text: '', contentType: '' };
   }
+
+  // sitemapXml and securityTxt aren't direct audits — check from HTTP artifacts
+  // Since we don't have direct access to artifacts here, derive from report score
+  for (const key of EXTRA_SIGNALS) {
+    if (!signals[key]) {
+      signals[key] = { found: false };
+    }
+  }
+
+  return signals as AxSignals;
 }
 
-function resolveUrl(base: string, path: string): string {
-  try {
-    return new URL(path, base).href;
-  } catch {
-    return `${base.replace(/\/$/, '')}/${path.replace(/^\//, '')}`;
+function reportToCategoryScores(report: AXReport): AxCategoryScores {
+  const scores: Record<string, number> = {};
+  for (const cat of report.categories) {
+    scores[cat.id] = cat.score;
   }
-}
 
-async function checkSignal(
-  baseUrl: string,
-  path: string,
-  validator?: (text: string) => boolean
-): Promise<AxSignalResult> {
-  const url = resolveUrl(baseUrl, path);
-  const result = await checkUrl(url);
-  if (!result.ok) return { found: false, url };
-  if (validator && !validator(result.text)) {
-    return { found: false, url, details: 'File exists but content invalid' };
-  }
-  return { found: true, url, details: result.text.slice(0, 500) };
+  return {
+    discovery: scores['discovery'] ?? 0,
+    apiQuality: scores['api-quality'] ?? 0,
+    structuredData: scores['structured-data'] ?? 0,
+    authOnboarding: scores['auth-onboarding'] ?? 0,
+    errorHandling: scores['error-handling'] ?? 0,
+    documentation: scores['documentation'] ?? 0,
+  };
 }
 
 /**
- * Scan a URL for AI-discoverability signals.
+ * Scan a URL using @agentgram/ax-score library.
  */
 export async function scanUrl(url: string): Promise<{
+  report: AXReport;
   signals: AxSignals;
-  pageContent: string;
+  score: number;
+  categoryScores: AxCategoryScores;
 }> {
-  const baseUrl = url.replace(/\/$/, '');
-
-  const [
-    robotsTxt,
-    llmsTxt,
-    openapiJson,
-    aiPluginJson,
-    schemaOrg,
-    sitemapXml,
-    securityTxt,
-    pageResult,
-  ] = await Promise.all([
-    checkSignal(baseUrl, '/robots.txt', (t) => t.includes('User-agent')),
-    checkSignal(baseUrl, '/llms.txt'),
-    checkSignal(baseUrl, '/openapi.json', (t) => {
-      try {
-        const parsed = JSON.parse(t);
-        return 'openapi' in parsed || 'swagger' in parsed;
-      } catch {
-        return false;
-      }
-    }),
-    checkSignal(baseUrl, '/.well-known/ai-plugin.json', (t) => {
-      try {
-        JSON.parse(t);
-        return true;
-      } catch {
-        return false;
-      }
-    }),
-    // Schema.org is checked from main page content (below)
-    Promise.resolve<AxSignalResult>({ found: false }),
-    checkSignal(baseUrl, '/sitemap.xml', (t) =>
-      t.includes('<urlset') || t.includes('<sitemapindex')
-    ),
-    checkSignal(baseUrl, '/.well-known/security.txt'),
-    checkUrl(baseUrl),
-  ]);
-
-  // Check main page for schema.org JSON-LD and meta description
-  let metaDescription: AxSignalResult = { found: false };
-  let schemaOrgResult = schemaOrg;
-
-  if (pageResult.ok) {
-    // Check for JSON-LD
-    const jsonLdMatch = pageResult.text.match(
-      /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i
-    );
-    if (jsonLdMatch) {
-      schemaOrgResult = {
-        found: true,
-        details: jsonLdMatch[1].slice(0, 500),
-      };
-    }
-
-    // Check for meta description
-    const metaMatch = pageResult.text.match(
-      /<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i
-    );
-    if (metaMatch) {
-      metaDescription = { found: true, details: metaMatch[1] };
-    }
-  }
+  const report = await runAudit({
+    url,
+    timeout: AX_SCAN_TIMEOUT_MS,
+  });
 
   return {
-    signals: {
-      robotsTxt,
-      llmsTxt,
-      openapiJson,
-      aiPluginJson,
-      schemaOrg: schemaOrgResult,
-      sitemapXml,
-      metaDescription,
-      securityTxt,
-    },
-    pageContent: pageResult.text,
+    report,
+    signals: auditToSignal(report),
+    score: report.score,
+    categoryScores: reportToCategoryScores(report),
   };
 }
 
-// --- Deterministic score computation ---
+// --- AI analysis for recommendations (platform-specific, uses OpenAI) ---
 
-const SIGNAL_WEIGHTS: Record<keyof AxSignals, number> = {
-  robotsTxt: 10,
-  llmsTxt: 20,
-  openapiJson: 15,
-  aiPluginJson: 10,
-  schemaOrg: 15,
-  sitemapXml: 10,
-  metaDescription: 10,
-  securityTxt: 10,
-};
-
-export function computeScore(signals: AxSignals): number {
-  let score = 0;
-  for (const [key, weight] of Object.entries(SIGNAL_WEIGHTS)) {
-    const signal = signals[key as keyof AxSignals];
-    if (signal.found) score += weight;
-  }
-  return Math.min(100, score);
-}
-
-export function computeCategoryScores(signals: AxSignals): AxCategoryScores {
-  return {
-    discovery: scoreCategory([
-      signals.robotsTxt,
-      signals.sitemapXml,
-      signals.metaDescription,
-    ]),
-    apiQuality: scoreCategory([signals.openapiJson, signals.aiPluginJson]),
-    structuredData: scoreCategory([signals.schemaOrg, signals.llmsTxt]),
-    authOnboarding: scoreCategory([signals.aiPluginJson]),
-    errorHandling: scoreCategory([signals.robotsTxt, signals.securityTxt]),
-    documentation: scoreCategory([
-      signals.llmsTxt,
-      signals.openapiJson,
-      signals.metaDescription,
-    ]),
-  };
-}
-
-function scoreCategory(results: AxSignalResult[]): number {
-  if (results.length === 0) return 0;
-  const found = results.filter((r) => r.found).length;
-  return Math.round((found / results.length) * 100);
-}
-
-// --- AI analysis for recommendations ---
-
-const ANALYSIS_PROMPT = `You are an AI discoverability analyst. Given a website's signals and content, provide actionable recommendations to improve how AI systems discover and interact with this site.
+const ANALYSIS_PROMPT = `You are an AI discoverability analyst. Given a website's audit report, provide actionable recommendations to improve how AI systems discover and interact with this site.
 
 For each recommendation, provide:
 - category: one of "discovery", "apiQuality", "structuredData", "authOnboarding", "errorHandling", "documentation"
@@ -224,16 +120,26 @@ interface AiRecommendation {
 }
 
 export async function analyzeWithAI(
-  signals: AxSignals,
-  pageContent: string
+  report: AXReport
 ): Promise<{
   recommendations: Omit<AxRecommendation, 'id' | 'scanId' | 'createdAt'>[];
   modelOutput: string;
   modelName: string;
 }> {
+  // Use library's built-in recommendations as fallback
+  const fallbackRecs = report.recommendations.map((r) => ({
+    category: 'discovery' as const,
+    priority: 'medium' as const,
+    title: r.audit,
+    description: r.message,
+    currentState: null,
+    suggestedFix: null,
+    impactScore: r.impact,
+  }));
+
   if (!OPENAI_API_KEY) {
     return {
-      recommendations: generateFallbackRecommendations(signals),
+      recommendations: fallbackRecs,
       modelOutput: 'AI analysis unavailable (no API key)',
       modelName: 'fallback',
     };
@@ -255,8 +161,21 @@ export async function analyzeWithAI(
             {
               role: 'user',
               content: JSON.stringify({
-                signals,
-                pageContentPreview: pageContent.slice(0, 3000),
+                url: report.url,
+                score: report.score,
+                categories: report.categories.map((c) => ({
+                  id: c.id,
+                  title: c.title,
+                  score: c.score,
+                })),
+                failedAudits: Object.values(report.audits)
+                  .filter((a) => a.score < 1)
+                  .map((a) => ({
+                    id: a.id,
+                    title: a.title,
+                    score: a.score,
+                    details: a.details?.summary,
+                  })),
               }),
             },
           ],
@@ -270,7 +189,7 @@ export async function analyzeWithAI(
     if (!response.ok) {
       console.error('OpenAI analysis error:', response.status);
       return {
-        recommendations: generateFallbackRecommendations(signals),
+        recommendations: fallbackRecs,
         modelOutput: `OpenAI error: ${response.status}`,
         modelName: AX_DEFAULT_MODEL,
       };
@@ -299,96 +218,9 @@ export async function analyzeWithAI(
   } catch (error) {
     console.error('AI analysis error:', error);
     return {
-      recommendations: generateFallbackRecommendations(signals),
+      recommendations: fallbackRecs,
       modelOutput: `Analysis error: ${error instanceof Error ? error.message : 'unknown'}`,
       modelName: AX_DEFAULT_MODEL,
     };
   }
-}
-
-function generateFallbackRecommendations(
-  signals: AxSignals
-): Omit<AxRecommendation, 'id' | 'scanId' | 'createdAt'>[] {
-  const recs: Omit<AxRecommendation, 'id' | 'scanId' | 'createdAt'>[] = [];
-
-  if (!signals.llmsTxt.found) {
-    recs.push({
-      category: 'documentation',
-      priority: 'high',
-      title: 'Add llms.txt file',
-      description:
-        'An llms.txt file helps AI systems understand your site structure and purpose.',
-      currentState: 'No llms.txt found',
-      suggestedFix:
-        'Create a /llms.txt file describing your site, its APIs, and key pages.',
-      impactScore: 90,
-    });
-  }
-
-  if (!signals.openapiJson.found) {
-    recs.push({
-      category: 'apiQuality',
-      priority: 'high',
-      title: 'Add OpenAPI specification',
-      description:
-        'An OpenAPI spec enables AI agents to discover and call your APIs programmatically.',
-      currentState: 'No openapi.json found',
-      suggestedFix: 'Create an /openapi.json file documenting your API endpoints.',
-      impactScore: 85,
-    });
-  }
-
-  if (!signals.schemaOrg.found) {
-    recs.push({
-      category: 'structuredData',
-      priority: 'medium',
-      title: 'Add Schema.org JSON-LD markup',
-      description:
-        'Structured data helps AI systems extract key information from your pages.',
-      currentState: 'No JSON-LD found in page',
-      suggestedFix:
-        'Add <script type="application/ld+json"> with Organization or WebSite schema.',
-      impactScore: 70,
-    });
-  }
-
-  if (!signals.robotsTxt.found) {
-    recs.push({
-      category: 'discovery',
-      priority: 'medium',
-      title: 'Add or fix robots.txt',
-      description:
-        'A robots.txt file controls which AI crawlers can access your site.',
-      currentState: 'No valid robots.txt found',
-      suggestedFix: 'Create a /robots.txt with appropriate User-agent directives.',
-      impactScore: 60,
-    });
-  }
-
-  if (!signals.sitemapXml.found) {
-    recs.push({
-      category: 'discovery',
-      priority: 'medium',
-      title: 'Add sitemap.xml',
-      description: 'A sitemap helps AI crawlers find all important pages on your site.',
-      currentState: 'No sitemap.xml found',
-      suggestedFix: 'Generate a /sitemap.xml listing your key pages.',
-      impactScore: 55,
-    });
-  }
-
-  if (!signals.metaDescription.found) {
-    recs.push({
-      category: 'discovery',
-      priority: 'low',
-      title: 'Add meta description',
-      description:
-        'A meta description provides AI systems with a summary of your page.',
-      currentState: 'No meta description tag found',
-      suggestedFix: 'Add <meta name="description" content="..."> to your pages.',
-      impactScore: 40,
-    });
-  }
-
-  return recs;
 }

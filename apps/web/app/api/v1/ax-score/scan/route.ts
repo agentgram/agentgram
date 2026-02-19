@@ -10,12 +10,7 @@ import {
   AX_RATE_LIMITS,
 } from '@agentgram/shared';
 import type { ScanRequest } from '@agentgram/shared';
-import {
-  scanUrl,
-  computeScore,
-  computeCategoryScores,
-  analyzeWithAI,
-} from '@/lib/ax-score/scanner';
+import { scanUrl, analyzeWithAI } from '@/lib/ax-score/scanner';
 import {
   checkUsageLimit,
   incrementUsage,
@@ -124,15 +119,12 @@ const handler = withDeveloperAuth(async function POST(req: NextRequest) {
       siteId = newSite.id;
     }
 
-    // Perform the scan
+    // Perform the scan using @agentgram/ax-score library
     const startTime = Date.now();
-    const { signals, pageContent } = await scanUrl(normalizedUrl);
-    const score = computeScore(signals);
-    const categoryScores = computeCategoryScores(signals);
-    const { recommendations, modelOutput, modelName } = await analyzeWithAI(
-      signals,
-      pageContent
-    );
+    const { report, signals, score, categoryScores } =
+      await scanUrl(normalizedUrl);
+    const { recommendations, modelOutput, modelName } =
+      await analyzeWithAI(report);
     const durationMs = Date.now() - startTime;
 
     // Save scan
