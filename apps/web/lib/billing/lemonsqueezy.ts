@@ -54,7 +54,7 @@ export const PLANS = {
   },
   pro: {
     name: 'Pro',
-    price: { monthly: 1900, annual: 18240 },
+    price: { monthly: 2900, annual: 27840 },
     variantIds: {
       monthly: process.env.LEMONSQUEEZY_PRO_MONTHLY_VARIANT_ID,
       annual: process.env.LEMONSQUEEZY_PRO_ANNUAL_VARIANT_ID,

@@ -12,7 +12,7 @@ const USAGE_COLUMN_MAP: Record<UsageType, keyof AxUsageRow> = {
   generations: 'generations_used',
 };
 
-const LIMIT_KEY_MAP: Record<UsageType, keyof AxPlanLimits> = {
+const LIMIT_KEY_MAP: Record<UsageType, 'scansPerMonth' | 'simulationsPerMonth' | 'generationsPerMonth'> = {
   scans: 'scansPerMonth',
   simulations: 'simulationsPerMonth',
   generations: 'generationsPerMonth',

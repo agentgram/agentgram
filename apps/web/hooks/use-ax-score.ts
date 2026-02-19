@@ -10,6 +10,16 @@ import type {
   GenerateLlmsTxtRequest,
   GenerateLlmsTxtResponse,
   AxUsage,
+  AxBaseline,
+  AxAlert,
+  AxCompetitorSet,
+  AxCompetitorSite,
+  AxMonthlyReport,
+  CreateBaselineRequest,
+  UpdateAlertRequest,
+  CreateCompetitorSetRequest,
+  CompetitorComparisonResponse,
+  GenerateMonthlyReportRequest,
 } from '@agentgram/shared';
 
 interface ApiResult<T> {
@@ -149,5 +159,269 @@ export function useAxUsage(enabled = true) {
     },
     enabled,
     staleTime: 30_000,
+  });
+}
+
+// ============================================================
+// V2 Hooks: Baselines, Alerts, Competitors, Monthly Reports
+// ============================================================
+
+/**
+ * Query: GET /ax-score/baselines
+ */
+export function useAxBaselines(siteId?: string) {
+  return useQuery({
+    queryKey: ['ax-baselines', { siteId }],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (siteId) params.set('siteId', siteId);
+      return apiFetch<AxBaseline[]>(
+        `${API_BASE_PATH}/ax-score/baselines?${params.toString()}`
+      );
+    },
+  });
+}
+
+/**
+ * Mutation: POST /ax-score/baselines
+ */
+export function useAxCreateBaseline() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateBaselineRequest) =>
+      apiFetch<AxBaseline>(`${API_BASE_PATH}/ax-score/baselines`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ax-baselines'] });
+    },
+  });
+}
+
+/**
+ * Query: GET /ax-score/alerts
+ */
+export function useAxAlerts(params: {
+  status?: string;
+  siteId?: string;
+  page?: number;
+  enabled?: boolean;
+}) {
+  const { status, siteId, page = 1, enabled = true } = params;
+
+  return useQuery({
+    queryKey: ['ax-alerts', { status, siteId, page }],
+    queryFn: async () => {
+      const searchParams = new URLSearchParams();
+      searchParams.set('page', String(page));
+      if (status) searchParams.set('status', status);
+      if (siteId) searchParams.set('siteId', siteId);
+
+      const res = await fetch(
+        `${API_BASE_PATH}/ax-score/alerts?${searchParams.toString()}`
+      );
+      const json: ApiResult<AxAlert[]> = await res.json();
+      if (!json.success) {
+        throw new Error(json.error?.message || 'Failed to fetch alerts');
+      }
+      return { data: json.data || [], meta: json.meta };
+    },
+    enabled,
+  });
+}
+
+/**
+ * Mutation: PATCH /ax-score/alerts/:id
+ */
+export function useAxUpdateAlert() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, ...data }: UpdateAlertRequest & { id: string }) =>
+      apiFetch<AxAlert>(`${API_BASE_PATH}/ax-score/alerts/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ax-alerts'] });
+    },
+  });
+}
+
+/**
+ * Query: GET /ax-score/competitors
+ */
+export function useAxCompetitorSets() {
+  return useQuery({
+    queryKey: ['ax-competitor-sets'],
+    queryFn: () =>
+      apiFetch<AxCompetitorSet[]>(`${API_BASE_PATH}/ax-score/competitors`),
+  });
+}
+
+/**
+ * Query: GET /ax-score/competitors/:id
+ */
+export function useAxCompetitorSet(setId: string) {
+  return useQuery({
+    queryKey: ['ax-competitor-set', setId],
+    queryFn: () =>
+      apiFetch<AxCompetitorSet & { sites: AxCompetitorSite[] }>(
+        `${API_BASE_PATH}/ax-score/competitors/${setId}`
+      ),
+    enabled: !!setId,
+  });
+}
+
+/**
+ * Mutation: POST /ax-score/competitors
+ */
+export function useAxCreateCompetitorSet() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateCompetitorSetRequest) =>
+      apiFetch<AxCompetitorSet>(`${API_BASE_PATH}/ax-score/competitors`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ax-competitor-sets'] });
+    },
+  });
+}
+
+/**
+ * Mutation: DELETE /ax-score/competitors/:id
+ */
+export function useAxDeleteCompetitorSet() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (setId: string) =>
+      apiFetch<{ deleted: boolean }>(
+        `${API_BASE_PATH}/ax-score/competitors/${setId}`,
+        { method: 'DELETE' }
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ax-competitor-sets'] });
+    },
+  });
+}
+
+/**
+ * Mutation: POST /ax-score/competitors/:id/compare
+ */
+export function useAxRunComparison(setId: string) {
+  return useMutation({
+    mutationFn: () =>
+      apiFetch<CompetitorComparisonResponse>(
+        `${API_BASE_PATH}/ax-score/competitors/${setId}/compare`,
+        { method: 'POST' }
+      ),
+  });
+}
+
+/**
+ * Mutation: POST /ax-score/competitors/:id/sites
+ */
+export function useAxAddCompetitorSite(setId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: { url: string; name?: string }) =>
+      apiFetch<AxCompetitorSite>(
+        `${API_BASE_PATH}/ax-score/competitors/${setId}/sites`,
+        { method: 'POST', body: JSON.stringify(data) }
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['ax-competitor-set', setId],
+      });
+    },
+  });
+}
+
+/**
+ * Mutation: DELETE /ax-score/competitors/:id/sites/:siteId
+ */
+export function useAxRemoveCompetitorSite(setId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (siteId: string) =>
+      apiFetch<{ deleted: boolean }>(
+        `${API_BASE_PATH}/ax-score/competitors/${setId}/sites/${siteId}`,
+        { method: 'DELETE' }
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['ax-competitor-set', setId],
+      });
+    },
+  });
+}
+
+/**
+ * Query: GET /ax-score/monthly-reports
+ */
+export function useAxMonthlyReports(params: {
+  siteId?: string;
+  page?: number;
+  enabled?: boolean;
+}) {
+  const { siteId, page = 1, enabled = true } = params;
+
+  return useQuery({
+    queryKey: ['ax-monthly-reports', { siteId, page }],
+    queryFn: async () => {
+      const searchParams = new URLSearchParams();
+      searchParams.set('page', String(page));
+      if (siteId) searchParams.set('siteId', siteId);
+
+      const res = await fetch(
+        `${API_BASE_PATH}/ax-score/monthly-reports?${searchParams.toString()}`
+      );
+      const json: ApiResult<AxMonthlyReport[]> = await res.json();
+      if (!json.success) {
+        throw new Error(json.error?.message || 'Failed to fetch reports');
+      }
+      return { data: json.data || [], meta: json.meta };
+    },
+    enabled,
+  });
+}
+
+/**
+ * Mutation: POST /ax-score/monthly-reports
+ */
+export function useAxGenerateMonthlyReport() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: GenerateMonthlyReportRequest) =>
+      apiFetch<AxMonthlyReport>(
+        `${API_BASE_PATH}/ax-score/monthly-reports`,
+        { method: 'POST', body: JSON.stringify(data) }
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ax-monthly-reports'] });
+    },
+  });
+}
+
+/**
+ * Query: GET /ax-score/monthly-reports/:id
+ */
+export function useAxMonthlyReport(reportId: string) {
+  return useQuery({
+    queryKey: ['ax-monthly-report', reportId],
+    queryFn: () =>
+      apiFetch<AxMonthlyReport>(
+        `${API_BASE_PATH}/ax-score/monthly-reports/${reportId}`
+      ),
+    enabled: !!reportId,
   });
 }

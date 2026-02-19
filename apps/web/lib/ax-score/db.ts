@@ -17,6 +17,9 @@ export interface AxSiteRow {
   name: string | null;
   status: string;
   last_scan_id: string | null;
+  industry: string | null;
+  region: string | null;
+  tags: string[];
   created_at: string;
   updated_at: string;
 }
@@ -60,6 +63,77 @@ export interface AxUsageRow {
   generations_used: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface AxBaselineRow {
+  id: string;
+  site_id: string;
+  developer_id: string;
+  scan_id: string;
+  score: number;
+  category_scores: Record<string, unknown>;
+  signals: Record<string, unknown>;
+  label: string | null;
+  is_current: boolean;
+  created_at: string;
+}
+
+export interface AxAlertRow {
+  id: string;
+  site_id: string;
+  developer_id: string;
+  scan_id: string | null;
+  baseline_id: string | null;
+  alert_type: string;
+  severity: string;
+  title: string;
+  description: string;
+  category: string | null;
+  score_delta: number | null;
+  previous_score: number | null;
+  current_score: number | null;
+  status: string;
+  acknowledged_at: string | null;
+  created_at: string;
+}
+
+export interface AxCompetitorSetRow {
+  id: string;
+  developer_id: string;
+  name: string;
+  description: string | null;
+  industry: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AxCompetitorSiteRow {
+  id: string;
+  set_id: string;
+  url: string;
+  name: string | null;
+  latest_score: number | null;
+  latest_scan_id: string | null;
+  last_scanned_at: string | null;
+  created_at: string;
+}
+
+export interface AxMonthlyReportRow {
+  id: string;
+  developer_id: string;
+  site_id: string | null;
+  month: string;
+  title: string;
+  summary: string | null;
+  score_trend: Record<string, unknown> | null;
+  category_trends: Record<string, unknown> | null;
+  top_regressions: Record<string, unknown> | null;
+  top_improvements: Record<string, unknown> | null;
+  action_items: Record<string, unknown> | null;
+  alert_count: number;
+  model_name: string | null;
+  status: string;
+  created_at: string;
 }
 
 /**

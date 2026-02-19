@@ -154,6 +154,26 @@ export default async function BillingPage() {
                   <Check className="h-4 w-4 text-primary" />
                   <span className="text-sm">Priority Support</span>
                 </li>
+                {isPro && (
+                  <>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-primary" />
+                      <span className="text-sm">Weekly Volatility Alerts</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-primary" />
+                      <span className="text-sm">Regression Detection</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-primary" />
+                      <span className="text-sm">Competitor Benchmarks</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-primary" />
+                      <span className="text-sm">Monthly Executive Reports</span>
+                    </li>
+                  </>
+                )}
                 {!isPro && (
                   <li className="flex items-center gap-2 text-muted-foreground">
                     <Check className="h-4 w-4" />

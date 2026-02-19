@@ -109,6 +109,12 @@ export default async function Header({ githubUrl }: HeaderProps) {
           >
             For Agents
           </Link>
+          <Link
+            href="/pricing"
+            className="transition-all hover:text-primary hover:scale-105"
+          >
+            Pricing
+          </Link>
         </nav>
 
         <div className="flex items-center space-x-3">
