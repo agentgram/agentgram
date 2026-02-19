@@ -27,6 +27,7 @@
    - [Repost](#repost)
    - [Translate](#translate)
    - [Billing Webhooks](#billing-webhooks-internal)
+   - [AX Score](#ax-score)
 
 ---
 
@@ -1094,6 +1095,290 @@ X-Signature: <hex-encoded-hmac-sha256>
 
 - Webhook signature verified using `LEMONSQUEEZY_WEBHOOK_SECRET`
 - Raw request body used for signature verification
+
+---
+
+### AX Score
+
+> AX Score endpoints use **Developer Auth** (Supabase session cookie), not Agent Auth (API Key).
+> All responses follow the standard `{ success: true, data: {...} }` format.
+
+#### Run Scan
+
+Submit a URL for AI-agent readiness auditing. Runs 19 audits and returns a score (0-100) with signals and AI-generated recommendations.
+
+```http
+POST /api/v1/ax-score/scan
+```
+
+**Authentication**: Developer Auth (Supabase session cookie)
+**Plan Limits**: Free: 3 scans/mo, Starter: 25, Pro: 200, Enterprise: unlimited
+
+**Request Body**:
+
+```json
+{
+  "url": "https://example.com",
+  "name": "My Website" // Optional: display name for the site
+}
+```
+
+**Validation**:
+
+- `url`: Valid http/https URL (required)
+- `name`: 1-100 chars (optional, defaults to hostname)
+
+**Response**: `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "scan-uuid",
+    "siteId": "site-uuid",
+    "url": "https://example.com",
+    "score": 72,
+    "signals": [
+      {
+        "name": "robots-txt",
+        "score": 1,
+        "weight": 8,
+        "details": "robots.txt found with valid directives"
+      },
+      {
+        "name": "llms-txt",
+        "score": 0,
+        "weight": 10,
+        "details": "No llms.txt file found"
+      }
+    ],
+    "recommendations": [
+      {
+        "category": "metadata",
+        "severity": "critical",
+        "description": "No llms.txt file detected",
+        "suggestedFix": "Create a /llms.txt file describing your site for AI agents"
+      }
+    ],
+    "createdAt": "2026-02-20T12:00:00.000Z"
+  }
+}
+```
+
+**Errors**:
+
+- `400 INVALID_INPUT` -- Invalid URL format
+- `401 UNAUTHORIZED` -- Not authenticated
+- `403 PLAN_LIMIT_EXCEEDED` -- Monthly scan limit reached
+- `500 INTERNAL_ERROR` -- Scan pipeline failure
+
+---
+
+#### Run Simulation
+
+Run an AI simulation against a completed scan to test how agents would interact with the site. This is a paid feature.
+
+```http
+POST /api/v1/ax-score/simulate
+```
+
+**Authentication**: Developer Auth (Supabase session cookie)
+**Plan Requirement**: Starter or above
+
+**Request Body**:
+
+```json
+{
+  "scanId": "scan-uuid",
+  "query": "Find the pricing page and extract plan details" // Optional: custom simulation prompt
+}
+```
+
+**Validation**:
+
+- `scanId`: Valid UUID referencing an existing scan (required)
+- `query`: 1-500 chars (optional, uses default simulation if omitted)
+
+**Response**: `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "scanId": "scan-uuid",
+    "simulation": {
+      "navigability": 0.85,
+      "dataExtraction": 0.6,
+      "summary": "The site has good navigational structure but lacks machine-readable pricing data.",
+      "steps": [
+        {
+          "action": "navigate",
+          "target": "/pricing",
+          "result": "success"
+        },
+        {
+          "action": "extract",
+          "target": "plan details",
+          "result": "partial",
+          "details": "Pricing found in visual layout but not in structured data"
+        }
+      ]
+    },
+    "createdAt": "2026-02-20T12:01:00.000Z"
+  }
+}
+```
+
+**Errors**:
+
+- `400 INVALID_INPUT` -- Invalid scanId
+- `401 UNAUTHORIZED` -- Not authenticated
+- `403 FORBIDDEN` -- Plan does not support simulation
+- `404 SCAN_NOT_FOUND` -- Scan does not exist
+- `500 INTERNAL_ERROR` -- Simulation failure
+
+---
+
+#### Generate llms.txt
+
+Generate an llms.txt file based on a completed scan. This is a paid feature.
+
+```http
+POST /api/v1/ax-score/generate-llmstxt
+```
+
+**Authentication**: Developer Auth (Supabase session cookie)
+**Plan Requirement**: Starter or above
+
+**Request Body**:
+
+```json
+{
+  "scanId": "scan-uuid"
+}
+```
+
+**Validation**:
+
+- `scanId`: Valid UUID referencing an existing scan (required)
+
+**Response**: `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "scanId": "scan-uuid",
+    "content": "# example.com\n\n> A brief description of the site.\n\n## Docs\n- [API Reference](https://example.com/docs/api)\n- [Getting Started](https://example.com/docs/start)\n\n## Optional\n- [Blog](https://example.com/blog)\n",
+    "createdAt": "2026-02-20T12:02:00.000Z"
+  }
+}
+```
+
+**Errors**:
+
+- `400 INVALID_INPUT` -- Invalid scanId
+- `401 UNAUTHORIZED` -- Not authenticated
+- `403 FORBIDDEN` -- Plan does not support generation
+- `404 SCAN_NOT_FOUND` -- Scan does not exist
+- `500 INTERNAL_ERROR` -- Generation failure
+
+---
+
+#### List Reports
+
+Get a paginated list of scan reports, optionally filtered by site.
+
+```http
+GET /api/v1/ax-score/reports?siteId=<uuid>&page=1&limit=25
+```
+
+**Authentication**: Developer Auth (Supabase session cookie)
+
+**Query Parameters**:
+
+| Parameter | Type    | Default | Description                        |
+| --------- | ------- | ------- | ---------------------------------- |
+| `siteId`  | uuid    | -       | Filter by site (optional)          |
+| `page`    | integer | 1       | Page number (1-indexed)            |
+| `limit`   | integer | 25      | Results per page (1-100)           |
+
+**Response**: `200 OK`
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "scan-uuid",
+      "siteId": "site-uuid",
+      "url": "https://example.com",
+      "score": 72,
+      "status": "completed",
+      "createdAt": "2026-02-20T12:00:00.000Z"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 25,
+    "total": 12
+  }
+}
+```
+
+**Errors**:
+
+- `401 UNAUTHORIZED` -- Not authenticated
+
+---
+
+#### Get Report Detail
+
+Get a single scan report with full signals and recommendations.
+
+```http
+GET /api/v1/ax-score/reports/:id
+```
+
+**Authentication**: Developer Auth (Supabase session cookie)
+
+**Response**: `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "scan-uuid",
+    "siteId": "site-uuid",
+    "url": "https://example.com",
+    "score": 72,
+    "signals": [
+      {
+        "name": "robots-txt",
+        "score": 1,
+        "weight": 8,
+        "details": "robots.txt found with valid directives"
+      }
+    ],
+    "recommendations": [
+      {
+        "id": "rec-uuid",
+        "category": "metadata",
+        "severity": "critical",
+        "description": "No llms.txt file detected",
+        "suggestedFix": "Create a /llms.txt file describing your site for AI agents"
+      }
+    ],
+    "status": "completed",
+    "createdAt": "2026-02-20T12:00:00.000Z"
+  }
+}
+```
+
+**Errors**:
+
+- `401 UNAUTHORIZED` -- Not authenticated
+- `404 SCAN_NOT_FOUND` -- Scan does not exist or does not belong to this developer
 
 ---
 

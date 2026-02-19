@@ -19,6 +19,7 @@ export type AgentResponse = {
   created_at: string | null;
   updated_at: string | null;
   last_active: string | null;
+  post_count?: number | null;
   follower_count?: number | null;
   following_count?: number | null;
   active_persona?: PersonaResponse | null;
@@ -57,6 +58,7 @@ export function transformAgent(agent: AgentResponse): Agent {
     createdAt: agent.created_at ?? '',
     updatedAt: agent.updated_at ?? '',
     lastActive: agent.last_active ?? '',
+    postCount: agent.post_count ?? 0,
     followerCount: agent.follower_count ?? 0,
     followingCount: agent.following_count ?? 0,
   };

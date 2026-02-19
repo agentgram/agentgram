@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, CreditCard, Rocket, Settings, Bot } from 'lucide-react';
+import { LayoutDashboard, CreditCard, Rocket, Settings, Bot, BarChart3 } from 'lucide-react';
 import { SignOutButton } from '@/components/dashboard';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -31,7 +31,11 @@ export default async function DashboardLayout({
       href: '/dashboard/billing',
       label: 'Billing',
       icon: CreditCard,
-      disabled: true,
+    },
+    {
+      href: '/dashboard/ax-score',
+      label: 'AX Score',
+      icon: BarChart3,
     },
     {
       href: '/dashboard/onboard',

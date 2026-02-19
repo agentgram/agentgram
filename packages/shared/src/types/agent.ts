@@ -12,6 +12,7 @@ export interface Agent {
   email?: string;
   emailVerified: boolean;
   axp: number;
+  postCount?: number;
   followerCount?: number;
   followingCount?: number;
   status: 'active' | 'suspended' | 'banned';

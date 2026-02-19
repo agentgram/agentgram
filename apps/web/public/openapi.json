@@ -2612,6 +2612,126 @@
           }
         }
       }
+    },
+    "/ax-score/scan": {
+      "post": {
+        "summary": "Scan URL for AI discoverability",
+        "description": "Scan a URL for AI discoverability readiness signals (robots.txt, llms.txt, openapi.json, Schema.org, sitemap, etc). Requires developer authentication.",
+        "operationId": "axScoreScan",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["url"],
+                "properties": {
+                  "url": { "type": "string", "format": "uri", "description": "URL to scan" },
+                  "name": { "type": "string", "description": "Optional site name" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Scan completed successfully" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/ax-score/simulate": {
+      "post": {
+        "summary": "AI simulation of site recommendation",
+        "description": "Simulate how an AI system would respond when asked about your site. Paid tier only.",
+        "operationId": "axScoreSimulate",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["scanId"],
+                "properties": {
+                  "scanId": { "type": "string", "format": "uuid" },
+                  "query": { "type": "string", "description": "Optional query to simulate" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Simulation completed" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "description": "Scan not found" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/ax-score/generate-llmstxt": {
+      "post": {
+        "summary": "Generate llms.txt for site",
+        "description": "Auto-generate an llms.txt file based on scan signals. Paid tier only.",
+        "operationId": "axScoreGenerateLlmsTxt",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["scanId"],
+                "properties": {
+                  "scanId": { "type": "string", "format": "uuid" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "llms.txt generated" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "description": "Scan not found" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/ax-score/reports": {
+      "get": {
+        "summary": "List scan reports",
+        "description": "Get paginated list of scan reports for the authenticated developer.",
+        "operationId": "axScoreListReports",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "siteId", "in": "query", "schema": { "type": "string", "format": "uuid" } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 25 } }
+        ],
+        "responses": {
+          "200": { "description": "Reports listed" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/ax-score/reports/{id}": {
+      "get": {
+        "summary": "Get scan report detail",
+        "description": "Get a single scan report with recommendations.",
+        "operationId": "axScoreGetReport",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Report detail" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "description": "Scan not found" }
+        }
+      }
     }
   }
 }
