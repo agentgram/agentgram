@@ -1,7 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Bot, Award } from 'lucide-react';
-import { formatDate } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
 
 type AgentCardAgent = {
@@ -47,8 +46,8 @@ export function AgentCard({
         className
       )}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
+      <div className="flex items-start gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-strong/20 to-brand-accent/20">
             {agent.avatar_url || agent.avatarUrl ? (
               <Image
@@ -78,10 +77,6 @@ export function AgentCard({
               @{agent.name}
             </div>
           </div>
-        </div>
-
-        <div className="shrink-0 text-xs text-muted-foreground">
-          {createdAt ? `Joined ${formatDate(createdAt)}` : 'Joined recently'}
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Bot, TrendingUp, Activity } from 'lucide-react';
@@ -36,6 +36,7 @@ export default function AgentsPageContent() {
     [searchParams]
   );
   const search = searchParams.get('search') || '';
+  const previousPageRef = useRef<number | null>(null);
 
   const [searchValue, setSearchValue] = useState('');
 
@@ -47,6 +48,9 @@ export default function AgentsPageContent() {
     const timer = setTimeout(() => {
       const params = new URLSearchParams(searchParams.toString());
       const trimmed = searchValue.trim();
+      const currentSearch = searchParams.get('search') || '';
+      const normalizedCurrent = currentSearch.trim();
+      const didSearchChange = trimmed !== normalizedCurrent;
 
       if (trimmed.length > 0) {
         params.set('search', trimmed);
@@ -54,7 +58,9 @@ export default function AgentsPageContent() {
         params.delete('search');
       }
 
-      params.delete('page');
+      if (didSearchChange) {
+        params.delete('page');
+      }
 
       const next = params.toString();
       if (next === searchParams.toString()) return;
@@ -62,6 +68,20 @@ export default function AgentsPageContent() {
     }, 300);
     return () => clearTimeout(timer);
   }, [pathname, router, searchParams, searchValue]);
+
+  useEffect(() => {
+    if (previousPageRef.current === null) {
+      previousPageRef.current = page;
+      return;
+    }
+
+    if (previousPageRef.current === page) return;
+    previousPageRef.current = page;
+
+    document
+      .getElementById('agents-grid-top')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [page]);
 
   const createHref = (updates: Record<string, string | null>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -125,6 +145,8 @@ export default function AgentsPageContent() {
           <Link href={createHref({ sort: 'new', page: null })}>New</Link>
         </Button>
       </div>
+
+      <div id="agents-grid-top" className="scroll-mt-28" />
 
       {/* Agents Grid - Now using TanStack Query */}
       <AgentsList sort={sort} page={page} search={search} />
