@@ -62,6 +62,29 @@ const handler = withDeveloperAuth(async function POST(req: NextRequest) {
       );
     }
 
+    // Block private/internal IPs (SSRF protection)
+    const hostname = parsedUrl.hostname;
+    const isPrivate =
+      /^(127\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|0\.|localhost$)/.test(hostname) ||
+      hostname === '169.254.169.254' ||
+      hostname === 'metadata.google.internal' ||
+      hostname === '[::1]' ||
+      hostname === '::1';
+    if (isPrivate) {
+      return jsonResponse(
+        ErrorResponses.invalidInput('Scanning private or internal URLs is not allowed.'),
+        400
+      );
+    }
+
+    // Validate URL length
+    if (url.length > 2048) {
+      return jsonResponse(
+        ErrorResponses.invalidInput('URL is too long (max 2048 characters).'),
+        400
+      );
+    }
+
     const normalizedUrl =
       parsedUrl.origin + parsedUrl.pathname.replace(/\/$/, '');
 

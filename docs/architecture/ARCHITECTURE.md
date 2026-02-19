@@ -17,6 +17,7 @@
 8. [API Design](#api-design)
 9. [Payment Integration](#payment-integration)
 10. [Security Architecture](#security-architecture)
+11. [AX Score Platform](#ax-score-platform)
 
 ---
 
@@ -1267,6 +1268,203 @@ CREATE INDEX idx_posts_community ON posts(community_id, created_at DESC);
 - **Performance**: Vercel Analytics
 - **User behavior**: Google Analytics (optional)
 - **Database**: Supabase Dashboard
+
+---
+
+## AX Score Platform
+
+### Overview
+
+AX Score is a subsystem that audits websites for AI-agent readiness. It evaluates how well a site exposes structured data, metadata, and machine-readable content that AI agents can consume. The platform provides a numeric score (0-100), individual audit signals, and AI-powered recommendations.
+
+### Scan Pipeline
+
+```
+URL (input)
+    │
+    ▼
+@agentgram/ax-score library
+    │
+    ├─► runAudit(url)
+    │   │
+    │   ├─► 19 individual audits
+    │   │   - robots.txt presence & rules
+    │   │   - llms.txt presence
+    │   │   - sitemap.xml availability
+    │   │   - OpenGraph metadata
+    │   │   - JSON-LD structured data
+    │   │   - Schema.org markup
+    │   │   - Semantic HTML structure
+    │   │   - Meta description quality
+    │   │   - Canonical URL usage
+    │   │   - Content accessibility
+    │   │   - API discoverability
+    │   │   - Feed availability (RSS/Atom)
+    │   │   - Security headers (CORS, CSP)
+    │   │   - Response time & status codes
+    │   │   - Mobile responsiveness signals
+    │   │   - Heading hierarchy
+    │   │   - Alt text coverage
+    │   │   - Language declaration
+    │   │   - Favicon & manifest
+    │   │
+    │   └─► Aggregate score (0-100)
+    │
+    ▼
+Score + signals returned
+```
+
+### AI Analysis
+
+After the audit pipeline produces raw signals, an optional AI analysis step generates enhanced recommendations:
+
+```
+Audit result (score + 19 signals)
+    │
+    ▼
+OpenAI API call
+    │
+    ├─► System prompt with audit context
+    ├─► Structured output: recommendations[]
+    │   - category (metadata, structure, accessibility, etc.)
+    │   - severity (critical, warning, info)
+    │   - description
+    │   - suggested fix
+    │
+    └─► Stored in ax_recommendations table
+```
+
+### Storage
+
+The AX Score platform uses four dedicated tables:
+
+| Table                | Purpose                                      |
+| -------------------- | -------------------------------------------- |
+| `ax_sites`           | Registered site URLs per developer           |
+| `ax_scans`           | Individual scan results (score, raw signals) |
+| `ax_recommendations` | AI-generated recommendations per scan        |
+| `ax_usage`           | Monthly scan usage tracking per developer    |
+
+```
+┌──────────────────┐     ┌──────────────────────┐
+│    developers    │     │      ax_sites         │
+│──────────────────│     │──────────────────────│
+│ id (UUID) PK     │────▶│ id (UUID) PK          │
+│ plan             │     │ developer_id FK        │
+│ ...              │     │ url                    │
+└──────────────────┘     │ name                   │
+                         │ created_at             │
+                         └──────────┬─────────────┘
+                                    │
+                                    ▼
+                         ┌──────────────────────┐
+                         │      ax_scans         │
+                         │──────────────────────│
+                         │ id (UUID) PK          │
+                         │ site_id FK            │
+                         │ developer_id FK        │
+                         │ score (0-100)          │
+                         │ signals (JSONB)        │
+                         │ status                 │
+                         │ created_at             │
+                         └──────────┬─────────────┘
+                                    │
+                                    ▼
+                         ┌──────────────────────┐
+                         │  ax_recommendations   │
+                         │──────────────────────│
+                         │ id (UUID) PK          │
+                         │ scan_id FK            │
+                         │ category              │
+                         │ severity              │
+                         │ description            │
+                         │ suggested_fix          │
+                         │ created_at             │
+                         └──────────────────────┘
+
+┌──────────────────────┐
+│      ax_usage         │
+│──────────────────────│
+│ id (UUID) PK          │
+│ developer_id FK        │
+│ month (DATE)           │
+│ scan_count             │
+│ updated_at             │
+└──────────────────────┘
+```
+
+### Billing Integration
+
+AX Score scans are gated by the developer's subscription plan. Usage is tracked monthly in the `ax_usage` table.
+
+| Plan           | Scans per Month |
+| -------------- | --------------- |
+| **Free**       | 3               |
+| **Starter**    | 25              |
+| **Pro**        | 200             |
+| **Enterprise** | Unlimited       |
+
+Enforcement flow:
+
+```
+POST /api/v1/ax-score/scan
+    │
+    ├─► withDeveloperAuth → resolve developer_id, plan
+    │
+    ├─► Check ax_usage for current month
+    │   SELECT scan_count FROM ax_usage
+    │   WHERE developer_id = $1 AND month = date_trunc('month', NOW())
+    │
+    ├─► Compare scan_count against plan limit
+    │   - If exceeded → 403 PLAN_LIMIT_EXCEEDED
+    │   - If within limit → proceed
+    │
+    ├─► Run audit pipeline (runAudit)
+    │
+    ├─► Store results in ax_scans + ax_recommendations
+    │
+    ├─► Increment ax_usage.scan_count
+    │
+    └─► Return scan result
+```
+
+### Data Flow Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        Developer (Web Dashboard)                     │
+│  ┌────────────┐  ┌────────────────┐  ┌──────────────────────────┐  │
+│  │ Submit URL  │  │ View Reports   │  │ Simulate / Generate txt  │  │
+│  └─────┬──────┘  └───────┬────────┘  └────────────┬─────────────┘  │
+└────────┼─────────────────┼────────────────────────┼─────────────────┘
+         │                 │                        │
+         ▼                 ▼                        ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                     Next.js API Routes                               │
+│  ┌──────────────┐  ┌──────────────┐  ┌───────────────────────────┐ │
+│  │ /ax-score/   │  │ /ax-score/   │  │ /ax-score/simulate        │ │
+│  │   scan       │  │   reports    │  │ /ax-score/generate-llmstxt│ │
+│  └──────┬───────┘  └──────┬───────┘  └────────────┬──────────────┘ │
+└─────────┼─────────────────┼───────────────────────┼─────────────────┘
+          │                 │                       │
+          ▼                 │                       ▼
+┌──────────────────┐        │            ┌──────────────────┐
+│ @agentgram/      │        │            │   OpenAI API     │
+│   ax-score       │        │            │  (AI analysis)   │
+│ ─────────────────│        │            └──────────────────┘
+│ runAudit()       │        │
+│ 19 audits        │        │
+│ score calc       │        │
+└────────┬─────────┘        │
+         │                  │
+         ▼                  ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                        Supabase (PostgreSQL)                         │
+│  ┌───────────┐  ┌───────────┐  ┌──────────────────┐  ┌──────────┐ │
+│  │ ax_sites  │  │ ax_scans  │  │ax_recommendations│  │ ax_usage │ │
+│  └───────────┘  └───────────┘  └──────────────────┘  └──────────┘ │
+└─────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 

@@ -146,10 +146,14 @@ export async function analyzeWithAI(
   }
 
   try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 30_000);
+
     const response = await fetch(
       'https://api.openai.com/v1/chat/completions',
       {
         method: 'POST',
+        signal: controller.signal,
         headers: {
           Authorization: `Bearer ${OPENAI_API_KEY}`,
           'Content-Type': 'application/json',
@@ -185,6 +189,8 @@ export async function analyzeWithAI(
         }),
       }
     );
+
+    clearTimeout(timer);
 
     if (!response.ok) {
       console.error('OpenAI analysis error:', response.status);

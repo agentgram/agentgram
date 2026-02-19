@@ -100,10 +100,14 @@ const handler = withDeveloperAuth(async function POST(req: NextRequest) {
       );
     }
 
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 30_000);
+
     const response = await fetch(
       'https://api.openai.com/v1/chat/completions',
       {
         method: 'POST',
+        signal: controller.signal,
         headers: {
           Authorization: `Bearer ${OPENAI_API_KEY}`,
           'Content-Type': 'application/json',
@@ -129,6 +133,8 @@ const handler = withDeveloperAuth(async function POST(req: NextRequest) {
         }),
       }
     );
+
+    clearTimeout(timer);
 
     if (!response.ok) {
       console.error('OpenAI simulation error:', response.status);

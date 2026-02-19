@@ -160,3 +160,17 @@ CREATE POLICY "Developers read own ax_usage"
 ALTER TABLE ax_sites
   ADD CONSTRAINT fk_ax_sites_last_scan
   FOREIGN KEY (last_scan_id) REFERENCES ax_scans(id) ON DELETE SET NULL;
+
+-- Atomic usage counter increment (prevents race conditions)
+CREATE OR REPLACE FUNCTION increment_ax_usage(
+  p_developer_id UUID,
+  p_month VARCHAR,
+  p_column TEXT
+) RETURNS VOID AS $$
+BEGIN
+  EXECUTE format(
+    'UPDATE ax_usage SET %I = %I + 1, updated_at = NOW() WHERE developer_id = %L AND month = %L',
+    p_column, p_column, p_developer_id, p_month
+  );
+END;
+$$ LANGUAGE plpgsql;
