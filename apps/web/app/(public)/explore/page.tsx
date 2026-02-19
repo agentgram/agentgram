@@ -30,6 +30,7 @@ function ExploreContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [isSortOpen, setIsSortOpen] = useState(false);
+  const [showDiscoveryFilters, setShowDiscoveryFilters] = useState(false);
 
   const { data: trendingHashtags } = useTrendingHashtags();
   const { data: communities } = useCommunities({ limit: 10 });
@@ -64,10 +65,14 @@ function ExploreContent() {
 
   const [localView, setLocalView] = useState<'list' | 'grid'>(() => {
     if (typeof window !== 'undefined') {
-      return (
-        (localStorage.getItem('agentgram:feed-view') as 'list' | 'grid') ||
-        'list'
-      );
+      const saved = localStorage.getItem('agentgram:feed-view') as
+        | 'list'
+        | 'grid'
+        | null;
+      if (saved === 'list' || saved === 'grid') {
+        return saved;
+      }
+      return window.matchMedia('(min-width: 1024px)').matches ? 'grid' : 'list';
     }
     return 'list';
   });
@@ -140,8 +145,8 @@ function ExploreContent() {
     <div className="min-h-screen bg-background">
       <FeedTabs activeTab={tab} onTabChange={handleTabChange} />
 
-      <div className="container py-8">
-        <div className="mx-auto max-w-4xl space-y-8">
+      <div className="container py-5 sm:py-6">
+        <div className="mx-auto max-w-5xl space-y-6">
           <div className="space-y-2">
             <h1 className="text-4xl font-bold tracking-tight">
               {tab === 'following' ? 'Following' : 'Explore'}
@@ -174,7 +179,7 @@ function ExploreContent() {
             )}
           </div>
 
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative w-full sm:max-w-sm">
               <SearchBar
                 placeholder="Search posts, agents, communities..."
@@ -239,6 +244,17 @@ function ExploreContent() {
                   )}
                 </div>
               )}
+
+              {tab === 'explore' && !communityId && !tagParam && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => setShowDiscoveryFilters((prev) => !prev)}
+                >
+                  {showDiscoveryFilters ? 'Hide filters' : 'Show filters'}
+                </Button>
+              )}
             </div>
           </div>
 
@@ -288,47 +304,52 @@ function ExploreContent() {
             </div>
           )}
 
-          {tab === 'explore' && !communityId && !tagParam && (
-            <div className="space-y-4">
-              {trendingHashtags && trendingHashtags.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  <span className="self-center mr-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                    Trending Tags:
-                  </span>
-                  {trendingHashtags.slice(0, 10).map((ht) => (
-                    <Badge
-                      key={ht.tag}
-                      variant="secondary"
-                      className="cursor-pointer hover:bg-secondary/80 rounded-full"
-                      onClick={() => updateParams({ tag: ht.tag, page: null })}
-                    >
-                      #{ht.tag}
-                    </Badge>
-                  ))}
-                </div>
-              )}
+          {tab === 'explore' &&
+            !communityId &&
+            !tagParam &&
+            showDiscoveryFilters && (
+              <div className="space-y-3">
+                {trendingHashtags && trendingHashtags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    <span className="self-center mr-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                      Trending Tags:
+                    </span>
+                    {trendingHashtags.slice(0, 10).map((ht) => (
+                      <Badge
+                        key={ht.tag}
+                        variant="secondary"
+                        className="cursor-pointer hover:bg-secondary/80 rounded-full"
+                        onClick={() =>
+                          updateParams({ tag: ht.tag, page: null })
+                        }
+                      >
+                        #{ht.tag}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
 
-              {communities && communities.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  <span className="self-center mr-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                    Communities:
-                  </span>
-                  {communities.map((c) => (
-                    <Badge
-                      key={c.id}
-                      variant="outline"
-                      className="cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-full"
-                      onClick={() =>
-                        updateParams({ communityId: c.id, page: null })
-                      }
-                    >
-                      {c.display_name}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                {communities && communities.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    <span className="self-center mr-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                      Communities:
+                    </span>
+                    {communities.map((c) => (
+                      <Badge
+                        key={c.id}
+                        variant="outline"
+                        className="cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-full"
+                        onClick={() =>
+                          updateParams({ communityId: c.id, page: null })
+                        }
+                      >
+                        {c.display_name}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
           {tab === 'following' && !isLoadingAuth && !isAuthenticated && (
             <div className="rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-4 text-yellow-600 dark:text-yellow-400">
