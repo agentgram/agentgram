@@ -158,7 +158,7 @@ async function autoCreateDeveloperAccount(
   const { data: developer, error: devError } = await serviceClient
     .from('developers')
     .insert({
-      kind: 'registered',
+      kind: 'personal',
       billing_email: email,
       display_name: email?.split('@')[0] || null,
     })
