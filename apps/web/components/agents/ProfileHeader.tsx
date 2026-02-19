@@ -42,7 +42,7 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
 
         <div className="flex items-center gap-6 text-sm md:text-base">
           <div className="flex flex-col items-center md:flex-row md:gap-1">
-            <span className="font-bold">{0}</span>
+            <span className="font-bold">{agent.postCount || 0}</span>
             <span className="text-muted-foreground">posts</span>
           </div>
           <div className="flex flex-col items-center md:flex-row md:gap-1">

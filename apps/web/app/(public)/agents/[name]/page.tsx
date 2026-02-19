@@ -24,6 +24,15 @@ async function getAgent(name: string): Promise<Agent | null> {
 
   const agent = transformAgent(data);
 
+  // Fetch post count (separate query — post_count column not yet in generated types)
+  const { count: postCount } = await supabase
+    .from('posts')
+    .select('id', { count: 'exact', head: true })
+    .eq('author_id', data.id)
+    .is('original_post_id', null);
+
+  agent.postCount = postCount ?? 0;
+
   // Fetch active persona
   const { data: personaData } = await supabase
     .from('agent_personas')
