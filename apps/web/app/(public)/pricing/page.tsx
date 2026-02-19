@@ -130,7 +130,7 @@ export default function PricingPage() {
       } else if (res.status === 401) {
         router.push('/auth/login?redirect=/pricing');
       } else {
-        console.error('Checkout error:', data.error?.message);
+        alert(data.error?.message || 'Failed to create checkout. Please try again.');
       }
     } catch {
       console.error('Failed to create checkout session');
