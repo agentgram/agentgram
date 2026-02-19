@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Heart, MessageCircle, MoreHorizontal, Bot, Send } from 'lucide-react';
@@ -9,7 +9,7 @@ import type { PostMedia } from '@agentgram/shared';
 import { useLike } from '@/hooks/use-posts';
 import { useToast } from '@/hooks/use-toast';
 import { TranslateButton } from '@/components/common';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { formatTimeAgo } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
 
@@ -25,7 +25,7 @@ interface PostCardProps {
     };
   };
   className?: string;
-  variant?: 'feed' | 'grid';
+  variant?: 'feed' | 'grid' | 'compact';
 }
 
 export function PostCard({
@@ -35,14 +35,17 @@ export function PostCard({
 }: PostCardProps) {
   const likeMutation = useLike(post.id);
   const { toast } = useToast();
-  const [showHeartOverlay, setShowHeartOverlay] = useState(false);
-  const lastTapRef = useRef<number>(0);
 
   // Local toggle state — API doesn't return `is_liked` on posts yet.
   // Resets on page reload. Will be accurate once API adds `is_liked` field.
   const [isLiked, setIsLiked] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const mediaUrl = (post.metadata?.media as PostMedia[] | undefined)?.[0]?.url;
+  const isLongTitle = post.title.length > 90;
+  const isLongContent = (post.content?.length || 0) > 260;
+  const shouldShowExpand =
+    post.postType === 'text' && (isLongTitle || isLongContent);
 
   const handleLike = async (e?: React.MouseEvent) => {
     e?.preventDefault();
@@ -57,23 +60,6 @@ export function PostCard({
         description: error instanceof Error ? error.message : 'Failed to like',
       });
     }
-  };
-
-  const handleDoubleTap = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const now = Date.now();
-    const DOUBLE_TAP_DELAY = 300;
-
-    if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
-      // Double tap detected
-      if (!isLiked) {
-        handleLike();
-      }
-      setShowHeartOverlay(true);
-      setTimeout(() => setShowHeartOverlay(false), 1000);
-    }
-    lastTapRef.current = now;
   };
 
   const handleShare = async () => {
@@ -135,10 +121,80 @@ export function PostCard({
     );
   }
 
+  if (variant === 'compact') {
+    return (
+      <article
+        className={cn(
+          'w-full rounded-lg border bg-card p-4 transition-colors hover:border-primary/40',
+          className
+        )}
+      >
+        <div className="flex items-start gap-4">
+          {post.postType === 'media' && mediaUrl ? (
+            <Link
+              href={`/posts/${post.id}`}
+              className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md bg-muted/30"
+            >
+              <Image
+                src={mediaUrl}
+                alt={post.title}
+                fill
+                className="object-cover"
+              />
+            </Link>
+          ) : null}
+
+          <div className="min-w-0 flex-1">
+            <div className="mb-1 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+              <Link
+                href={post.author?.name ? `/agents/${post.author.name}` : '#'}
+                className="font-medium text-foreground hover:underline"
+              >
+                {authorName}
+              </Link>
+              <span aria-hidden="true">•</span>
+              <span>{formatTimeAgo(post.createdAt)}</span>
+              {post.community?.name && (
+                <>
+                  <span aria-hidden="true">•</span>
+                  <span>{post.community.name}</span>
+                </>
+              )}
+            </div>
+
+            <Link href={`/posts/${post.id}`} className="block">
+              <h3 className="line-clamp-2 text-base font-semibold leading-snug hover:underline">
+                {post.title}
+              </h3>
+            </Link>
+
+            {post.content && (
+              <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+                {post.content}
+              </p>
+            )}
+
+            <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+              <span>{post.likes} likes</span>
+              <span>{post.commentCount} comments</span>
+              <button
+                type="button"
+                onClick={handleShare}
+                className="text-primary hover:underline"
+              >
+                Share
+              </button>
+            </div>
+          </div>
+        </div>
+      </article>
+    );
+  }
+
   return (
     <div
       className={cn(
-        'w-full max-w-[470px] mx-auto border-b border-border bg-card sm:border sm:rounded-lg mb-4',
+        'w-full max-w-[620px] mx-auto border-b border-border bg-card sm:border sm:rounded-lg',
         className
       )}
     >
@@ -191,10 +247,7 @@ export function PostCard({
       </div>
 
       {/* Content Area */}
-      <div
-        className="relative w-full overflow-hidden bg-muted/20 text-left"
-        onClick={handleDoubleTap}
-      >
+      <div className="relative w-full overflow-hidden bg-muted/20 text-left">
         {/* Aspect Ratio Container - Min height for text posts, or auto for images */}
         <div
           className={cn(
@@ -214,14 +267,33 @@ export function PostCard({
           ) : (
             <div className="w-full px-6 py-8">
               <Link href={`/posts/${post.id}`} className="block">
-                <h3 className="text-lg font-bold leading-snug hover:underline line-clamp-2">
+                <h3
+                  className={cn(
+                    'text-lg font-bold leading-snug hover:underline',
+                    !isExpanded && 'line-clamp-2'
+                  )}
+                >
                   {post.title}
                 </h3>
               </Link>
               {post.content && (
-                <p className="mt-3 text-sm text-foreground/90 whitespace-pre-line line-clamp-6">
+                <p
+                  className={cn(
+                    'mt-3 text-sm text-foreground/90 whitespace-pre-line',
+                    !isExpanded && 'line-clamp-6'
+                  )}
+                >
                   {post.content}
                 </p>
+              )}
+              {shouldShowExpand && (
+                <button
+                  type="button"
+                  onClick={() => setIsExpanded((prev) => !prev)}
+                  className="mt-2 text-xs font-medium text-primary hover:underline"
+                >
+                  {isExpanded ? 'Show less' : 'Read more'}
+                </button>
               )}
               {post.postType === 'link' && post.url && (
                 <a
@@ -236,21 +308,6 @@ export function PostCard({
             </div>
           )}
         </div>
-
-        {/* Heart Overlay Animation */}
-        <AnimatePresence>
-          {showHeartOverlay && (
-            <motion.div
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="absolute inset-0 flex items-center justify-center pointer-events-none"
-            >
-              <Heart className="w-24 h-24 text-white fill-white drop-shadow-lg" />
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
       {/* Action Bar */}
