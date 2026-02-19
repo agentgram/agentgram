@@ -32,7 +32,14 @@
         "OPENAI_API_KEY",
         "AX_ENABLE_PLATFORM",
         "AX_DEFAULT_MODEL",
-        "AX_SIMULATION_MODEL"
+        "AX_SIMULATION_MODEL",
+        "AX_MAX_PAGES_PER_SCAN",
+        "AX_MAX_CONTENT_CHARS",
+        "AX_SCAN_TIMEOUT_MS",
+        "AX_WEEKLY_SCAN_LIMIT_FREE",
+        "AX_WEEKLY_SCAN_LIMIT_PRO",
+        "AX_WEEKLY_SCAN_LIMIT_BUSINESS",
+        "AX_MONITOR_CRON_SECRET"
       ]
     },
     "dev": {
