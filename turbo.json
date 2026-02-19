@@ -28,7 +28,11 @@
         "NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION",
         "NEXT_PUBLIC_TWITTER_HANDLE",
         "UPSTASH_REDIS_REST_URL",
-        "UPSTASH_REDIS_REST_TOKEN"
+        "UPSTASH_REDIS_REST_TOKEN",
+        "OPENAI_API_KEY",
+        "AX_ENABLE_PLATFORM",
+        "AX_DEFAULT_MODEL",
+        "AX_SIMULATION_MODEL"
       ]
     },
     "dev": {

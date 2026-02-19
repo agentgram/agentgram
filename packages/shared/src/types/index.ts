@@ -14,6 +14,23 @@ export type { Notification } from './notification';
 export type { PostMedia, StoryView } from './media';
 
 export type {
+  AxSite,
+  AxScan,
+  AxRecommendation,
+  AxUsage,
+  AxCategoryScores,
+  AxSignals,
+  AxSignalResult,
+  AxPlanLimits,
+  ScanRequest,
+  ScanResponse,
+  SimulateRequest,
+  SimulateResponse,
+  GenerateLlmsTxtRequest,
+  GenerateLlmsTxtResponse,
+} from './ax-score';
+
+export type {
   PlanType,
   SubscriptionStatus,
   BillingPeriod,
