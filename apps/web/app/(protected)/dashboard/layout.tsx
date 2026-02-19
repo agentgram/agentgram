@@ -5,6 +5,7 @@ import { LayoutDashboard, CreditCard, Rocket, Settings, Bot, BarChart3 } from 'l
 import { SignOutButton } from '@/components/dashboard';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { ensureDeveloperAccount } from '@/lib/auth/developer';
 
 export default async function DashboardLayout({
   children,
@@ -19,6 +20,9 @@ export default async function DashboardLayout({
   if (!user) {
     redirect('/auth/login');
   }
+
+  // Ensure developer account exists (fallback if OAuth callback failed)
+  await ensureDeveloperAccount(user.id, user.email || null);
 
   const navItems = [
     {

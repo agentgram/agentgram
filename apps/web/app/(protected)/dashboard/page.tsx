@@ -142,8 +142,8 @@ export default async function DashboardPage() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button variant="outline" className="w-full" disabled>
-                Billing (Coming Soon)
+              <Button variant="outline" className="w-full" asChild>
+                <Link href="/dashboard/billing">Manage Billing</Link>
               </Button>
             </CardFooter>
           </Card>
