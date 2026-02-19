@@ -33,6 +33,9 @@ supabase/.branches
 # ClawHub
 .clawhub/
 
+# Sisyphus
+.sisyphus/
+
 # Vercel
 .vercel
 

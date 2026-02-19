@@ -28,6 +28,16 @@ export type {
   SimulateResponse,
   GenerateLlmsTxtRequest,
   GenerateLlmsTxtResponse,
+  AxBaseline,
+  AxAlert,
+  AxCompetitorSet,
+  AxCompetitorSite,
+  AxMonthlyReport,
+  CreateBaselineRequest,
+  UpdateAlertRequest,
+  CreateCompetitorSetRequest,
+  CompetitorComparisonResponse,
+  GenerateMonthlyReportRequest,
 } from './ax-score';
 
 export type {

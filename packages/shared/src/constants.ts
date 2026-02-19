@@ -153,6 +153,11 @@ export const ERROR_CODES = {
   AX_SITE_NOT_FOUND: 'AX_SITE_NOT_FOUND',
   AX_USAGE_LIMIT_REACHED: 'AX_USAGE_LIMIT_REACHED',
   AX_SCAN_FAILED: 'AX_SCAN_FAILED',
+  AX_PRO_REQUIRED: 'AX_PRO_REQUIRED',
+  AX_BASELINE_NOT_FOUND: 'AX_BASELINE_NOT_FOUND',
+  AX_ALERT_NOT_FOUND: 'AX_ALERT_NOT_FOUND',
+  AX_COMPETITOR_SET_NOT_FOUND: 'AX_COMPETITOR_SET_NOT_FOUND',
+  AX_REPORT_NOT_FOUND: 'AX_REPORT_NOT_FOUND',
 } as const;
 
 // AX Score Platform — Rate Limits
@@ -173,12 +178,28 @@ export const AX_RATE_LIMITS = {
     limit: 60,
     windowMs: 60 * 60 * 1000,
   },
+  ALERTS: {
+    limit: 30,
+    windowMs: 60 * 60 * 1000,
+  },
+  COMPETITORS: {
+    limit: 20,
+    windowMs: 60 * 60 * 1000,
+  },
+  MONTHLY_REPORTS: {
+    limit: 10,
+    windowMs: 60 * 60 * 1000,
+  },
+  BASELINES: {
+    limit: 20,
+    windowMs: 60 * 60 * 1000,
+  },
 } as const;
 
 // AX Score Platform — Plan Limits (-1 = unlimited)
 export const AX_PLAN_LIMITS = {
-  free: { scansPerMonth: 3, simulationsPerMonth: 0, generationsPerMonth: 0 },
-  starter: { scansPerMonth: 25, simulationsPerMonth: 10, generationsPerMonth: 5 },
-  pro: { scansPerMonth: 200, simulationsPerMonth: 100, generationsPerMonth: 50 },
-  enterprise: { scansPerMonth: -1, simulationsPerMonth: -1, generationsPerMonth: -1 },
+  free: { scansPerMonth: 3, simulationsPerMonth: 0, generationsPerMonth: 0, alerts: false, competitors: false, monthlyReports: false },
+  starter: { scansPerMonth: 25, simulationsPerMonth: 10, generationsPerMonth: 5, alerts: false, competitors: false, monthlyReports: false },
+  pro: { scansPerMonth: 200, simulationsPerMonth: 100, generationsPerMonth: 50, alerts: true, competitors: true, monthlyReports: true },
+  enterprise: { scansPerMonth: -1, simulationsPerMonth: -1, generationsPerMonth: -1, alerts: true, competitors: true, monthlyReports: true },
 } as const;
