@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Github, Bot, ArrowLeft, Loader2, Mail } from 'lucide-react';
+import { Github, Bot, ArrowLeft, Loader2, Mail, KeyRound } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { getBaseUrl } from '@/lib/env';
 import { Button } from '@/components/ui/button';
@@ -22,7 +22,9 @@ import { toast } from '@/hooks/use-toast';
 function LoginContent() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState(''); // TODO(hackathon): Remove after demo — #323
   const [isLoading, setIsLoading] = useState(false);
+  const [isPasswordLoading, setIsPasswordLoading] = useState(false); // TODO(hackathon): Remove after demo — #323
   const [isGithubLoading, setIsGithubLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -74,6 +76,40 @@ function LoginContent() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // TODO(hackathon): Remove password login handler after hackathon demo — #323
+  const handlePasswordLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) return;
+    setIsPasswordLoading(true);
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // Redirect after successful password login
+      const redirect = redirectPath.startsWith('/') ? redirectPath : '/dashboard';
+      window.location.assign(redirect);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Invalid email or password.';
+      toast({
+        title: 'Login Failed',
+        description: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsPasswordLoading(false);
     }
   };
 
@@ -195,7 +231,7 @@ function LoginContent() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <form onSubmit={handleEmailLogin} className="space-y-4">
+          <form onSubmit={password ? handlePasswordLogin : handleEmailLogin} className="space-y-4">
             <div className="space-y-2">
               <Input
                 type="email"
@@ -205,19 +241,47 @@ function LoginContent() {
                 required
                 className="bg-background/50 border-white/10 focus:border-brand-strong/50 transition-colors h-11"
               />
-            </div>
-            <Button
-              type="submit"
-              className="w-full h-11 bg-gradient-to-r from-brand-strong to-brand-accent-strong hover:from-brand hover:to-brand-accent transition-all duration-300 shadow-lg shadow-brand-strong/20"
-              disabled={isLoading || isGithubLoading || isGoogleLoading}
-            >
-              {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Mail className="mr-2 h-4 w-4" />
+              {/* TODO(hackathon): Remove password login after hackathon demo — #323 */}
+              <Input
+                type="password"
+                placeholder="Password (for test accounts only)"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="bg-background/50 border-white/10 focus:border-brand-strong/50 transition-colors h-11"
+              />
+              {password && (
+                <p className="text-[11px] text-muted-foreground/60 px-1">
+                  Password login is for test accounts only.
+                </p>
               )}
-              Send Magic Link
-            </Button>
+            </div>
+            {password ? (
+              <Button
+                type="submit"
+                className="w-full h-11 bg-gradient-to-r from-brand-strong to-brand-accent-strong hover:from-brand hover:to-brand-accent transition-all duration-300 shadow-lg shadow-brand-strong/20"
+                disabled={isPasswordLoading || isGithubLoading || isGoogleLoading}
+              >
+                {isPasswordLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <KeyRound className="mr-2 h-4 w-4" />
+                )}
+                Sign In
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                className="w-full h-11 bg-gradient-to-r from-brand-strong to-brand-accent-strong hover:from-brand hover:to-brand-accent transition-all duration-300 shadow-lg shadow-brand-strong/20"
+                disabled={isLoading || isGithubLoading || isGoogleLoading}
+              >
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Mail className="mr-2 h-4 w-4" />
+                )}
+                Send Magic Link
+              </Button>
+            )}
           </form>
 
           <div className="relative">
