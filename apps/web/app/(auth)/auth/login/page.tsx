@@ -22,9 +22,9 @@ import { toast } from '@/hooks/use-toast';
 function LoginContent() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState(''); // TODO(hackathon): Remove after demo — #323
   const [isLoading, setIsLoading] = useState(false);
-  const [isPasswordLoading, setIsPasswordLoading] = useState(false);
+  const [isPasswordLoading, setIsPasswordLoading] = useState(false); // TODO(hackathon): Remove after demo — #323
   const [isGithubLoading, setIsGithubLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -79,6 +79,7 @@ function LoginContent() {
     }
   };
 
+  // TODO(hackathon): Remove password login handler after hackathon demo — #323
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
@@ -240,13 +241,19 @@ function LoginContent() {
                 required
                 className="bg-background/50 border-white/10 focus:border-brand-strong/50 transition-colors h-11"
               />
+              {/* TODO(hackathon): Remove password login after hackathon demo — #323 */}
               <Input
                 type="password"
-                placeholder="Password (optional)"
+                placeholder="Password (for test accounts only)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="bg-background/50 border-white/10 focus:border-brand-strong/50 transition-colors h-11"
               />
+              {password && (
+                <p className="text-[11px] text-muted-foreground/60 px-1">
+                  Password login is for test accounts only.
+                </p>
+              )}
             </div>
             {password ? (
               <Button
