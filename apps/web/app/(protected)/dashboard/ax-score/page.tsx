@@ -359,7 +359,7 @@ export default function DashboardAxScorePage() {
                     <CompetitorSetCard
                       key={set.id}
                       set={set}
-                      siteCount={0}
+                      siteCount={(set as unknown as { siteCount?: number }).siteCount || 0}
                       avgScore={null}
                       onClick={() => handleRunComparison(set.id)}
                     />
