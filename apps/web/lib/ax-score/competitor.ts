@@ -140,6 +140,29 @@ export async function listCompetitorSets(
 }
 
 /**
+ * Get site counts for multiple competitor sets.
+ */
+export async function getCompetitorSetSiteCounts(
+  setIds: string[]
+): Promise<Record<string, number>> {
+  if (setIds.length === 0) return {};
+
+  const db = getAxDbClient();
+  const counts: Record<string, number> = {};
+
+  const { data } = await db
+    .from('ax_competitor_sites')
+    .select('set_id')
+    .in('set_id', setIds);
+
+  for (const row of (data || []) as { set_id: string }[]) {
+    counts[row.set_id] = (counts[row.set_id] || 0) + 1;
+  }
+
+  return counts;
+}
+
+/**
  * Run a comparison between the developer's sites and a competitor set.
  * Computes percentile rank for each developer site relative to competitors.
  */

@@ -15,6 +15,7 @@ import { getDeveloperPlan } from '@/lib/ax-score/usage';
 import {
   listCompetitorSets,
   createCompetitorSet,
+  getCompetitorSetSiteCounts,
 } from '@/lib/ax-score/competitor';
 
 /**
@@ -44,6 +45,9 @@ const getHandler = withDeveloperAuth(async function GET(req: NextRequest) {
 
     const sets = await listCompetitorSets(developerId);
 
+    const setIds = sets.map((s) => s.id);
+    const siteCounts = await getCompetitorSetSiteCounts(setIds);
+
     return jsonResponse(
       createSuccessResponse(
         sets.map((s) => ({
@@ -52,6 +56,7 @@ const getHandler = withDeveloperAuth(async function GET(req: NextRequest) {
           name: s.name,
           description: s.description,
           industry: s.industry,
+          siteCount: siteCounts[s.id] || 0,
           createdAt: s.created_at,
           updatedAt: s.updated_at,
         }))
