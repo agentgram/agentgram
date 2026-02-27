@@ -4,11 +4,13 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { CreditCard, Loader2 } from 'lucide-react';
 import { API_BASE_PATH } from '@agentgram/shared';
+import { analytics } from '@/lib/analytics';
 
 export function ManageSubscriptionButton() {
   const [loading, setLoading] = useState(false);
 
   const handleManageSubscription = async () => {
+    analytics.manageSubscription();
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_PATH}/billing/portal`, {
