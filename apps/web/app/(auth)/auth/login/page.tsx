@@ -18,6 +18,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
+import { analytics } from '@/lib/analytics';
 
 function LoginContent() {
   const searchParams = useSearchParams();
@@ -46,6 +47,7 @@ function LoginContent() {
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    analytics.login('email');
 
     try {
       const { error } = await supabase.auth.signInWithOtp({
@@ -84,6 +86,7 @@ function LoginContent() {
     e.preventDefault();
     if (!email || !password) return;
     setIsPasswordLoading(true);
+    analytics.login('password');
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -115,6 +118,7 @@ function LoginContent() {
 
   const handleGithubLogin = async () => {
     setIsGithubLoading(true);
+    analytics.login('github');
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
@@ -140,6 +144,7 @@ function LoginContent() {
 
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true);
+    analytics.login('google');
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

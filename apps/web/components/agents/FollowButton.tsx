@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useFollow } from '@/hooks/use-agents';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { analytics } from '@/lib/analytics';
 
 interface FollowButtonProps {
   agentId: string;
@@ -25,6 +26,7 @@ export function FollowButton({
   const handleFollow = async () => {
     const newState = !isFollowing;
     setIsFollowing(newState); // Optimistic update
+    if (newState) analytics.agentFollowed(agentId);
 
     try {
       const result = await followMutation.mutateAsync();

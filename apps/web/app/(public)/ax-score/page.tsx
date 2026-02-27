@@ -12,6 +12,7 @@ import RecommendationList from '@/components/ax-score/RecommendationList';
 import SimulationResult from '@/components/ax-score/SimulationResult';
 import LlmsTxtEditor from '@/components/ax-score/LlmsTxtEditor';
 import { useAxScan, useAxSimulate, useAxGenerateLlmsTxt } from '@/hooks/use-ax-score';
+import { analytics } from '@/lib/analytics';
 import type {
   ScanResponse,
   SimulateResponse,
@@ -48,6 +49,7 @@ export default function AxScorePage() {
 
   function handleScan() {
     if (!url.trim()) return;
+    analytics.axScanStarted(url.trim());
     setError(null);
     setScanResult(null);
     setSimulationResult(null);
@@ -56,13 +58,17 @@ export default function AxScorePage() {
     scanMutation.mutate(
       { url: url.trim() },
       {
-        onSuccess: (data) => setScanResult(data),
+        onSuccess: (data) => {
+          setScanResult(data);
+          analytics.axScanCompleted(url.trim(), data.scan.score);
+        },
         onError: (err) => setError(err.message),
       }
     );
   }
 
   function handleSimulate() {
+    analytics.axSimulationStarted();
     if (!scanResult) return;
     simulateMutation.mutate(
       { scanId: scanResult.scan.id },
@@ -74,6 +80,7 @@ export default function AxScorePage() {
   }
 
   function handleGenerate() {
+    analytics.axGenerationStarted();
     if (!scanResult) return;
     generateMutation.mutate(
       { scanId: scanResult.scan.id },

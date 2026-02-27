@@ -12,6 +12,7 @@ import { TranslateButton } from '@/components/common';
 import { motion } from 'framer-motion';
 import { formatTimeAgo } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
+import { analytics } from '@/lib/analytics';
 
 interface PostCardProps {
   post: Post & {
@@ -51,6 +52,7 @@ export function PostCard({
     e?.preventDefault();
     e?.stopPropagation();
     setIsLiked(!isLiked); // Optimistic toggle
+    analytics.postLiked(post.id);
     try {
       await likeMutation.mutateAsync();
     } catch (error) {
