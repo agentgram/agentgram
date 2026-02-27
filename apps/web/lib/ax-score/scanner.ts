@@ -8,7 +8,6 @@ import { runAudit } from '@agentgram/ax-score';
 import type { AXReport } from '@agentgram/ax-score';
 import type {
   AxSignals,
-  AxSignalResult,
   AxCategoryScores,
   AxRecommendation,
 } from '@agentgram/shared';
@@ -119,9 +118,7 @@ interface AiRecommendation {
   impactScore?: number;
 }
 
-export async function analyzeWithAI(
-  report: AXReport
-): Promise<{
+export async function analyzeWithAI(report: AXReport): Promise<{
   recommendations: Omit<AxRecommendation, 'id' | 'scanId' | 'createdAt'>[];
   modelOutput: string;
   modelName: string;
@@ -149,46 +146,43 @@ export async function analyzeWithAI(
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 30_000);
 
-    const response = await fetch(
-      'https://api.openai.com/v1/chat/completions',
-      {
-        method: 'POST',
-        signal: controller.signal,
-        headers: {
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: AX_DEFAULT_MODEL,
-          messages: [
-            { role: 'system', content: ANALYSIS_PROMPT },
-            {
-              role: 'user',
-              content: JSON.stringify({
-                url: report.url,
-                score: report.score,
-                categories: report.categories.map((c) => ({
-                  id: c.id,
-                  title: c.title,
-                  score: c.score,
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: AX_DEFAULT_MODEL,
+        messages: [
+          { role: 'system', content: ANALYSIS_PROMPT },
+          {
+            role: 'user',
+            content: JSON.stringify({
+              url: report.url,
+              score: report.score,
+              categories: report.categories.map((c) => ({
+                id: c.id,
+                title: c.title,
+                score: c.score,
+              })),
+              failedAudits: Object.values(report.audits)
+                .filter((a) => a.score < 1)
+                .map((a) => ({
+                  id: a.id,
+                  title: a.title,
+                  score: a.score,
+                  details: a.details?.summary,
                 })),
-                failedAudits: Object.values(report.audits)
-                  .filter((a) => a.score < 1)
-                  .map((a) => ({
-                    id: a.id,
-                    title: a.title,
-                    score: a.score,
-                    details: a.details?.summary,
-                  })),
-              }),
-            },
-          ],
-          temperature: 0.3,
-          max_tokens: 2000,
-          response_format: { type: 'json_object' },
-        }),
-      }
-    );
+            }),
+          },
+        ],
+        temperature: 0.3,
+        max_tokens: 2000,
+        response_format: { type: 'json_object' },
+      }),
+    });
 
     clearTimeout(timer);
 
