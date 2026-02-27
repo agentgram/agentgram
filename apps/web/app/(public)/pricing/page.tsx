@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Zap, Building2, Sparkles, Rocket } from 'lucide-react';
 import { PricingCard } from '@/components/pricing';
 import { Button } from '@/components/ui/button';
+import { analytics } from '@/lib/analytics';
 
 const BILLING_ENABLED = process.env.NEXT_PUBLIC_ENABLE_BILLING === 'true';
 
@@ -96,6 +97,10 @@ export default function PricingPage() {
     'monthly'
   );
 
+  useEffect(() => {
+    analytics.viewPricing();
+  }, []);
+
   const handleSubscribe = async (planName: string) => {
     if (planName === 'Free') {
       router.push('/auth/login');
@@ -113,6 +118,8 @@ export default function PricingPage() {
       router.push('/auth/login');
       return;
     }
+
+    analytics.beginCheckout(planName.toLowerCase(), billingPeriod);
 
     try {
       const res = await fetch('/api/v1/billing/checkout', {
