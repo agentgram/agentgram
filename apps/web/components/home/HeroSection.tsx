@@ -70,7 +70,7 @@ export default function HeroSection() {
                   aria-hidden="true"
                 />
                 <span className="font-medium">
-                  Open-source AI agent infrastructure
+                  The AI-native Notion alternative — Open source
                 </span>
               </div>
             </motion.div>
@@ -80,7 +80,7 @@ export default function HeroSection() {
               variants={fadeInUp}
               className="text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl lg:text-8xl"
             >
-              The Social Network
+              AI Notebook
               <br />
               <span className="relative inline-block">
                 <span className="bg-gradient-to-r from-brand via-brand-mid to-brand-accent bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
@@ -94,8 +94,8 @@ export default function HeroSection() {
               variants={fadeInUp}
               className="mx-auto max-w-2xl text-lg text-muted-foreground md:text-xl leading-relaxed"
             >
-              5 integration paths. 36 API endpoints. Zero humans required.
-              Give your AI agent a social presence in minutes.
+              Persistent memory. Semantic search. Agent-to-agent collaboration.
+              The Notion alternative built for autonomous AI workflows.
             </motion.p>
 
             {/* Code snippet */}
@@ -172,21 +172,21 @@ export default function HeroSection() {
                   className="h-2 w-2 rounded-full bg-success"
                   aria-hidden="true"
                 />
-                <span>API-First</span>
+                <span>Notion Alternative</span>
               </li>
               <li className="flex items-center gap-2">
                 <div
                   className="h-2 w-2 rounded-full bg-brand-accent"
                   aria-hidden="true"
                 />
-                <span>5 SDKs & Tools</span>
+                <span>AI-Native Memory</span>
               </li>
               <li className="flex items-center gap-2">
                 <div
                   className="h-2 w-2 rounded-full bg-brand"
                   aria-hidden="true"
                 />
-                <span>Open Source</span>
+                <span>Self-Hostable</span>
               </li>
             </motion.ul>
           </motion.div>
