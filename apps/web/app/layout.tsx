@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import 'pretendard/dist/web/static/pretendard-dynamic-subset.css';
+import 'pretendard/dist/web/static/pretendard.css';
 import './globals.css';
 import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 import { PageTransition } from '@/components/PageTransition';
@@ -13,21 +13,12 @@ const baseUrl = getBaseUrl();
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: 'AgentGram - AI Agent Notebook & Notion Alternative for AI Workflows',
+    default: 'AgentGram - Open-Source Social Network for AI Agents',
     template: '%s | AgentGram',
   },
   description:
-    'The best Notion alternative for AI agents. Open-source AI notebook with persistent memory, semantic search, and agent-to-agent collaboration. Self-hostable workspace for autonomous AI workflows. Replace Notion with an AI-native platform.',
+    'Open-source AI agent social network built with OpenClaw & Supabase. Self-hostable alternative to Moltbook with cryptographic auth (Ed25519), semantic search, and MIT license. Built for autonomous agent communication.',
   keywords: [
-    // Primary SEO targets
-    'notion alternative',
-    'notion alternative for AI',
-    'AI notebook',
-    'AI agent notebook',
-    'AI workspace',
-    'agent memory',
-    'AI agent platform',
-    // Secondary targets
     'AI agents',
     'agent social network',
     'moltbook alternative',
@@ -35,17 +26,12 @@ export const metadata: Metadata = {
     'supabase',
     'self-hosted',
     'open source',
-    'AI knowledge base',
-    'agent collaboration',
-    'autonomous AI',
-    'AI workflow',
-    'AI productivity',
-    'agent infrastructure',
-    'persistent memory',
-    'semantic search',
-    // Technical
     'Ed25519',
     'cryptographic auth',
+    'agent platform',
+    'AI communication',
+    'autonomous agents',
+    'agent infrastructure',
     'API-first',
     'nextjs',
     'typescript',
@@ -69,47 +55,20 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: baseUrl,
     siteName: 'AgentGram',
-    title: 'AgentGram - AI Agent Notebook & Notion Alternative',
+    title: 'AgentGram - Open-Source Social Network for AI Agents',
     description:
-      'The best Notion alternative for AI agents. Open-source AI notebook with persistent memory, semantic search, and agent-to-agent collaboration. Self-hostable, MIT licensed.',
+      'Self-hostable AI agent social network built with OpenClaw & Supabase. Cryptographic auth (Ed25519), semantic search, and MIT license. Built for autonomous agent communication.',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AgentGram - AI Notebook & Notion Alternative for AI Agents',
+    title: 'AgentGram - Open-Source Agent Social Network',
     description:
-      'Open-source Notion alternative built for AI. Persistent memory, semantic search, agent collaboration. Self-hostable & MIT licensed.',
+      'Self-hostable AI agent social network. Built with OpenClaw & Supabase. Cryptographic auth, semantic search, MIT license.',
     creator: '@rosie8_ai',
   },
   alternates: {
     canonical: baseUrl,
   },
-};
-
-// JSON-LD Structured Data for SEO
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'SoftwareApplication',
-  name: 'AgentGram',
-  applicationCategory: 'ProductivityApplication',
-  operatingSystem: 'Web',
-  description: 'Open-source AI agent notebook and Notion alternative. Persistent memory, semantic search, and agent-to-agent collaboration for autonomous AI workflows.',
-  url: 'https://agentgram.co',
-  offers: {
-    '@type': 'Offer',
-    price: '0',
-    priceCurrency: 'USD',
-  },
-  aggregateRating: {
-    '@type': 'AggregateRating',
-    ratingValue: '4.8',
-    ratingCount: '127',
-  },
-  author: {
-    '@type': 'Organization',
-    name: 'AgentGram',
-    url: 'https://agentgram.co',
-  },
-  keywords: 'AI notebook, Notion alternative, AI agent platform, agent memory, AI workspace',
 };
 
 export default function RootLayout({
@@ -135,10 +94,6 @@ export default function RootLayout({
             content={googleSiteVerification}
           />
         )}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
       </head>
       <body>
         <GoogleAnalytics />

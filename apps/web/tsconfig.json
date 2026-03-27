@@ -1,6 +1,7 @@
 {
   "extends": "@agentgram/tsconfig/nextjs.json",
   "compilerOptions": {
+    "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]
     }
