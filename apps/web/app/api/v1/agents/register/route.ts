@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
-import { generateApiKey, withRateLimit } from '@agentgram/auth';
+import { generateApiKey, withRateLimit, redis } from '@agentgram/auth';
 import bcrypt from 'bcryptjs';
 import type { AgentRegistration } from '@agentgram/shared';
 import {
@@ -18,8 +18,36 @@ import {
   createErrorResponse,
 } from '@agentgram/shared';
 
+/**
+ * Global registration rate limit — caps total registrations across all IPs.
+ * Prevents distributed spam attacks that rotate source IPs.
+ *
+ * Key: "global:registration" in Redis
+ * Limit: 50 registrations per hour
+ */
+const GLOBAL_REGISTRATION_LIMIT = 50;
+const GLOBAL_REGISTRATION_WINDOW_SECONDS = 3600;
+
 async function registerHandler(req: NextRequest) {
   try {
+    // Global registration rate limit (all IPs combined)
+    if (redis) {
+      const globalKey = 'global:registration';
+      const current = await redis.incr(globalKey);
+      if (current === 1) {
+        await redis.expire(globalKey, GLOBAL_REGISTRATION_WINDOW_SECONDS);
+      }
+      if (current > GLOBAL_REGISTRATION_LIMIT) {
+        return jsonResponse(
+          createErrorResponse(
+            'RATE_LIMIT_EXCEEDED',
+            'Too many registrations. Please try again later.'
+          ),
+          429
+        );
+      }
+    }
+
     const body = (await req.json()) as AgentRegistration;
     const { name, displayName, description, email, publicKey } = body;
 

@@ -87,12 +87,24 @@ export const redis =
     : null;
 
 if (!redis && process.env.NODE_ENV === 'production') {
-  console.warn(
+  console.error(
     '[agentgram:ratelimit] Upstash Redis not configured in production. ' +
-      'In-memory rate limiting is ineffective in serverless environments. ' +
+      'Mutation endpoints will reject requests (fail-closed). ' +
       'Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN.'
   );
 }
+
+/**
+ * Rate limit types that must fail-closed (reject) when Redis is unavailable
+ * in production. Read-only endpoints still fall back to in-memory limiting.
+ */
+const FAIL_CLOSED_TYPES = new Set([
+  'registration',
+  'post',
+  'comment',
+  'vote',
+  'follow',
+]);
 
 if (!redis) {
   startCleanupInterval();
@@ -263,6 +275,7 @@ export function withRateLimit<T extends unknown[]>(
   limitType: string | RateLimitOptions,
   handler: (req: NextRequest, ...args: T) => Promise<Response>
 ): (req: NextRequest, ...args: T) => Promise<Response> {
+  const typeName = typeof limitType === 'string' ? limitType : 'custom';
   const options: RateLimitOptions =
     typeof limitType === 'string'
       ? RATE_LIMIT_CONFIGS[limitType] || RATE_LIMIT_CONFIGS.default
@@ -281,6 +294,28 @@ export function withRateLimit<T extends unknown[]>(
       ? `key-prefix:${keyPrefix}:${pathname}`
       : null;
     const limiter = getLimiter(options);
+
+    // Fail-closed: reject mutation endpoints when Redis is unavailable in production
+    if (
+      !limiter &&
+      process.env.NODE_ENV === 'production' &&
+      FAIL_CLOSED_TYPES.has(typeName)
+    ) {
+      console.error(
+        `[agentgram:ratelimit] Rejecting ${typeName} request: Redis unavailable (fail-closed)`
+      );
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'RATE_LIMIT_EXCEEDED',
+            message:
+              'Service temporarily unavailable. Please try again later.',
+          },
+        } satisfies ApiResponse,
+        { status: 503, headers: { 'Retry-After': '60' } }
+      );
+    }
 
     if (limiter) {
       const result = await limiter.limit(key);

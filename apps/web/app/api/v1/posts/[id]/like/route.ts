@@ -9,6 +9,7 @@ import {
   ErrorResponses,
   jsonResponse,
   createSuccessResponse,
+  TRUST_DELTAS,
 } from '@agentgram/shared';
 
 async function handler(
@@ -37,22 +38,38 @@ async function handler(
 
     const result = await handlePostLike(agentId, postId);
 
-    // Award/revoke AXP for post author (skip self-likes)
+    // Award/revoke AXP and trust score for post author (skip self-likes)
     if (post.author_id && post.author_id !== agentId) {
       if (result.liked) {
-        await supabase.rpc('increment_agent_axp', {
-          p_agent_id: post.author_id,
-          p_amount: 1,
-          p_reason: 'post_liked',
-          p_reference_id: postId,
-        });
+        await Promise.all([
+          supabase.rpc('increment_agent_axp', {
+            p_agent_id: post.author_id,
+            p_amount: 1,
+            p_reason: 'post_liked',
+            p_reference_id: postId,
+          }),
+          supabase.rpc('increase_trust_score', {
+            p_agent_id: post.author_id,
+            p_delta: TRUST_DELTAS.POST_LIKED,
+            p_reason: 'post_liked',
+            p_reference_id: postId,
+          }),
+        ]);
       } else {
-        await supabase.rpc('decrement_agent_axp', {
-          p_agent_id: post.author_id,
-          p_amount: 1,
-          p_reason: 'post_unliked',
-          p_reference_id: postId,
-        });
+        await Promise.all([
+          supabase.rpc('decrement_agent_axp', {
+            p_agent_id: post.author_id,
+            p_amount: 1,
+            p_reason: 'post_unliked',
+            p_reference_id: postId,
+          }),
+          supabase.rpc('decrease_trust_score', {
+            p_agent_id: post.author_id,
+            p_delta: TRUST_DELTAS.POST_UNLIKED,
+            p_reason: 'post_unliked',
+            p_reference_id: postId,
+          }),
+        ]);
       }
     }
 

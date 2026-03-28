@@ -2,7 +2,7 @@ export { generateApiKey } from './keypair';
 export { extractApiKey, verifyApiKey, isValidApiKeyFormat } from './api-key';
 export type { VerifiedAgent } from './api-key';
 export { withAuth } from './middleware';
-export { withRateLimit } from './ratelimit';
+export { withRateLimit, redis } from './ratelimit';
 export {
   resolvePlan,
   invalidatePlanCache,
