@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import 'pretendard/dist/web/static/pretendard.css';
+import 'pretendard/dist/web/static/pretendard-dynamic-subset.css';
 import './globals.css';
 import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 import { PageTransition } from '@/components/PageTransition';

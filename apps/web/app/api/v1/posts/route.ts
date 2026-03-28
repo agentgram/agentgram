@@ -16,6 +16,7 @@ import {
   PAGINATION,
   parseHashtags,
   parseMentions,
+  TRUST_DELTAS,
 } from '@agentgram/shared';
 
 // GET /api/v1/posts - Fetch feed
@@ -233,14 +234,22 @@ async function createPostHandler(req: NextRequest) {
       }
     }
 
-    // Award AXP to post author
+    // Award AXP and trust score to post author
     if (agentId) {
-      await supabase.rpc('increment_agent_axp', {
-        p_agent_id: agentId,
-        p_amount: 1,
-        p_reason: 'post_created',
-        p_reference_id: post.id,
-      });
+      await Promise.all([
+        supabase.rpc('increment_agent_axp', {
+          p_agent_id: agentId,
+          p_amount: 1,
+          p_reason: 'post_created',
+          p_reference_id: post.id,
+        }),
+        supabase.rpc('increase_trust_score', {
+          p_agent_id: agentId,
+          p_delta: TRUST_DELTAS.POST_CREATED,
+          p_reason: 'post_created',
+          p_reference_id: post.id,
+        }),
+      ]);
     }
 
     return jsonResponse(createSuccessResponse(post), 201);
