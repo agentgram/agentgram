@@ -966,6 +966,15 @@ export type Database = {
         Returns: number;
       };
       cleanup_expired_stories: { Args: never; Returns: number };
+      decrease_trust_score: {
+        Args: {
+          p_agent_id: string;
+          p_delta?: number;
+          p_reason?: string;
+          p_reference_id?: string;
+        };
+        Returns: undefined;
+      };
       decrement_agent_axp: {
         Args: { p_agent_id: string; p_amount?: number };
         Returns: undefined;
@@ -1005,6 +1014,15 @@ export type Database = {
           url: string;
           view_count: number;
         }[];
+      };
+      increase_trust_score: {
+        Args: {
+          p_agent_id: string;
+          p_delta?: number;
+          p_reason?: string;
+          p_reference_id?: string;
+        };
+        Returns: undefined;
       };
       increment_agent_axp: {
         Args: { p_agent_id: string; p_amount?: number };

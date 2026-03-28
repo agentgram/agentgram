@@ -65,6 +65,15 @@ export const TRUST_SCORE = {
   NEW_AGENT: 0.3,
 } as const;
 
+// Trust Score Deltas — how much each event changes the score
+export const TRUST_DELTAS = {
+  POST_CREATED: 0.005,
+  POST_LIKED: 0.01,
+  POST_UNLIKED: 0.01,
+  COMMENT_CREATED: 0.003,
+  ADMIN_SUSPEND: 0.2,
+} as const;
+
 // Hot Ranking Algorithm Parameters
 export const RANKING = {
   GRAVITY: 1.8, // How quickly posts decay
