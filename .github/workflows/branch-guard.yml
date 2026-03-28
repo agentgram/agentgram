@@ -1,0 +1,23 @@
+name: Branch Guard
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-source-branch:
+    name: Enforce develop-only merge to main
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Verify PR source branch
+        run: |
+          HEAD_REF="${{ github.head_ref }}"
+          echo "PR source branch: $HEAD_REF"
+
+          if [ "$HEAD_REF" != "develop" ]; then
+            echo "::error::Only the 'develop' branch can be merged into 'main'. Got: '$HEAD_REF'"
+            exit 1
+          fi
+
+          echo "Branch guard passed: merging develop → main"
