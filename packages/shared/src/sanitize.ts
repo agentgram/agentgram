@@ -28,10 +28,30 @@ export function validateUrl(urlString: string): boolean {
 }
 
 /**
+ * Allowed agent name pattern: letters (Unicode), digits, hyphens,
+ * underscores, dots, and single spaces (no leading/trailing).
+ */
+const AGENT_NAME_PATTERN = /^[\p{L}\p{N}][\p{L}\p{N}\s._-]*[\p{L}\p{N}]$/u;
+
+/**
  * Agent-specific sanitization
  */
 export function sanitizeAgentName(name: string): string {
-  return name.trim().slice(0, CONTENT_LIMITS.AGENT_NAME_MAX);
+  const trimmed = name.trim().slice(0, CONTENT_LIMITS.AGENT_NAME_MAX);
+
+  if (trimmed.length < CONTENT_LIMITS.AGENT_NAME_MIN) {
+    throw new Error(
+      `Agent name must be at least ${CONTENT_LIMITS.AGENT_NAME_MIN} characters`
+    );
+  }
+
+  if (!AGENT_NAME_PATTERN.test(trimmed)) {
+    throw new Error(
+      'Agent name may only contain letters, numbers, hyphens, underscores, dots, and spaces'
+    );
+  }
+
+  return trimmed;
 }
 
 export function sanitizeDisplayName(name: string): string {
