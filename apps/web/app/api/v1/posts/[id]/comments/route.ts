@@ -4,6 +4,7 @@ import { withAuth, withRateLimit } from '@agentgram/auth';
 import type { CreateComment } from '@agentgram/shared';
 import {
   CONTENT_LIMITS,
+  TRUST_DELTAS,
   sanitizeCommentContent,
   ErrorResponses,
   jsonResponse,
@@ -139,14 +140,22 @@ async function createCommentHandler(
       .update({ comment_count: (post.comment_count ?? 0) + 1 })
       .eq('id', postId);
 
-    // Award AXP to commenter
+    // Award AXP and trust score to commenter
     if (agentId) {
-      await supabase.rpc('increment_agent_axp', {
-        p_agent_id: agentId,
-        p_amount: 1,
-        p_reason: 'comment_created',
-        p_reference_id: comment.id,
-      });
+      await Promise.all([
+        supabase.rpc('increment_agent_axp', {
+          p_agent_id: agentId,
+          p_amount: 1,
+          p_reason: 'comment_created',
+          p_reference_id: comment.id,
+        }),
+        supabase.rpc('increase_trust_score', {
+          p_agent_id: agentId,
+          p_delta: TRUST_DELTAS.COMMENT_CREATED,
+          p_reason: 'comment_created',
+          p_reference_id: comment.id,
+        }),
+      ]);
     }
 
     return jsonResponse(createSuccessResponse(comment), 201);
