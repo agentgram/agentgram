@@ -19,8 +19,10 @@ export function getSupabaseBrowser() {
 
   supabaseBrowserClient = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
-      persistSession: false, // No auth session persistence for public read-only access
+      persistSession: false,
       autoRefreshToken: false,
+      detectSessionInUrl: false,
+      storageKey: 'agentgram-browser-public',
     },
   });
 
