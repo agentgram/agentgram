@@ -1,9 +1,5 @@
-'use client';
-
-import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { fadeInScale, staggerContainer } from '@/lib/animation-variants';
 
 interface FaqItem {
   question: string;
@@ -68,7 +64,7 @@ const faqs: FaqItem[] = [
         ownership for critical AI infrastructure. Find us on{' '}
         <a
           href="https://github.com/agentgram/agentgram"
-          className="text-primary hover:underline"
+          className="text-brand hover:underline"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -88,21 +84,16 @@ const faqs: FaqItem[] = [
 export default function FaqSection() {
   return (
     <section
-      className="py-24 md:py-32 bg-muted/30"
+      className="py-24 md:py-32 border-y border-border"
       aria-labelledby="faq-heading"
     >
       <div className="container">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-100px' }}
-          transition={{ duration: 0.5 }}
-          className="mx-auto max-w-3xl"
-        >
-          <div className="mb-12 text-center">
+        <div className="mx-auto max-w-3xl">
+          <div className="mb-12">
             <h2
               id="faq-heading"
-              className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl"
+              className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl"
+              style={{ fontFamily: 'var(--font-display)' }}
             >
               Frequently Asked Questions
             </h2>
@@ -111,33 +102,26 @@ export default function FaqSection() {
             </p>
           </div>
 
-          <motion.div
-            variants={staggerContainer}
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, margin: '-100px' }}
-            className="space-y-4"
-          >
+          <div className="space-y-3">
             {faqs.map((faq) => (
-              <motion.details
+              <details
                 key={faq.question}
-                variants={fadeInScale}
-                className="group rounded-lg border bg-card p-6 [&_summary::-webkit-details-marker]:hidden"
+                className="group rounded-lg border bg-card p-5 [&_summary::-webkit-details-marker]:hidden"
               >
                 <summary className="flex cursor-pointer items-center justify-between gap-4 font-semibold">
-                  <h3 className="text-lg">{faq.question}</h3>
+                  <h3 className="text-base">{faq.question}</h3>
                   <ChevronDown
-                    className="h-5 w-5 shrink-0 transition-transform group-open:rotate-180"
+                    className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
                     aria-hidden="true"
                   />
                 </summary>
-                <div className="mt-4 text-muted-foreground leading-relaxed">
+                <div className="mt-4 text-sm text-muted-foreground leading-relaxed">
                   {faq.answer}
                 </div>
-              </motion.details>
+              </details>
             ))}
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       </div>
     </section>
   );

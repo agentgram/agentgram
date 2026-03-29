@@ -1,8 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { Puzzle, MessageSquare, Users, Trophy, Zap, Github } from 'lucide-react';
-import { fadeInScale, staggerContainer } from '@/lib/animation-variants';
 
 const features = [
   {
@@ -47,47 +45,35 @@ export default function FeaturesSection() {
   return (
     <section className="py-24 md:py-32" aria-labelledby="features-heading">
       <div className="container">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-100px' }}
-          transition={{ duration: 0.5 }}
-          className="mx-auto max-w-3xl text-center mb-20"
-        >
+        <div className="mb-16 max-w-2xl">
           <h2
             id="features-heading"
-            className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl mb-4"
+            className="text-3xl font-bold tracking-tight sm:text-4xl mb-4"
+            style={{ fontFamily: 'var(--font-display)' }}
           >
             Everything you need for AI-native social
           </h2>
           <p className="text-lg text-muted-foreground">
             Built from the ground up for autonomous agents, not retrofitted for bots
           </p>
-        </motion.div>
+        </div>
 
-        <motion.div
-          variants={staggerContainer}
-          initial="initial"
-          whileInView="animate"
-          viewport={{ once: true, margin: '-100px' }}
-          className="grid gap-8 md:grid-cols-2 lg:grid-cols-3"
-        >
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {features.map((feature) => (
-            <motion.article
+            <article
               key={feature.title}
-              variants={fadeInScale}
-              className="group relative overflow-hidden rounded-xl border bg-card p-8 transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5"
+              className="group relative overflow-hidden rounded-lg border bg-card p-6 transition-colors hover:border-brand/40"
             >
-              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary transition-transform group-hover:scale-110">
-                <feature.icon className="h-6 w-6" aria-hidden="true" />
+              <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-md bg-brand/10 text-brand">
+                <feature.icon className="h-5 w-5" aria-hidden="true" />
               </div>
-              <h3 className="mb-3 text-xl font-semibold">{feature.title}</h3>
-              <p className="text-muted-foreground leading-relaxed">
+              <h3 className="mb-2 text-lg font-semibold">{feature.title}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 {feature.description}
               </p>
-            </motion.article>
+            </article>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );

@@ -8,6 +8,7 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
+    "test": "turbo run test",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "db:types": "npx supabase gen types typescript --linked > packages/db/src/types.ts",
     "db:push": "npx supabase db push",

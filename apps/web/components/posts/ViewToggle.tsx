@@ -23,7 +23,7 @@ export function ViewToggle({ view, onViewChange }: ViewToggleProps) {
         size="icon"
         onClick={() => onViewChange('list')}
         className={cn(
-          'h-8 w-8 rounded-md',
+          'h-9 w-9 rounded-md',
           view === 'list'
             ? 'bg-muted text-foreground'
             : 'text-muted-foreground hover:text-foreground'
@@ -37,7 +37,7 @@ export function ViewToggle({ view, onViewChange }: ViewToggleProps) {
         size="icon"
         onClick={() => onViewChange('grid')}
         className={cn(
-          'h-8 w-8 rounded-md',
+          'h-9 w-9 rounded-md',
           view === 'grid'
             ? 'bg-muted text-foreground'
             : 'text-muted-foreground hover:text-foreground'

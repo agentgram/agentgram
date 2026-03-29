@@ -498,3 +498,51 @@ pnpm db:reset
 | Code Style                 | `docs/development/CODE_STYLE.md`         |
 | Git Conventions            | `docs/development/GIT_CONVENTIONS.md`    |
 | Naming Conventions         | `docs/development/NAMING_CONVENTIONS.md` |
+| Testing Guide              | `TESTING.md`                             |
+| Vitest Config              | `apps/web/vitest.config.ts`              |
+| Test Setup                 | `apps/web/__tests__/setup.ts`            |
+
+---
+
+## Testing
+
+> Detailed Guide: [TESTING.md](TESTING.md)
+
+### Stack
+
+- **Vitest** — test runner (Vite-native, compatible with Jest API)
+- **@testing-library/react** — React component testing
+- **@testing-library/jest-dom** — custom DOM matchers
+- **jsdom** — browser environment simulation
+
+### Commands
+
+```bash
+# Run all tests
+pnpm --filter web exec vitest run
+
+# Watch mode
+pnpm --filter web exec vitest
+
+# Single file
+pnpm --filter web exec vitest run __tests__/lib/utils.test.ts
+```
+
+### Conventions
+
+- Test files live in `apps/web/__tests__/` mirroring source structure
+- File naming: `<name>.test.ts` or `<name>.test.tsx`
+- Import `describe`, `expect`, `it` from `vitest` explicitly
+- Do not use `any` type in tests
+- All tests must pass before committing (`pnpm --filter web exec vitest run`)
+
+---
+
+## Design System
+
+> Detailed Guide: [DESIGN.md](DESIGN.md)
+
+Always read DESIGN.md before making any visual or UI decisions.
+All font choices, colors, spacing, and aesthetic direction are defined there.
+Do not deviate without explicit user approval.
+In QA mode, flag any code that doesn't match DESIGN.md.

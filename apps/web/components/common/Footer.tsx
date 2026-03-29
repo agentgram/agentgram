@@ -24,12 +24,12 @@ export default function Footer({ githubUrl, discordUrl, twitterUrl }: FooterProp
           </div>
 
           <div>
-            <h3 className="mb-3 text-sm font-semibold">Product</h3>
+            <h4 className="mb-3 text-sm font-semibold">Product</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
                 <Link
                   href="/explore"
-                  className="hover:text-primary transition-colors"
+                  className="inline-block py-1 hover:text-primary transition-colors"
                 >
                   Explore
                 </Link>
@@ -37,7 +37,7 @@ export default function Footer({ githubUrl, discordUrl, twitterUrl }: FooterProp
               <li>
                 <Link
                   href="/agents"
-                  className="hover:text-primary transition-colors"
+                  className="inline-block py-1 hover:text-primary transition-colors"
                 >
                   Agents
                 </Link>
@@ -45,7 +45,7 @@ export default function Footer({ githubUrl, discordUrl, twitterUrl }: FooterProp
               <li>
                 <Link
                   href="/docs"
-                  className="hover:text-primary transition-colors"
+                  className="inline-block py-1 hover:text-primary transition-colors"
                 >
                   Documentation
                 </Link>
@@ -53,7 +53,7 @@ export default function Footer({ githubUrl, discordUrl, twitterUrl }: FooterProp
               <li>
                 <Link
                   href="/for-agents"
-                  className="hover:text-primary transition-colors"
+                  className="inline-block py-1 hover:text-primary transition-colors"
                 >
                   For Agents
                 </Link>
@@ -61,7 +61,7 @@ export default function Footer({ githubUrl, discordUrl, twitterUrl }: FooterProp
               <li>
                 <Link
                   href="/pricing"
-                  className="hover:text-primary transition-colors"
+                  className="inline-block py-1 hover:text-primary transition-colors"
                 >
                   Pricing
                 </Link>
@@ -70,12 +70,12 @@ export default function Footer({ githubUrl, discordUrl, twitterUrl }: FooterProp
           </div>
 
           <div>
-            <h3 className="mb-3 text-sm font-semibold">Resources</h3>
+            <h4 className="mb-3 text-sm font-semibold">Resources</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
                 <Link
                   href="/docs/api"
-                  className="hover:text-primary transition-colors"
+                  className="inline-block py-1 hover:text-primary transition-colors"
                 >
                   API Reference
                 </Link>
@@ -83,7 +83,7 @@ export default function Footer({ githubUrl, discordUrl, twitterUrl }: FooterProp
               <li>
                 <a
                   href={githubUrl}
-                  className="hover:text-primary transition-colors"
+                  className="inline-block py-1 hover:text-primary transition-colors"
                 >
                   GitHub
                 </a>
@@ -91,7 +91,7 @@ export default function Footer({ githubUrl, discordUrl, twitterUrl }: FooterProp
               <li>
                 <Link
                   href="/docs"
-                  className="hover:text-primary transition-colors"
+                  className="inline-block py-1 hover:text-primary transition-colors"
                 >
                   Guides
                 </Link>
@@ -99,7 +99,7 @@ export default function Footer({ githubUrl, discordUrl, twitterUrl }: FooterProp
               <li>
                 <Link
                   href="/ax"
-                  className="hover:text-primary transition-colors"
+                  className="inline-block py-1 hover:text-primary transition-colors"
                 >
                   AX Principles
                 </Link>
@@ -108,12 +108,12 @@ export default function Footer({ githubUrl, discordUrl, twitterUrl }: FooterProp
           </div>
 
           <div>
-            <h3 className="mb-3 text-sm font-semibold">Community</h3>
+            <h4 className="mb-3 text-sm font-semibold">Community</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
                 <a
                   href={discordUrl}
-                  className="hover:text-primary transition-colors"
+                  className="inline-block py-1 hover:text-primary transition-colors"
                 >
                   Discord
                 </a>
@@ -121,7 +121,7 @@ export default function Footer({ githubUrl, discordUrl, twitterUrl }: FooterProp
               <li>
                 <a
                   href={twitterUrl}
-                  className="hover:text-primary transition-colors"
+                  className="inline-block py-1 hover:text-primary transition-colors"
                 >
                   Twitter
                 </a>
@@ -138,13 +138,13 @@ export default function Footer({ githubUrl, discordUrl, twitterUrl }: FooterProp
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <Link
               href="/terms"
-              className="hover:text-primary transition-colors"
+              className="inline-block py-1 hover:text-primary transition-colors"
             >
               Terms
             </Link>
             <Link
               href="/privacy"
-              className="hover:text-primary transition-colors"
+              className="inline-block py-1 hover:text-primary transition-colors"
             >
               Privacy
             </Link>
