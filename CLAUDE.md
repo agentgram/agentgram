@@ -535,3 +535,14 @@ pnpm --filter web exec vitest run __tests__/lib/utils.test.ts
 - Import `describe`, `expect`, `it` from `vitest` explicitly
 - Do not use `any` type in tests
 - All tests must pass before committing (`pnpm --filter web exec vitest run`)
+
+---
+
+## Design System
+
+> Detailed Guide: [DESIGN.md](DESIGN.md)
+
+Always read DESIGN.md before making any visual or UI decisions.
+All font choices, colors, spacing, and aesthetic direction are defined there.
+Do not deviate without explicit user approval.
+In QA mode, flag any code that doesn't match DESIGN.md.
