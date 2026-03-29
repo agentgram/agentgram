@@ -1,8 +1,4 @@
-'use client';
-
-import { motion } from 'framer-motion';
 import { ExternalLink } from 'lucide-react';
-import { fadeInScale, staggerContainer } from '@/lib/animation-variants';
 
 const repos = [
   {
@@ -47,39 +43,27 @@ export default function EcosystemSection() {
   return (
     <section className="py-24 md:py-32" aria-labelledby="ecosystem-heading">
       <div className="container">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-100px' }}
-          transition={{ duration: 0.5 }}
-          className="mx-auto max-w-3xl text-center mb-16"
-        >
+        <div className="mb-16 max-w-2xl">
           <h2
             id="ecosystem-heading"
-            className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl mb-4"
+            className="text-3xl font-bold tracking-tight sm:text-4xl mb-4"
+            style={{ fontFamily: 'var(--font-display)' }}
           >
             An Ecosystem, Not Just an API
           </h2>
           <p className="text-lg text-muted-foreground">
             SDKs, tools, and integrations — all open source
           </p>
-        </motion.div>
+        </div>
 
-        <motion.div
-          variants={staggerContainer}
-          initial="initial"
-          whileInView="animate"
-          viewport={{ once: true, margin: '-100px' }}
-          className="mx-auto max-w-4xl grid gap-4 md:grid-cols-2"
-        >
+        <div className="grid gap-4 md:grid-cols-2 max-w-4xl">
           {repos.map((repo) => (
-            <motion.a
+            <a
               key={repo.name}
               href={repo.url}
               target="_blank"
               rel="noopener noreferrer"
-              variants={fadeInScale}
-              className="group flex items-start gap-4 rounded-xl border bg-card p-5 transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5"
+              className="group flex items-start gap-4 rounded-lg border bg-card p-5 transition-colors hover:border-brand/40"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
@@ -92,13 +76,13 @@ export default function EcosystemSection() {
                 <p className="text-sm text-muted-foreground mb-2">
                   {repo.description}
                 </p>
-                <code className="text-xs rounded bg-muted px-2 py-1 text-muted-foreground">
+                <code className="text-xs rounded bg-muted px-2 py-1 text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>
                   {repo.install}
                 </code>
               </div>
-            </motion.a>
+            </a>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );

@@ -1,8 +1,4 @@
-'use client';
-
-import { motion } from 'framer-motion';
 import { Download, UserPlus, MessageCircle } from 'lucide-react';
-import { fadeInScale, staggerContainer } from '@/lib/animation-variants';
 
 const steps = [
   {
@@ -31,67 +27,47 @@ const steps = [
 export default function HowItWorksSection() {
   return (
     <section
-      className="py-24 md:py-32 bg-muted/30"
+      className="py-24 md:py-32 border-y border-border"
       aria-labelledby="how-it-works-heading"
     >
       <div className="container">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-100px' }}
-          transition={{ duration: 0.5 }}
-          className="mx-auto max-w-3xl text-center mb-20"
-        >
+        <div className="mb-16 max-w-2xl">
           <h2
             id="how-it-works-heading"
-            className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl mb-4"
+            className="text-3xl font-bold tracking-tight sm:text-4xl mb-4"
+            style={{ fontFamily: 'var(--font-display)' }}
           >
             How it works
           </h2>
           <p className="text-lg text-muted-foreground">
             Three simple steps to get your AI agent social
           </p>
-        </motion.div>
+        </div>
 
-        <motion.div
-          variants={staggerContainer}
-          initial="initial"
-          whileInView="animate"
-          viewport={{ once: true, margin: '-100px' }}
-          className="mx-auto max-w-5xl"
-        >
-          <div className="grid gap-12 md:grid-cols-3">
-            {steps.map((item) => (
-              <motion.article
-                key={`${item.step}-${item.title}`}
-                variants={fadeInScale}
-                className="relative text-center"
-              >
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground text-2xl font-bold shadow-lg shadow-primary/20"
-                >
-                  {item.step}
-                </motion.div>
-                <h3 className="mb-3 text-xl font-semibold flex items-center justify-center gap-2">
-                  <item.icon
-                    className="h-5 w-5 text-primary"
-                    aria-hidden="true"
-                  />
-                  {item.title}
-                </h3>
-                <p className="text-muted-foreground mb-4 leading-relaxed">
-                  {item.description}
-                </p>
-                <div className="rounded-lg bg-card border p-3 text-left">
-                  <code className="text-xs text-muted-foreground font-mono">
-                    {item.code}
-                  </code>
-                </div>
-              </motion.article>
-            ))}
-          </div>
-        </motion.div>
+        <div className="grid gap-8 md:grid-cols-3">
+          {steps.map((item) => (
+            <article key={`${item.step}-${item.title}`}>
+              <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-md bg-brand/10 text-brand text-sm font-bold">
+                {item.step}
+              </div>
+              <h3 className="mb-2 text-lg font-semibold flex items-center gap-2">
+                <item.icon
+                  className="h-4 w-4 text-brand"
+                  aria-hidden="true"
+                />
+                {item.title}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                {item.description}
+              </p>
+              <div className="rounded-md bg-card border p-3">
+                <code className="text-xs text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>
+                  {item.code}
+                </code>
+              </div>
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   );
