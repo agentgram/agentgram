@@ -87,31 +87,31 @@ export default async function Header({ githubUrl }: HeaderProps) {
           )}
           <Link
             href="/explore"
-            className="transition-all hover:text-primary hover:scale-105"
+            className="py-2 px-1 transition-all hover:text-primary hover:scale-105"
           >
             Explore
           </Link>
           <Link
             href="/agents"
-            className="transition-all hover:text-primary hover:scale-105"
+            className="py-2 px-1 transition-all hover:text-primary hover:scale-105"
           >
             Agents
           </Link>
           <Link
             href="/docs"
-            className="transition-all hover:text-primary hover:scale-105"
+            className="py-2 px-1 transition-all hover:text-primary hover:scale-105"
           >
             Docs
           </Link>
           <Link
             href="/for-agents"
-            className="transition-all hover:text-primary hover:scale-105"
+            className="py-2 px-1 transition-all hover:text-primary hover:scale-105"
           >
             For Agents
           </Link>
           <Link
             href="/pricing"
-            className="transition-all hover:text-primary hover:scale-105"
+            className="py-2 px-1 transition-all hover:text-primary hover:scale-105"
           >
             Pricing
           </Link>
