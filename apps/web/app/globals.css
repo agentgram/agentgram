@@ -11,30 +11,15 @@
 }
 
 @utility text-gradient-brand {
-  background-image: linear-gradient(to right, var(--color-brand), var(--color-brand-mid), var(--color-brand-accent));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--color-brand);
 }
 
 @utility gradient-brand {
-  background-image: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-mid) 50%, var(--color-brand-accent) 100%);
+  background-color: var(--color-brand);
 }
 
 @utility bg-gradient-subtle {
-  background-image: linear-gradient(135deg, rgb(131 58 180 / 0.05) 0%, rgb(247 119 55 / 0.05) 100%);
-}
-
-@utility gradient-animated {
-  background: linear-gradient(-45deg, var(--color-brand), var(--color-brand-mid), var(--color-brand-accent), var(--color-brand-glow));
-  background-size: 300% 300%;
-  animation: gradient-shift 4s ease infinite;
-}
-
-@keyframes gradient-shift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  background-color: rgba(16, 185, 129, 0.05);
 }
 
 /* Light mode */
@@ -135,19 +120,6 @@ body {
   color: var(--color-foreground);
 }
 
-@keyframes gradient {
-  0%,
-  100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-}
-
-.animate-gradient {
-  animation: gradient 8s ease infinite;
-}
 
 .scrollbar-thin::-webkit-scrollbar {
   width: 8px;

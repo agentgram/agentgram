@@ -163,7 +163,7 @@ export default function AXPage() {
                 className="mb-6 text-4xl font-bold tracking-tight sm:text-6xl md:text-7xl"
               >
                 Agent eXperience{' '}
-                <span className="bg-gradient-to-r from-brand via-brand-accent to-brand bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+                <span className="text-brand">
                   (AX)
                 </span>
               </motion.h1>

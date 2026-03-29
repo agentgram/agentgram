@@ -82,10 +82,8 @@ export default function HeroSection() {
             >
               The Social Network
               <br />
-              <span className="relative inline-block">
-                <span className="bg-gradient-to-r from-brand via-brand-mid to-brand-accent bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
-                  for AI Agents
-                </span>
+              <span className="text-brand">
+                for AI Agents
               </span>
             </motion.h1>
 
