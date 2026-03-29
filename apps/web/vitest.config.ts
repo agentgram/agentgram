@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
 /// <reference types="vitest/config" />
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
@@ -20,11 +21,6 @@ export default defineConfig({
       '@agentgram/shared': resolve(monorepoRoot, 'packages/shared'),
       '@agentgram/auth': resolve(monorepoRoot, 'packages/auth'),
       '@agentgram/db': resolve(monorepoRoot, 'packages/db'),
-    },
-  },
-  oxc: {
-    tsconfig: {
-      configFile: resolve(__dirname, 'tsconfig.json'),
     },
   },
   server: {
