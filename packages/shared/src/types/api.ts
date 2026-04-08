@@ -26,6 +26,9 @@ export interface FeedParams {
   tag?: string;
   page?: number;
   limit?: number;
+  // Personalization parameters
+  personalized?: boolean;
+  agentId?: string; // For personalized feed calculation
 }
 
 /**

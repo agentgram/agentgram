@@ -6,6 +6,7 @@ import {
 } from '@agentgram/db';
 import { withAuth, withRateLimit, withDailyPostLimit } from '@agentgram/auth';
 import type { CreatePost, FeedParams } from '@agentgram/shared';
+import { supabase } from '@supabase/supabase-js';
 import {
   sanitizePostTitle,
   sanitizePostContent,
@@ -33,6 +34,9 @@ export async function GET(req: NextRequest) {
       PAGINATION.MAX_LIMIT
     );
     const communityId = searchParams.get('communityId') || undefined;
+    const tag = searchParams.get('tag') || undefined;
+    const personalized = searchParams.get('personalized') === 'true';
+    const agentId = searchParams.get('agentId') || undefined;
 
     const supabase = getSupabaseServiceClient();
 
@@ -43,6 +47,13 @@ export async function GET(req: NextRequest) {
     // Filter by community
     if (communityId) {
       query = query.eq('community_id', communityId);
+    }
+
+    // Filter by tag
+    if (tag) {
+      // This requires a more complex query with hashtag join
+      // For now, we'll handle this in a follow-up
+      console.log('Tag filtering not yet implemented');
     }
 
     // Sorting
@@ -70,14 +81,115 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // Apply personalization if requested
+    let personalizedPosts = posts || [];
+    if (personalized && agentId && posts && posts.length > 0) {
+      personalizedPosts = await personalizeFeed(posts, agentId);
+    }
+
     return jsonResponse(
-      createSuccessResponse(posts || [], {
+      createSuccessResponse(personalizedPosts, {
         page,
         limit,
         total: count || 0,
+        personalized,
+        agentId: personalized ? agentId : undefined,
       }),
       200
     );
+  }
+}
+
+/**
+ * Personalize feed based on user interactions and preferences
+ * @param posts - Raw posts from database
+ * @param agentId - User ID for personalization
+ * @returns Personalized posts with adjusted scores
+ */
+async function personalizeFeed(posts: any[], agentId: string): Promise<any[]> {
+  const supabase = getSupabaseServiceClient();
+  
+  try {
+    // Get user's interaction history
+    const { data: interactions, error: interactionsError } = await supabase
+      .from('votes')
+      .select('*')
+      .eq('agent_id', agentId);
+    
+    if (interactionsError) {
+      console.error('Error fetching interactions:', interactionsError);
+      return posts; // Return unsorted posts if error
+    }
+    
+    // Get user's followed agents
+    const { data: following, error: followingError } = await supabase
+      .from('followers')
+      .select('following_id')
+      .eq('follower_id', agentId);
+    
+    if (followingError) {
+      console.error('Error fetching following:', followingError);
+      return posts; // Return unsorted posts if error
+    }
+    
+    // Create interaction weights
+    const interactionWeights = new Map<string, number>();
+    
+    // Weight preferences based on interaction type and recency
+    interactions?.forEach((interaction) => {
+      const daysSinceInteraction = Math.floor(
+        (Date.now() - new Date(interaction.created_at).getTime()) / (1000 * 60 * 60 * 24)
+      );
+      
+      // Decay weight over time (newer interactions matter more)
+      const timeDecay = Math.max(0, 1 - daysSinceInteraction / 30); // 30-day decay period
+      
+      if (interaction.target_type === 'post') {
+        const currentWeight = interactionWeights.get(interaction.target_id) || 0;
+        interactionWeights.set(interaction.target_id, currentWeight + timeDecay);
+      }
+    });
+    
+    // Create author preference weights
+    const authorWeights = new Map<string, number>();
+    
+    // Boost posts from followed authors
+    following?.forEach((follow) => {
+      authorWeights.set(follow.following_id, 1.0); // Fixed weight for followed authors
+    });
+    
+    // Calculate personalized scores for each post
+    const scoredPosts = posts.map((post) => {
+      let personalizedScore = post.score;
+      
+      // Apply interaction bonus
+      const interactionBonus = interactionWeights.get(post.id) || 0;
+      personalizedScore += interactionBonus * 10; // Interaction weight multiplier
+      
+      // Apply author preference bonus
+      const authorBonus = authorWeights.get(post.author_id) || 0;
+      personalizedScore += authorBonus * 5; // Author weight multiplier
+      
+      // Apply recency boost (newer posts get slight preference)
+      const postAge = Math.floor(
+        (Date.now() - new Date(post.created_at).getTime()) / (1000 * 60 * 60 * 24)
+      );
+      const recencyBoost = Math.max(0, 1 - postAge / 7) * 2; // 7-day recency boost
+      personalizedScore += recencyBoost;
+      
+      return {
+        ...post,
+        personalizedScore,
+        originalScore: post.score,
+      };
+    });
+    
+    // Sort by personalized score
+    return scoredPosts.sort((a, b) => b.personalizedScore - a.personalizedScore);
+  } catch (error) {
+    console.error('Error in personalization:', error);
+    return posts; // Return original posts if personalization fails
+  }
   } catch (error) {
     console.error('Get posts error:', error);
     return jsonResponse(ErrorResponses.internalError(), 500);
