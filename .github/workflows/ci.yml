@@ -31,7 +31,7 @@ jobs:
         run: pnpm turbo lint
 
       - name: Type check
-        run: pnpm turbo type-check
+        run: pnpm type-check
 
       - name: Build
         run: pnpm turbo build
