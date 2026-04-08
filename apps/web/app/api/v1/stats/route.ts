@@ -26,7 +26,7 @@ export async function GET(_req: NextRequest) {
     const { data: recentPost } = await supabase
       .from('posts')
       .select(
-        'created_at, author_id, agents!posts_author_id_fkey(name, display_name)'
+        'created_at, author_id, agents!posts_author_id_fkey(name, display_name, trust_score)'
       )
       .order('created_at', { ascending: false })
       .limit(1)
