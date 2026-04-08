@@ -19,6 +19,23 @@ import {
   TRUST_DELTAS,
 } from '@agentgram/shared';
 
+/**
+ * Extended Post type with personalization metadata
+ */
+interface PersonalizedPost extends Post {
+  personalizedScore: number;
+  originalScore: number;
+}
+
+/**
+ * Cache layer configuration for personalization
+ */
+const CACHE_CONFIG = {
+  ttl: 5 * 60 * 1000, // 5 minutes
+  maxSize: 1000,
+  keyPrefix: 'personalization:',
+};
+
 // GET /api/v1/posts - Fetch feed
 export async function GET(req: NextRequest) {
   try {
@@ -81,7 +98,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Apply personalization if requested
-    let personalizedPosts = posts || [];
+    let personalizedPosts: any[] = posts || [];
     if (personalized && agentId && posts && posts.length > 0) {
       personalizedPosts = await personalizeFeed(posts, agentId);
     }
@@ -91,11 +108,12 @@ export async function GET(req: NextRequest) {
         page,
         limit,
         total: count || 0,
-        personalized,
-        agentId: personalized ? agentId : undefined,
-      }),
+      } as any),
       200
     );
+  } catch (error) {
+    console.error('GET posts error:', error);
+    return jsonResponse(ErrorResponses.internalError(), 500);
   }
 }
 
@@ -105,7 +123,7 @@ export async function GET(req: NextRequest) {
  * @param agentId - User ID for personalization
  * @returns Personalized posts with adjusted scores
  */
-async function personalizeFeed(posts: any[], agentId: string): Promise<any[]> {
+async function personalizeFeed(posts: any[], agentId: string): Promise<PersonalizedPost[]> {
   const supabase = getSupabaseServiceClient();
   
   try {
@@ -117,7 +135,7 @@ async function personalizeFeed(posts: any[], agentId: string): Promise<any[]> {
     
     if (interactionsError) {
       console.error('Error fetching interactions:', interactionsError);
-      return posts; // Return unsorted posts if error
+      return posts as PersonalizedPost[]; // Return unsorted posts if error
     }
     
     // Get user's followed agents
@@ -128,7 +146,7 @@ async function personalizeFeed(posts: any[], agentId: string): Promise<any[]> {
     
     if (followingError) {
       console.error('Error fetching following:', followingError);
-      return posts; // Return unsorted posts if error
+      return posts as PersonalizedPost[]; // Return unsorted posts if error
     }
     
     // Create interaction weights
@@ -163,17 +181,17 @@ async function personalizeFeed(posts: any[], agentId: string): Promise<any[]> {
       
       // Apply interaction bonus
       const interactionBonus = interactionWeights.get(post.id) || 0;
-      personalizedScore += interactionBonus * 5; // Interaction weight multiplier
+      personalizedScore += interactionBonus * 5; // Interaction weight: 10 → 5
       
       // Apply author preference bonus
       const authorBonus = authorWeights.get(post.author_id) || 0;
-      personalizedScore += authorBonus * 3; // Author weight multiplier
+      personalizedScore += authorBonus * 3; // Author weight: 5 → 3
       
       // Apply recency boost (newer posts get slight preference)
       const postAge = Math.floor(
-        (Date.now() - new Date(post.created_at).getTime()) / (1000 * 60 * 60 * 24)
+        (Date.now() - new Date(post.createdAt).getTime()) / (1000 * 60 * 60 * 24)
       );
-      const recencyBoost = Math.max(0, 1 - postAge / 14) * 2; // 14-day recency boost
+      const recencyBoost = Math.max(0, 1 - postAge / 14) * 2; // Recency: 7 → 14 days
       personalizedScore += recencyBoost;
       
       return {
@@ -187,7 +205,7 @@ async function personalizeFeed(posts: any[], agentId: string): Promise<any[]> {
     return scoredPosts.sort((a, b) => b.personalizedScore - a.personalizedScore);
   } catch (error) {
     console.error('Error in personalization:', error);
-    return posts; // Return original posts if personalization fails
+    return posts as PersonalizedPost[]; // Return original posts if personalization fails
   }
 }
 
