@@ -1,0 +1,247 @@
+name: Security Audit (gstack CSO)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ⚠️  DEPRECATION NOTICE — workflow_dispatch (manual runs)
+#
+# Manual security audit runs via workflow_dispatch are DEPRECATED.
+# This workflow now runs automatically on every pull request targeting
+# `develop` or `main`, which is the preferred and supported path.
+#
+# Manual dispatch will be removed in a future release. If you need an
+# on-demand audit outside of a PR, open a draft PR instead.
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      scope:
+        # [DEPRECATED] Prefer PR-triggered audits. Manual dispatch will be removed.
+        description: 'Audit scope — basic or full (deprecated: use PR trigger instead)'
+        required: false
+        default: 'full'
+        type: choice
+        options:
+          - full
+          - basic
+      pr_number:
+        description: 'PR number to post comment on (optional)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: write
+
+# Cancel in-progress audits on the same branch to avoid stale comments
+concurrency:
+  group: security-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # Full history enables diff-mode comparison
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install gstack CLI
+        run: npm install -g gstack
+
+      - name: Create security reports directory
+        run: mkdir -p .gstack/security-reports
+
+      # ── Resolve parameters ────────────────────────────────────────────────
+
+      - name: Resolve audit parameters
+        id: params
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            SCOPE="full"
+            DIFF_MODE="true"
+            BASE_REF="${{ github.event.pull_request.base.sha }}"
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+          else
+            echo "::warning title=Deprecated::Manual workflow_dispatch is deprecated. Use PR-triggered audits instead."
+            SCOPE="${{ inputs.scope || 'full' }}"
+            DIFF_MODE="false"
+            BASE_REF=""
+            PR_NUMBER="${{ inputs.pr_number }}"
+          fi
+
+          REPORT_DATE=$(date -u +%Y-%m-%d)
+          if [ -n "$PR_NUMBER" ]; then
+            REPORT_NAME="${REPORT_DATE}-pr-${PR_NUMBER}-audit.json"
+          else
+            REPORT_NAME="${REPORT_DATE}-run-${{ github.run_id }}-audit.json"
+          fi
+
+          REPORT_PATH=".gstack/security-reports/${REPORT_NAME}"
+
+          echo "scope=${SCOPE}"           >> "$GITHUB_OUTPUT"
+          echo "diff-mode=${DIFF_MODE}"   >> "$GITHUB_OUTPUT"
+          echo "base-ref=${BASE_REF}"     >> "$GITHUB_OUTPUT"
+          echo "pr-number=${PR_NUMBER}"   >> "$GITHUB_OUTPUT"
+          echo "report-name=${REPORT_NAME}" >> "$GITHUB_OUTPUT"
+          echo "report-path=${REPORT_PATH}" >> "$GITHUB_OUTPUT"
+
+      # ── Run audit ────────────────────────────────────────────────────────
+
+      - name: Run gstack CSO security audit
+        id: audit
+        run: |
+          ARGS=(
+            "--output" "${{ steps.params.outputs.report-path }}"
+            "--scope"  "${{ steps.params.outputs.scope }}"
+            "--mode"   "ci_pr"
+          )
+
+          if [ "${{ steps.params.outputs.diff-mode }}" = "true" ] && [ -n "${{ steps.params.outputs.base-ref }}" ]; then
+            ARGS+=("--diff-mode" "--base-ref" "${{ steps.params.outputs.base-ref }}")
+          fi
+
+          gstack cso "${ARGS[@]}"
+        # continue-on-error so downstream steps (comment, artifact) still run
+        continue-on-error: true
+
+      # ── Archive report ────────────────────────────────────────────────────
+
+      - name: Upload security report artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-report-${{ github.run_id }}
+          path: .gstack/security-reports/
+          retention-days: 90
+
+      # ── Post PR comment ───────────────────────────────────────────────────
+
+      - name: Post security report as PR comment
+        if: >-
+          always() &&
+          (
+            github.event_name == 'pull_request' ||
+            steps.params.outputs.pr-number != ''
+          )
+        uses: actions/github-script@v8
+        env:
+          REPORT_PATH: ${{ steps.params.outputs.report-path }}
+          PR_NUMBER: ${{ steps.params.outputs.pr-number }}
+        with:
+          script: |
+            const { execSync } = require('child_process');
+            const fs = require('fs');
+
+            const reportPath = process.env.REPORT_PATH;
+            const prNumber = parseInt(
+              process.env.PR_NUMBER || String(context.issue?.number ?? ''),
+              10
+            );
+
+            if (!fs.existsSync(reportPath)) {
+              console.log(`Report not found at ${reportPath}, skipping comment.`);
+              return;
+            }
+
+            if (isNaN(prNumber)) {
+              console.log('No PR number resolved, skipping comment.');
+              return;
+            }
+
+            let comment;
+            try {
+              comment = execSync(
+                `npx tsx .github/scripts/format-security-report.ts "${reportPath}"`,
+                { encoding: 'utf-8' }
+              );
+            } catch (err) {
+              console.error('Failed to format report:', err.message);
+              comment = [
+                '<!-- gstack-cso-security-audit -->',
+                '## 🛡️ Security Audit — ⚠️ Report Format Error',
+                '',
+                'The audit ran but the report could not be formatted.',
+                'Check the workflow artifacts for the raw JSON report.',
+              ].join('\n');
+            }
+
+            // Upsert: update existing bot comment or create new one
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+
+            const existing = comments.find(
+              c => c.user.type === 'Bot' &&
+                   c.body.includes('<!-- gstack-cso-security-audit -->')
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: comment,
+              });
+              console.log(`Updated existing security audit comment #${existing.id}`);
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: comment,
+              });
+              console.log(`Posted new security audit comment on PR #${prNumber}`);
+            }
+
+      # ── Gate on severity ─────────────────────────────────────────────────
+
+      - name: Fail on critical or high severity findings
+        if: always()
+        run: |
+          REPORT="${{ steps.params.outputs.report-path }}"
+
+          if [ ! -f "${REPORT}" ]; then
+            echo "::warning::Security report not found — audit may have failed to run."
+            exit 0
+          fi
+
+          CRITICAL=$(python3 -c "
+          import json, sys
+          d = json.load(open('${REPORT}'))
+          print(d.get('totals', {}).get('critical', 0))
+          ")
+          HIGH=$(python3 -c "
+          import json, sys
+          d = json.load(open('${REPORT}'))
+          print(d.get('totals', {}).get('high', 0))
+          ")
+
+          echo "Security audit results: critical=${CRITICAL} high=${HIGH}"
+
+          if [ "${CRITICAL}" -gt "0" ] || [ "${HIGH}" -gt "0" ]; then
+            echo "::error::Security audit failed — ${CRITICAL} critical and ${HIGH} high severity issues found."
+            echo "Review the security report comment on this PR or download the workflow artifact."
+            exit 1
+          fi
+
+          echo "✅ Security audit passed — no critical or high severity issues."

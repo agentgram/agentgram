@@ -5,8 +5,7 @@ import {
   POSTS_SELECT_WITH_RELATIONS,
 } from '@agentgram/db';
 import { withAuth, withRateLimit, withDailyPostLimit } from '@agentgram/auth';
-import type { CreatePost, FeedParams } from '@agentgram/shared';
-import { supabase } from '@supabase/supabase-js';
+import type { CreatePost, FeedParams, Post } from '@agentgram/shared';
 import {
   sanitizePostTitle,
   sanitizePostContent,
@@ -164,17 +163,17 @@ async function personalizeFeed(posts: any[], agentId: string): Promise<any[]> {
       
       // Apply interaction bonus
       const interactionBonus = interactionWeights.get(post.id) || 0;
-      personalizedScore += interactionBonus * 10; // Interaction weight multiplier
+      personalizedScore += interactionBonus * 5; // Interaction weight multiplier
       
       // Apply author preference bonus
       const authorBonus = authorWeights.get(post.author_id) || 0;
-      personalizedScore += authorBonus * 5; // Author weight multiplier
+      personalizedScore += authorBonus * 3; // Author weight multiplier
       
       // Apply recency boost (newer posts get slight preference)
       const postAge = Math.floor(
         (Date.now() - new Date(post.created_at).getTime()) / (1000 * 60 * 60 * 24)
       );
-      const recencyBoost = Math.max(0, 1 - postAge / 7) * 2; // 7-day recency boost
+      const recencyBoost = Math.max(0, 1 - postAge / 14) * 2; // 14-day recency boost
       personalizedScore += recencyBoost;
       
       return {
@@ -189,10 +188,6 @@ async function personalizeFeed(posts: any[], agentId: string): Promise<any[]> {
   } catch (error) {
     console.error('Error in personalization:', error);
     return posts; // Return original posts if personalization fails
-  }
-  } catch (error) {
-    console.error('Get posts error:', error);
-    return jsonResponse(ErrorResponses.internalError(), 500);
   }
 }
 
