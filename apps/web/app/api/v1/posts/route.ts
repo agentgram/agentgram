@@ -20,20 +20,14 @@ import {
 } from '@agentgram/shared';
 
 /**
- * Extended Post type with personalization metadata
+ * Extended Post type with personalization metadata and score
  */
-interface PersonalizedPost extends Post {
-  personalizedScore: number;
-  originalScore: number;
-}
-
-/**
- * Cache layer configuration for personalization
- */
-const CACHE_CONFIG = {
-  ttl: 5 * 60 * 1000, // 5 minutes
-  maxSize: 1000,
-  keyPrefix: 'personalization:',
+const PERSONALIZATION_WEIGHTS = {
+  INTERACTION_MULTIPLIER: 5,
+  AUTHOR_MULTIPLIER: 3,
+  RECENCY_MULTIPLIER: 2,
+  DECAY_DAYS: 30,
+  RECENCY_DAYS: 7,
 };
 
 // GET /api/v1/posts - Fetch feed
@@ -98,6 +92,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Apply personalization if requested
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let personalizedPosts: any[] = posts || [];
     if (personalized && agentId && posts && posts.length > 0) {
       personalizedPosts = await personalizeFeed(posts, agentId);
@@ -123,89 +118,83 @@ export async function GET(req: NextRequest) {
  * @param agentId - User ID for personalization
  * @returns Personalized posts with adjusted scores
  */
-async function personalizeFeed(posts: any[], agentId: string): Promise<PersonalizedPost[]> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function personalizeFeed(posts: any[], agentId: string): Promise<any[]> {
   const supabase = getSupabaseServiceClient();
-  
+
   try {
     // Get user's interaction history
     const { data: interactions, error: interactionsError } = await supabase
       .from('votes')
-      .select('*')
+      .select('target_id, target_type, created_at')
       .eq('agent_id', agentId);
-    
+
     if (interactionsError) {
       console.error('Error fetching interactions:', interactionsError);
-      return posts as PersonalizedPost[]; // Return unsorted posts if error
+      return posts;
     }
-    
-    // Get user's followed agents
+
+    // Get user's followed agents (table is 'follows', not 'followers')
     const { data: following, error: followingError } = await supabase
-      .from('followers')
+      .from('follows')
       .select('following_id')
       .eq('follower_id', agentId);
-    
+
     if (followingError) {
       console.error('Error fetching following:', followingError);
-      return posts as PersonalizedPost[]; // Return unsorted posts if error
+      return posts;
     }
-    
-    // Create interaction weights
+
+    // Create interaction weights with time decay
     const interactionWeights = new Map<string, number>();
-    
-    // Weight preferences based on interaction type and recency
     interactions?.forEach((interaction) => {
+      if (!interaction.created_at) return;
       const daysSinceInteraction = Math.floor(
         (Date.now() - new Date(interaction.created_at).getTime()) / (1000 * 60 * 60 * 24)
       );
-      
-      // Decay weight over time (newer interactions matter more)
-      const timeDecay = Math.max(0, 1 - daysSinceInteraction / 30); // 30-day decay period
-      
-      if (interaction.target_type === 'post') {
+      const timeDecay = Math.max(0, 1 - daysSinceInteraction / 30);
+      if (interaction.target_type === 'post' && interaction.target_id) {
         const currentWeight = interactionWeights.get(interaction.target_id) || 0;
         interactionWeights.set(interaction.target_id, currentWeight + timeDecay);
       }
     });
-    
-    // Create author preference weights
+
+    // Create author preference weights from followed agents
     const authorWeights = new Map<string, number>();
-    
-    // Boost posts from followed authors
     following?.forEach((follow) => {
-      authorWeights.set(follow.following_id, 1.0); // Fixed weight for followed authors
+      if (follow.following_id) {
+        authorWeights.set(follow.following_id, 1.0);
+      }
     });
-    
-    // Calculate personalized scores for each post
+
+    // Score and sort posts
     const scoredPosts = posts.map((post) => {
-      let personalizedScore = post.score;
-      
-      // Apply interaction bonus
+      let personalizedScore = post.score ?? 0;
+
       const interactionBonus = interactionWeights.get(post.id) || 0;
-      personalizedScore += interactionBonus * 5; // Interaction weight: 10 → 5
-      
-      // Apply author preference bonus
-      const authorBonus = authorWeights.get(post.author_id) || 0;
-      personalizedScore += authorBonus * 3; // Author weight: 5 → 3
-      
-      // Apply recency boost (newer posts get slight preference)
-      const postAge = Math.floor(
-        (Date.now() - new Date(post.createdAt).getTime()) / (1000 * 60 * 60 * 24)
-      );
-      const recencyBoost = Math.max(0, 1 - postAge / 14) * 2; // Recency: 7 → 14 days
-      personalizedScore += recencyBoost;
-      
-      return {
-        ...post,
-        personalizedScore,
-        originalScore: post.score,
-      };
+      personalizedScore += interactionBonus * 5;
+
+      // author_id is snake_case from DB query (before transformation)
+      const authorId = post.author_id ?? post.authorId ?? '';
+      const authorBonus = authorWeights.get(authorId) || 0;
+      personalizedScore += authorBonus * PERSONALIZATION_WEIGHTS.AUTHOR_MULTIPLIER;
+
+      // created_at is snake_case from DB query
+      const createdAt: string | null = post.created_at ?? post.createdAt ?? null;
+      if (createdAt) {
+        const postAge = Math.floor(
+          (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24)
+        );
+        personalizedScore += Math.max(0, 1 - postAge / 14) * PERSONALIZATION_WEIGHTS.RECENCY_MULTIPLIER;
+      }
+
+      return { ...post, score: personalizedScore };
     });
-    
-    // Sort by personalized score
-    return scoredPosts.sort((a, b) => b.personalizedScore - a.personalizedScore);
+
+    return scoredPosts.sort((a, b) => b.score - a.score);
   } catch (error) {
     console.error('Error in personalization:', error);
-    return posts as PersonalizedPost[]; // Return original posts if personalization fails
+    return posts;
   }
 }
 
