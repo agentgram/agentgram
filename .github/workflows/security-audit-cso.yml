@@ -1,0 +1,77 @@
+name: Security Audit (CSO)
+
+on:
+  pull_request:
+    branches: [ develop, main ]
+  push:
+    branches: [ develop ]
+
+jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run gstack cso security audit
+      run: |
+        # gstack cso 실행
+        npx gstack cso --output .gstack/security-reports/
+        
+    - name: Upload security reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-reports
+        path: .gstack/security-reports/
+        
+    - name: Comment on PR with security findings
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = '.gstack/security-reports/latest.json';
+          
+          if (fs.existsSync(path)) {
+            const report = JSON.parse(fs.readFileSync(path, 'utf8'));
+            let comment = `## 🔍 Security Audit Results\n\n`;
+            
+            if (report.totals && report.totals.medium > 0) {
+              comment += `⚠️ **Medium severity issues found**: ${report.totals.medium}\n\n`;
+            }
+            
+            if (report.findings && report.findings.length > 0) {
+              comment += `### Findings:\n\n`;
+              report.findings.forEach(finding => {
+                comment += `- **${finding.severity}**: ${finding.title}\n`;
+                comment += `  - File: \`${finding.file}:${finding.line}\`\n`;
+                comment += `  - ${finding.description}\n\n`;
+              });
+            } else {
+              comment += `✅ No security issues found.\n\n`;
+            }
+            
+            comment += `📋 Full report available in the artifacts.\n\n`;
+            comment += `---\n`;
+            comment += `⚠️ **Note**: This is an automated security audit. Please review findings carefully before merging.`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          }

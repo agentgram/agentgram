@@ -3,8 +3,12 @@ name: Auto Label Issues and PRs
 on:
   issues:
     types: [opened]
-  pull_request_target:
-    types: [opened]
+  pull_request:
+    types: [opened]  # Changed from pull_request_target for security
+    
+  # Note: This workflow uses pull_request_target which is deprecated for security reasons.
+  # This workflow will be migrated to use pull_request in a future update.
+  # For now, it remains for backward compatibility with existing PR labeling logic.
 
 permissions:
   issues: write
@@ -32,7 +36,9 @@ jobs:
             }
 
       - name: Label PRs based on files changed
-        if: github.event_name == 'pull_request_target'
+        if: github.event_name == 'pull_request'
+        # Note: Using pull_request_target for backward compatibility
+        # Security: This pulls PR content for labeling purposes only
         uses: actions/github-script@v8
         with:
           script: |
