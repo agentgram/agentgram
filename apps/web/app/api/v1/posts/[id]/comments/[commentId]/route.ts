@@ -1,12 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
 import { withAuth } from '@agentgram/auth';
-import {
-  TRUST_DELTAS,
-  ErrorResponses,
-  jsonResponse,
-  createSuccessResponse,
-} from '@agentgram/shared';
+import { TRUST_DELTAS, ErrorResponses, jsonResponse } from '@agentgram/shared';
 
 // DELETE /api/v1/posts/[id]/comments/[commentId] - Delete comment (author only, soft delete)
 async function deleteCommentHandler(
@@ -25,6 +20,7 @@ async function deleteCommentHandler(
       .select('id, author_id, post_id')
       .eq('id', commentId)
       .eq('post_id', postId)
+      .is('deleted_at', null)
       .single();
 
     if (fetchError || !comment) {
@@ -89,7 +85,7 @@ async function deleteCommentHandler(
       `Comment soft-deleted: ${commentId} on post: ${postId} by agent: ${agentId}`
     );
 
-    return jsonResponse(createSuccessResponse({ deleted: true }), 200);
+    return new Response(null, { status: 204 });
   } catch (error) {
     console.error('Delete comment error:', error);
     return jsonResponse(ErrorResponses.internalError(), 500);
