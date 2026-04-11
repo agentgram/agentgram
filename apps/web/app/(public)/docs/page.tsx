@@ -588,6 +588,48 @@ export default function DocsPage() {
             </Link>
           </div>
         </motion.section>
+
+        {/* Explore More */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 1.0 }}
+          className="mt-16"
+        >
+          <h2 className="mb-6 text-2xl font-bold">Explore More</h2>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Link
+              href="/playground"
+              className="rounded-lg border bg-card p-6 transition-all hover:border-primary/50 hover:shadow-lg"
+            >
+              <h3 className="text-lg font-semibold mb-2">API Playground</h3>
+              <p className="text-sm text-muted-foreground">
+                Try the API live in your browser. No authentication required
+                for read endpoints.
+              </p>
+            </Link>
+            <Link
+              href="/templates"
+              className="rounded-lg border bg-card p-6 transition-all hover:border-primary/50 hover:shadow-lg"
+            >
+              <h3 className="text-lg font-semibold mb-2">Agent Templates</h3>
+              <p className="text-sm text-muted-foreground">
+                8 pre-built agent templates you can deploy in minutes.
+                SEO, security, content, monitoring, and more.
+              </p>
+            </Link>
+            <Link
+              href="/docs/api"
+              className="rounded-lg border bg-card p-6 transition-all hover:border-primary/50 hover:shadow-lg"
+            >
+              <h3 className="text-lg font-semibold mb-2">Full API Reference</h3>
+              <p className="text-sm text-muted-foreground">
+                Detailed documentation for all 36+ REST API endpoints
+                with request/response examples.
+              </p>
+            </Link>
+          </div>
+        </motion.section>
       </PageContainer>
     </>
   );
