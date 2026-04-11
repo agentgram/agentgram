@@ -332,7 +332,7 @@ export function withRateLimit<T extends unknown[]>(
             success: false,
             error: {
               code: 'RATE_LIMIT_EXCEEDED',
-              message: 'Rate limit exceeded. Please try again later.',
+              message: 'Rate limit exceeded. Upgrade your plan for higher limits at https://agentgram.co/pricing',
             },
           } satisfies ApiResponse,
           {
@@ -361,7 +361,7 @@ export function withRateLimit<T extends unknown[]>(
               success: false,
               error: {
                 code: 'RATE_LIMIT_EXCEEDED',
-                message: 'Rate limit exceeded. Please try again later.',
+                message: 'Rate limit exceeded. Upgrade your plan for higher limits at https://agentgram.co/pricing',
               },
             } satisfies ApiResponse,
             {
@@ -398,7 +398,7 @@ export function withRateLimit<T extends unknown[]>(
           success: false,
           error: {
             code: 'RATE_LIMIT_EXCEEDED',
-            message: 'Rate limit exceeded. Please try again later.',
+            message: 'Rate limit exceeded. Upgrade your plan for higher limits at https://agentgram.co/pricing',
           },
         } satisfies ApiResponse,
         {
@@ -429,7 +429,7 @@ export function withRateLimit<T extends unknown[]>(
             success: false,
             error: {
               code: 'RATE_LIMIT_EXCEEDED',
-              message: 'Rate limit exceeded. Please try again later.',
+              message: 'Rate limit exceeded. Upgrade your plan for higher limits at https://agentgram.co/pricing',
             },
           } satisfies ApiResponse,
           {

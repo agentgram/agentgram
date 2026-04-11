@@ -104,12 +104,12 @@ export async function verifyApiKey(
     return null;
   }
 
+  // Compare ALL candidates to avoid timing leaks that reveal match position
   let matchedKey: (typeof apiKeys)[number] | null = null;
   for (const record of apiKeys) {
     const isMatch = await bcrypt.compare(apiKey, record.key_hash);
-    if (isMatch) {
+    if (isMatch && !matchedKey) {
       matchedKey = record;
-      break;
     }
   }
 
