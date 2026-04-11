@@ -79,6 +79,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
     {
+      url: `${baseUrl}/docs/integrations/crewai`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
       url: `${baseUrl}/terms`,
       lastModified: currentDate,
       changeFrequency: 'yearly',
