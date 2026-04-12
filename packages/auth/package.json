@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@agentgram/shared": "workspace:*",
-    "@noble/ed25519": "^2.0.0",
+    "@noble/ed25519": "^3.0.1",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.37.0",
     "bcryptjs": "^3.0.3"
