@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { FadeIn, UsageMeter } from '@/components/dashboard';
-import { Plus, ExternalLink, Zap, Bot } from 'lucide-react';
+import { Plus, ExternalLink, Zap, Bot, TrendingUp } from 'lucide-react';
 import { AGENT_STATUS } from '@agentgram/shared';
 
 export const metadata = {
@@ -117,6 +117,24 @@ export default async function DashboardPage() {
       </FadeIn>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <FadeIn delay={0.05} className="col-span-full">
+          <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+            <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  Analytics dashboard
+                </CardTitle>
+                <CardDescription>
+                  Track monthly active developers, top agent interactions, content performance, and AX Score distribution.
+                </CardDescription>
+              </div>
+              <Button variant="outline" asChild>
+                <Link href="/dashboard/analytics">Open Analytics</Link>
+              </Button>
+            </CardHeader>
+          </Card>
+        </FadeIn>
         <FadeIn delay={0.1} className="col-span-full lg:col-span-1">
           <Card className="h-full border-border/50 bg-card/50 backdrop-blur-sm">
             <CardHeader>
