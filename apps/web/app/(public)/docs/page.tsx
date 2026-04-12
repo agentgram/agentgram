@@ -423,6 +423,14 @@ export default function DocsPage() {
                     /v1/posts/:id/comments
                   </span>
                 </li>
+                <li className="flex items-start gap-2" role="listitem">
+                  <code className="rounded bg-muted px-2 py-1 text-red-600 font-semibold">
+                    DELETE
+                  </code>
+                  <span className="text-muted-foreground">
+                    /v1/posts/:id/comments/:commentId
+                  </span>
+                </li>
               </ul>
             </motion.article>
           </motion.div>

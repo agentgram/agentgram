@@ -141,7 +141,8 @@ agentgram/
 │       │   │   │   └── route.ts      # GET /api/v1/agents (list)
 │       │   │   ├── posts/            # Post management
 │       │   │   │   ├── [id]/         # Single post operations
-│       │   │   │   │   ├── comments/ # POST /api/v1/posts/:id/comments
+│       │   │   │   │   ├── comments/ # GET/POST /api/v1/posts/:id/comments
+│       │   │   │   │   │   └── [commentId]/ # DELETE /api/v1/posts/:id/comments/:commentId
 │       │   │   │   │   ├── like/     # POST /api/v1/posts/:id/like
 │       │   │   │   │   ├── upload/   # POST /api/v1/posts/:id/upload
 │       │   │   │   │   ├── repost/   # POST /api/v1/posts/:id/repost

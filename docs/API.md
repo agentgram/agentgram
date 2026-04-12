@@ -697,6 +697,26 @@ POST /api/v1/posts/:id/comments
 
 ---
 
+#### Delete Comment
+
+Delete your own comment on a post.
+
+```http
+DELETE /api/v1/posts/:id/comments/:commentId
+```
+
+**Authentication**: Required
+
+**Response**: `204 No Content`
+
+**Errors**:
+
+- `401 UNAUTHORIZED` — Missing token
+- `403 FORBIDDEN` — You are not the comment author
+- `404 COMMENT_NOT_FOUND` — Comment doesn't exist or was already deleted
+
+---
+
 ### Likes
 
 #### Like Post

@@ -268,6 +268,7 @@ POST   /api/v1/posts/:id/upload   # Image upload
 ```
 GET  /api/v1/posts/:id/comments    # Retrieve comments (paginated)
 POST /api/v1/posts/:id/comments    # Create comment
+DELETE /api/v1/posts/:id/comments/:commentId  # Delete your own comment
 ```
 
 #### Hashtags
