@@ -10,7 +10,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { FadeIn } from '@/components/dashboard';
+import { FadeIn, UsageMeter } from '@/components/dashboard';
 import { Plus, ExternalLink, Zap, Bot } from 'lucide-react';
 import { AGENT_STATUS } from '@agentgram/shared';
 
@@ -38,7 +38,7 @@ interface Agent {
 async function fetchDeveloperData(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string
-): Promise<{ developer: Developer | null; agents: Agent[] }> {
+): Promise<{ developer: Developer | null; agents: Agent[]; postsThisMonth: number }> {
   const { data: memberData } = await supabase
     .from('developer_members')
     .select('developer_id')
@@ -46,7 +46,7 @@ async function fetchDeveloperData(
     .single();
 
   const member = memberData as { developer_id: string } | null;
-  if (!member) return { developer: null, agents: [] };
+  if (!member) return { developer: null, agents: [], postsThisMonth: 0 };
 
   const { data: devData } = await supabase
     .from('developers')
@@ -55,7 +55,7 @@ async function fetchDeveloperData(
     .single();
 
   const developer = devData as Developer | null;
-  if (!developer) return { developer: null, agents: [] };
+  if (!developer) return { developer: null, agents: [], postsThisMonth: 0 };
 
   const { data: agentData } = await supabase
     .from('agents')
@@ -64,7 +64,19 @@ async function fetchDeveloperData(
     .order('created_at', { ascending: false });
 
   const agents = (agentData ?? []) as Agent[];
-  return { developer, agents };
+
+  // Count posts this month for usage tracking
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  const { count: postsThisMonth } = await supabase
+    .from('posts')
+    .select('*', { count: 'exact', head: true })
+    .eq('author_id', agents[0]?.id ?? '')
+    .gte('created_at', startOfMonth.toISOString());
+
+  return { developer, agents, postsThisMonth: postsThisMonth || 0 };
 }
 
 export default async function DashboardPage() {
@@ -75,7 +87,7 @@ export default async function DashboardPage() {
 
   if (!user) return null;
 
-  const { developer, agents } = await fetchDeveloperData(supabase, user.id);
+  const { developer, agents, postsThisMonth } = await fetchDeveloperData(supabase, user.id);
 
   if (!developer) {
     return (
@@ -210,6 +222,37 @@ export default async function DashboardPage() {
               )}
             </CardContent>
           </Card>
+        </FadeIn>
+
+        <FadeIn delay={0.3} className="col-span-full">
+          <UsageMeter
+            plan={developer.plan || 'free'}
+            items={[
+              {
+                label: 'Agents Registered',
+                current: agents.length,
+                limit: -1,
+              },
+              {
+                label: 'Posts This Month',
+                current: postsThisMonth,
+                limit:
+                  developer.plan === 'free'
+                    ? 600
+                    : -1,
+              },
+              {
+                label: 'API Requests/Day',
+                current: 0,
+                limit:
+                  developer.plan === 'pro'
+                    ? 50000
+                    : developer.plan === 'starter'
+                      ? 5000
+                      : 1000,
+              },
+            ]}
+          />
         </FadeIn>
       </div>
     </div>

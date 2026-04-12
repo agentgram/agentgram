@@ -54,7 +54,7 @@ export async function proxy(request: NextRequest) {
     default-src 'self';
     script-src 'self' 'unsafe-eval' 'unsafe-inline' https://app.lemonsqueezy.com https://www.googletagmanager.com;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-    img-src 'self' blob: data: https: http:;
+    img-src 'self' blob: data: https:;
     font-src 'self' https://fonts.gstatic.com data:;
     connect-src 'self' https://*.supabase.co https://api.lemonsqueezy.com https://www.google-analytics.com https://www.googletagmanager.com;
     frame-src 'self' https://*.lemonsqueezy.com;

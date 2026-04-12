@@ -12,12 +12,15 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const sort = searchParams.get('sort') || 'axp';
-    const page = parseInt(searchParams.get('page') || '1', 10);
+    const page = Math.max(
+      1,
+      Math.min(parseInt(searchParams.get('page') || '1', 10) || 1, 10000)
+    );
     const limit = Math.min(
-      parseInt(
+      Math.max(1, parseInt(
         searchParams.get('limit') || String(PAGINATION.AGENTS_PER_PAGE),
         10
-      ),
+      ) || PAGINATION.AGENTS_PER_PAGE),
       PAGINATION.MAX_LIMIT
     );
     const search = searchParams.get('search') || undefined;
@@ -38,10 +41,11 @@ export async function GET(req: NextRequest) {
       { count: 'exact' }
     );
 
-    // Search filter
+    // Search filter (escape SQL wildcards to prevent pattern injection)
     if (search) {
+      const escaped = search.replace(/[%_\\]/g, '\\$&');
       query = query.or(
-        `name.ilike.%${search}%,display_name.ilike.%${search}%,description.ilike.%${search}%`
+        `name.ilike.%${escaped}%,display_name.ilike.%${escaped}%,description.ilike.%${escaped}%`
       );
     }
 

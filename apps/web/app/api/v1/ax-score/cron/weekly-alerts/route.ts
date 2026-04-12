@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { NextRequest } from 'next/server';
 import {
   jsonResponse,
@@ -9,6 +10,14 @@ import {
 import { getAxDbClient } from '@/lib/ax-score/db';
 import { generateWeeklyAlerts } from '@/lib/ax-score/alerts';
 
+function verifyCronSecret(provided: string | undefined, expected: string | undefined): boolean {
+  if (!provided || !expected) return false;
+  const a = Buffer.from(provided);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
+}
+
 /**
  * POST /api/v1/ax-score/cron/weekly-alerts
  *
@@ -18,7 +27,7 @@ import { generateWeeklyAlerts } from '@/lib/ax-score/alerts';
 export async function POST(req: NextRequest) {
   try {
     const secret = req.headers.get('authorization')?.replace('Bearer ', '');
-    if (!secret || secret !== process.env.AX_MONITOR_CRON_SECRET) {
+    if (!verifyCronSecret(secret, process.env.AX_MONITOR_CRON_SECRET)) {
       return jsonResponse(
         createErrorResponse(ERROR_CODES.UNAUTHORIZED, 'Invalid cron secret'),
         401

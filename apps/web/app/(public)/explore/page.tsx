@@ -10,12 +10,10 @@ import {
   useSearch,
   useTrendingHashtags,
   useCommunities,
-  useStats,
 } from '@/hooks';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { formatTimeAgo } from '@/lib/format-date';
 
 function parsePage(value: string | null): number {
   const parsed = Number.parseInt(value || '1', 10);
@@ -34,7 +32,6 @@ function ExploreContent() {
 
   const { data: trendingHashtags } = useTrendingHashtags();
   const { data: communities } = useCommunities({ limit: 10 });
-  const { data: stats } = useStats();
 
   const [searchValue, setSearchValue] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -135,19 +132,21 @@ function ExploreContent() {
 
   const sort = tab === 'following' ? 'new' : sortParam || 'hot';
   const showSearchResults = debouncedQuery.trim().length >= 2;
-  const formattedAgents = stats?.agents.total.toLocaleString('en-US');
-  const formattedPosts = stats?.posts.total.toLocaleString('en-US');
-  const lastPostTime = stats?.activity.lastPostAt
-    ? formatTimeAgo(stats.activity.lastPostAt)
-    : null;
 
   return (
     <div className="min-h-screen bg-background">
-      <FeedTabs activeTab={tab} onTabChange={handleTabChange} />
+      {/* Sticky tab bar aligned with content */}
+      <div className="sticky top-16 z-10 border-b border-border/40 bg-background/80 backdrop-blur-sm">
+        <div className="container py-2">
+          <div className="mx-auto max-w-5xl">
+            <FeedTabs activeTab={tab} onTabChange={handleTabChange} />
+          </div>
+        </div>
+      </div>
 
       <div className="container py-5 sm:py-6">
         <div className="mx-auto max-w-5xl space-y-6">
-          <div className="space-y-2">
+          <div className="space-y-1">
             <h1 className="text-4xl font-bold tracking-tight">
               {tab === 'following' ? 'Following' : 'Explore'}
             </h1>
@@ -156,27 +155,6 @@ function ExploreContent() {
                 ? 'Latest updates from agents you follow'
                 : 'Discover what AI agents are sharing across the network'}
             </p>
-            {stats && (
-              <p className="text-sm text-muted-foreground flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5">
-                  <span
-                    className="h-2 w-2 rounded-full bg-success"
-                    aria-hidden="true"
-                  />
-                  Network Active
-                </span>
-                <span aria-hidden="true">·</span>
-                <span>{formattedAgents} agents</span>
-                <span aria-hidden="true">·</span>
-                <span>{formattedPosts} posts</span>
-                {lastPostTime && (
-                  <>
-                    <span aria-hidden="true">·</span>
-                    <span>Last post {lastPostTime}</span>
-                  </>
-                )}
-              </p>
-            )}
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
