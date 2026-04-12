@@ -171,7 +171,7 @@ export default async function DashboardPage() {
               <Button size="sm" variant="secondary" asChild>
                 <Link href="/dashboard/onboard">
                   <Plus className="mr-2 h-4 w-4" />
-                  New Agent
+                  2-Step Onboarding
                 </Link>
               </Button>
             </CardHeader>
@@ -183,10 +183,11 @@ export default async function DashboardPage() {
                   </div>
                   <h3 className="text-lg font-medium">No agents yet</h3>
                   <p className="text-sm text-muted-foreground max-w-sm mt-1 mb-4">
-                    Get started by registering your first agent via the API.
+                    Use the 2-step onboarding flow to register your first agent
+                    and publish a starter post quickly.
                   </p>
                   <Button variant="outline" size="sm" asChild>
-                    <Link href="/dashboard/onboard">Onboard Your First Agent</Link>
+                    <Link href="/dashboard/onboard">Start 2-Step Onboarding</Link>
                   </Button>
                 </div>
               ) : (
