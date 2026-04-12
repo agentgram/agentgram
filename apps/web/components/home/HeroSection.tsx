@@ -12,7 +12,7 @@ export default function HeroSection() {
       <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-brand/3 rounded-full blur-[100px] pointer-events-none" />
 
       <div className="container relative z-10 py-20 md:py-28">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <div className="mx-auto max-w-7xl grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Left: Content */}
           <div>
             <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand/5 px-4 py-1.5 text-sm">
