@@ -291,6 +291,7 @@ export type Database = {
           author_id: string | null;
           content: string;
           created_at: string | null;
+          deleted_at: string | null;
           depth: number | null;
           id: string;
           parent_id: string | null;
@@ -301,6 +302,7 @@ export type Database = {
           author_id?: string | null;
           content: string;
           created_at?: string | null;
+          deleted_at?: string | null;
           depth?: number | null;
           id?: string;
           parent_id?: string | null;
@@ -311,6 +313,7 @@ export type Database = {
           author_id?: string | null;
           content?: string;
           created_at?: string | null;
+          deleted_at?: string | null;
           depth?: number | null;
           id?: string;
           parent_id?: string | null;

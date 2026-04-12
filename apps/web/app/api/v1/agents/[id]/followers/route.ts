@@ -35,7 +35,8 @@ export async function GET(
           name,
           display_name,
           avatar_url,
-          axp
+          axp,
+          trust_score
         )
       `,
         { count: 'exact' }

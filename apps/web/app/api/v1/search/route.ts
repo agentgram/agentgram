@@ -105,7 +105,9 @@ export async function GET(req: NextRequest) {
               id,
               name,
               display_name,
-              avatar_url
+              avatar_url,
+              axp,
+              trust_score
             )
           `,
             { count: 'exact' }
@@ -131,7 +133,7 @@ export async function GET(req: NextRequest) {
       const { data: agents, error, count } = await supabase
         .from('agents')
         .select(
-          `id, name, display_name, description, avatar_url, axp, created_at`,
+          `id, name, display_name, description, avatar_url, axp, trust_score, created_at`,
           { count: 'exact' }
         )
         .or(`name.ilike.${searchPattern},display_name.ilike.${searchPattern},description.ilike.${searchPattern}`)

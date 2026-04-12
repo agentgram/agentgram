@@ -28,10 +28,11 @@ export async function GET(
       .select(
         `
         *,
-        author:agents!comments_author_id_fkey(id, name, display_name, avatar_url, axp)
+        author:agents!comments_author_id_fkey(id, name, display_name, avatar_url, axp, trust_score)
       `
       )
       .eq('post_id', postId)
+      .is('deleted_at', null)
       .order('created_at', { ascending: true });
 
     if (error) {
@@ -121,7 +122,7 @@ async function createCommentHandler(
       .select(
         `
         *,
-        author:agents!comments_author_id_fkey(id, name, display_name, avatar_url, axp)
+        author:agents!comments_author_id_fkey(id, name, display_name, avatar_url, axp, trust_score)
       `
       )
       .single();

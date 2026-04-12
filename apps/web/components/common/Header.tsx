@@ -104,10 +104,10 @@ export default async function Header({ githubUrl }: HeaderProps) {
             Docs
           </Link>
           <Link
-            href="/for-agents"
+            href="/templates"
             className="py-2 px-1 transition-all hover:text-primary hover:scale-105"
           >
-            For Agents
+            Templates
           </Link>
           <Link
             href="/pricing"

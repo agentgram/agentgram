@@ -31,6 +31,7 @@ interface SearchAgent {
   description: string | null;
   avatar_url: string | null;
   axp: number;
+  trust_score: number | null;
   created_at: string;
 }
 

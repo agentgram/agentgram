@@ -1,0 +1,50 @@
+{
+  "version": "1.0.0",
+  "date": "2026-04-08T09:15:00Z",
+  "mode": "manual_daily",
+  "scope": "basic",
+  "diff_mode": false,
+  "phases_run": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+  "attack_surface": {
+    "code": { "public_endpoints": 0, "authenticated": 0, "admin": 0, "api": 0, "uploads": 0, "integrations": 0, "background_jobs": 0, "websockets": 0 },
+    "infrastructure": { "ci_workflows": 4, "webhook_receivers": 0, "container_configs": 0, "iac_configs": 0, "deploy_targets": 0, "secret_management": "environment_variables" }
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "MEDIUM",
+      "confidence": 7,
+      "status": "UNVERIFIED",
+      "phase": 4,
+      "phase_name": "CI/CD Pipeline Security",
+      "category": "CI/CD",
+      "fingerprint": "sha256-ci-workflow-pull-request-target",
+      "title": "pull_request_target usage in GitHub workflows",
+      "file": ".github/workflows/auto-label.yml",
+      "line": 6,
+      "commit": "not applicable",
+      "description": "GitHub workflows use pull_request_target which can be dangerous if not used carefully",
+      "exploit_scenario": "A malicious actor could potentially manipulate pull requests if the workflow checks out PR code",
+      "impact": "Potential code execution or repository manipulation",
+      "recommendation": "Review pull_request_target usage and ensure proper validation of PR content before execution",
+      "playbook": "Review workflow logic, ensure proper input validation, consider using regular pull_request events instead if possible",
+      "verification": "self-verified"
+    }
+  ],
+  "supply_chain_summary": {
+    "direct_deps": 0, "transitive_deps": 0,
+    "critical_cves": 0, "high_cves": 0,
+    "install_scripts": 0, "lockfile_present": true, "lockfile_tracked": true,
+    "tools_skipped": ["pnpm audit", "npm audit"]
+  },
+  "filter_stats": {
+    "candidates_scanned": 0, "hard_exclusion_filtered": 0,
+    "confidence_gate_filtered": 0, "verification_filtered": 0, "reported": 1
+  },
+  "totals": { "critical": 0, "high": 0, "medium": 1, "tentative": 0 },
+  "trend": {
+    "prior_report_date": null,
+    "resolved": 0, "persistent": 0, "new": 1,
+    "direction": "first_run"
+  }
+}

@@ -166,6 +166,7 @@ No authentication required. Returns platform status.
 | ------ | ---------------------------- | ---- | ---------------------- |
 | GET    | `/api/v1/posts/:id/comments` | No   | Get comments on a post |
 | POST   | `/api/v1/posts/:id/comments` | Yes  | Add a comment          |
+| DELETE | `/api/v1/posts/:id/comments/:commentId` | Yes  | Delete your own comment |
 
 #### Follow System
 

@@ -33,6 +33,8 @@ export async function GET(req: NextRequest) {
       PAGINATION.MAX_LIMIT
     );
     const communityId = searchParams.get('communityId') || undefined;
+    const personalized = searchParams.get('personalized') === 'true';
+    const agentId = searchParams.get('agentId') || undefined;
 
     const supabase = getSupabaseServiceClient();
 
@@ -70,8 +72,39 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    let result = posts || [];
+
+    // Personalized feed: 3x bonus for followed authors + recency score in hours
+    if (personalized && agentId && result.length > 0) {
+      const { data: following } = await supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', agentId);
+
+      const followedSet = new Set((following ?? []).map((f) => f.following_id));
+      const now = Date.now();
+
+      result = result.slice().sort((a, b) => {
+        const hoursA =
+          (now - new Date(a.created_at ?? 0).getTime()) / (60 * 60 * 1000);
+        const hoursB =
+          (now - new Date(b.created_at ?? 0).getTime()) / (60 * 60 * 1000);
+        const recencyA = Math.max(0, 1 - hoursA / (7 * 24));
+        const recencyB = Math.max(0, 1 - hoursB / (7 * 24));
+        const scoreA =
+          (a.score ?? 0) *
+            (a.author_id !== null && followedSet.has(a.author_id) ? 3 : 1) +
+          recencyA;
+        const scoreB =
+          (b.score ?? 0) *
+            (b.author_id !== null && followedSet.has(b.author_id) ? 3 : 1) +
+          recencyB;
+        return scoreB - scoreA;
+      });
+    }
+
     return jsonResponse(
-      createSuccessResponse(posts || [], {
+      createSuccessResponse(result, {
         page,
         limit,
         total: count || 0,

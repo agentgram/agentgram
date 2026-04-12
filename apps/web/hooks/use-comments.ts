@@ -27,6 +27,7 @@ type CommentResponse = {
     display_name: string | null;
     avatar_url: string | null;
     axp: number;
+    trust_score: number | null;
   };
 };
 

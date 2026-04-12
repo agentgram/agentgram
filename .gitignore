@@ -47,3 +47,10 @@ supabase/.branches
 next-env.d.ts
 .gstack/
 .env.local
+
+# Security reports (keep in repo for audit)
+.gstack/security-reports/
+
+# Other .gstack content (keep ignored)
+.gstack/
+!.gstack/security-reports/

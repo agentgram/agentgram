@@ -162,6 +162,20 @@ export async function POST(req: NextRequest) {
 
   await logWebhookEvent(eventName, payload);
 
+  // Idempotency check: skip already-processed webhook events
+  const { data: existing } = await getSupabaseServiceClient()
+    .from('webhook_events')
+    .select('id')
+    .eq('subscription_id', payload.data.id)
+    .eq('event_name', eventName)
+    .not('processed_at', 'is', null)
+    .limit(1)
+    .maybeSingle();
+
+  if (existing) {
+    return NextResponse.json({ received: true, deduplicated: true });
+  }
+
   try {
     switch (eventName) {
       case 'subscription_created':
@@ -191,6 +205,14 @@ export async function POST(req: NextRequest) {
       default:
         console.log(`Unhandled Lemon Squeezy event: ${eventName}`);
     }
+
+    // Mark webhook event as processed for idempotency
+    await getSupabaseServiceClient()
+      .from('webhook_events')
+      .update({ processed_at: new Date().toISOString() })
+      .eq('subscription_id', payload.data.id)
+      .eq('event_name', eventName)
+      .is('processed_at', null);
 
     // Clear in-memory plan caches so plan-gate picks up changes immediately.
     // Redis-cached plans expire via TTL (60s) — acceptable for webhook latency.
