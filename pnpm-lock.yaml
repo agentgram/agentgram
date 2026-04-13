@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       vercel:
-        specifier: ^50.44.0
-        version: 50.44.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(typescript@6.0.2)
+        specifier: ^51.1.0
+        version: 51.1.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(typescript@6.0.2)
     devDependencies:
       '@turbo/gen':
         specifier: ^2.9.5
@@ -2408,8 +2408,8 @@ packages:
   '@vercel/python-analysis@0.11.0':
     resolution: {integrity: sha512-gsoj+nscmNm0xDh+tRhECRhit2VlAVaD7jc9h93sN6rDEBDxPo7eLEgIJFzVDaAItxERZ9Od2IK/04fB9vFy+g==}
 
-  '@vercel/python@6.29.0':
-    resolution: {integrity: sha512-B5nnIJrMjsT2bawrsNmgwjDRarSm2PGr6o2yUFvYlfUyggR0cqt8L9GvPJPijUt2biebukWE18rAzf41JDfkUA==}
+  '@vercel/python@6.30.0':
+    resolution: {integrity: sha512-r9+6eTc6e2CrkWElNRp+zjVKmSNu3anyrL34MGhkdvWguglFDmcMP8YdI3rLLAOcboqY1BwXoD879LOw31cSyA==}
 
   '@vercel/redwood@2.4.12':
     resolution: {integrity: sha512-8kJ7eEerI4iMpKVRxQCsnxiIwRVsWtyirEbYb4erCqqsJymTu/xrjhsfAUuzeP8qkuYGP82MJVK+hpKlFtsjGw==}
@@ -2644,10 +2644,9 @@ packages:
     engines: {node: '>=6.0.0'}
     hasBin: true
 
-  basic-ftp@5.2.0:
-    resolution: {integrity: sha512-VoMINM2rqJwJgfdHq6RiUudKt2BV+FY5ZFezP/ypmwayk68+NzzAQy4XXLlqsGD4MCzq3DrmNFD/uUmBJuGoXw==}
+  basic-ftp@5.2.2:
+    resolution: {integrity: sha512-1tDrzKsdCg70WGvbFss/ulVAxupNauGnOlgpyjKzeQxzyllBLS0CGLV7tjIXTK3ZQA9/FBEm9qyFFN1bciA6pw==}
     engines: {node: '>=10.0.0'}
-    deprecated: Security vulnerability fixed in 5.2.1, please upgrade
 
   bcryptjs@3.0.3:
     resolution: {integrity: sha512-GlF5wPWnSa/X5LKM1o0wz0suXIINz1iHRLvTS+sLyi7XPbe5ycmYI3DlZqVGZZtDgl4DmasFg7gOB3JYbphV5g==}
@@ -3702,6 +3701,10 @@ packages:
     resolution: {integrity: sha512-wgWa6FWQ3QRRJbIjbsldRJZxdxYngT/dO0I5Ynmlnin8qy7tC6xYzbcJjtN4wHLXtkbVwHzk0C+OejVw1XM+DQ==}
     engines: {node: 20 || >=22}
 
+  lru-cache@11.3.5:
+    resolution: {integrity: sha512-NxVFwLAnrd9i7KUBxC4DrUhmgjzOs+1Qm50D3oF1/oL+r1NpZ4gA7xvG0/zJ8evR7zIKn4vLf7qTNduWFtCrRw==}
+    engines: {node: 20 || >=22}
+
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
@@ -3834,8 +3837,8 @@ packages:
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
 
-  netmask@2.1.0:
-    resolution: {integrity: sha512-z9sZrk6wyf8/NDKKqe+Tyl58XtgkYrV4kgt1O8xrzYvpl1LvPacPo0imMLHfpStk3kgCIq1ksJ2bmJn9hue2lQ==}
+  netmask@2.1.1:
+    resolution: {integrity: sha512-eonl3sLUha+S1GzTPxychyhnUzKyeQkZ7jLjKrBagJgPla13F+uQ71HgpFefyHgqrjEbCPkDArxYsjY8/+gLKA==}
     engines: {node: '>= 0.4.0'}
 
   next@16.2.2:
@@ -4614,6 +4617,10 @@ packages:
     resolution: {integrity: sha512-H/nlJ/h0ggGC+uRL3ovD+G0i4bqhvsDOpbDv7At5eFLlj2b41L8QliGbnl2H7SnDiYhENphh1tQFJZf+MyfLsQ==}
     engines: {node: '>=20.18.1'}
 
+  undici@7.25.0:
+    resolution: {integrity: sha512-xXnp4kTyor2Zq+J1FfPI6Eq3ew5h6Vl0F/8d9XU5zZQf1tX9s2Su1/3PiMmUANFULpmksxkClamIZcaUqryHsQ==}
+    engines: {node: '>=20.18.1'}
+
   universalify@2.0.1:
     resolution: {integrity: sha512-gptHNQghINnc/vTGIk0SOFGFNXw7JVrlRUtConJRlvaw6DuX0wO5Jeko9sWrMBhh+PsYAZ7oXAiOnf/UKogyiw==}
     engines: {node: '>= 10.0.0'}
@@ -4656,8 +4663,8 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  vercel@50.44.0:
-    resolution: {integrity: sha512-9FO5H6eFcKOtAzWyKGYMrc/ba3rvIQTvPbSSDAVdAIIesOTy47qV/Zsqf1qOUWrmPdSou3x5F++VfJBfMUhcyg==}
+  vercel@51.1.0:
+    resolution: {integrity: sha512-iMfAqlXHmgebtl/TX9wx8HrXIu9hVWJrSGG+f3xZt7LuAzl/4jTWSvQfScUeUPu4yXBjJMRgd6n7aODm4OMXbg==}
     engines: {node: '>= 18'}
     hasBin: true
 
@@ -6827,7 +6834,7 @@ snapshots:
       smol-toml: 1.5.2
       zod: 3.22.4
 
-  '@vercel/python@6.29.0':
+  '@vercel/python@6.30.0':
     dependencies:
       '@vercel/python-analysis': 0.11.0
 
@@ -6870,7 +6877,7 @@ snapshots:
       ms: 2.1.3
       picocolors: 1.1.1
       tar-stream: 3.1.7
-      undici: 7.24.7
+      undici: 7.25.0
       xdg-app-paths: 5.1.0
       zod: 3.24.4
     transitivePeerDependencies:
@@ -7098,7 +7105,7 @@ snapshots:
 
   baseline-browser-mapping@2.10.18: {}
 
-  basic-ftp@5.2.0: {}
+  basic-ftp@5.2.2: {}
 
   bcryptjs@3.0.3: {}
 
@@ -7930,7 +7937,7 @@ snapshots:
 
   get-uri@6.0.5:
     dependencies:
-      basic-ftp: 5.2.0
+      basic-ftp: 5.2.2
       data-uri-to-buffer: 6.0.2
       debug: 4.4.3
     transitivePeerDependencies:
@@ -8336,6 +8343,8 @@ snapshots:
 
   lru-cache@11.3.2: {}
 
+  lru-cache@11.3.5: {}
+
   lru-cache@5.1.1:
     dependencies:
       yallist: 3.1.1
@@ -8437,7 +8446,7 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  netmask@2.1.0: {}
+  netmask@2.1.1: {}
 
   next@16.2.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
@@ -8621,7 +8630,7 @@ snapshots:
   pac-resolver@7.0.1:
     dependencies:
       degenerator: 5.0.1
-      netmask: 2.1.0
+      netmask: 2.1.1
 
   parent-module@1.0.1:
     dependencies:
@@ -8643,7 +8652,7 @@ snapshots:
 
   path-scurry@2.0.2:
     dependencies:
-      lru-cache: 11.3.2
+      lru-cache: 11.3.5
       minipass: 7.1.3
 
   path-to-regexp@6.1.0: {}
@@ -9346,6 +9355,8 @@ snapshots:
 
   undici@7.24.7: {}
 
+  undici@7.25.0: {}
+
   universalify@2.0.1: {}
 
   unpipe@1.0.0: {}
@@ -9379,7 +9390,7 @@ snapshots:
     dependencies:
       react: 19.2.4
 
-  vercel@50.44.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(typescript@6.0.2):
+  vercel@51.1.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(typescript@6.0.2):
     dependencies:
       '@vercel/backends': 0.0.59(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(typescript@6.0.2)
       '@vercel/blob': 2.3.0
@@ -9398,7 +9409,7 @@ snapshots:
       '@vercel/next': 4.16.6
       '@vercel/node': 5.7.4
       '@vercel/prepare-flags-definitions': 0.2.1
-      '@vercel/python': 6.29.0
+      '@vercel/python': 6.30.0
       '@vercel/redwood': 2.4.12
       '@vercel/remix-builder': 5.7.2
       '@vercel/ruby': 2.3.2
