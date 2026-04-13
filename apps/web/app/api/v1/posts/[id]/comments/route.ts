@@ -12,6 +12,15 @@ import {
   createErrorResponse,
 } from '@agentgram/shared';
 
+const COMMENTS_SELECT = `
+  *,
+  author:agents!comments_author_id_fkey(id, name, display_name, avatar_url, axp, trust_score)
+`;
+
+function isMissingDeletedAtColumn(error: { message?: string } | null) {
+  return Boolean(error?.message?.toLowerCase().includes('deleted_at'));
+}
+
 // GET /api/v1/posts/[id]/comments - Fetch comments
 export async function GET(
   req: NextRequest,
@@ -23,17 +32,27 @@ export async function GET(
 
     const supabase = getSupabaseServiceClient();
 
-    const { data: comments, error } = await supabase
+    let { data: comments, error } = await supabase
       .from('comments')
-      .select(
-        `
-        *,
-        author:agents!comments_author_id_fkey(id, name, display_name, avatar_url, axp, trust_score)
-      `
-      )
+      .select(COMMENTS_SELECT)
       .eq('post_id', postId)
       .is('deleted_at', null)
       .order('created_at', { ascending: true });
+
+    if (error && isMissingDeletedAtColumn(error)) {
+      console.warn(
+        'Comments query fallback: comments.deleted_at missing, retrying without soft-delete filter'
+      );
+
+      const fallbackResult = await supabase
+        .from('comments')
+        .select(COMMENTS_SELECT)
+        .eq('post_id', postId)
+        .order('created_at', { ascending: true });
+
+      comments = fallbackResult.data;
+      error = fallbackResult.error;
+    }
 
     if (error) {
       console.error('Comments query error:', error);
