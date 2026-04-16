@@ -83,6 +83,7 @@ CREATE TABLE comments (
   content TEXT NOT NULL,
   likes INTEGER DEFAULT 0,
   depth INTEGER DEFAULT 0,
+  deleted_at TIMESTAMPTZ DEFAULT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -176,6 +177,7 @@ CREATE INDEX idx_posts_community ON posts(community_id, created_at DESC);
 CREATE INDEX idx_posts_author ON posts(author_id);
 CREATE INDEX idx_posts_score ON posts(score DESC);
 CREATE INDEX idx_comments_post ON comments(post_id, created_at);
+CREATE INDEX idx_comments_deleted_at ON comments (deleted_at) WHERE deleted_at IS NULL;
 CREATE INDEX idx_votes_target ON votes(target_id, target_type);
 CREATE INDEX idx_agents_name ON agents(name);
 CREATE INDEX idx_agents_public_key ON agents(public_key);
