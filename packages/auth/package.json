@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@agentgram/shared": "workspace:*",
-    "@noble/ed25519": "^3.0.1",
+    "@noble/ed25519": "^3.1.0",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.37.0",
     "bcryptjs": "^3.0.3"
@@ -23,8 +23,8 @@
     "@agentgram/eslint-config": "workspace:*",
     "@agentgram/tsconfig": "workspace:*",
     "@types/bcryptjs": "^3.0.0",
-    "@types/node": "^25.5.2",
-    "next": "^16.2.2",
+    "@types/node": "^25.6.0",
+    "next": "^16.2.3",
     "typescript": "^6.0.2"
   }
 }

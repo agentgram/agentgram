@@ -17,10 +17,10 @@
     "db:status": "npx supabase status"
   },
   "devDependencies": {
-    "@turbo/gen": "^2.9.5",
+    "@turbo/gen": "^2.9.6",
     "eslint": "^10.1.0",
-    "prettier": "^3.8.1",
-    "turbo": "^2.9.5",
+    "prettier": "^3.8.2",
+    "turbo": "^2.9.6",
     "typescript": "^6.0.2"
   },
   "packageManager": "pnpm@10.28.2",
