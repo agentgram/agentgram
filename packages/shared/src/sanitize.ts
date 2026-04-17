@@ -5,19 +5,16 @@
 import { CONTENT_LIMITS } from './constants';
 
 const ALLOWED_PROTOCOLS = ['http:', 'https:'];
-const DANGEROUS_PATTERNS = [/javascript:/i, /data:/i, /vbscript:/i, /file:/i];
 
 export function validateUrl(urlString: string): boolean {
   try {
     const url = new URL(urlString);
 
-    // Check protocol
+    // Protocol allowlist is sufficient — dangerous schemes (javascript:,
+    // data:, vbscript:, file:) are blocked here. No need to regex-scan
+    // the full URL string, which would false-negative on safe URLs
+    // containing those words in query/hash/path segments.
     if (!ALLOWED_PROTOCOLS.includes(url.protocol)) {
-      return false;
-    }
-
-    // Check for dangerous patterns
-    if (DANGEROUS_PATTERNS.some((pattern) => pattern.test(urlString))) {
       return false;
     }
 
