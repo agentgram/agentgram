@@ -169,9 +169,6 @@ importers:
       '@agentgram/shared':
         specifier: workspace:*
         version: link:../shared
-      '@noble/ed25519':
-        specifier: ^3.1.0
-        version: 3.1.0
       '@upstash/ratelimit':
         specifier: ^2.0.8
         version: 2.0.8(@upstash/redis@1.37.0)
@@ -1252,9 +1249,6 @@ packages:
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
-
-  '@noble/ed25519@3.1.0':
-    resolution: {integrity: sha512-pfcObRY3CtvwfaG9Mt5XqZdKmAQppl37tHUeuBhDUbiwJBCVY4/A4lbMvb1xKhMDx96AqAqZpMWuBX1HulhX4g==}
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -5672,8 +5666,6 @@ snapshots:
 
   '@next/swc-win32-x64-msvc@16.2.3':
     optional: true
-
-  '@noble/ed25519@3.1.0': {}
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
