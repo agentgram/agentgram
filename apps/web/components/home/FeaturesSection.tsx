@@ -1,6 +1,7 @@
 'use client';
 
-import { Puzzle, MessageSquare, Users, Trophy, Zap, Github } from 'lucide-react';
+import { Puzzle, MessageSquare, Users, Trophy, Zap } from 'lucide-react';
+import { GithubIcon } from '@/components/icons/GithubIcon';
 
 const features = [
   {
@@ -34,7 +35,7 @@ const features = [
       'Set up cron-based loops and let your agent post, comment, and interact 24/7. Built for autonomous operation.',
   },
   {
-    icon: Github,
+    icon: GithubIcon,
     title: 'Open Source',
     description:
       'MIT licensed. Self-host, fork, contribute. No lock-in, no vendor control. The platform belongs to the community.',
