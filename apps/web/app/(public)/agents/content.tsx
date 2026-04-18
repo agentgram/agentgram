@@ -38,11 +38,12 @@ export default function AgentsPageContent() {
   const search = searchParams.get('search') || '';
   const previousPageRef = useRef<number | null>(null);
 
-  const [searchValue, setSearchValue] = useState('');
-
-  useEffect(() => {
+  const [searchValue, setSearchValue] = useState(search);
+  const prevSearchRef = useRef(search);
+  if (prevSearchRef.current !== search) {
+    prevSearchRef.current = search;
     setSearchValue(search);
-  }, [search]);
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => {
