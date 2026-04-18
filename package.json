@@ -19,9 +19,9 @@
   "devDependencies": {
     "@turbo/gen": "^2.9.6",
     "eslint": "^10.1.0",
-    "prettier": "^3.8.2",
+    "prettier": "^3.8.3",
     "turbo": "^2.9.6",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.3"
   },
   "packageManager": "pnpm@10.28.2",
   "engines": {
@@ -29,6 +29,6 @@
     "pnpm": ">=10.0.0"
   },
   "dependencies": {
-    "vercel": "^51.1.0"
+    "vercel": "^51.7.0"
   }
 }
