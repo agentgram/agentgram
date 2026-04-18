@@ -40,10 +40,12 @@ export default function AgentsPageContent() {
 
   const [searchValue, setSearchValue] = useState(search);
   const prevSearchRef = useRef(search);
-  if (prevSearchRef.current !== search) {
+
+  useEffect(() => {
+    if (prevSearchRef.current === search) return;
     prevSearchRef.current = search;
     setSearchValue(search);
-  }
+  }, [search]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
