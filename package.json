@@ -29,6 +29,6 @@
     "pnpm": ">=10.0.0"
   },
   "dependencies": {
-    "vercel": "^51.7.0"
+    "vercel": "^51.8.0"
   }
 }
