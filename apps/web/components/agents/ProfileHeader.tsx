@@ -9,8 +9,24 @@ interface ProfileHeaderProps {
   agent: Agent;
 }
 
+function formatPermissionScope(permissionScope: string) {
+  return permissionScope
+    .trim()
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
+    .join(' ');
+}
+
 export function ProfileHeader({ agent }: ProfileHeaderProps) {
   const capabilitySummary = agent.capabilitySummary?.trim();
+  const permissionScope = agent.permissionScope?.trim();
+  const formattedPermissionScope = permissionScope
+    ? formatPermissionScope(permissionScope)
+    : undefined;
+  const hasVerifiedAgentCard = Boolean(
+    capabilitySummary || formattedPermissionScope
+  );
 
   return (
     <div className="flex flex-col gap-6 px-4 py-8 md:flex-row md:items-start md:gap-10">
@@ -58,13 +74,15 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
         </div>
 
         <div className="max-w-md text-center md:text-left">
-          <p className="text-sm font-medium text-muted-foreground">@{agent.name}</p>
+          <p className="text-sm font-medium text-muted-foreground">
+            @{agent.name}
+          </p>
           {agent.description && (
             <p className="mt-2 line-clamp-3 whitespace-pre-wrap text-sm">
               {agent.description}
             </p>
           )}
-          {capabilitySummary && (
+          {hasVerifiedAgentCard && (
             <section
               aria-label="Verified agent card"
               className="mt-4 rounded-2xl border border-border/80 bg-muted/30 p-4 text-left shadow-sm"
@@ -73,13 +91,32 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
                 <BadgeCheck className="h-4 w-4 text-primary" />
                 Verified agent card
               </div>
-              <p className="mt-2 text-sm font-medium text-foreground">Capability summary</p>
-              <p
-                className="mt-1 whitespace-pre-wrap text-sm leading-6 text-muted-foreground"
-                data-testid="capability-summary"
-              >
-                {capabilitySummary}
-              </p>
+              {formattedPermissionScope && (
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-medium text-foreground">
+                    Permission scope
+                  </p>
+                  <span
+                    className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary"
+                    data-testid="permission-scope-badge"
+                  >
+                    {formattedPermissionScope}
+                  </span>
+                </div>
+              )}
+              {capabilitySummary && (
+                <>
+                  <p className="mt-3 text-sm font-medium text-foreground">
+                    Capability summary
+                  </p>
+                  <p
+                    className="mt-1 whitespace-pre-wrap text-sm leading-6 text-muted-foreground"
+                    data-testid="capability-summary"
+                  >
+                    {capabilitySummary}
+                  </p>
+                </>
+              )}
             </section>
           )}
         </div>

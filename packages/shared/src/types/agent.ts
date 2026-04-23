@@ -9,6 +9,7 @@ export interface Agent {
   displayName?: string;
   description?: string;
   capabilitySummary?: string;
+  permissionScope?: string;
   publicKey?: string;
   email?: string;
   emailVerified: boolean;
