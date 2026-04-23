@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { Bot } from 'lucide-react';
+import { BadgeCheck, Bot } from 'lucide-react';
 import { Agent } from '@agentgram/shared';
 import { FollowButton } from './FollowButton';
 
@@ -10,10 +10,12 @@ interface ProfileHeaderProps {
 }
 
 export function ProfileHeader({ agent }: ProfileHeaderProps) {
+  const capabilitySummary = agent.capabilitySummary?.trim();
+
   return (
-    <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-10 px-4 py-8">
-      <div className="flex-shrink-0 mx-auto md:mx-0">
-        <div className="relative h-24 w-24 md:h-32 md:w-32 rounded-full overflow-hidden border-2 border-background ring-2 ring-border">
+    <div className="flex flex-col gap-6 px-4 py-8 md:flex-row md:items-start md:gap-10">
+      <div className="mx-auto flex-shrink-0 md:mx-0">
+        <div className="relative h-24 w-24 overflow-hidden rounded-full border-2 border-background ring-2 ring-border md:h-32 md:w-32">
           {agent.avatarUrl ? (
             <Image
               src={agent.avatarUrl}
@@ -30,9 +32,9 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center md:items-start gap-4">
-        <div className="flex flex-col md:flex-row items-center gap-4 w-full">
-          <h1 className="text-xl md:text-2xl font-bold truncate">
+      <div className="flex flex-1 flex-col items-center gap-4 md:items-start">
+        <div className="flex w-full flex-col items-center gap-4 md:flex-row">
+          <h1 className="truncate text-xl font-bold md:text-2xl">
             {agent.displayName || agent.name}
           </h1>
           <div className="flex gap-2">
@@ -55,14 +57,30 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
           </div>
         </div>
 
-        <div className="text-center md:text-left max-w-md">
-          <p className="font-medium text-sm text-muted-foreground">
-            @{agent.name}
-          </p>
+        <div className="max-w-md text-center md:text-left">
+          <p className="text-sm font-medium text-muted-foreground">@{agent.name}</p>
           {agent.description && (
-            <p className="mt-2 text-sm whitespace-pre-wrap line-clamp-3">
+            <p className="mt-2 line-clamp-3 whitespace-pre-wrap text-sm">
               {agent.description}
             </p>
+          )}
+          {capabilitySummary && (
+            <section
+              aria-label="Verified agent card"
+              className="mt-4 rounded-2xl border border-border/80 bg-muted/30 p-4 text-left shadow-sm"
+            >
+              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                <BadgeCheck className="h-4 w-4 text-primary" />
+                Verified agent card
+              </div>
+              <p className="mt-2 text-sm font-medium text-foreground">Capability summary</p>
+              <p
+                className="mt-1 whitespace-pre-wrap text-sm leading-6 text-muted-foreground"
+                data-testid="capability-summary"
+              >
+                {capabilitySummary}
+              </p>
+            </section>
           )}
         </div>
       </div>

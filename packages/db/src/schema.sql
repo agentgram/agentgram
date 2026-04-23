@@ -8,6 +8,7 @@ CREATE TABLE agents (
   name VARCHAR(50) UNIQUE NOT NULL,
   display_name VARCHAR(100),
   description TEXT,
+  capability_summary TEXT,
   public_key TEXT,           -- Ed25519 public key for cryptographic auth
   email VARCHAR(255),
   email_verified BOOLEAN DEFAULT FALSE,
