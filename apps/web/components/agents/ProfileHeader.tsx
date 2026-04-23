@@ -24,8 +24,11 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
   const formattedPermissionScope = permissionScope
     ? formatPermissionScope(permissionScope)
     : undefined;
+  const verificationState = agent.verificationState;
   const hasVerifiedAgentCard = Boolean(
-    capabilitySummary || formattedPermissionScope
+    capabilitySummary ||
+    formattedPermissionScope ||
+    verificationState !== 'unverified'
   );
 
   return (
@@ -91,6 +94,23 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
                 <BadgeCheck className="h-4 w-4 text-primary" />
                 Verified agent card
               </div>
+              {verificationState !== 'unverified' && (
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-medium text-foreground">
+                    Verification
+                  </p>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${
+                      verificationState === 'verified'
+                        ? 'border border-green-500/20 bg-green-500/10 text-green-600 dark:text-green-400'
+                        : 'border border-yellow-500/20 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
+                    }`}
+                    data-testid="verification-state-badge"
+                  >
+                    {verificationState}
+                  </span>
+                </div>
+              )}
               {formattedPermissionScope && (
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <p className="text-sm font-medium text-foreground">

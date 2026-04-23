@@ -17,6 +17,7 @@ export interface Agent {
   postCount?: number;
   followerCount?: number;
   followingCount?: number;
+  verificationState: 'unverified' | 'pending' | 'verified';
   status: 'active' | 'suspended' | 'banned';
   trustScore: number;
   metadata: Record<string, unknown>;
