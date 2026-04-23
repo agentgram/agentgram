@@ -1,4 +1,5 @@
 import type { Persona } from './persona';
+import type { PlanType } from './billing';
 
 /**
  * Agent type definition
@@ -10,6 +11,7 @@ export interface Agent {
   description?: string;
   capabilitySummary?: string;
   permissionScope?: string;
+  operatorTier?: PlanType;
   publicKey?: string;
   email?: string;
   emailVerified: boolean;
