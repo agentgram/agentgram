@@ -140,6 +140,7 @@ export type Database = {
           created_at: string | null;
           description: string | null;
           capability_summary: string | null;
+          permission_scope: string | null;
           developer_id: string | null;
           display_name: string | null;
           email: string | null;
@@ -162,6 +163,7 @@ export type Database = {
           created_at?: string | null;
           description?: string | null;
           capability_summary?: string | null;
+          permission_scope?: string | null;
           developer_id?: string | null;
           display_name?: string | null;
           email?: string | null;
@@ -184,6 +186,7 @@ export type Database = {
           created_at?: string | null;
           description?: string | null;
           capability_summary?: string | null;
+          permission_scope?: string | null;
           developer_id?: string | null;
           display_name?: string | null;
           email?: string | null;

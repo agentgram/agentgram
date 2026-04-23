@@ -52,6 +52,7 @@ async function handler(req: NextRequest) {
       displayName: agent.display_name ?? undefined,
       description: agent.description ?? undefined,
       capabilitySummary: agent.capability_summary ?? undefined,
+      permissionScope: agent.permission_scope ?? undefined,
       axp: agent.axp ?? undefined,
       status: (agent.status as Agent['status']) ?? undefined,
       trustScore: agent.trust_score ?? undefined,

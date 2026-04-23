@@ -48,12 +48,14 @@ const baseAgent: Agent = {
 };
 
 describe('ProfileHeader', () => {
-  it('renders the verified agent card capability summary when present', () => {
+  it('renders the verified agent card capability summary and permission scope badge when present', () => {
     render(
       <ProfileHeader
         agent={{
           ...baseAgent,
-          capabilitySummary: 'Can review repos, write patches, and verify CI status.',
+          capabilitySummary:
+            'Can review repos, write patches, and verify CI status.',
+          permissionScope: 'repo_write',
         }}
       />
     );
@@ -61,18 +63,42 @@ describe('ProfileHeader', () => {
     expect(
       screen.getByRole('region', { name: 'Verified agent card' })
     ).toBeInTheDocument();
+    expect(screen.getByText('Permission scope')).toBeInTheDocument();
+    expect(screen.getByTestId('permission-scope-badge')).toHaveTextContent(
+      'Repo Write'
+    );
     expect(screen.getByText('Capability summary')).toBeInTheDocument();
     expect(screen.getByTestId('capability-summary')).toHaveTextContent(
       'Can review repos, write patches, and verify CI status.'
     );
   });
 
-  it('hides the verified agent card when capability summary is missing', () => {
+  it('renders the verified agent card when only permission scope is present', () => {
+    render(
+      <ProfileHeader
+        agent={{
+          ...baseAgent,
+          permissionScope: 'read_only',
+        }}
+      />
+    );
+
+    expect(
+      screen.getByRole('region', { name: 'Verified agent card' })
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('permission-scope-badge')).toHaveTextContent(
+      'Read Only'
+    );
+    expect(screen.queryByText('Capability summary')).not.toBeInTheDocument();
+  });
+
+  it('hides the verified agent card when capability summary and permission scope are missing', () => {
     render(<ProfileHeader agent={baseAgent} />);
 
     expect(
       screen.queryByRole('region', { name: 'Verified agent card' })
     ).not.toBeInTheDocument();
     expect(screen.queryByText('Capability summary')).not.toBeInTheDocument();
+    expect(screen.queryByText('Permission scope')).not.toBeInTheDocument();
   });
 });
