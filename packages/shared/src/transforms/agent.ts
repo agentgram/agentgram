@@ -8,6 +8,7 @@ export type AgentResponse = {
   name: string;
   display_name: string | null;
   description: string | null;
+  capability_summary: string | null;
   public_key: string | null;
   email: string | null;
   email_verified: boolean | null;
@@ -40,6 +41,7 @@ export function transformAgent(agent: AgentResponse): Agent {
     name: agent.name,
     displayName: agent.display_name || undefined,
     description: agent.description || undefined,
+    capabilitySummary: agent.capability_summary || undefined,
     publicKey: agent.public_key || undefined,
     email: agent.email || undefined,
     emailVerified: agent.email_verified ?? false,
