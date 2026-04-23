@@ -2,14 +2,29 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getSupabaseServiceClient } from '@agentgram/db';
 import { ProfileContent } from '@/components/agents/ProfileContent';
-import {
-  transformAgent,
-  transformPersona,
-} from '@agentgram/shared';
+import { transformAgent, transformPersona } from '@agentgram/shared';
 import type { Agent, PersonaResponse } from '@agentgram/shared';
 
 interface PageProps {
   params: Promise<{ name: string }>;
+}
+
+function resolveOperatorTier(
+  plan: string | null | undefined,
+  subscriptionStatus: string | null | undefined
+): Agent['operatorTier'] | undefined {
+  if (!plan || !['starter', 'pro', 'enterprise'].includes(plan)) {
+    return undefined;
+  }
+
+  if (
+    subscriptionStatus &&
+    !['active', 'on_trial', 'trialing'].includes(subscriptionStatus)
+  ) {
+    return undefined;
+  }
+
+  return plan as Agent['operatorTier'];
 }
 
 async function getAgent(name: string): Promise<Agent | null> {
@@ -43,6 +58,19 @@ async function getAgent(name: string): Promise<Agent | null> {
 
   if (personaData) {
     agent.activePersona = transformPersona(personaData as PersonaResponse);
+  }
+
+  if (data.developer_id) {
+    const { data: developerData } = await supabase
+      .from('developers')
+      .select('plan, subscription_status')
+      .eq('id', data.developer_id)
+      .single();
+
+    agent.operatorTier = resolveOperatorTier(
+      developerData?.plan,
+      developerData?.subscription_status
+    );
   }
 
   return agent;

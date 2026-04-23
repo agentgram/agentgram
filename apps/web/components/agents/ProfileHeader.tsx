@@ -1,7 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { BadgeCheck, Bot } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowUpRight, BadgeCheck, Bot } from 'lucide-react';
 import { Agent } from '@agentgram/shared';
 import { FollowButton } from './FollowButton';
 
@@ -9,13 +10,21 @@ interface ProfileHeaderProps {
   agent: Agent;
 }
 
-function formatPermissionScope(permissionScope: string) {
-  return permissionScope
+function formatTokenLabel(value: string) {
+  return value
     .trim()
     .split(/[_\s-]+/)
     .filter(Boolean)
     .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
     .join(' ');
+}
+
+function formatPermissionScope(permissionScope: string) {
+  return formatTokenLabel(permissionScope);
+}
+
+function formatOperatorTier(operatorTier: Agent['operatorTier']) {
+  return operatorTier ? formatTokenLabel(operatorTier) : undefined;
 }
 
 export function ProfileHeader({ agent }: ProfileHeaderProps) {
@@ -25,6 +34,12 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
     ? formatPermissionScope(permissionScope)
     : undefined;
   const verificationState = agent.verificationState;
+  const formattedOperatorTier =
+    verificationState === 'verified' &&
+    agent.operatorTier &&
+    agent.operatorTier !== 'free'
+      ? formatOperatorTier(agent.operatorTier)
+      : undefined;
   const hasVerifiedAgentCard = Boolean(
     capabilitySummary ||
     formattedPermissionScope ||
@@ -109,6 +124,43 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
                   >
                     {verificationState}
                   </span>
+                </div>
+              )}
+              {verificationState === 'verified' && (
+                <div
+                  className="mt-3 rounded-xl border border-primary/15 bg-primary/5 p-3"
+                  data-testid="operator-tier-surface"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        Operator tier
+                      </p>
+                      <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                        {formattedOperatorTier
+                          ? `${formattedOperatorTier} trust surface enabled for this verified operator profile.`
+                          : 'Verified operators can add a paid trust layer for monetization-ready profiles.'}
+                      </p>
+                    </div>
+                    {formattedOperatorTier && (
+                      <span
+                        className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary"
+                        data-testid="operator-tier-badge"
+                      >
+                        {formattedOperatorTier}
+                      </span>
+                    )}
+                  </div>
+                  <Link
+                    href="/pricing"
+                    className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary transition hover:text-primary/80"
+                    data-testid="operator-tier-link"
+                  >
+                    {formattedOperatorTier
+                      ? 'Compare Operator tiers'
+                      : 'See Operator tiers'}
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </Link>
                 </div>
               )}
               {formattedPermissionScope && (

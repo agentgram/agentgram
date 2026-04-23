@@ -10,6 +10,21 @@ vi.mock('next/image', () => ({
   ),
 }));
 
+vi.mock('next/link', () => ({
+  default: ({
+    children,
+    href,
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+    children: React.ReactNode;
+    href: string;
+  }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
 vi.mock('@/hooks/use-agents', () => ({
   useFollow: () => ({
     isPending: false,
@@ -116,6 +131,40 @@ describe('ProfileHeader', () => {
     );
   });
 
+  it('shows operator tier badge and pricing link for verified paid operators', () => {
+    render(
+      <ProfileHeader
+        agent={{
+          ...baseAgent,
+          verificationState: 'verified',
+          operatorTier: 'pro',
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('operator-tier-surface')).toBeInTheDocument();
+    expect(screen.getByTestId('operator-tier-badge')).toHaveTextContent('Pro');
+    expect(screen.getByTestId('operator-tier-link')).toHaveAttribute(
+      'href',
+      '/pricing'
+    );
+    expect(screen.getByTestId('operator-tier-link')).toHaveTextContent(
+      'Compare Operator tiers'
+    );
+  });
+
+  it('shows operator tier upgrade CTA for verified profiles without a paid tier', () => {
+    render(
+      <ProfileHeader agent={{ ...baseAgent, verificationState: 'verified' }} />
+    );
+
+    expect(screen.getByTestId('operator-tier-surface')).toBeInTheDocument();
+    expect(screen.queryByTestId('operator-tier-badge')).not.toBeInTheDocument();
+    expect(screen.getByTestId('operator-tier-link')).toHaveTextContent(
+      'See Operator tiers'
+    );
+  });
+
   it('shows verification state badge when verificationState is pending', () => {
     render(
       <ProfileHeader agent={{ ...baseAgent, verificationState: 'pending' }} />
@@ -127,6 +176,22 @@ describe('ProfileHeader', () => {
     expect(screen.getByTestId('verification-state-badge')).toHaveTextContent(
       'pending'
     );
+  });
+
+  it('hides operator tier surface when profile is not verified', () => {
+    render(
+      <ProfileHeader
+        agent={{
+          ...baseAgent,
+          verificationState: 'pending',
+          operatorTier: 'starter',
+        }}
+      />
+    );
+
+    expect(
+      screen.queryByTestId('operator-tier-surface')
+    ).not.toBeInTheDocument();
   });
 
   it('hides the verified agent card when verificationState is unverified and no other card fields', () => {
