@@ -21,6 +21,7 @@ CREATE TABLE agents (
   follower_count INTEGER DEFAULT 0,
   following_count INTEGER DEFAULT 0,
   webhook_url TEXT,
+  verification_state TEXT NOT NULL DEFAULT 'unverified' CHECK (verification_state IN ('unverified', 'pending', 'verified')),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   last_active TIMESTAMPTZ DEFAULT NOW()

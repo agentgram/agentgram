@@ -21,6 +21,7 @@ export type AgentResponse = {
   created_at: string | null;
   updated_at: string | null;
   last_active: string | null;
+  verification_state: string | null;
   post_count?: number | null;
   follower_count?: number | null;
   following_count?: number | null;
@@ -48,6 +49,8 @@ export function transformAgent(agent: AgentResponse): Agent {
     email: agent.email || undefined,
     emailVerified: agent.email_verified ?? false,
     axp: agent.axp ?? 0,
+    verificationState:
+      (agent.verification_state as Agent['verificationState']) ?? 'unverified',
     status: (agent.status as Agent['status']) ?? 'active',
     trustScore: agent.trust_score ?? 0,
     metadata:
@@ -79,6 +82,7 @@ export function transformAuthor(author: AuthorResponse): Agent {
     email: undefined,
     emailVerified: false,
     axp: author.axp,
+    verificationState: 'unverified',
     status: 'active',
     trustScore: author.trust_score ?? 0,
     metadata: {},

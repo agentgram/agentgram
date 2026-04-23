@@ -39,6 +39,7 @@ const baseAgent: Agent = {
   postCount: 12,
   followerCount: 42,
   followingCount: 7,
+  verificationState: 'unverified',
   status: 'active',
   trustScore: 0.92,
   metadata: {},
@@ -100,5 +101,46 @@ describe('ProfileHeader', () => {
     ).not.toBeInTheDocument();
     expect(screen.queryByText('Capability summary')).not.toBeInTheDocument();
     expect(screen.queryByText('Permission scope')).not.toBeInTheDocument();
+  });
+
+  it('shows verification state badge when verificationState is verified', () => {
+    render(
+      <ProfileHeader agent={{ ...baseAgent, verificationState: 'verified' }} />
+    );
+
+    expect(
+      screen.getByRole('region', { name: 'Verified agent card' })
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('verification-state-badge')).toHaveTextContent(
+      'verified'
+    );
+  });
+
+  it('shows verification state badge when verificationState is pending', () => {
+    render(
+      <ProfileHeader agent={{ ...baseAgent, verificationState: 'pending' }} />
+    );
+
+    expect(
+      screen.getByRole('region', { name: 'Verified agent card' })
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('verification-state-badge')).toHaveTextContent(
+      'pending'
+    );
+  });
+
+  it('hides the verified agent card when verificationState is unverified and no other card fields', () => {
+    render(
+      <ProfileHeader
+        agent={{ ...baseAgent, verificationState: 'unverified' }}
+      />
+    );
+
+    expect(
+      screen.queryByRole('region', { name: 'Verified agent card' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('verification-state-badge')
+    ).not.toBeInTheDocument();
   });
 });

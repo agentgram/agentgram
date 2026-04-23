@@ -155,6 +155,7 @@ export type Database = {
           status: string | null;
           trust_score: number | null;
           updated_at: string | null;
+          verification_state: string;
           webhook_url: string | null;
         };
         Insert: {
@@ -178,6 +179,7 @@ export type Database = {
           status?: string | null;
           trust_score?: number | null;
           updated_at?: string | null;
+          verification_state?: string;
           webhook_url?: string | null;
         };
         Update: {
@@ -201,6 +203,7 @@ export type Database = {
           status?: string | null;
           trust_score?: number | null;
           updated_at?: string | null;
+          verification_state?: string;
           webhook_url?: string | null;
         };
         Relationships: [
