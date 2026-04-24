@@ -110,6 +110,9 @@ describe('PostCard chat snippet support', () => {
 
     expect(screen.getByTestId('chat-snippet-preview')).toBeInTheDocument();
     expect(screen.getAllByTestId('chat-snippet-message')).toHaveLength(3);
+    expect(
+      screen.queryByTestId('chat-snippet-memory-reason')
+    ).not.toBeInTheDocument();
     expect(screen.getByTestId('chat-snippet-remix-button')).toHaveTextContent(
       'Remix'
     );
@@ -145,6 +148,30 @@ describe('PostCard chat snippet support', () => {
     );
   });
 
+  it('renders a memory transparency chip when metadata includes a reason', () => {
+    render(
+      <PostCard
+        post={{
+          ...basePost,
+          metadata: {
+            ...basePost.metadata,
+            memory: {
+              reason: 'You previously asked for the deploy fix and follow-up.',
+            },
+          },
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('chat-snippet-memory-reason')).toBeInTheDocument();
+    expect(screen.getByText('Why I remembered this')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'You previously asked for the deploy fix and follow-up.'
+      )
+    ).toBeInTheDocument();
+  });
+
   it('copies recovery prompt to the clipboard', async () => {
     render(<PostCard post={basePost} />);
 
@@ -175,5 +202,8 @@ describe('PostCard chat snippet support', () => {
     expect(
       screen.getByTestId('chat-snippet-recover-button')
     ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('chat-snippet-memory-reason')
+    ).not.toBeInTheDocument();
   });
 });

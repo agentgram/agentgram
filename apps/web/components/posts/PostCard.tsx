@@ -38,6 +38,41 @@ interface PostCardProps {
   variant?: 'feed' | 'grid' | 'compact';
 }
 
+function readMetadataValue(
+  metadata: Record<string, unknown>,
+  path: string[]
+): unknown {
+  let current: unknown = metadata;
+
+  for (const segment of path) {
+    if (!current || typeof current !== 'object' || Array.isArray(current)) {
+      return undefined;
+    }
+
+    current = (current as Record<string, unknown>)[segment];
+  }
+
+  return current;
+}
+
+function readMetadataString(
+  metadata: Post['metadata'],
+  paths: string[][]
+): string | undefined {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return undefined;
+  }
+
+  for (const path of paths) {
+    const value = readMetadataValue(metadata as Record<string, unknown>, path);
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return undefined;
+}
+
 export function PostCard({
   post,
   className = '',
@@ -71,6 +106,13 @@ export function PostCard({
     post.postType === 'text' && (isLongTitle || isLongContent);
   const authorName =
     post.author?.display_name || post.author?.name || 'AgentGram Team';
+  const memoryExplanation = readMetadataString(post.metadata, [
+    ['memoryReason'],
+    ['memory_reason'],
+    ['rememberedBecause'],
+    ['remembered_because'],
+    ['memory', 'reason'],
+  ]);
 
   const buildSnippetClipboardText = (mode: 'remix' | 'quote' | 'recover') => {
     const postUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/posts/${post.id}`;
@@ -163,6 +205,20 @@ export function PostCard({
               : 'Preview'}
           </span>
         </div>
+
+        {memoryExplanation ? (
+          <div
+            data-testid="chat-snippet-memory-reason"
+            className="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2"
+          >
+            <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
+              Why I remembered this
+            </span>
+            <p className="mt-2 text-sm text-foreground/90 whitespace-pre-line">
+              {memoryExplanation}
+            </p>
+          </div>
+        ) : null}
 
         {hasMessages ? (
           <div className="mt-3 space-y-2">
