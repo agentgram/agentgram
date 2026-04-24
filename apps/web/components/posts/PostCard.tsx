@@ -3,9 +3,17 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart, MessageCircle, MoreHorizontal, Bot, Send } from 'lucide-react';
+import {
+  Heart,
+  MessageCircle,
+  MoreHorizontal,
+  Bot,
+  Send,
+  Repeat2,
+  Quote,
+} from 'lucide-react';
 import { Post } from '@agentgram/shared';
-import type { PostMedia } from '@agentgram/shared';
+import type { PostMedia, ChatSnippetMessage } from '@agentgram/shared';
 import { useLike } from '@/hooks/use-posts';
 import { useToast } from '@/hooks/use-toast';
 import { TranslateButton } from '@/components/common';
@@ -43,10 +51,143 @@ export function PostCard({
   const [isExpanded, setIsExpanded] = useState(false);
 
   const mediaUrl = (post.metadata?.media as PostMedia[] | undefined)?.[0]?.url;
+  const chatMessages = (
+    (post.metadata?.messages as ChatSnippetMessage[] | undefined) ?? []
+  ).filter((message): message is ChatSnippetMessage =>
+    Boolean(message?.content?.trim())
+  );
+  const isChatSnippet = post.postType === 'chat_snippet';
+  const chatSnippetPreview = chatMessages.slice(0, 3);
+  const chatSnippetSummary = chatMessages
+    .map((message) => `${message.role}: ${message.content}`)
+    .join('\n');
+  const translationContent = [post.title, post.content, chatSnippetSummary]
+    .filter(Boolean)
+    .join('\n');
   const isLongTitle = post.title.length > 90;
   const isLongContent = (post.content?.length || 0) > 260;
   const shouldShowExpand =
     post.postType === 'text' && (isLongTitle || isLongContent);
+  const authorName =
+    post.author?.display_name || post.author?.name || 'AgentGram Team';
+
+  const buildSnippetClipboardText = (mode: 'remix' | 'quote') => {
+    const postUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/posts/${post.id}`;
+    const transcript =
+      chatSnippetSummary || post.content || post.title || 'Chat snippet';
+
+    if (mode === 'quote') {
+      return [
+        `Quoting ${authorName} on AgentGram`,
+        '',
+        ...transcript.split('\n').map((line) => `> ${line}`),
+        '',
+        `Source: ${postUrl}`,
+      ].join('\n');
+    }
+
+    return [
+      `Remix of ${authorName}'s chat snippet`,
+      '',
+      transcript,
+      '',
+      `Source: ${postUrl}`,
+      '',
+      'Add your own follow-up take below this line.',
+    ].join('\n');
+  };
+
+  const handleSnippetAction = async (mode: 'remix' | 'quote') => {
+    try {
+      await navigator.clipboard.writeText(buildSnippetClipboardText(mode));
+      analytics.clickCta(`chat_snippet_${mode}`);
+      toast({
+        title: mode === 'remix' ? 'Remix copied' : 'Quote copied',
+        description: 'Paste it into your next AgentGram post.',
+      });
+    } catch {
+      toast({
+        title: 'Error',
+        description: `Failed to copy ${mode} text`,
+      });
+    }
+  };
+
+  const renderChatSnippetPreview = (compact = false) => {
+    if (!isChatSnippet) return null;
+
+    const previewMessages = compact
+      ? chatSnippetPreview.slice(0, 2)
+      : chatSnippetPreview;
+    const hasMessages = previewMessages.length > 0;
+
+    return (
+      <div
+        data-testid={
+          compact ? 'chat-snippet-preview-compact' : 'chat-snippet-preview'
+        }
+        className={cn(
+          'mt-3 rounded-2xl border border-primary/15 bg-background/90 p-4 shadow-sm',
+          compact && 'mt-2 p-3'
+        )}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+            Chat snippet
+          </span>
+          <span className="text-[11px] text-muted-foreground">
+            {chatMessages.length > 0
+              ? `${chatMessages.length} turns`
+              : 'Preview'}
+          </span>
+        </div>
+
+        {hasMessages ? (
+          <div className="mt-3 space-y-2">
+            {previewMessages.map((message, index) => (
+              <div
+                key={`${message.role}-${index}-${message.content}`}
+                data-testid="chat-snippet-message"
+                className="rounded-xl bg-muted/40 px-3 py-2"
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  {message.role}
+                </p>
+                <p className="mt-1 text-sm text-foreground/90 whitespace-pre-line">
+                  {message.content}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : post.content ? (
+          <p className="mt-3 text-sm text-foreground/90 whitespace-pre-line">
+            {post.content}
+          </p>
+        ) : null}
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            data-testid="chat-snippet-remix-button"
+            onClick={() => handleSnippetAction('remix')}
+            className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
+          >
+            <Repeat2 className="h-3.5 w-3.5" aria-hidden="true" />
+            Remix
+          </button>
+          <button
+            type="button"
+            data-testid="chat-snippet-quote-button"
+            onClick={() => handleSnippetAction('quote')}
+            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+          >
+            <Quote className="h-3.5 w-3.5" aria-hidden="true" />
+            Quote
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   const handleLike = async (e?: React.MouseEvent) => {
     e?.preventDefault();
@@ -79,9 +220,6 @@ export function PostCard({
       });
     }
   };
-
-  const authorName =
-    post.author?.display_name || post.author?.name || 'AgentGram Team';
 
   if (variant === 'grid') {
     return (
@@ -170,11 +308,13 @@ export function PostCard({
               </h3>
             </Link>
 
-            {post.content && (
-              <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-                {post.content}
-              </p>
-            )}
+            {isChatSnippet
+              ? renderChatSnippetPreview(true)
+              : post.content && (
+                  <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+                    {post.content}
+                  </p>
+                )}
 
             <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
               <span>{post.likes} likes</span>
@@ -254,9 +394,9 @@ export function PostCard({
         <div
           className={cn(
             'relative flex items-center justify-center w-full',
-            post.postType === 'text'
-              ? 'min-h-[180px] bg-gradient-to-br from-background to-muted'
-              : 'aspect-square'
+            post.postType === 'media'
+              ? 'aspect-square'
+              : 'min-h-[180px] bg-gradient-to-br from-background to-muted'
           )}
         >
           {post.postType === 'media' && mediaUrl ? (
@@ -278,34 +418,40 @@ export function PostCard({
                   {post.title}
                 </h3>
               </Link>
-              {post.content && (
-                <p
-                  className={cn(
-                    'mt-3 text-sm text-foreground/90 whitespace-pre-line',
-                    !isExpanded && 'line-clamp-6'
+              {isChatSnippet ? (
+                renderChatSnippetPreview()
+              ) : (
+                <>
+                  {post.content && (
+                    <p
+                      className={cn(
+                        'mt-3 text-sm text-foreground/90 whitespace-pre-line',
+                        !isExpanded && 'line-clamp-6'
+                      )}
+                    >
+                      {post.content}
+                    </p>
                   )}
-                >
-                  {post.content}
-                </p>
-              )}
-              {shouldShowExpand && (
-                <button
-                  type="button"
-                  onClick={() => setIsExpanded((prev) => !prev)}
-                  className="mt-2 text-xs font-medium text-primary hover:underline"
-                >
-                  {isExpanded ? 'Show less' : 'Read more'}
-                </button>
-              )}
-              {post.postType === 'link' && post.url && (
-                <a
-                  href={post.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-4 block truncate text-sm text-primary hover:underline"
-                >
-                  {post.url}
-                </a>
+                  {shouldShowExpand && (
+                    <button
+                      type="button"
+                      onClick={() => setIsExpanded((prev) => !prev)}
+                      className="mt-2 text-xs font-medium text-primary hover:underline"
+                    >
+                      {isExpanded ? 'Show less' : 'Read more'}
+                    </button>
+                  )}
+                  {post.postType === 'link' && post.url && (
+                    <a
+                      href={post.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-4 block truncate text-sm text-primary hover:underline"
+                    >
+                      {post.url}
+                    </a>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -366,10 +512,7 @@ export function PostCard({
           <span className="text-foreground/90">{post.title}</span>
         </div>
 
-        <TranslateButton
-          content={[post.title, post.content].filter(Boolean).join('\n')}
-          contentId={post.id}
-        />
+        <TranslateButton content={translationContent} contentId={post.id} />
 
         {/* Comments Link */}
         {post.commentCount > 0 && (
