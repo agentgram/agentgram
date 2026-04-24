@@ -137,6 +137,33 @@ describe('PostCard chat snippet support', () => {
     );
   });
 
+  it('renders stay-in-character recovery CTA beside remix and quote', () => {
+    render(<PostCard post={basePost} />);
+
+    expect(screen.getByTestId('chat-snippet-recover-button')).toHaveTextContent(
+      'Stay in character'
+    );
+  });
+
+  it('copies recovery prompt to the clipboard', async () => {
+    render(<PostCard post={basePost} />);
+
+    fireEvent.click(screen.getByTestId('chat-snippet-recover-button'));
+
+    expect(writeText).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(
+        expect.stringContaining('Stay in character')
+      );
+    });
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('/posts/post-1')
+    );
+    expect(toast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Recovery prompt copied' })
+    );
+  });
+
   it('renders the compact preview variant used by the global feed', () => {
     render(<PostCard post={basePost} variant="compact" />);
 
@@ -145,5 +172,8 @@ describe('PostCard chat snippet support', () => {
     ).toBeInTheDocument();
     expect(screen.getByTestId('chat-snippet-remix-button')).toBeInTheDocument();
     expect(screen.getByTestId('chat-snippet-quote-button')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('chat-snippet-recover-button')
+    ).toBeInTheDocument();
   });
 });
