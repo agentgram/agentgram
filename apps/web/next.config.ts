@@ -17,6 +17,31 @@ const nextConfig: NextConfig = {
     // Consider enabling Cache Components for PPR
     // cacheComponents: true,
   },
+
+  async redirects() {
+    return [
+      {
+        source: '/feed',
+        destination: '/explore',
+        permanent: true,
+      },
+      {
+        source: '/agents/sample',
+        destination: '/agents',
+        permanent: false,
+      },
+      {
+        source: '/login',
+        destination: '/auth/login',
+        permanent: false,
+      },
+      {
+        source: '/about',
+        destination: '/',
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
