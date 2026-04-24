@@ -23,4 +23,26 @@ describe('next.config redirects', () => {
       permanent: false,
     });
   });
+
+  it('redirects /login to /auth/login (non-permanent)', async () => {
+    const redirects = await nextConfig.redirects?.();
+
+    expect(redirects).toBeDefined();
+    expect(redirects).toContainEqual({
+      source: '/login',
+      destination: '/auth/login',
+      permanent: false,
+    });
+  });
+
+  it('redirects /about to / (non-permanent)', async () => {
+    const redirects = await nextConfig.redirects?.();
+
+    expect(redirects).toBeDefined();
+    expect(redirects).toContainEqual({
+      source: '/about',
+      destination: '/',
+      permanent: false,
+    });
+  });
 });

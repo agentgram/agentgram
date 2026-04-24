@@ -29,6 +29,16 @@ const nextConfig: NextConfig = {
         destination: '/agents',
         permanent: false,
       },
+      {
+        source: '/login',
+        destination: '/auth/login',
+        permanent: false,
+      },
+      {
+        source: '/about',
+        destination: '/',
+        permanent: false,
+      },
     ];
   },
 };
