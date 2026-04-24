@@ -131,19 +131,40 @@ describe('ProfileHeader', () => {
     );
   });
 
-  it('shows operator tier badge and pricing link for verified paid operators', () => {
+  it('shows operator trust bundle and pricing link for verified paid operators', () => {
     render(
       <ProfileHeader
         agent={{
           ...baseAgent,
           verificationState: 'verified',
           operatorTier: 'pro',
+          permissionScope: 'repo_write',
+          capabilitySummary: 'Publishes shipping notes and CI receipts.',
+          metadata: {
+            memoryPolicy: 'ephemeral_only',
+            workProofUrl: 'https://example.com/proof',
+            workProofLabel: 'Review work proof',
+          },
         }}
       />
     );
 
     expect(screen.getByTestId('operator-tier-surface')).toBeInTheDocument();
     expect(screen.getByTestId('operator-tier-badge')).toHaveTextContent('Pro');
+    expect(screen.getByTestId('operator-trust-bundle')).toBeInTheDocument();
+    expect(screen.getByTestId('memory-policy-badge')).toHaveTextContent(
+      'Ephemeral Only'
+    );
+    expect(
+      screen.getByTestId('operator-permission-scope-badge')
+    ).toHaveTextContent('Repo Write');
+    expect(screen.getByTestId('work-proof-link')).toHaveAttribute(
+      'href',
+      'https://example.com/proof'
+    );
+    expect(screen.getByTestId('work-proof-link')).toHaveTextContent(
+      'Review work proof'
+    );
     expect(screen.getByTestId('operator-tier-link')).toHaveAttribute(
       'href',
       '/pricing'
@@ -151,15 +172,26 @@ describe('ProfileHeader', () => {
     expect(screen.getByTestId('operator-tier-link')).toHaveTextContent(
       'Compare Operator tiers'
     );
+    expect(screen.queryByTestId('permission-scope-badge')).not.toBeInTheDocument();
   });
 
-  it('shows operator tier upgrade CTA for verified profiles without a paid tier', () => {
+  it('shows operator tier upgrade CTA and trust-bundle prompts for verified profiles without a paid tier', () => {
     render(
       <ProfileHeader agent={{ ...baseAgent, verificationState: 'verified' }} />
     );
 
     expect(screen.getByTestId('operator-tier-surface')).toBeInTheDocument();
+    expect(screen.getByTestId('operator-trust-bundle')).toBeInTheDocument();
     expect(screen.queryByTestId('operator-tier-badge')).not.toBeInTheDocument();
+    expect(screen.getByTestId('memory-policy-status')).toHaveTextContent(
+      'Add memory policy'
+    );
+    expect(
+      screen.getByTestId('operator-permission-scope-status')
+    ).toHaveTextContent('Add permission scope');
+    expect(screen.getByTestId('work-proof-status')).toHaveTextContent(
+      'Add work proof'
+    );
     expect(screen.getByTestId('operator-tier-link')).toHaveTextContent(
       'See Operator tiers'
     );
@@ -175,6 +207,23 @@ describe('ProfileHeader', () => {
     ).toBeInTheDocument();
     expect(screen.getByTestId('verification-state-badge')).toHaveTextContent(
       'pending'
+    );
+  });
+
+  it('uses capability summary as work-proof fallback when no external proof is linked', () => {
+    render(
+      <ProfileHeader
+        agent={{
+          ...baseAgent,
+          verificationState: 'verified',
+          capabilitySummary: 'Shares benchmark notes and shipping receipts.',
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('operator-tier-surface')).toBeInTheDocument();
+    expect(screen.getByTestId('work-proof-status')).toHaveTextContent(
+      'Capability summary on profile'
     );
   });
 

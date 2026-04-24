@@ -27,6 +27,41 @@ function formatOperatorTier(operatorTier: Agent['operatorTier']) {
   return operatorTier ? formatTokenLabel(operatorTier) : undefined;
 }
 
+function readMetadataValue(
+  metadata: Record<string, unknown>,
+  path: string[]
+): unknown {
+  let current: unknown = metadata;
+
+  for (const segment of path) {
+    if (!current || typeof current !== 'object' || Array.isArray(current)) {
+      return undefined;
+    }
+
+    current = (current as Record<string, unknown>)[segment];
+  }
+
+  return current;
+}
+
+function readMetadataString(
+  metadata: Agent['metadata'],
+  paths: string[][]
+): string | undefined {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return undefined;
+  }
+
+  for (const path of paths) {
+    const value = readMetadataValue(metadata as Record<string, unknown>, path);
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return undefined;
+}
+
 export function ProfileHeader({ agent }: ProfileHeaderProps) {
   const capabilitySummary = agent.capabilitySummary?.trim();
   const permissionScope = agent.permissionScope?.trim();
@@ -40,6 +75,32 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
     agent.operatorTier !== 'free'
       ? formatOperatorTier(agent.operatorTier)
       : undefined;
+  const memoryPolicy = readMetadataString(agent.metadata, [
+    ['memoryPolicy'],
+    ['memory_policy'],
+    ['memory', 'policy'],
+    ['memoryVisibility'],
+    ['memory', 'visibility'],
+  ]);
+  const formattedMemoryPolicy = memoryPolicy
+    ? formatTokenLabel(memoryPolicy)
+    : undefined;
+  const workProofUrl = readMetadataString(agent.metadata, [
+    ['workProofUrl'],
+    ['work_proof_url'],
+    ['proofUrl'],
+    ['proof_url'],
+    ['workProof', 'url'],
+    ['workProof'],
+  ]);
+  const workProofLabel =
+    readMetadataString(agent.metadata, [
+      ['workProofLabel'],
+      ['work_proof_label'],
+      ['proofLabel'],
+      ['proof_label'],
+      ['workProof', 'label'],
+    ]) ?? (workProofUrl ? 'View work proof' : undefined);
   const hasVerifiedAgentCard = Boolean(
     capabilitySummary ||
     formattedPermissionScope ||
@@ -151,6 +212,82 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
                       </span>
                     )}
                   </div>
+                  <div
+                    className="mt-3 rounded-xl border border-border/70 bg-background/80 p-3"
+                    data-testid="operator-trust-bundle"
+                  >
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                      Trust bundle
+                    </p>
+                    <div className="mt-3 space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-sm font-medium text-foreground">
+                          Memory policy
+                        </p>
+                        {formattedMemoryPolicy ? (
+                          <span
+                            className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary"
+                            data-testid="memory-policy-badge"
+                          >
+                            {formattedMemoryPolicy}
+                          </span>
+                        ) : (
+                          <span
+                            className="text-xs text-muted-foreground"
+                            data-testid="memory-policy-status"
+                          >
+                            Add memory policy
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-sm font-medium text-foreground">
+                          Permission scope
+                        </p>
+                        {formattedPermissionScope ? (
+                          <span
+                            className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary"
+                            data-testid="operator-permission-scope-badge"
+                          >
+                            {formattedPermissionScope}
+                          </span>
+                        ) : (
+                          <span
+                            className="text-xs text-muted-foreground"
+                            data-testid="operator-permission-scope-status"
+                          >
+                            Add permission scope
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-sm font-medium text-foreground">
+                          Work proof
+                        </p>
+                        {workProofUrl ? (
+                          <Link
+                            href={workProofUrl}
+                            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition hover:text-primary/80"
+                            data-testid="work-proof-link"
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {workProofLabel}
+                            <ArrowUpRight className="h-3.5 w-3.5" />
+                          </Link>
+                        ) : (
+                          <span
+                            className="text-xs text-muted-foreground"
+                            data-testid="work-proof-status"
+                          >
+                            {capabilitySummary
+                              ? 'Capability summary on profile'
+                              : 'Add work proof'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                   <Link
                     href="/pricing"
                     className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary transition hover:text-primary/80"
@@ -163,7 +300,7 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
                   </Link>
                 </div>
               )}
-              {formattedPermissionScope && (
+              {formattedPermissionScope && verificationState !== 'verified' && (
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <p className="text-sm font-medium text-foreground">
                     Permission scope
