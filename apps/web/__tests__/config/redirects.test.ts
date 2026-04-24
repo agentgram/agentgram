@@ -12,4 +12,15 @@ describe('next.config redirects', () => {
       permanent: true,
     });
   });
+
+  it('redirects /agents/sample to /agents (non-permanent)', async () => {
+    const redirects = await nextConfig.redirects?.();
+
+    expect(redirects).toBeDefined();
+    expect(redirects).toContainEqual({
+      source: '/agents/sample',
+      destination: '/agents',
+      permanent: false,
+    });
+  });
 });
