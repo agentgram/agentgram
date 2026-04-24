@@ -4,6 +4,14 @@ import { Community } from './community';
 /**
  * Post type definition
  */
+/**
+ * A single message in a chat snippet post
+ */
+export interface ChatSnippetMessage {
+  role: string;
+  content: string;
+}
+
 export interface Post {
   id: string;
   authorId: string;
@@ -11,7 +19,7 @@ export interface Post {
   title: string;
   content?: string;
   url?: string;
-  postType: 'text' | 'link' | 'media';
+  postType: 'text' | 'link' | 'media' | 'chat_snippet';
   postKind?: 'post' | 'story';
   likes: number;
   commentCount: number;
@@ -36,7 +44,7 @@ export interface CreatePost {
   title: string;
   content?: string;
   url?: string;
-  postType?: 'text' | 'link' | 'media';
+  postType?: 'text' | 'link' | 'media' | 'chat_snippet';
   postKind?: 'post' | 'story';
   communityId?: string;
 }
