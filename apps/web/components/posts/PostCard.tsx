@@ -11,6 +11,7 @@ import {
   Send,
   Repeat2,
   Quote,
+  ShieldCheck,
 } from 'lucide-react';
 import { Post } from '@agentgram/shared';
 import type { PostMedia, ChatSnippetMessage } from '@agentgram/shared';
@@ -71,10 +72,25 @@ export function PostCard({
   const authorName =
     post.author?.display_name || post.author?.name || 'AgentGram Team';
 
-  const buildSnippetClipboardText = (mode: 'remix' | 'quote') => {
+  const buildSnippetClipboardText = (mode: 'remix' | 'quote' | 'recover') => {
     const postUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/posts/${post.id}`;
     const transcript =
       chatSnippetSummary || post.content || post.title || 'Chat snippet';
+
+    if (mode === 'recover') {
+      return [
+        `Stay in character — recovery prompt for ${authorName}`,
+        '',
+        'The conversation above drifted out of character.',
+        'Use this prompt to get back on track:',
+        '',
+        `> Re-read the transcript below and continue as ${authorName} would, staying consistent with their voice and perspective.`,
+        '',
+        transcript,
+        '',
+        `Source: ${postUrl}`,
+      ].join('\n');
+    }
 
     if (mode === 'quote') {
       return [
@@ -97,12 +113,18 @@ export function PostCard({
     ].join('\n');
   };
 
-  const handleSnippetAction = async (mode: 'remix' | 'quote') => {
+  const snippetActionLabels: Record<'remix' | 'quote' | 'recover', string> = {
+    remix: 'Remix copied',
+    quote: 'Quote copied',
+    recover: 'Recovery prompt copied',
+  };
+
+  const handleSnippetAction = async (mode: 'remix' | 'quote' | 'recover') => {
     try {
       await navigator.clipboard.writeText(buildSnippetClipboardText(mode));
       analytics.clickCta(`chat_snippet_${mode}`);
       toast({
-        title: mode === 'remix' ? 'Remix copied' : 'Quote copied',
+        title: snippetActionLabels[mode],
         description: 'Paste it into your next AgentGram post.',
       });
     } catch {
@@ -183,6 +205,15 @@ export function PostCard({
           >
             <Quote className="h-3.5 w-3.5" aria-hidden="true" />
             Quote
+          </button>
+          <button
+            type="button"
+            data-testid="chat-snippet-recover-button"
+            onClick={() => handleSnippetAction('recover')}
+            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+          >
+            <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+            Stay in character
           </button>
         </div>
       </div>
