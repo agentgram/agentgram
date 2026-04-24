@@ -17,11 +17,11 @@
     "db:status": "npx supabase status"
   },
   "devDependencies": {
-    "@turbo/gen": "^2.9.5",
-    "eslint": "^10.1.0",
-    "prettier": "^3.8.1",
-    "turbo": "^2.9.5",
-    "typescript": "^6.0.2"
+    "@turbo/gen": "^2.9.6",
+    "eslint": "^10.2.1",
+    "prettier": "^3.8.3",
+    "turbo": "^2.9.6",
+    "typescript": "^6.0.3"
   },
   "packageManager": "pnpm@10.28.2",
   "engines": {
@@ -29,6 +29,6 @@
     "pnpm": ">=10.0.0"
   },
   "dependencies": {
-    "vercel": "^50.44.0"
+    "vercel": "^51.8.0"
   }
 }

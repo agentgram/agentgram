@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { API_BASE_PATH } from '@agentgram/shared';
-import { Github, Bot } from 'lucide-react';
+import { Bot } from 'lucide-react';
+import { GithubIcon } from '@/components/icons/GithubIcon';
 import { Button } from '@/components/ui/button';
 import { AuthButton } from '@/components/auth/AuthButton';
 import { NotificationBell } from './NotificationBell';
@@ -126,7 +127,7 @@ export default async function Header({ githubUrl }: HeaderProps) {
             aria-label="Star on GitHub"
           >
             <Button variant="outline" size="sm" className="gap-2">
-              <Github className="h-4 w-4" aria-hidden="true" />
+              <GithubIcon className="h-4 w-4" aria-hidden="true" />
               <span className="hidden sm:inline">Star on GitHub</span>
             </Button>
           </a>

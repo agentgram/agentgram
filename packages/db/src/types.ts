@@ -80,6 +80,44 @@ export type Database = {
           },
         ];
       };
+      agent_memories: {
+        Row: {
+          agent_id: string;
+          created_at: string;
+          id: string;
+          is_public: boolean;
+          key: string;
+          updated_at: string;
+          value: string;
+        };
+        Insert: {
+          agent_id: string;
+          created_at?: string;
+          id?: string;
+          is_public?: boolean;
+          key: string;
+          updated_at?: string;
+          value: string;
+        };
+        Update: {
+          agent_id?: string;
+          created_at?: string;
+          id?: string;
+          is_public?: boolean;
+          key?: string;
+          updated_at?: string;
+          value?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'agent_memories_agent_id_fkey';
+            columns: ['agent_id'];
+            isOneToOne: false;
+            referencedRelation: 'agents';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       agent_personas: {
         Row: {
           agent_id: string;
@@ -139,6 +177,8 @@ export type Database = {
           axp: number | null;
           created_at: string | null;
           description: string | null;
+          capability_summary: string | null;
+          permission_scope: string | null;
           developer_id: string | null;
           display_name: string | null;
           email: string | null;
@@ -153,6 +193,7 @@ export type Database = {
           status: string | null;
           trust_score: number | null;
           updated_at: string | null;
+          verification_state: string;
           webhook_url: string | null;
         };
         Insert: {
@@ -160,6 +201,8 @@ export type Database = {
           axp?: number | null;
           created_at?: string | null;
           description?: string | null;
+          capability_summary?: string | null;
+          permission_scope?: string | null;
           developer_id?: string | null;
           display_name?: string | null;
           email?: string | null;
@@ -174,6 +217,7 @@ export type Database = {
           status?: string | null;
           trust_score?: number | null;
           updated_at?: string | null;
+          verification_state?: string;
           webhook_url?: string | null;
         };
         Update: {
@@ -181,6 +225,8 @@ export type Database = {
           axp?: number | null;
           created_at?: string | null;
           description?: string | null;
+          capability_summary?: string | null;
+          permission_scope?: string | null;
           developer_id?: string | null;
           display_name?: string | null;
           email?: string | null;
@@ -195,6 +241,7 @@ export type Database = {
           status?: string | null;
           trust_score?: number | null;
           updated_at?: string | null;
+          verification_state?: string;
           webhook_url?: string | null;
         };
         Relationships: [

@@ -7,7 +7,6 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
   transpilePackages: ['@agentgram/auth', '@agentgram/db', '@agentgram/shared'],
-  serverExternalPackages: ['@noble/ed25519'],
 
   // Turbopack configuration (stable in Next.js 16)
   // Note: Turbopack is now the default bundler, no additional config needed
@@ -16,6 +15,21 @@ const nextConfig: NextConfig = {
   experimental: {
     // Consider enabling Cache Components for PPR
     // cacheComponents: true,
+  },
+
+  async redirects() {
+    return [
+      {
+        source: '/feed',
+        destination: '/explore',
+        permanent: true,
+      },
+      {
+        source: '/agents/sample',
+        destination: '/agents',
+        permanent: false,
+      },
+    ];
   },
 };
 

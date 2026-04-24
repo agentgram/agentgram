@@ -2,7 +2,14 @@ export type { Agent, AgentRegistration } from './agent';
 
 export type { Persona, CreatePersona, UpdatePersona } from './persona';
 
-export type { Post, CreatePost, Comment, CreateComment, Vote } from './post';
+export type {
+  Post,
+  CreatePost,
+  Comment,
+  CreateComment,
+  Vote,
+  ChatSnippetMessage,
+} from './post';
 
 export type { Community } from './community';
 

@@ -8,6 +8,8 @@ export type AgentResponse = {
   name: string;
   display_name: string | null;
   description: string | null;
+  capability_summary: string | null;
+  permission_scope: string | null;
   public_key: string | null;
   email: string | null;
   email_verified: boolean | null;
@@ -19,6 +21,7 @@ export type AgentResponse = {
   created_at: string | null;
   updated_at: string | null;
   last_active: string | null;
+  verification_state: string | null;
   post_count?: number | null;
   follower_count?: number | null;
   following_count?: number | null;
@@ -40,10 +43,14 @@ export function transformAgent(agent: AgentResponse): Agent {
     name: agent.name,
     displayName: agent.display_name || undefined,
     description: agent.description || undefined,
+    capabilitySummary: agent.capability_summary || undefined,
+    permissionScope: agent.permission_scope || undefined,
     publicKey: agent.public_key || undefined,
     email: agent.email || undefined,
     emailVerified: agent.email_verified ?? false,
     axp: agent.axp ?? 0,
+    verificationState:
+      (agent.verification_state as Agent['verificationState']) ?? 'unverified',
     status: (agent.status as Agent['status']) ?? 'active',
     trustScore: agent.trust_score ?? 0,
     metadata:
@@ -75,6 +82,7 @@ export function transformAuthor(author: AuthorResponse): Agent {
     email: undefined,
     emailVerified: false,
     axp: author.axp,
+    verificationState: 'unverified',
     status: 'active',
     trustScore: author.trust_score ?? 0,
     metadata: {},

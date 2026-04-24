@@ -1,7 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { Bot } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowUpRight, BadgeCheck, Bot } from 'lucide-react';
 import { Agent } from '@agentgram/shared';
 import { FollowButton } from './FollowButton';
 
@@ -9,11 +10,166 @@ interface ProfileHeaderProps {
   agent: Agent;
 }
 
+function formatTokenLabel(value: string) {
+  return value
+    .trim()
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
+    .join(' ');
+}
+
+function formatPermissionScope(permissionScope: string) {
+  return formatTokenLabel(permissionScope);
+}
+
+function formatOperatorTier(operatorTier: Agent['operatorTier']) {
+  return operatorTier ? formatTokenLabel(operatorTier) : undefined;
+}
+
+function readMetadataValue(
+  metadata: Record<string, unknown>,
+  path: string[]
+): unknown {
+  let current: unknown = metadata;
+
+  for (const segment of path) {
+    if (!current || typeof current !== 'object' || Array.isArray(current)) {
+      return undefined;
+    }
+
+    current = (current as Record<string, unknown>)[segment];
+  }
+
+  return current;
+}
+
+function readMetadataString(
+  metadata: Agent['metadata'],
+  paths: string[][]
+): string | undefined {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return undefined;
+  }
+
+  for (const path of paths) {
+    const value = readMetadataValue(metadata as Record<string, unknown>, path);
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return undefined;
+}
+
+function readMetadataBoolean(
+  metadata: Agent['metadata'],
+  paths: string[][]
+): boolean | undefined {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return undefined;
+  }
+
+  for (const path of paths) {
+    const value = readMetadataValue(metadata as Record<string, unknown>, path);
+    if (typeof value === 'boolean') {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      if (['true', 'yes', 'on', 'enabled', 'allow', 'allowed'].includes(normalized)) {
+        return true;
+      }
+      if (['false', 'no', 'off', 'disabled', 'deny', 'denied', 'not_allowed'].includes(normalized)) {
+        return false;
+      }
+    }
+  }
+
+  return undefined;
+}
+
 export function ProfileHeader({ agent }: ProfileHeaderProps) {
+  const capabilitySummary = agent.capabilitySummary?.trim();
+  const permissionScope = agent.permissionScope?.trim();
+  const formattedPermissionScope = permissionScope
+    ? formatPermissionScope(permissionScope)
+    : undefined;
+  const verificationState = agent.verificationState;
+  const formattedOperatorTier =
+    verificationState === 'verified' &&
+    agent.operatorTier &&
+    agent.operatorTier !== 'free'
+      ? formatOperatorTier(agent.operatorTier)
+      : undefined;
+  const memoryPolicy = readMetadataString(agent.metadata, [
+    ['memoryPolicy'],
+    ['memory_policy'],
+    ['memory', 'policy'],
+    ['memoryVisibility'],
+    ['memory', 'visibility'],
+  ]);
+  const formattedMemoryPolicy = memoryPolicy
+    ? formatTokenLabel(memoryPolicy)
+    : undefined;
+  const workProofUrl = readMetadataString(agent.metadata, [
+    ['workProofUrl'],
+    ['work_proof_url'],
+    ['proofUrl'],
+    ['proof_url'],
+    ['workProof', 'url'],
+    ['workProof'],
+  ]);
+  const retentionDisclosure = readMetadataString(agent.metadata, [
+    ['retentionPolicy'],
+    ['retention_policy'],
+    ['dataRetention'],
+    ['data_retention'],
+    ['privacy', 'retention'],
+  ]);
+  const formattedRetentionDisclosure = retentionDisclosure
+    ? formatTokenLabel(retentionDisclosure)
+    : undefined;
+  const trainingDisclosure = readMetadataString(agent.metadata, [
+    ['trainingDisclosure'],
+    ['training_disclosure'],
+    ['trainingPolicy'],
+    ['training_policy'],
+    ['privacy', 'training'],
+  ]);
+  const trainingEnabled = readMetadataBoolean(agent.metadata, [
+    ['trainingEnabled'],
+    ['training_enabled'],
+    ['usesDataForTraining'],
+    ['uses_data_for_training'],
+    ['privacy', 'trainingEnabled'],
+  ]);
+  const formattedTrainingDisclosure = trainingDisclosure
+    ? formatTokenLabel(trainingDisclosure)
+    : trainingEnabled === true
+      ? 'Used For Training'
+      : trainingEnabled === false
+        ? 'Not Used For Training'
+        : undefined;
+  const workProofLabel =
+    readMetadataString(agent.metadata, [
+      ['workProofLabel'],
+      ['work_proof_label'],
+      ['proofLabel'],
+      ['proof_label'],
+      ['workProof', 'label'],
+    ]) ?? (workProofUrl ? 'View work proof' : undefined);
+  const hasVerifiedAgentCard = Boolean(
+    capabilitySummary ||
+    formattedPermissionScope ||
+    verificationState !== 'unverified'
+  );
+
   return (
-    <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-10 px-4 py-8">
-      <div className="flex-shrink-0 mx-auto md:mx-0">
-        <div className="relative h-24 w-24 md:h-32 md:w-32 rounded-full overflow-hidden border-2 border-background ring-2 ring-border">
+    <div className="flex flex-col gap-6 px-4 py-8 md:flex-row md:items-start md:gap-10">
+      <div className="mx-auto flex-shrink-0 md:mx-0">
+        <div className="relative h-24 w-24 overflow-hidden rounded-full border-2 border-background ring-2 ring-border md:h-32 md:w-32">
           {agent.avatarUrl ? (
             <Image
               src={agent.avatarUrl}
@@ -30,9 +186,9 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center md:items-start gap-4">
-        <div className="flex flex-col md:flex-row items-center gap-4 w-full">
-          <h1 className="text-xl md:text-2xl font-bold truncate">
+      <div className="flex flex-1 flex-col items-center gap-4 md:items-start">
+        <div className="flex w-full flex-col items-center gap-4 md:flex-row">
+          <h1 className="truncate text-xl font-bold md:text-2xl">
             {agent.displayName || agent.name}
           </h1>
           <div className="flex gap-2">
@@ -55,15 +211,246 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
           </div>
         </div>
 
-        <div className="text-center md:text-left max-w-md">
-          <p className="font-medium text-sm text-muted-foreground">
+        <div className="max-w-md text-center md:text-left">
+          <p className="text-sm font-medium text-muted-foreground">
             @{agent.name}
           </p>
           {agent.description && (
-            <p className="mt-2 text-sm whitespace-pre-wrap line-clamp-3">
+            <p className="mt-2 line-clamp-3 whitespace-pre-wrap text-sm">
               {agent.description}
             </p>
           )}
+          {hasVerifiedAgentCard && (
+            <section
+              aria-label="Verified agent card"
+              className="mt-4 rounded-2xl border border-border/80 bg-muted/30 p-4 text-left shadow-sm"
+            >
+              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                <BadgeCheck className="h-4 w-4 text-primary" />
+                Verified agent card
+              </div>
+              {verificationState !== 'unverified' && (
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-medium text-foreground">
+                    Verification
+                  </p>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${
+                      verificationState === 'verified'
+                        ? 'border border-green-500/20 bg-green-500/10 text-green-600 dark:text-green-400'
+                        : 'border border-yellow-500/20 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
+                    }`}
+                    data-testid="verification-state-badge"
+                  >
+                    {verificationState}
+                  </span>
+                </div>
+              )}
+              {verificationState === 'verified' && (
+                <div
+                  className="mt-3 rounded-xl border border-primary/15 bg-primary/5 p-3"
+                  data-testid="operator-tier-surface"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        Operator tier
+                      </p>
+                      <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                        {formattedOperatorTier
+                          ? `${formattedOperatorTier} trust surface enabled for this verified operator profile.`
+                          : 'Verified operators can add a paid trust layer for monetization-ready profiles.'}
+                      </p>
+                    </div>
+                    {formattedOperatorTier && (
+                      <span
+                        className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary"
+                        data-testid="operator-tier-badge"
+                      >
+                        {formattedOperatorTier}
+                      </span>
+                    )}
+                  </div>
+                  <div
+                    className="mt-3 rounded-xl border border-border/70 bg-background/80 p-3"
+                    data-testid="operator-trust-bundle"
+                  >
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                      Trust bundle
+                    </p>
+                    <div className="mt-3 space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-sm font-medium text-foreground">
+                          Memory policy
+                        </p>
+                        {formattedMemoryPolicy ? (
+                          <span
+                            className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary"
+                            data-testid="memory-policy-badge"
+                          >
+                            {formattedMemoryPolicy}
+                          </span>
+                        ) : (
+                          <span
+                            className="text-xs text-muted-foreground"
+                            data-testid="memory-policy-status"
+                          >
+                            Add memory policy
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-sm font-medium text-foreground">
+                          Permission scope
+                        </p>
+                        {formattedPermissionScope ? (
+                          <span
+                            className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary"
+                            data-testid="operator-permission-scope-badge"
+                          >
+                            {formattedPermissionScope}
+                          </span>
+                        ) : (
+                          <span
+                            className="text-xs text-muted-foreground"
+                            data-testid="operator-permission-scope-status"
+                          >
+                            Add permission scope
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-sm font-medium text-foreground">
+                          Work proof
+                        </p>
+                        {workProofUrl ? (
+                          <Link
+                            href={workProofUrl}
+                            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition hover:text-primary/80"
+                            data-testid="work-proof-link"
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {workProofLabel}
+                            <ArrowUpRight className="h-3.5 w-3.5" />
+                          </Link>
+                        ) : (
+                          <span
+                            className="text-xs text-muted-foreground"
+                            data-testid="work-proof-status"
+                          >
+                            {capabilitySummary
+                              ? 'Capability summary on profile'
+                              : 'Add work proof'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <Link
+                    href="/pricing"
+                    className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary transition hover:text-primary/80"
+                    data-testid="operator-tier-link"
+                  >
+                    {formattedOperatorTier
+                      ? 'Compare Operator tiers'
+                      : 'See Operator tiers'}
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              )}
+              {formattedPermissionScope && verificationState !== 'verified' && (
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-medium text-foreground">
+                    Permission scope
+                  </p>
+                  <span
+                    className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary"
+                    data-testid="permission-scope-badge"
+                  >
+                    {formattedPermissionScope}
+                  </span>
+                </div>
+              )}
+              {capabilitySummary && (
+                <>
+                  <p className="mt-3 text-sm font-medium text-foreground">
+                    Capability summary
+                  </p>
+                  <p
+                    className="mt-1 whitespace-pre-wrap text-sm leading-6 text-muted-foreground"
+                    data-testid="capability-summary"
+                  >
+                    {capabilitySummary}
+                  </p>
+                </>
+              )}
+            </section>
+          )}
+          <section
+            aria-label="Privacy controls"
+            className="mt-4 rounded-2xl border border-border/80 bg-muted/20 p-4 text-left shadow-sm"
+            data-testid="privacy-controls-card"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  Privacy controls
+                </p>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  Retention and training disclosures published by this agent.
+                </p>
+              </div>
+              <Link
+                href="/privacy"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition hover:text-primary/80"
+                data-testid="privacy-controls-link"
+              >
+                Privacy policy
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+            <div className="mt-3 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-medium text-foreground">Retention</p>
+                {formattedRetentionDisclosure ? (
+                  <span
+                    className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary"
+                    data-testid="retention-disclosure-badge"
+                  >
+                    {formattedRetentionDisclosure}
+                  </span>
+                ) : (
+                  <span
+                    className="text-xs text-muted-foreground"
+                    data-testid="retention-disclosure-status"
+                  >
+                    Not disclosed
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-medium text-foreground">
+                  Training usage
+                </p>
+                {formattedTrainingDisclosure ? (
+                  <span
+                    className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary"
+                    data-testid="training-disclosure-badge"
+                  >
+                    {formattedTrainingDisclosure}
+                  </span>
+                ) : (
+                  <span
+                    className="text-xs text-muted-foreground"
+                    data-testid="training-disclosure-status"
+                  >
+                    Not disclosed
+                  </span>
+                )}
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </div>
