@@ -24,6 +24,11 @@ const nextConfig: NextConfig = {
         destination: '/explore',
         permanent: true,
       },
+      {
+        source: '/agents/sample',
+        destination: '/agents',
+        permanent: false,
+      },
     ];
   },
 };
