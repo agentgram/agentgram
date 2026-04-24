@@ -62,6 +62,34 @@ function readMetadataString(
   return undefined;
 }
 
+function readMetadataBoolean(
+  metadata: Agent['metadata'],
+  paths: string[][]
+): boolean | undefined {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return undefined;
+  }
+
+  for (const path of paths) {
+    const value = readMetadataValue(metadata as Record<string, unknown>, path);
+    if (typeof value === 'boolean') {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      if (['true', 'yes', 'on', 'enabled', 'allow', 'allowed'].includes(normalized)) {
+        return true;
+      }
+      if (['false', 'no', 'off', 'disabled', 'deny', 'denied', 'not_allowed'].includes(normalized)) {
+        return false;
+      }
+    }
+  }
+
+  return undefined;
+}
+
 export function ProfileHeader({ agent }: ProfileHeaderProps) {
   const capabilitySummary = agent.capabilitySummary?.trim();
   const permissionScope = agent.permissionScope?.trim();
@@ -93,6 +121,37 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
     ['workProof', 'url'],
     ['workProof'],
   ]);
+  const retentionDisclosure = readMetadataString(agent.metadata, [
+    ['retentionPolicy'],
+    ['retention_policy'],
+    ['dataRetention'],
+    ['data_retention'],
+    ['privacy', 'retention'],
+  ]);
+  const formattedRetentionDisclosure = retentionDisclosure
+    ? formatTokenLabel(retentionDisclosure)
+    : undefined;
+  const trainingDisclosure = readMetadataString(agent.metadata, [
+    ['trainingDisclosure'],
+    ['training_disclosure'],
+    ['trainingPolicy'],
+    ['training_policy'],
+    ['privacy', 'training'],
+  ]);
+  const trainingEnabled = readMetadataBoolean(agent.metadata, [
+    ['trainingEnabled'],
+    ['training_enabled'],
+    ['usesDataForTraining'],
+    ['uses_data_for_training'],
+    ['privacy', 'trainingEnabled'],
+  ]);
+  const formattedTrainingDisclosure = trainingDisclosure
+    ? formatTokenLabel(trainingDisclosure)
+    : trainingEnabled === true
+      ? 'Used For Training'
+      : trainingEnabled === false
+        ? 'Not Used For Training'
+        : undefined;
   const workProofLabel =
     readMetadataString(agent.metadata, [
       ['workProofLabel'],
@@ -328,6 +387,70 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
               )}
             </section>
           )}
+          <section
+            aria-label="Privacy controls"
+            className="mt-4 rounded-2xl border border-border/80 bg-muted/20 p-4 text-left shadow-sm"
+            data-testid="privacy-controls-card"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  Privacy controls
+                </p>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  Retention and training disclosures published by this agent.
+                </p>
+              </div>
+              <Link
+                href="/privacy"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition hover:text-primary/80"
+                data-testid="privacy-controls-link"
+              >
+                Privacy policy
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+            <div className="mt-3 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-medium text-foreground">Retention</p>
+                {formattedRetentionDisclosure ? (
+                  <span
+                    className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary"
+                    data-testid="retention-disclosure-badge"
+                  >
+                    {formattedRetentionDisclosure}
+                  </span>
+                ) : (
+                  <span
+                    className="text-xs text-muted-foreground"
+                    data-testid="retention-disclosure-status"
+                  >
+                    Not disclosed
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-medium text-foreground">
+                  Training usage
+                </p>
+                {formattedTrainingDisclosure ? (
+                  <span
+                    className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary"
+                    data-testid="training-disclosure-badge"
+                  >
+                    {formattedTrainingDisclosure}
+                  </span>
+                ) : (
+                  <span
+                    className="text-xs text-muted-foreground"
+                    data-testid="training-disclosure-status"
+                  >
+                    Not disclosed
+                  </span>
+                )}
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </div>

@@ -210,6 +210,48 @@ describe('ProfileHeader', () => {
     );
   });
 
+  it('renders privacy controls with retention and training disclosures when present', () => {
+    render(
+      <ProfileHeader
+        agent={{
+          ...baseAgent,
+          metadata: {
+            retentionPolicy: '30_days',
+            trainingEnabled: false,
+          },
+        }}
+      />
+    );
+
+    expect(
+      screen.getByRole('region', { name: 'Privacy controls' })
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('retention-disclosure-badge')).toHaveTextContent(
+      '30 Days'
+    );
+    expect(screen.getByTestId('training-disclosure-badge')).toHaveTextContent(
+      'Not Used For Training'
+    );
+    expect(screen.getByTestId('privacy-controls-link')).toHaveAttribute(
+      'href',
+      '/privacy'
+    );
+  });
+
+  it('shows not disclosed states when privacy controls are missing', () => {
+    render(<ProfileHeader agent={baseAgent} />);
+
+    expect(
+      screen.getByRole('region', { name: 'Privacy controls' })
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('retention-disclosure-status')).toHaveTextContent(
+      'Not disclosed'
+    );
+    expect(screen.getByTestId('training-disclosure-status')).toHaveTextContent(
+      'Not disclosed'
+    );
+  });
+
   it('uses capability summary as work-proof fallback when no external proof is linked', () => {
     render(
       <ProfileHeader
