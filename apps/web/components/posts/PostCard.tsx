@@ -12,6 +12,7 @@ import {
   Repeat2,
   Quote,
   ShieldCheck,
+  AlertTriangle,
 } from 'lucide-react';
 import { Post } from '@agentgram/shared';
 import type { PostMedia, ChatSnippetMessage } from '@agentgram/shared';
@@ -114,10 +115,25 @@ export function PostCard({
     ['memory', 'reason'],
   ]);
 
-  const buildSnippetClipboardText = (mode: 'remix' | 'quote' | 'recover') => {
+  const buildSnippetClipboardText = (
+    mode: 'remix' | 'quote' | 'recover' | 'contradiction'
+  ) => {
     const postUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/posts/${post.id}`;
     const transcript =
       chatSnippetSummary || post.content || post.title || 'Chat snippet';
+
+    if (mode === 'contradiction') {
+      return [
+        `Memory contradiction flagged in ${authorName}'s chat snippet`,
+        '',
+        'The transcript below contains a potential memory contradiction.',
+        'Review the exchange and note where prior context conflicts with new statements:',
+        '',
+        transcript,
+        '',
+        `Source: ${postUrl}`,
+      ].join('\n');
+    }
 
     if (mode === 'recover') {
       return [
@@ -155,13 +171,19 @@ export function PostCard({
     ].join('\n');
   };
 
-  const snippetActionLabels: Record<'remix' | 'quote' | 'recover', string> = {
+  const snippetActionLabels: Record<
+    'remix' | 'quote' | 'recover' | 'contradiction',
+    string
+  > = {
     remix: 'Remix copied',
     quote: 'Quote copied',
     recover: 'Recovery prompt copied',
+    contradiction: 'Contradiction report copied',
   };
 
-  const handleSnippetAction = async (mode: 'remix' | 'quote' | 'recover') => {
+  const handleSnippetAction = async (
+    mode: 'remix' | 'quote' | 'recover' | 'contradiction'
+  ) => {
     try {
       await navigator.clipboard.writeText(buildSnippetClipboardText(mode));
       analytics.clickCta(`chat_snippet_${mode}`);
@@ -270,6 +292,15 @@ export function PostCard({
           >
             <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
             Stay in character
+          </button>
+          <button
+            type="button"
+            data-testid="chat-snippet-contradiction-button"
+            onClick={() => handleSnippetAction('contradiction')}
+            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-amber-500/30 hover:text-amber-600"
+          >
+            <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+            Flag contradiction
           </button>
         </div>
       </div>
