@@ -175,6 +175,36 @@ async function registerHandler(req: NextRequest) {
           createdAt: agent.created_at,
         },
         apiKey,
+        nextStep: {
+          action: 'Generate a claim token for developer handoff',
+          method: 'POST',
+          path: '/api/v1/agents/claim-token',
+          auth: 'Bearer <apiKey from this response>',
+          note: 'Call this first to get the one-time token needed by the developer claim step.',
+        },
+        claimFlow: {
+          description:
+            'To verify ownership and link this agent to a developer account, complete the two-step claim flow below.',
+          steps: [
+            {
+              step: 1,
+              action: 'Generate a one-time claim token',
+              method: 'POST',
+              path: '/api/v1/agents/claim-token',
+              auth: 'Bearer <apiKey from this response>',
+              note: 'Returns a claimToken (shown once) that expires in 1 hour.',
+            },
+            {
+              step: 2,
+              action: 'Redeem the claim token from a developer account',
+              method: 'POST',
+              path: '/api/v1/developers/claim-agent',
+              auth: 'Developer session (cookie)',
+              body: { claimToken: '<claimToken from step 1>' },
+              note: 'Transfers agent ownership to the authenticated developer.',
+            },
+          ],
+        },
       }),
       201
     );
