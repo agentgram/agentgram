@@ -37,6 +37,9 @@ describe('ProactiveControlsForm', () => {
             optIn: false,
             dailyLimit: 7,
             weeklyLimit: 21,
+            quietHoursEnabled: true,
+            quietHoursStart: '21:30',
+            quietHoursEnd: '07:15',
             updatedAt: '2026-04-26T00:00:00.000Z',
           },
         }),
@@ -44,13 +47,16 @@ describe('ProactiveControlsForm', () => {
     );
   });
 
-  it('shows opt-in off by default with visible daily and weekly caps and saves through the API', async () => {
+  it('shows caps and quiet hours controls and saves through the API', async () => {
     render(
       <ProactiveControlsForm
         initialSettings={{
           optIn: false,
           dailyLimit: 2,
           weeklyLimit: 8,
+          quietHoursEnabled: false,
+          quietHoursStart: '22:00',
+          quietHoursEnd: '08:00',
         }}
       />
     );
@@ -60,12 +66,24 @@ describe('ProactiveControlsForm', () => {
     ).not.toBeChecked();
     expect(screen.getByLabelText('Daily outreach cap')).toHaveValue(2);
     expect(screen.getByLabelText('Weekly outreach cap')).toHaveValue(8);
+    expect(
+      screen.getByRole('checkbox', { name: /quiet hours/i })
+    ).not.toBeChecked();
+    expect(screen.queryByLabelText('Quiet hours start')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Quiet hours end')).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Daily outreach cap'), {
       target: { value: '7' },
     });
     fireEvent.change(screen.getByLabelText('Weekly outreach cap'), {
       target: { value: '21' },
+    });
+    fireEvent.click(screen.getByRole('checkbox', { name: /quiet hours/i }));
+    fireEvent.change(screen.getByLabelText('Quiet hours start'), {
+      target: { value: '21:30' },
+    });
+    fireEvent.change(screen.getByLabelText('Quiet hours end'), {
+      target: { value: '07:15' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Save controls' }));
 
@@ -81,6 +99,9 @@ describe('ProactiveControlsForm', () => {
             optIn: false,
             dailyLimit: 7,
             weeklyLimit: 21,
+            quietHoursEnabled: true,
+            quietHoursStart: '21:30',
+            quietHoursEnd: '07:15',
           }),
         })
       );
@@ -91,6 +112,9 @@ describe('ProactiveControlsForm', () => {
     ).toBeInTheDocument();
     expect(screen.getByLabelText('Daily outreach cap')).toHaveValue(7);
     expect(screen.getByLabelText('Weekly outreach cap')).toHaveValue(21);
+    expect(screen.getByRole('checkbox', { name: /quiet hours/i })).toBeChecked();
+    expect(screen.getByLabelText('Quiet hours start')).toHaveValue('21:30');
+    expect(screen.getByLabelText('Quiet hours end')).toHaveValue('07:15');
   });
 
   it('shows an error when the save request fails', async () => {
@@ -108,6 +132,9 @@ describe('ProactiveControlsForm', () => {
           optIn: false,
           dailyLimit: 2,
           weeklyLimit: 8,
+          quietHoursEnabled: false,
+          quietHoursStart: '22:00',
+          quietHoursEnd: '08:00',
         }}
       />
     );
@@ -155,6 +182,9 @@ describe('SettingsPage', () => {
                       optIn: false,
                       dailyLimit: 2,
                       weeklyLimit: 8,
+                      quietHoursEnabled: true,
+                      quietHoursStart: '23:00',
+                      quietHoursEnd: '06:30',
                     },
                   },
                 },
@@ -178,6 +208,10 @@ describe('SettingsPage', () => {
           optIn: false,
           dailyLimit: 2,
           weeklyLimit: 8,
+          quietHoursEnabled: true,
+          quietHoursStart: '23:00',
+          quietHoursEnd: '06:30',
+          updatedAt: undefined,
         },
       },
       undefined
