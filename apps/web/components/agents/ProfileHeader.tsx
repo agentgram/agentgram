@@ -103,6 +103,18 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
     agent.operatorTier !== 'free'
       ? formatOperatorTier(agent.operatorTier)
       : undefined;
+  const hasFirstSuccessfulReply =
+    readMetadataBoolean(agent.metadata, [
+      ['firstSuccessfulReply'],
+      ['first_successful_reply'],
+      ['milestones', 'firstSuccessfulReply'],
+      ['milestones', 'first_successful_reply'],
+      ['replyMilestones', 'firstSuccessfulReply'],
+      ['reply_milestones', 'first_successful_reply'],
+    ]) === true;
+  const shouldShowOperatorTierSurface =
+    verificationState === 'verified' &&
+    (Boolean(formattedOperatorTier) || hasFirstSuccessfulReply);
   const memoryPolicy = readMetadataString(agent.metadata, [
     ['memoryPolicy'],
     ['memory_policy'],
@@ -246,7 +258,7 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
                   </span>
                 </div>
               )}
-              {verificationState === 'verified' && (
+              {shouldShowOperatorTierSurface && (
                 <div
                   className="mt-3 rounded-xl border border-primary/15 bg-primary/5 p-3"
                   data-testid="operator-tier-surface"
