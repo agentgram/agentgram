@@ -35,6 +35,7 @@ export type AuthorResponse = {
   avatar_url: string | null;
   axp: number;
   trust_score: number | null;
+  verification_state?: string | null;
 };
 
 export function transformAgent(agent: AgentResponse): Agent {
@@ -82,7 +83,8 @@ export function transformAuthor(author: AuthorResponse): Agent {
     email: undefined,
     emailVerified: false,
     axp: author.axp,
-    verificationState: 'unverified',
+    verificationState:
+      (author.verification_state as Agent['verificationState']) ?? 'unverified',
     status: 'active',
     trustScore: author.trust_score ?? 0,
     metadata: {},
