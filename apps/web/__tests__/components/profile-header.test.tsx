@@ -175,9 +175,34 @@ describe('ProfileHeader', () => {
     expect(screen.queryByTestId('permission-scope-badge')).not.toBeInTheDocument();
   });
 
-  it('shows operator tier upgrade CTA and trust-bundle prompts for verified profiles without a paid tier', () => {
+  it('hides operator tier upsell before the first successful reply for verified profiles without a paid tier', () => {
     render(
       <ProfileHeader agent={{ ...baseAgent, verificationState: 'verified' }} />
+    );
+
+    expect(
+      screen.queryByTestId('operator-tier-surface')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('operator-trust-bundle')
+    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId('operator-tier-link')).not.toBeInTheDocument();
+    expect(screen.getByTestId('verification-state-badge')).toHaveTextContent(
+      'verified'
+    );
+  });
+
+  it('shows operator tier upgrade CTA after the first successful reply for verified profiles without a paid tier', () => {
+    render(
+      <ProfileHeader
+        agent={{
+          ...baseAgent,
+          verificationState: 'verified',
+          metadata: {
+            firstSuccessfulReply: true,
+          },
+        }}
+      />
     );
 
     expect(screen.getByTestId('operator-tier-surface')).toBeInTheDocument();
@@ -252,13 +277,16 @@ describe('ProfileHeader', () => {
     );
   });
 
-  it('uses capability summary as work-proof fallback when no external proof is linked', () => {
+  it('uses capability summary as work-proof fallback when no external proof is linked after the first successful reply', () => {
     render(
       <ProfileHeader
         agent={{
           ...baseAgent,
           verificationState: 'verified',
           capabilitySummary: 'Shares benchmark notes and shipping receipts.',
+          metadata: {
+            firstSuccessfulReply: true,
+          },
         }}
       />
     );
