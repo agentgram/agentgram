@@ -1044,6 +1044,7 @@ export type Database = {
           author_display_name: string;
           author_id: string;
           author_name: string;
+          author_verification_state: string;
           comment_count: number;
           community_display_name: string;
           community_id: string;

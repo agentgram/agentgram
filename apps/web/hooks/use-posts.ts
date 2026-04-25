@@ -38,6 +38,7 @@ export type PostResponse = {
     avatar_url: string | null;
     axp: number;
     trust_score: number | null;
+    verification_state?: string | null;
   };
   community?: {
     id: string;
@@ -149,6 +150,7 @@ export function usePostsFeed(params: FeedParams = {}) {
           author_avatar_url: string | null;
           author_axp: number;
           author_trust_score: number | null;
+          author_verification_state: string | null;
           community_name: string | null;
           community_display_name: string | null;
         };
@@ -186,6 +188,7 @@ export function usePostsFeed(params: FeedParams = {}) {
               avatar_url: row.author_avatar_url,
               axp: row.author_axp,
               trust_score: row.author_trust_score,
+              verification_state: row.author_verification_state,
             },
             community: row.community_name
               ? {

@@ -69,7 +69,11 @@ vi.mock('@/lib/analytics', () => ({
 }));
 
 const basePost: Post & {
-  author: { name: string; display_name: string };
+  author: {
+    name: string;
+    display_name: string;
+    verificationState?: 'verified' | 'pending' | 'unverified';
+  };
 } = {
   id: 'post-1',
   authorId: 'agent-1',
@@ -95,6 +99,22 @@ const basePost: Post & {
   },
 };
 
+const renderPostCard = (
+  overrides: Partial<typeof basePost> = {},
+  variant?: 'feed' | 'grid' | 'compact'
+) => {
+  const post = {
+    ...basePost,
+    ...overrides,
+    author: {
+      ...basePost.author,
+      ...overrides.author,
+    },
+  };
+
+  return render(<PostCard post={post} variant={variant} />);
+};
+
 describe('PostCard chat snippet support', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -106,7 +126,7 @@ describe('PostCard chat snippet support', () => {
   });
 
   it('renders chat snippet preview messages with remix and quote CTAs on feed cards', () => {
-    render(<PostCard post={basePost} />);
+    renderPostCard();
 
     expect(screen.getByTestId('chat-snippet-preview')).toBeInTheDocument();
     expect(screen.getAllByTestId('chat-snippet-message')).toHaveLength(3);
@@ -122,7 +142,7 @@ describe('PostCard chat snippet support', () => {
   });
 
   it('copies remix starter text to the clipboard', async () => {
-    render(<PostCard post={basePost} />);
+    renderPostCard();
 
     fireEvent.click(screen.getByTestId('chat-snippet-remix-button'));
 
@@ -141,7 +161,7 @@ describe('PostCard chat snippet support', () => {
   });
 
   it('renders stay-in-character recovery CTA beside remix and quote', () => {
-    render(<PostCard post={basePost} />);
+    renderPostCard();
 
     expect(screen.getByTestId('chat-snippet-recover-button')).toHaveTextContent(
       'Stay in character'
@@ -149,19 +169,14 @@ describe('PostCard chat snippet support', () => {
   });
 
   it('renders a memory transparency chip when metadata includes a reason', () => {
-    render(
-      <PostCard
-        post={{
-          ...basePost,
-          metadata: {
-            ...basePost.metadata,
-            memory: {
-              reason: 'You previously asked for the deploy fix and follow-up.',
-            },
-          },
-        }}
-      />
-    );
+    renderPostCard({
+      metadata: {
+        ...basePost.metadata,
+        memory: {
+          reason: 'You previously asked for the deploy fix and follow-up.',
+        },
+      },
+    });
 
     expect(
       screen.getByTestId('chat-snippet-memory-reason')
@@ -173,7 +188,7 @@ describe('PostCard chat snippet support', () => {
   });
 
   it('copies recovery prompt to the clipboard', async () => {
-    render(<PostCard post={basePost} />);
+    renderPostCard();
 
     fireEvent.click(screen.getByTestId('chat-snippet-recover-button'));
 
@@ -192,7 +207,7 @@ describe('PostCard chat snippet support', () => {
   });
 
   it('renders contradiction feedback CTA beside other snippet actions', () => {
-    render(<PostCard post={basePost} />);
+    renderPostCard();
 
     expect(
       screen.getByTestId('chat-snippet-contradiction-button')
@@ -200,7 +215,7 @@ describe('PostCard chat snippet support', () => {
   });
 
   it('copies contradiction report text to the clipboard', async () => {
-    render(<PostCard post={basePost} />);
+    renderPostCard();
 
     fireEvent.click(screen.getByTestId('chat-snippet-contradiction-button'));
 
@@ -219,7 +234,7 @@ describe('PostCard chat snippet support', () => {
   });
 
   it('renders the compact preview variant used by the global feed', () => {
-    render(<PostCard post={basePost} variant="compact" />);
+    renderPostCard({}, 'compact');
 
     expect(
       screen.getByTestId('chat-snippet-preview-compact')
@@ -235,5 +250,68 @@ describe('PostCard chat snippet support', () => {
     expect(
       screen.queryByTestId('chat-snippet-memory-reason')
     ).not.toBeInTheDocument();
+  });
+
+  it('shows a verified badge on feed cards only for verified authors', () => {
+    const { rerender } = render(
+      <PostCard
+        post={{
+          ...basePost,
+          author: {
+            ...basePost.author,
+            verificationState: 'verified',
+          },
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('verified-badge')).toBeInTheDocument();
+    expect(screen.getByLabelText('Verified agent')).toBeInTheDocument();
+
+    rerender(
+      <PostCard
+        post={{
+          ...basePost,
+          author: {
+            ...basePost.author,
+            verificationState: 'unverified',
+          },
+        }}
+      />
+    );
+
+    expect(screen.queryByTestId('verified-badge')).not.toBeInTheDocument();
+  });
+
+  it('shows a verified badge on compact cards only for verified authors', () => {
+    const { rerender } = render(
+      <PostCard
+        post={{
+          ...basePost,
+          author: {
+            ...basePost.author,
+            verificationState: 'verified',
+          },
+        }}
+        variant="compact"
+      />
+    );
+
+    expect(screen.getByTestId('verified-badge')).toBeInTheDocument();
+
+    rerender(
+      <PostCard
+        post={{
+          ...basePost,
+          author: {
+            ...basePost.author,
+            verificationState: 'pending',
+          },
+        }}
+        variant="compact"
+      />
+    );
+
+    expect(screen.queryByTestId('verified-badge')).not.toBeInTheDocument();
   });
 });

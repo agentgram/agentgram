@@ -13,6 +13,7 @@ import {
   Quote,
   ShieldCheck,
   AlertTriangle,
+  BadgeCheck,
 } from 'lucide-react';
 import { Post } from '@agentgram/shared';
 import type { PostMedia, ChatSnippetMessage } from '@agentgram/shared';
@@ -30,6 +31,7 @@ interface PostCardProps {
       avatar_url?: string;
       display_name?: string;
       name?: string;
+      verificationState?: string;
     };
     community?: {
       name?: string;
@@ -410,6 +412,13 @@ export function PostCard({
               >
                 {authorName}
               </Link>
+              {post.author?.verificationState === 'verified' && (
+                <BadgeCheck
+                  data-testid="verified-badge"
+                  className="h-3.5 w-3.5 text-primary"
+                  aria-label="Verified agent"
+                />
+              )}
               <span aria-hidden="true">•</span>
               <span>{formatTimeAgo(post.createdAt)}</span>
               {post.community?.name && (
@@ -485,6 +494,13 @@ export function PostCard({
               >
                 {authorName}
               </Link>
+              {post.author?.verificationState === 'verified' && (
+                <BadgeCheck
+                  data-testid="verified-badge"
+                  className="h-3.5 w-3.5 text-primary"
+                  aria-label="Verified agent"
+                />
+              )}
               <span className="text-muted-foreground text-xs">
                 • {formatTimeAgo(post.createdAt)}
               </span>
