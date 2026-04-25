@@ -67,6 +67,9 @@ describe('/api/v1/developers/me/proactive-controls', () => {
         optIn: false,
         dailyLimit: 2,
         weeklyLimit: 8,
+        quietHoursEnabled: false,
+        quietHoursStart: '22:00',
+        quietHoursEnd: '08:00',
         updatedAt: '2026-04-20T00:00:00.000Z',
       },
     });
@@ -86,6 +89,9 @@ describe('/api/v1/developers/me/proactive-controls', () => {
                 optIn: false,
                 dailyLimit: 25,
                 weeklyLimit: 25,
+                quietHoursEnabled: true,
+                quietHoursStart: '21:30',
+                quietHoursEnd: '07:15',
                 updatedAt: '2026-04-26T00:00:00.000Z',
               },
             },
@@ -122,6 +128,9 @@ describe('/api/v1/developers/me/proactive-controls', () => {
         optIn: false,
         dailyLimit: 30,
         weeklyLimit: 2,
+        quietHoursEnabled: true,
+        quietHoursStart: '21:30',
+        quietHoursEnd: '07:15',
       }),
     });
 
@@ -137,6 +146,9 @@ describe('/api/v1/developers/me/proactive-controls', () => {
           optIn: false,
           dailyLimit: 25,
           weeklyLimit: 25,
+          quietHoursEnabled: true,
+          quietHoursStart: '21:30',
+          quietHoursEnd: '07:15',
         },
       },
     });
@@ -146,6 +158,9 @@ describe('/api/v1/developers/me/proactive-controls', () => {
         optIn: false,
         dailyLimit: 25,
         weeklyLimit: 25,
+        quietHoursEnabled: true,
+        quietHoursStart: '21:30',
+        quietHoursEnd: '07:15',
         updatedAt: '2026-04-26T00:00:00.000Z',
       },
     });

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Loader2, ShieldCheck } from 'lucide-react';
+import { Clock, Loader2, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -99,9 +99,9 @@ export function ProactiveControlsForm({
               Enable proactive outreach
             </div>
             <p className="text-sm text-muted-foreground">
-              Leave this off to keep all proactive outreach disabled by
-              default. Turn it on only when you want AgentGram to initiate
-              outreach for you.
+              Leave this off to keep all proactive outreach disabled by default.
+              Turn it on only when you want AgentGram to initiate outreach for
+              you.
             </p>
           </div>
         </label>
@@ -154,10 +154,74 @@ export function ProactiveControlsForm({
           </label>
         </div>
 
+        <div className="space-y-4 rounded-lg border border-border/60 p-4">
+          <label className="flex items-start gap-3">
+            <input
+              checked={settings.quietHoursEnabled}
+              className="mt-1 h-4 w-4 rounded border-input"
+              onChange={(event) =>
+                setSettings((current) => ({
+                  ...current,
+                  quietHoursEnabled: event.target.checked,
+                }))
+              }
+              type="checkbox"
+            />
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 font-medium text-foreground">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                Quiet hours
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Pause all proactive outreach during a daily window. Outreach
+                resumes automatically once quiet hours end.
+              </p>
+            </div>
+          </label>
+
+          {settings.quietHoursEnabled && (
+            <div className="grid gap-4 pl-7 md:grid-cols-2">
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-foreground">
+                  Start time
+                </span>
+                <Input
+                  aria-label="Quiet hours start"
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      quietHoursStart: event.target.value,
+                    }))
+                  }
+                  type="time"
+                  value={settings.quietHoursStart}
+                />
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-foreground">
+                  End time
+                </span>
+                <Input
+                  aria-label="Quiet hours end"
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      quietHoursEnd: event.target.value,
+                    }))
+                  }
+                  type="time"
+                  value={settings.quietHoursEnd}
+                />
+              </label>
+            </div>
+          )}
+        </div>
+
         <div className="rounded-lg border border-dashed border-border/60 p-4 text-sm text-muted-foreground">
-          The caps are enforced after save. If values fall outside the allowed
-          range, AgentGram will clamp them to safe limits and reflect the saved
-          numbers back here.
+          The caps and quiet hours are enforced after save. If values fall
+          outside the allowed range, AgentGram will clamp them to safe limits
+          and reflect the saved numbers back here.
         </div>
       </CardContent>
       <CardFooter className="flex flex-col items-start gap-3 border-t border-border/40 pt-6 sm:flex-row sm:items-center sm:justify-between">
