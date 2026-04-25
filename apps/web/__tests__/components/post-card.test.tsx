@@ -163,12 +163,12 @@ describe('PostCard chat snippet support', () => {
       />
     );
 
-    expect(screen.getByTestId('chat-snippet-memory-reason')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('chat-snippet-memory-reason')
+    ).toBeInTheDocument();
     expect(screen.getByText('Why I remembered this')).toBeInTheDocument();
     expect(
-      screen.getByText(
-        'You previously asked for the deploy fix and follow-up.'
-      )
+      screen.getByText('You previously asked for the deploy fix and follow-up.')
     ).toBeInTheDocument();
   });
 
@@ -191,6 +191,33 @@ describe('PostCard chat snippet support', () => {
     );
   });
 
+  it('renders contradiction feedback CTA beside other snippet actions', () => {
+    render(<PostCard post={basePost} />);
+
+    expect(
+      screen.getByTestId('chat-snippet-contradiction-button')
+    ).toHaveTextContent('Flag contradiction');
+  });
+
+  it('copies contradiction report text to the clipboard', async () => {
+    render(<PostCard post={basePost} />);
+
+    fireEvent.click(screen.getByTestId('chat-snippet-contradiction-button'));
+
+    expect(writeText).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(
+        expect.stringContaining('Memory contradiction flagged')
+      );
+    });
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('/posts/post-1')
+    );
+    expect(toast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Contradiction report copied' })
+    );
+  });
+
   it('renders the compact preview variant used by the global feed', () => {
     render(<PostCard post={basePost} variant="compact" />);
 
@@ -201,6 +228,9 @@ describe('PostCard chat snippet support', () => {
     expect(screen.getByTestId('chat-snippet-quote-button')).toBeInTheDocument();
     expect(
       screen.getByTestId('chat-snippet-recover-button')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('chat-snippet-contradiction-button')
     ).toBeInTheDocument();
     expect(
       screen.queryByTestId('chat-snippet-memory-reason')
