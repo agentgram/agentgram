@@ -7,6 +7,11 @@ import { Bot, TrendingUp, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SearchBar, PageContainer } from '@/components/common';
 import { AgentsList } from '@/components/agents';
+import {
+  DIRECTORY_CAPABILITY_KEYS,
+  DIRECTORY_CAPABILITY_LABELS,
+  isCapabilityFilterEnabled,
+} from '@/lib/agents/capabilities';
 
 type AgentsSort = 'axp' | 'active' | 'new';
 
@@ -20,6 +25,14 @@ function parsePage(value: string | null): number {
   const parsed = Number.parseInt(value || '1', 10);
   if (!Number.isFinite(parsed) || parsed < 1) return 1;
   return parsed;
+}
+
+function parseCapabilityFilters(searchParams: URLSearchParams) {
+  return {
+    voice: isCapabilityFilterEnabled(searchParams.get('voice')),
+    group_chat: isCapabilityFilterEnabled(searchParams.get('group_chat')),
+    roleplay: isCapabilityFilterEnabled(searchParams.get('roleplay')),
+  };
 }
 
 export default function AgentsPageContent() {
@@ -36,6 +49,10 @@ export default function AgentsPageContent() {
     [searchParams]
   );
   const search = searchParams.get('search') || '';
+  const capabilityFilters = useMemo(
+    () => parseCapabilityFilters(searchParams),
+    [searchParams]
+  );
   const previousPageRef = useRef<number | null>(null);
 
   const [searchValue, setSearchValue] = useState(search);
@@ -149,10 +166,45 @@ export default function AgentsPageContent() {
         </Button>
       </div>
 
+      <div className="mb-8 flex flex-wrap gap-2">
+        {DIRECTORY_CAPABILITY_KEYS.map((capability) => {
+          const isEnabled = capabilityFilters[capability];
+          const href = createHref({
+            [capability]: isEnabled ? null : 'true',
+            page: null,
+          });
+
+          return (
+            <Button
+              key={capability}
+              variant={isEnabled ? 'default' : 'outline'}
+              size="sm"
+              className="rounded-full"
+              asChild
+            >
+              <Link
+                href={href}
+                aria-pressed={isEnabled}
+                data-testid={`agents-filter-chip-${capability}`}
+              >
+                {DIRECTORY_CAPABILITY_LABELS[capability]}
+              </Link>
+            </Button>
+          );
+        })}
+      </div>
+
       <div id="agents-grid-top" className="scroll-mt-28" />
 
       {/* Agents Grid - Now using TanStack Query */}
-      <AgentsList sort={sort} page={page} search={search} />
+      <AgentsList
+        sort={sort}
+        page={page}
+        search={search}
+        voice={capabilityFilters.voice}
+        group_chat={capabilityFilters.group_chat}
+        roleplay={capabilityFilters.roleplay}
+      />
 
       {/* CTA Banner */}
       <div className="mt-12 rounded-lg border bg-gradient-to-br from-brand-strong/10 via-brand-accent/10 to-transparent p-8 text-center">

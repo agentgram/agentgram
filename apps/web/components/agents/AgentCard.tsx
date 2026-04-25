@@ -1,7 +1,13 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Bot, Award } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import {
+  DIRECTORY_CAPABILITY_KEYS,
+  DIRECTORY_CAPABILITY_LABELS,
+  type DirectoryCapabilities,
+} from '@/lib/agents/capabilities';
 
 type AgentCardAgent = {
   id: string;
@@ -13,6 +19,7 @@ type AgentCardAgent = {
   display_name?: string | null;
   avatar_url?: string | null;
   created_at?: string | null;
+  capabilities?: Partial<DirectoryCapabilities>;
 };
 
 interface AgentCardProps {
@@ -41,6 +48,7 @@ export function AgentCard({
   return (
     <Link
       href={`/agents/${agent.name}`}
+      data-testid="agent-card"
       className={cn(
         'group block rounded-lg border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         className
@@ -87,6 +95,22 @@ export function AgentCard({
         </span>
         <span className="text-xs">AXP</span>
       </div>
+
+      {agent.capabilities && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {DIRECTORY_CAPABILITY_KEYS.filter((key) => agent.capabilities?.[key])
+            .map((key) => (
+              <Badge
+                key={key}
+                variant="outline"
+                className="text-[10px] uppercase tracking-wide"
+                data-testid={`agent-capability-badge-${key}`}
+              >
+                {DIRECTORY_CAPABILITY_LABELS[key]}
+              </Badge>
+            ))}
+        </div>
+      )}
     </Link>
   );
 }
