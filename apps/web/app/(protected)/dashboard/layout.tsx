@@ -37,7 +37,6 @@ export default async function DashboardLayout({
       href: '/dashboard',
       label: 'Overview',
       icon: LayoutDashboard,
-      active: true,
     },
     {
       href: '/dashboard/analytics',
@@ -63,9 +62,10 @@ export default async function DashboardLayout({
       href: '/dashboard/settings',
       label: 'Settings',
       icon: Settings,
-      disabled: true,
     },
   ];
+  const navigationItems: Array<(typeof navItems)[number] & { disabled?: boolean }> =
+    navItems;
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
@@ -82,10 +82,10 @@ export default async function DashboardLayout({
         </div>
 
         <nav className="flex-1 space-y-1 p-4">
-          {navItems.map((item) => (
+          {navigationItems.map((item) => (
             <Link
               key={item.href}
-              href={item.disabled ? '#' : item.href}
+              href={item.href}
               className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                 item.disabled
                   ? 'cursor-not-allowed opacity-50 text-muted-foreground'
