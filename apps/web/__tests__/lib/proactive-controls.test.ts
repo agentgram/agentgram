@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_PROACTIVE_CONTROLS_SETTINGS,
+  TONE_PRESETS,
   normalizeProactiveControlsSettings,
   readProactiveControlsFromMetadata,
   writeProactiveControlsToMetadata,
@@ -15,6 +16,7 @@ describe('proactive controls helper', () => {
       quietHoursEnabled: false,
       quietHoursStart: '22:00',
       quietHoursEnd: '08:00',
+      tonePreset: 'neutral',
     });
   });
 
@@ -27,6 +29,7 @@ describe('proactive controls helper', () => {
         quietHoursEnabled: 'true',
         quietHoursStart: '25:00',
         quietHoursEnd: 'nope',
+        tonePreset: 'loud',
         updatedAt: 123,
       })
     ).toEqual({
@@ -36,8 +39,19 @@ describe('proactive controls helper', () => {
       quietHoursEnabled: false,
       quietHoursStart: '22:00',
       quietHoursEnd: '08:00',
+      tonePreset: 'neutral',
       updatedAt: undefined,
     });
+  });
+
+  it('preserves valid tone presets', () => {
+    for (const tonePreset of TONE_PRESETS) {
+      expect(
+        normalizeProactiveControlsSettings({
+          tonePreset,
+        }).tonePreset
+      ).toBe(tonePreset);
+    }
   });
 
   it('forces weekly limit to stay at or above the daily limit', () => {
@@ -54,6 +68,7 @@ describe('proactive controls helper', () => {
       quietHoursEnabled: false,
       quietHoursStart: '22:00',
       quietHoursEnd: '08:00',
+      tonePreset: 'neutral',
       updatedAt: undefined,
     });
   });
@@ -67,6 +82,7 @@ describe('proactive controls helper', () => {
         quietHoursEnabled: true,
         quietHoursStart: '21:30',
         quietHoursEnd: '07:15',
+        tonePreset: 'brief',
       })
     ).toEqual({
       optIn: true,
@@ -75,6 +91,7 @@ describe('proactive controls helper', () => {
       quietHoursEnabled: true,
       quietHoursStart: '21:30',
       quietHoursEnd: '07:15',
+      tonePreset: 'brief',
       updatedAt: undefined,
     });
   });
@@ -89,6 +106,7 @@ describe('proactive controls helper', () => {
           quietHoursEnabled: true,
           quietHoursStart: '23:00',
           quietHoursEnd: '06:30',
+          tonePreset: 'warm',
           updatedAt: '2026-04-26T00:00:00.000Z',
         },
       })
@@ -99,6 +117,7 @@ describe('proactive controls helper', () => {
       quietHoursEnabled: true,
       quietHoursStart: '23:00',
       quietHoursEnd: '06:30',
+      tonePreset: 'warm',
       updatedAt: '2026-04-26T00:00:00.000Z',
     });
 
@@ -118,6 +137,7 @@ describe('proactive controls helper', () => {
           quietHoursEnabled: true,
           quietHoursStart: '21:00',
           quietHoursEnd: '06:00',
+          tonePreset: 'warm',
         },
         '2026-04-26T03:06:00.000Z'
       )
@@ -130,6 +150,7 @@ describe('proactive controls helper', () => {
         quietHoursEnabled: true,
         quietHoursStart: '21:00',
         quietHoursEnd: '06:00',
+        tonePreset: 'warm',
         updatedAt: '2026-04-26T03:06:00.000Z',
       },
     });

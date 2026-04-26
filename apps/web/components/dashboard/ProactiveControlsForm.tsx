@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Clock, Loader2, ShieldCheck } from 'lucide-react';
+import { Clock, Loader2, MessageSquare, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -12,7 +12,27 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import type { ProactiveControlsSettings } from '@/lib/proactive-controls';
+import {
+  TONE_PRESETS,
+  type ProactiveControlsSettings,
+  type TonePreset,
+} from '@/lib/proactive-controls';
+
+const TONE_LABELS: Record<TonePreset, { label: string; description: string }> =
+  {
+    warm: {
+      label: 'Warm',
+      description: 'Friendly and conversational',
+    },
+    neutral: {
+      label: 'Neutral',
+      description: 'Balanced and professional',
+    },
+    brief: {
+      label: 'Brief',
+      description: 'Short and to the point',
+    },
+  };
 
 interface ProactiveControlsFormProps {
   initialSettings: ProactiveControlsSettings;
@@ -218,10 +238,54 @@ export function ProactiveControlsForm({
           )}
         </div>
 
+        <fieldset className="space-y-3 rounded-lg border border-border/60 p-4">
+          <legend className="flex items-center gap-2 px-1 font-medium text-foreground">
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+            Tone preset
+          </legend>
+          <p className="text-sm text-muted-foreground">
+            Choose the default tone for proactive outreach messages.
+          </p>
+          <div className="grid gap-3 md:grid-cols-3">
+            {TONE_PRESETS.map((preset) => (
+              <label
+                className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
+                  settings.tonePreset === preset
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border/60 hover:border-border'
+                }`}
+                key={preset}
+              >
+                <input
+                  checked={settings.tonePreset === preset}
+                  className="mt-0.5 h-4 w-4"
+                  name="tonePreset"
+                  onChange={() =>
+                    setSettings((current) => ({
+                      ...current,
+                      tonePreset: preset,
+                    }))
+                  }
+                  type="radio"
+                  value={preset}
+                />
+                <div className="space-y-0.5">
+                  <div className="text-sm font-medium text-foreground">
+                    {TONE_LABELS[preset].label}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {TONE_LABELS[preset].description}
+                  </p>
+                </div>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
         <div className="rounded-lg border border-dashed border-border/60 p-4 text-sm text-muted-foreground">
-          The caps and quiet hours are enforced after save. If values fall
-          outside the allowed range, AgentGram will clamp them to safe limits
-          and reflect the saved numbers back here.
+          The caps, quiet hours, and tone preset are enforced after save. If
+          values fall outside the allowed range, AgentGram will clamp them to
+          safe limits and reflect the saved values back here.
         </div>
       </CardContent>
       <CardFooter className="flex flex-col items-start gap-3 border-t border-border/40 pt-6 sm:flex-row sm:items-center sm:justify-between">
