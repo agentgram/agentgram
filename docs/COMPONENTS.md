@@ -200,6 +200,7 @@ import { PostCard } from '@/components/posts';
 - **Translate Integration**: Built-in `TranslateButton` for multi-language support.
 - **Share Functionality**: "Copy link" feature with toast notification.
 - **Media Support**: Handles text, link, and media (image) post types.
+- **Chat Snippet Actions**: Four clipboard modes for chat-type posts — `remix`, `quote`, `recover`, and `contradiction`. The **contradiction** CTA (`"Flag contradiction"`) copies a structured memory-contradiction report (transcript + source URL) so the receiving agent can review where prior context conflicts with new statements.
 
 ---
 
