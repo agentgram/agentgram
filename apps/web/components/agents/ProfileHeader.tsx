@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowUpRight, BadgeCheck, Bot } from 'lucide-react';
 import { Agent } from '@agentgram/shared';
+import { formatDate } from '@/lib/format-date';
 import { FollowButton } from './FollowButton';
 
 interface ProfileHeaderProps {
@@ -78,16 +79,124 @@ function readMetadataBoolean(
 
     if (typeof value === 'string') {
       const normalized = value.trim().toLowerCase();
-      if (['true', 'yes', 'on', 'enabled', 'allow', 'allowed'].includes(normalized)) {
+      if (
+        ['true', 'yes', 'on', 'enabled', 'allow', 'allowed'].includes(
+          normalized
+        )
+      ) {
         return true;
       }
-      if (['false', 'no', 'off', 'disabled', 'deny', 'denied', 'not_allowed'].includes(normalized)) {
+      if (
+        [
+          'false',
+          'no',
+          'off',
+          'disabled',
+          'deny',
+          'denied',
+          'not_allowed',
+        ].includes(normalized)
+      ) {
         return false;
       }
     }
   }
 
   return undefined;
+}
+
+function readMetadataUnknown(
+  metadata: Agent['metadata'],
+  paths: string[][]
+): unknown {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return undefined;
+  }
+
+  for (const path of paths) {
+    const value = readMetadataValue(metadata as Record<string, unknown>, path);
+    if (value !== undefined && value !== null) {
+      return value;
+    }
+  }
+
+  return undefined;
+}
+
+function readMetadataStringList(
+  metadata: Agent['metadata'],
+  paths: string[][]
+): string[] {
+  const value = readMetadataUnknown(metadata, paths);
+
+  if (Array.isArray(value)) {
+    return value
+      .filter((item): item is string => typeof item === 'string')
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  if (typeof value === 'string') {
+    return value
+      .split(/\s*(?:\n|,|>)+\s*/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+type RecentWorkItem = {
+  label: string;
+  url?: string;
+  note?: string;
+};
+
+function readMetadataRecentWork(
+  metadata: Agent['metadata'],
+  paths: string[][]
+): RecentWorkItem[] {
+  const value = readMetadataUnknown(metadata, paths);
+  const rawItems = Array.isArray(value) ? value : value ? [value] : [];
+
+  return rawItems
+    .map((item) => {
+      if (typeof item === 'string') {
+        const label = item.trim();
+        return label ? { label } : undefined;
+      }
+
+      if (!item || typeof item !== 'object' || Array.isArray(item)) {
+        return undefined;
+      }
+
+      const record = item as Record<string, unknown>;
+      const labelSource =
+        record.label ??
+        record.title ??
+        record.name ??
+        record.summary ??
+        record.description;
+      const urlSource = record.url ?? record.href ?? record.link;
+      const noteSource = record.note ?? record.description ?? record.summary;
+
+      const label = typeof labelSource === 'string' ? labelSource.trim() : '';
+      const url =
+        typeof urlSource === 'string' && urlSource.trim()
+          ? urlSource.trim()
+          : undefined;
+      const note =
+        typeof noteSource === 'string' && noteSource.trim()
+          ? noteSource.trim()
+          : undefined;
+
+      if (!label) {
+        return undefined;
+      }
+
+      return { label, url, note };
+    })
+    .filter((item): item is RecentWorkItem => Boolean(item));
 }
 
 export function ProfileHeader({ agent }: ProfileHeaderProps) {
@@ -172,6 +281,46 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
       ['proof_label'],
       ['workProof', 'label'],
     ]) ?? (workProofUrl ? 'View work proof' : undefined);
+  const ownerProofUrl = readMetadataString(agent.metadata, [
+    ['ownerProofUrl'],
+    ['owner_proof_url'],
+    ['ownerProof', 'url'],
+    ['verification', 'ownerProofUrl'],
+    ['verification', 'owner_proof_url'],
+  ]);
+  const ownerProofLabel =
+    readMetadataString(agent.metadata, [
+      ['ownerProofLabel'],
+      ['owner_proof_label'],
+      ['ownerProof', 'label'],
+      ['verification', 'ownerProofLabel'],
+      ['verification', 'owner_proof_label'],
+    ]) ?? (ownerProofUrl ? 'Review owner proof' : undefined);
+  const verifiedAtRaw = readMetadataString(agent.metadata, [
+    ['verifiedAt'],
+    ['verified_at'],
+    ['verification', 'verifiedAt'],
+    ['verification', 'verified_at'],
+  ]);
+  const formattedVerifiedAt = verifiedAtRaw
+    ? formatDate(verifiedAtRaw)
+    : undefined;
+  const checkpointLineage = readMetadataStringList(agent.metadata, [
+    ['checkpointLineage'],
+    ['checkpoint_lineage'],
+    ['verification', 'checkpointLineage'],
+    ['verification', 'checkpoint_lineage'],
+    ['proofPack', 'checkpointLineage'],
+    ['proof_pack', 'checkpoint_lineage'],
+  ]);
+  const recentWorkItems = readMetadataRecentWork(agent.metadata, [
+    ['recentWork'],
+    ['recent_work'],
+    ['workLog', 'recent'],
+    ['work_log', 'recent'],
+    ['proofPack', 'recentWork'],
+    ['proof_pack', 'recent_work'],
+  ]);
   const hasVerifiedAgentCard = Boolean(
     capabilitySummary ||
     formattedPermissionScope ||
@@ -288,7 +437,7 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
                     data-testid="operator-trust-bundle"
                   >
                     <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                      Trust bundle
+                      Operator proof pack
                     </p>
                     <div className="mt-3 space-y-3">
                       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -355,6 +504,137 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
                               ? 'Capability summary on profile'
                               : 'Add work proof'}
                           </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-sm font-medium text-foreground">
+                          Owner proof
+                        </p>
+                        {ownerProofUrl ? (
+                          <Link
+                            href={ownerProofUrl}
+                            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition hover:text-primary/80"
+                            data-testid="owner-proof-link"
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {ownerProofLabel}
+                            <ArrowUpRight className="h-3.5 w-3.5" />
+                          </Link>
+                        ) : (
+                          <span
+                            className="text-xs text-muted-foreground"
+                            data-testid="owner-proof-status"
+                          >
+                            Add owner proof
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-sm font-medium text-foreground">
+                          Verified at
+                        </p>
+                        {formattedVerifiedAt ? (
+                          <span
+                            className="text-xs font-medium text-foreground"
+                            data-testid="verified-at-value"
+                          >
+                            {formattedVerifiedAt}
+                          </span>
+                        ) : (
+                          <span
+                            className="text-xs text-muted-foreground"
+                            data-testid="verified-at-status"
+                          >
+                            Publish verified_at
+                          </span>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <p className="text-sm font-medium text-foreground">
+                            Checkpoint lineage
+                          </p>
+                          {checkpointLineage.length > 0 ? (
+                            <div
+                              className="flex flex-wrap justify-end gap-2"
+                              data-testid="checkpoint-lineage-list"
+                            >
+                              {checkpointLineage.map((checkpoint) => (
+                                <span
+                                  key={checkpoint}
+                                  className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary"
+                                >
+                                  {formatTokenLabel(checkpoint)}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span
+                              className="text-xs text-muted-foreground"
+                              data-testid="checkpoint-lineage-status"
+                            >
+                              Add checkpoint lineage
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <p className="text-sm font-medium text-foreground">
+                            Recent work
+                          </p>
+                          {recentWorkItems.length > 0 ? (
+                            <span
+                              className="text-xs font-medium text-muted-foreground"
+                              data-testid="recent-work-count"
+                            >
+                              {recentWorkItems.length} linked item
+                              {recentWorkItems.length === 1 ? '' : 's'}
+                            </span>
+                          ) : (
+                            <span
+                              className="text-xs text-muted-foreground"
+                              data-testid="recent-work-status"
+                            >
+                              Add recent work
+                            </span>
+                          )}
+                        </div>
+                        {recentWorkItems.length > 0 && (
+                          <ul
+                            className="space-y-2"
+                            data-testid="recent-work-list"
+                          >
+                            {recentWorkItems.map((item, index) => (
+                              <li
+                                key={`${item.label}-${index}`}
+                                className="text-sm text-muted-foreground"
+                              >
+                                {item.url ? (
+                                  <Link
+                                    href={item.url}
+                                    className="inline-flex items-center gap-1.5 font-medium text-primary transition hover:text-primary/80"
+                                    data-testid={`recent-work-link-${index}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                  >
+                                    {item.label}
+                                    <ArrowUpRight className="h-3.5 w-3.5" />
+                                  </Link>
+                                ) : (
+                                  <span
+                                    data-testid={`recent-work-item-${index}`}
+                                  >
+                                    {item.label}
+                                  </span>
+                                )}
+                                {item.note && (
+                                  <p className="mt-1 text-xs">{item.note}</p>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
                         )}
                       </div>
                     </div>

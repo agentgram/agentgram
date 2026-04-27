@@ -144,6 +144,18 @@ describe('ProfileHeader', () => {
             memoryPolicy: 'ephemeral_only',
             workProofUrl: 'https://example.com/proof',
             workProofLabel: 'Review work proof',
+            ownerProofUrl: 'https://example.com/owner-proof',
+            ownerProofLabel: 'Review owner proof',
+            verifiedAt: '2026-04-21T12:34:56.000Z',
+            checkpointLineage: ['claim_token', 'owner_proof', 'recent_work'],
+            recentWork: [
+              {
+                label: 'Shipped verified profile CTA',
+                url: 'https://example.com/pr/466',
+                note: 'Merged trust-surface follow-up.',
+              },
+              'Recovered post-merge UX evidence',
+            ],
           },
         }}
       />
@@ -152,6 +164,7 @@ describe('ProfileHeader', () => {
     expect(screen.getByTestId('operator-tier-surface')).toBeInTheDocument();
     expect(screen.getByTestId('operator-tier-badge')).toHaveTextContent('Pro');
     expect(screen.getByTestId('operator-trust-bundle')).toBeInTheDocument();
+    expect(screen.getByText('Operator proof pack')).toBeInTheDocument();
     expect(screen.getByTestId('memory-policy-badge')).toHaveTextContent(
       'Ephemeral Only'
     );
@@ -165,6 +178,35 @@ describe('ProfileHeader', () => {
     expect(screen.getByTestId('work-proof-link')).toHaveTextContent(
       'Review work proof'
     );
+    expect(screen.getByTestId('owner-proof-link')).toHaveAttribute(
+      'href',
+      'https://example.com/owner-proof'
+    );
+    expect(screen.getByTestId('owner-proof-link')).toHaveTextContent(
+      'Review owner proof'
+    );
+    expect(screen.getByTestId('verified-at-value')).toHaveTextContent(
+      new Date('2026-04-21T12:34:56.000Z').toLocaleDateString()
+    );
+    expect(screen.getByTestId('checkpoint-lineage-list')).toHaveTextContent(
+      'Claim Token'
+    );
+    expect(screen.getByTestId('checkpoint-lineage-list')).toHaveTextContent(
+      'Owner Proof'
+    );
+    expect(screen.getByTestId('recent-work-count')).toHaveTextContent(
+      '2 linked items'
+    );
+    expect(screen.getByTestId('recent-work-link-0')).toHaveAttribute(
+      'href',
+      'https://example.com/pr/466'
+    );
+    expect(screen.getByTestId('recent-work-link-0')).toHaveTextContent(
+      'Shipped verified profile CTA'
+    );
+    expect(screen.getByTestId('recent-work-item-1')).toHaveTextContent(
+      'Recovered post-merge UX evidence'
+    );
     expect(screen.getByTestId('operator-tier-link')).toHaveAttribute(
       'href',
       '/pricing'
@@ -172,7 +214,9 @@ describe('ProfileHeader', () => {
     expect(screen.getByTestId('operator-tier-link')).toHaveTextContent(
       'Compare Operator tiers'
     );
-    expect(screen.queryByTestId('permission-scope-badge')).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('permission-scope-badge')
+    ).not.toBeInTheDocument();
   });
 
   it('hides operator tier upsell before the first successful reply for verified profiles without a paid tier', () => {
@@ -216,6 +260,18 @@ describe('ProfileHeader', () => {
     ).toHaveTextContent('Add permission scope');
     expect(screen.getByTestId('work-proof-status')).toHaveTextContent(
       'Add work proof'
+    );
+    expect(screen.getByTestId('owner-proof-status')).toHaveTextContent(
+      'Add owner proof'
+    );
+    expect(screen.getByTestId('verified-at-status')).toHaveTextContent(
+      'Publish verified_at'
+    );
+    expect(screen.getByTestId('checkpoint-lineage-status')).toHaveTextContent(
+      'Add checkpoint lineage'
+    );
+    expect(screen.getByTestId('recent-work-status')).toHaveTextContent(
+      'Add recent work'
     );
     expect(screen.getByTestId('operator-tier-link')).toHaveTextContent(
       'See Operator tiers'
