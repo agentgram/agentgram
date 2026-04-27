@@ -40,6 +40,7 @@ describe('ProactiveControlsForm', () => {
             quietHoursEnabled: true,
             quietHoursStart: '21:30',
             quietHoursEnd: '07:15',
+            tonePreset: 'warm',
             updatedAt: '2026-04-26T00:00:00.000Z',
           },
         }),
@@ -57,6 +58,7 @@ describe('ProactiveControlsForm', () => {
           quietHoursEnabled: false,
           quietHoursStart: '22:00',
           quietHoursEnd: '08:00',
+          tonePreset: 'neutral',
         }}
       />
     );
@@ -71,6 +73,7 @@ describe('ProactiveControlsForm', () => {
     ).not.toBeChecked();
     expect(screen.queryByLabelText('Quiet hours start')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Quiet hours end')).not.toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /neutral/i })).toBeChecked();
 
     fireEvent.change(screen.getByLabelText('Daily outreach cap'), {
       target: { value: '7' },
@@ -85,6 +88,7 @@ describe('ProactiveControlsForm', () => {
     fireEvent.change(screen.getByLabelText('Quiet hours end'), {
       target: { value: '07:15' },
     });
+    fireEvent.click(screen.getByRole('radio', { name: /warm/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Save controls' }));
 
     await waitFor(() => {
@@ -102,6 +106,7 @@ describe('ProactiveControlsForm', () => {
             quietHoursEnabled: true,
             quietHoursStart: '21:30',
             quietHoursEnd: '07:15',
+            tonePreset: 'warm',
           }),
         })
       );
@@ -115,6 +120,7 @@ describe('ProactiveControlsForm', () => {
     expect(screen.getByRole('checkbox', { name: /quiet hours/i })).toBeChecked();
     expect(screen.getByLabelText('Quiet hours start')).toHaveValue('21:30');
     expect(screen.getByLabelText('Quiet hours end')).toHaveValue('07:15');
+    expect(screen.getByRole('radio', { name: /warm/i })).toBeChecked();
   });
 
   it('shows an error when the save request fails', async () => {
@@ -135,6 +141,7 @@ describe('ProactiveControlsForm', () => {
           quietHoursEnabled: false,
           quietHoursStart: '22:00',
           quietHoursEnd: '08:00',
+          tonePreset: 'neutral',
         }}
       />
     );
@@ -185,6 +192,7 @@ describe('SettingsPage', () => {
                       quietHoursEnabled: true,
                       quietHoursStart: '23:00',
                       quietHoursEnd: '06:30',
+                      tonePreset: 'brief',
                     },
                   },
                 },
@@ -211,6 +219,7 @@ describe('SettingsPage', () => {
           quietHoursEnabled: true,
           quietHoursStart: '23:00',
           quietHoursEnd: '06:30',
+          tonePreset: 'brief',
           updatedAt: undefined,
         },
       },

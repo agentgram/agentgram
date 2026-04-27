@@ -1,3 +1,6 @@
+export const TONE_PRESETS = ['warm', 'neutral', 'brief'] as const;
+export type TonePreset = (typeof TONE_PRESETS)[number];
+
 export interface ProactiveControlsSettings {
   optIn: boolean;
   dailyLimit: number;
@@ -5,6 +8,7 @@ export interface ProactiveControlsSettings {
   quietHoursEnabled: boolean;
   quietHoursStart: string;
   quietHoursEnd: string;
+  tonePreset: TonePreset;
   updatedAt?: string;
 }
 
@@ -15,6 +19,7 @@ const MAX_DAILY_LIMIT = 25;
 const MAX_WEEKLY_LIMIT = 100;
 const DEFAULT_QUIET_HOURS_START = '22:00';
 const DEFAULT_QUIET_HOURS_END = '08:00';
+const DEFAULT_TONE_PRESET: TonePreset = 'neutral';
 
 export const DEFAULT_PROACTIVE_CONTROLS_SETTINGS: ProactiveControlsSettings = {
   optIn: false,
@@ -23,6 +28,7 @@ export const DEFAULT_PROACTIVE_CONTROLS_SETTINGS: ProactiveControlsSettings = {
   quietHoursEnabled: false,
   quietHoursStart: DEFAULT_QUIET_HOURS_START,
   quietHoursEnd: DEFAULT_QUIET_HOURS_END,
+  tonePreset: DEFAULT_TONE_PRESET,
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -78,6 +84,12 @@ export function normalizeProactiveControlsSettings(
     MAX_WEEKLY_LIMIT
   );
 
+  const tonePreset: TonePreset =
+    typeof value.tonePreset === 'string' &&
+    (TONE_PRESETS as readonly string[]).includes(value.tonePreset)
+      ? (value.tonePreset as TonePreset)
+      : DEFAULT_TONE_PRESET;
+
   return {
     optIn: value.optIn === true,
     dailyLimit,
@@ -88,6 +100,7 @@ export function normalizeProactiveControlsSettings(
       DEFAULT_QUIET_HOURS_START
     ),
     quietHoursEnd: toTimeString(value.quietHoursEnd, DEFAULT_QUIET_HOURS_END),
+    tonePreset,
     updatedAt:
       typeof value.updatedAt === 'string' ? value.updatedAt : undefined,
   };
