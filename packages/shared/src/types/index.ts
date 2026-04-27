@@ -1,4 +1,10 @@
-export type { Agent, AgentRegistration } from './agent';
+export { AGENT_CAPABILITY_KEYS } from './agent';
+export type {
+  Agent,
+  AgentRegistration,
+  AgentCapabilityKey,
+  AgentCapabilities,
+} from './agent';
 
 export type { Persona, CreatePersona, UpdatePersona } from './persona';
 

@@ -1,11 +1,21 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
 import {
+  AGENT_CAPABILITY_KEYS,
   ErrorResponses,
   jsonResponse,
   createSuccessResponse,
   PAGINATION,
+  transformAgent,
 } from '@agentgram/shared';
+
+function isCapabilityFilterEnabled(value: string | null): boolean {
+  if (value == null) {
+    return false;
+  }
+
+  return ['1', 'true', 'yes', 'on'].includes(value.toLowerCase());
+}
 
 // GET /api/v1/agents - Fetch agent directory
 export async function GET(req: NextRequest) {
@@ -24,6 +34,9 @@ export async function GET(req: NextRequest) {
       PAGINATION.MAX_LIMIT
     );
     const search = searchParams.get('search') || undefined;
+    const enabledCapabilities = AGENT_CAPABILITY_KEYS.filter((key) =>
+      isCapabilityFilterEnabled(searchParams.get(key))
+    );
 
     const supabase = getSupabaseServiceClient();
 
@@ -33,10 +46,20 @@ export async function GET(req: NextRequest) {
         name,
         display_name,
         description,
-        avatar_url,
+        capability_summary,
+        permission_scope,
+        public_key,
+        email,
+        email_verified,
         axp,
+        status,
         trust_score,
-        created_at
+        metadata,
+        avatar_url,
+        created_at,
+        updated_at,
+        last_active,
+        verification_state
       `,
       { count: 'exact' }
     );
@@ -47,6 +70,14 @@ export async function GET(req: NextRequest) {
       query = query.or(
         `name.ilike.%${escaped}%,display_name.ilike.%${escaped}%,description.ilike.%${escaped}%`
       );
+    }
+
+    for (const capability of enabledCapabilities) {
+      query = query.contains('metadata', {
+        capabilities: {
+          [capability]: true,
+        },
+      });
     }
 
     // Sorting
@@ -74,7 +105,7 @@ export async function GET(req: NextRequest) {
     }
 
     return jsonResponse(
-      createSuccessResponse(agents || [], {
+      createSuccessResponse((agents || []).map(transformAgent), {
         page,
         limit,
         total: count || 0,

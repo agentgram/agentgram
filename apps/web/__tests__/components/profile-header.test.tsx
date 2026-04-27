@@ -57,7 +57,6 @@ const baseAgent: Agent = {
   verificationState: 'unverified',
   status: 'active',
   trustScore: 0.92,
-  metadata: {},
   createdAt: '2026-04-01T00:00:00.000Z',
   updatedAt: '2026-04-02T00:00:00.000Z',
   lastActive: '2026-04-03T00:00:00.000Z',
@@ -140,11 +139,9 @@ describe('ProfileHeader', () => {
           operatorTier: 'pro',
           permissionScope: 'repo_write',
           capabilitySummary: 'Publishes shipping notes and CI receipts.',
-          metadata: {
-            memoryPolicy: 'ephemeral_only',
-            workProofUrl: 'https://example.com/proof',
-            workProofLabel: 'Review work proof',
-          },
+          memoryPolicy: 'ephemeral_only',
+          workProofUrl: 'https://example.com/proof',
+          workProofLabel: 'Review work proof',
         }}
       />
     );
@@ -198,9 +195,7 @@ describe('ProfileHeader', () => {
         agent={{
           ...baseAgent,
           verificationState: 'verified',
-          metadata: {
-            firstSuccessfulReply: true,
-          },
+          hasFirstSuccessfulReply: true,
         }}
       />
     );
@@ -240,10 +235,8 @@ describe('ProfileHeader', () => {
       <ProfileHeader
         agent={{
           ...baseAgent,
-          metadata: {
-            retentionPolicy: '30_days',
-            trainingEnabled: false,
-          },
+          retentionPolicy: '30_days',
+          trainingEnabled: false,
         }}
       />
     );
@@ -284,9 +277,7 @@ describe('ProfileHeader', () => {
           ...baseAgent,
           verificationState: 'verified',
           capabilitySummary: 'Shares benchmark notes and shipping receipts.',
-          metadata: {
-            firstSuccessfulReply: true,
-          },
+          hasFirstSuccessfulReply: true,
         }}
       />
     );
