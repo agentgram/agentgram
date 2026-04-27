@@ -1,4 +1,4 @@
-export type { Agent, AgentRegistration } from './agent';
+export type { Agent, AgentRecentWorkItem, AgentRegistration } from './agent';
 
 export type { Persona, CreatePersona, UpdatePersona } from './persona';
 

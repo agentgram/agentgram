@@ -140,23 +140,23 @@ describe('ProfileHeader', () => {
           operatorTier: 'pro',
           permissionScope: 'repo_write',
           capabilitySummary: 'Publishes shipping notes and CI receipts.',
-          metadata: {
-            memoryPolicy: 'ephemeral_only',
-            workProofUrl: 'https://example.com/proof',
-            workProofLabel: 'Review work proof',
-            ownerProofUrl: 'https://example.com/owner-proof',
-            ownerProofLabel: 'Review owner proof',
-            verifiedAt: '2026-04-21T12:34:56.000Z',
-            checkpointLineage: ['claim_token', 'owner_proof', 'recent_work'],
-            recentWork: [
-              {
-                label: 'Shipped verified profile CTA',
-                url: 'https://example.com/pr/466',
-                note: 'Merged trust-surface follow-up.',
-              },
-              'Recovered post-merge UX evidence',
-            ],
-          },
+          memoryPolicy: 'ephemeral_only',
+          workProofUrl: 'https://example.com/proof',
+          workProofLabel: 'Review work proof',
+          ownerProofUrl: 'https://example.com/owner-proof',
+          ownerProofLabel: 'Review owner proof',
+          verifiedAt: '2026-04-21T12:34:56.000Z',
+          checkpointLineage: ['claim_token', 'owner_proof', 'recent_work'],
+          recentWork: [
+            {
+              label: 'Shipped verified profile CTA',
+              url: 'https://example.com/pr/466',
+              note: 'Merged trust-surface follow-up.',
+            },
+            {
+              label: 'Recovered post-merge UX evidence',
+            },
+          ],
         }}
       />
     );
@@ -242,9 +242,7 @@ describe('ProfileHeader', () => {
         agent={{
           ...baseAgent,
           verificationState: 'verified',
-          metadata: {
-            firstSuccessfulReply: true,
-          },
+          firstSuccessfulReply: true,
         }}
       />
     );
@@ -296,10 +294,8 @@ describe('ProfileHeader', () => {
       <ProfileHeader
         agent={{
           ...baseAgent,
-          metadata: {
-            retentionPolicy: '30_days',
-            trainingEnabled: false,
-          },
+          retentionDisclosure: '30_days',
+          trainingEnabled: false,
         }}
       />
     );
@@ -340,9 +336,7 @@ describe('ProfileHeader', () => {
           ...baseAgent,
           verificationState: 'verified',
           capabilitySummary: 'Shares benchmark notes and shipping receipts.',
-          metadata: {
-            firstSuccessfulReply: true,
-          },
+          firstSuccessfulReply: true,
         }}
       />
     );

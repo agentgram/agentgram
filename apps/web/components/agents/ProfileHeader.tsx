@@ -28,177 +28,6 @@ function formatOperatorTier(operatorTier: Agent['operatorTier']) {
   return operatorTier ? formatTokenLabel(operatorTier) : undefined;
 }
 
-function readMetadataValue(
-  metadata: Record<string, unknown>,
-  path: string[]
-): unknown {
-  let current: unknown = metadata;
-
-  for (const segment of path) {
-    if (!current || typeof current !== 'object' || Array.isArray(current)) {
-      return undefined;
-    }
-
-    current = (current as Record<string, unknown>)[segment];
-  }
-
-  return current;
-}
-
-function readMetadataString(
-  metadata: Agent['metadata'],
-  paths: string[][]
-): string | undefined {
-  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
-    return undefined;
-  }
-
-  for (const path of paths) {
-    const value = readMetadataValue(metadata as Record<string, unknown>, path);
-    if (typeof value === 'string' && value.trim()) {
-      return value.trim();
-    }
-  }
-
-  return undefined;
-}
-
-function readMetadataBoolean(
-  metadata: Agent['metadata'],
-  paths: string[][]
-): boolean | undefined {
-  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
-    return undefined;
-  }
-
-  for (const path of paths) {
-    const value = readMetadataValue(metadata as Record<string, unknown>, path);
-    if (typeof value === 'boolean') {
-      return value;
-    }
-
-    if (typeof value === 'string') {
-      const normalized = value.trim().toLowerCase();
-      if (
-        ['true', 'yes', 'on', 'enabled', 'allow', 'allowed'].includes(
-          normalized
-        )
-      ) {
-        return true;
-      }
-      if (
-        [
-          'false',
-          'no',
-          'off',
-          'disabled',
-          'deny',
-          'denied',
-          'not_allowed',
-        ].includes(normalized)
-      ) {
-        return false;
-      }
-    }
-  }
-
-  return undefined;
-}
-
-function readMetadataUnknown(
-  metadata: Agent['metadata'],
-  paths: string[][]
-): unknown {
-  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
-    return undefined;
-  }
-
-  for (const path of paths) {
-    const value = readMetadataValue(metadata as Record<string, unknown>, path);
-    if (value !== undefined && value !== null) {
-      return value;
-    }
-  }
-
-  return undefined;
-}
-
-function readMetadataStringList(
-  metadata: Agent['metadata'],
-  paths: string[][]
-): string[] {
-  const value = readMetadataUnknown(metadata, paths);
-
-  if (Array.isArray(value)) {
-    return value
-      .filter((item): item is string => typeof item === 'string')
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-
-  if (typeof value === 'string') {
-    return value
-      .split(/\s*(?:\n|,|>)+\s*/)
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-
-  return [];
-}
-
-type RecentWorkItem = {
-  label: string;
-  url?: string;
-  note?: string;
-};
-
-function readMetadataRecentWork(
-  metadata: Agent['metadata'],
-  paths: string[][]
-): RecentWorkItem[] {
-  const value = readMetadataUnknown(metadata, paths);
-  const rawItems = Array.isArray(value) ? value : value ? [value] : [];
-
-  return rawItems
-    .map((item) => {
-      if (typeof item === 'string') {
-        const label = item.trim();
-        return label ? { label } : undefined;
-      }
-
-      if (!item || typeof item !== 'object' || Array.isArray(item)) {
-        return undefined;
-      }
-
-      const record = item as Record<string, unknown>;
-      const labelSource =
-        record.label ??
-        record.title ??
-        record.name ??
-        record.summary ??
-        record.description;
-      const urlSource = record.url ?? record.href ?? record.link;
-      const noteSource = record.note ?? record.description ?? record.summary;
-
-      const label = typeof labelSource === 'string' ? labelSource.trim() : '';
-      const url =
-        typeof urlSource === 'string' && urlSource.trim()
-          ? urlSource.trim()
-          : undefined;
-      const note =
-        typeof noteSource === 'string' && noteSource.trim()
-          ? noteSource.trim()
-          : undefined;
-
-      if (!label) {
-        return undefined;
-      }
-
-      return { label, url, note };
-    })
-    .filter((item): item is RecentWorkItem => Boolean(item));
-}
-
 export function ProfileHeader({ agent }: ProfileHeaderProps) {
   const capabilitySummary = agent.capabilitySummary?.trim();
   const permissionScope = agent.permissionScope?.trim();
@@ -212,60 +41,21 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
     agent.operatorTier !== 'free'
       ? formatOperatorTier(agent.operatorTier)
       : undefined;
-  const hasFirstSuccessfulReply =
-    readMetadataBoolean(agent.metadata, [
-      ['firstSuccessfulReply'],
-      ['first_successful_reply'],
-      ['milestones', 'firstSuccessfulReply'],
-      ['milestones', 'first_successful_reply'],
-      ['replyMilestones', 'firstSuccessfulReply'],
-      ['reply_milestones', 'first_successful_reply'],
-    ]) === true;
+  const hasFirstSuccessfulReply = agent.firstSuccessfulReply === true;
   const shouldShowOperatorTierSurface =
     verificationState === 'verified' &&
     (Boolean(formattedOperatorTier) || hasFirstSuccessfulReply);
-  const memoryPolicy = readMetadataString(agent.metadata, [
-    ['memoryPolicy'],
-    ['memory_policy'],
-    ['memory', 'policy'],
-    ['memoryVisibility'],
-    ['memory', 'visibility'],
-  ]);
+  const memoryPolicy = agent.memoryPolicy?.trim();
   const formattedMemoryPolicy = memoryPolicy
     ? formatTokenLabel(memoryPolicy)
     : undefined;
-  const workProofUrl = readMetadataString(agent.metadata, [
-    ['workProofUrl'],
-    ['work_proof_url'],
-    ['proofUrl'],
-    ['proof_url'],
-    ['workProof', 'url'],
-    ['workProof'],
-  ]);
-  const retentionDisclosure = readMetadataString(agent.metadata, [
-    ['retentionPolicy'],
-    ['retention_policy'],
-    ['dataRetention'],
-    ['data_retention'],
-    ['privacy', 'retention'],
-  ]);
+  const workProofUrl = agent.workProofUrl?.trim();
+  const retentionDisclosure = agent.retentionDisclosure?.trim();
   const formattedRetentionDisclosure = retentionDisclosure
     ? formatTokenLabel(retentionDisclosure)
     : undefined;
-  const trainingDisclosure = readMetadataString(agent.metadata, [
-    ['trainingDisclosure'],
-    ['training_disclosure'],
-    ['trainingPolicy'],
-    ['training_policy'],
-    ['privacy', 'training'],
-  ]);
-  const trainingEnabled = readMetadataBoolean(agent.metadata, [
-    ['trainingEnabled'],
-    ['training_enabled'],
-    ['usesDataForTraining'],
-    ['uses_data_for_training'],
-    ['privacy', 'trainingEnabled'],
-  ]);
+  const trainingDisclosure = agent.trainingDisclosure?.trim();
+  const trainingEnabled = agent.trainingEnabled;
   const formattedTrainingDisclosure = trainingDisclosure
     ? formatTokenLabel(trainingDisclosure)
     : trainingEnabled === true
@@ -274,53 +64,17 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
         ? 'Not Used For Training'
         : undefined;
   const workProofLabel =
-    readMetadataString(agent.metadata, [
-      ['workProofLabel'],
-      ['work_proof_label'],
-      ['proofLabel'],
-      ['proof_label'],
-      ['workProof', 'label'],
-    ]) ?? (workProofUrl ? 'View work proof' : undefined);
-  const ownerProofUrl = readMetadataString(agent.metadata, [
-    ['ownerProofUrl'],
-    ['owner_proof_url'],
-    ['ownerProof', 'url'],
-    ['verification', 'ownerProofUrl'],
-    ['verification', 'owner_proof_url'],
-  ]);
+    agent.workProofLabel?.trim() ??
+    (workProofUrl ? 'View work proof' : undefined);
+  const ownerProofUrl = agent.ownerProofUrl?.trim();
   const ownerProofLabel =
-    readMetadataString(agent.metadata, [
-      ['ownerProofLabel'],
-      ['owner_proof_label'],
-      ['ownerProof', 'label'],
-      ['verification', 'ownerProofLabel'],
-      ['verification', 'owner_proof_label'],
-    ]) ?? (ownerProofUrl ? 'Review owner proof' : undefined);
-  const verifiedAtRaw = readMetadataString(agent.metadata, [
-    ['verifiedAt'],
-    ['verified_at'],
-    ['verification', 'verifiedAt'],
-    ['verification', 'verified_at'],
-  ]);
-  const formattedVerifiedAt = verifiedAtRaw
-    ? formatDate(verifiedAtRaw)
+    agent.ownerProofLabel?.trim() ??
+    (ownerProofUrl ? 'Review owner proof' : undefined);
+  const formattedVerifiedAt = agent.verifiedAt
+    ? formatDate(agent.verifiedAt)
     : undefined;
-  const checkpointLineage = readMetadataStringList(agent.metadata, [
-    ['checkpointLineage'],
-    ['checkpoint_lineage'],
-    ['verification', 'checkpointLineage'],
-    ['verification', 'checkpoint_lineage'],
-    ['proofPack', 'checkpointLineage'],
-    ['proof_pack', 'checkpoint_lineage'],
-  ]);
-  const recentWorkItems = readMetadataRecentWork(agent.metadata, [
-    ['recentWork'],
-    ['recent_work'],
-    ['workLog', 'recent'],
-    ['work_log', 'recent'],
-    ['proofPack', 'recentWork'],
-    ['proof_pack', 'recent_work'],
-  ]);
+  const checkpointLineage = agent.checkpointLineage ?? [];
+  const recentWorkItems = agent.recentWork ?? [];
   const hasVerifiedAgentCard = Boolean(
     capabilitySummary ||
     formattedPermissionScope ||

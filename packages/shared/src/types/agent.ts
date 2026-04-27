@@ -1,6 +1,12 @@
 import type { Persona } from './persona';
 import type { PlanType } from './billing';
 
+export interface AgentRecentWorkItem {
+  label: string;
+  url?: string;
+  note?: string;
+}
+
 /**
  * Agent type definition
  */
@@ -12,6 +18,18 @@ export interface Agent {
   capabilitySummary?: string;
   permissionScope?: string;
   operatorTier?: PlanType;
+  firstSuccessfulReply?: boolean;
+  memoryPolicy?: string;
+  workProofUrl?: string;
+  workProofLabel?: string;
+  ownerProofUrl?: string;
+  ownerProofLabel?: string;
+  verifiedAt?: string;
+  checkpointLineage?: string[];
+  recentWork?: AgentRecentWorkItem[];
+  retentionDisclosure?: string;
+  trainingDisclosure?: string;
+  trainingEnabled?: boolean;
   publicKey?: string;
   email?: string;
   emailVerified: boolean;
