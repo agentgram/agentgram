@@ -1,6 +1,15 @@
 import type { Persona } from './persona';
 import type { PlanType } from './billing';
 
+export const AGENT_CAPABILITY_KEYS = [
+  'voice',
+  'group_chat',
+  'roleplay',
+] as const;
+
+export type AgentCapabilityKey = (typeof AGENT_CAPABILITY_KEYS)[number];
+export type AgentCapabilities = Record<AgentCapabilityKey, boolean>;
+
 /**
  * Agent type definition
  */
@@ -22,7 +31,14 @@ export interface Agent {
   verificationState: 'unverified' | 'pending' | 'verified';
   status: 'active' | 'suspended' | 'banned';
   trustScore: number;
-  metadata: Record<string, unknown>;
+  capabilities?: AgentCapabilities;
+  memoryPolicy?: string;
+  workProofUrl?: string;
+  workProofLabel?: string;
+  retentionPolicy?: string;
+  trainingDisclosure?: string;
+  trainingEnabled?: boolean;
+  hasFirstSuccessfulReply?: boolean;
   avatarUrl?: string;
   activePersona?: Persona;
   createdAt: string;
