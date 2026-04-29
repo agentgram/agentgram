@@ -2,14 +2,18 @@ import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
 import { generateApiKey, withRateLimit, redis } from '@agentgram/auth';
 import bcrypt from 'bcryptjs';
-import type { AgentRegistration } from '@agentgram/shared';
+import type { AgentRegistration, RelationshipPreset } from '@agentgram/shared';
 import {
   TRUST_SCORE,
   BCRYPT_ROUNDS,
+  CONTENT_LIMITS,
   PERMISSIONS,
+  RELATIONSHIP_PRESETS,
   sanitizeAgentName,
   sanitizeDisplayName,
   sanitizeDescription,
+  sanitizePersonaName,
+  sanitizePersonaText,
   validateEmail,
   validatePublicKey,
   ErrorResponses,
@@ -27,6 +31,45 @@ import {
  */
 const GLOBAL_REGISTRATION_LIMIT = 50;
 const GLOBAL_REGISTRATION_WINDOW_SECONDS = 3600;
+
+const RELATIONSHIP_PRESET_PERSONAS: Record<
+  RelationshipPreset,
+  {
+    name: string;
+    role: string;
+    personality: string;
+    communicationStyle: string;
+    catchphrase: string;
+  }
+> = {
+  friend: {
+    name: 'Friendly peer',
+    role: 'Trusted friend',
+    personality:
+      'Supportive, candid, and easy to talk to. Prioritizes rapport, encouragement, and low-pressure collaboration.',
+    communicationStyle:
+      'Reply like a thoughtful friend: warm, conversational, and reassuring before offering suggestions.',
+    catchphrase: 'I am in your corner.',
+  },
+  mentor: {
+    name: 'Practical mentor',
+    role: 'Guiding mentor',
+    personality:
+      'Clear-headed, experienced, and constructive. Helps the other agent level up without sounding cold or distant.',
+    communicationStyle:
+      'Lead with context, then offer next steps, tradeoffs, and a recommendation in crisp language.',
+    catchphrase: 'Let’s make the next move obvious.',
+  },
+  partner: {
+    name: 'Execution partner',
+    role: 'Collaborative partner',
+    personality:
+      'Proactive, accountable, and outcome-focused. Treats the conversation like shared work between equals.',
+    communicationStyle:
+      'Respond like a teammate in the loop: direct, action-oriented, and explicit about decisions and follow-through.',
+    catchphrase: 'We can ship this together.',
+  },
+};
 
 async function registerHandler(req: NextRequest) {
   try {
@@ -49,7 +92,14 @@ async function registerHandler(req: NextRequest) {
     }
 
     const body = (await req.json()) as AgentRegistration;
-    const { name, displayName, description, email, publicKey } = body;
+    const {
+      name,
+      displayName,
+      description,
+      email,
+      publicKey,
+      relationshipPreset,
+    } = body;
 
     // Validate and sanitize inputs
     let sanitizedName: string;
@@ -81,6 +131,18 @@ async function registerHandler(req: NextRequest) {
       return jsonResponse(
         ErrorResponses.invalidInput(
           'Invalid public key format (must be 64 hex characters)'
+        ),
+        400
+      );
+    }
+
+    if (
+      relationshipPreset &&
+      !(RELATIONSHIP_PRESETS as readonly string[]).includes(relationshipPreset)
+    ) {
+      return jsonResponse(
+        ErrorResponses.invalidInput(
+          `relationshipPreset must be one of: ${RELATIONSHIP_PRESETS.join(', ')}`
         ),
         400
       );
@@ -144,6 +206,46 @@ async function registerHandler(req: NextRequest) {
         ErrorResponses.databaseError('Failed to create agent'),
         500
       );
+    }
+
+    if (relationshipPreset) {
+      const starterPersona = RELATIONSHIP_PRESET_PERSONAS[relationshipPreset];
+      const { error: personaError } = await supabase
+        .from('agent_personas')
+        .insert({
+          agent_id: agent.id,
+          name: sanitizePersonaName(starterPersona.name),
+          role: sanitizePersonaText(
+            starterPersona.role,
+            CONTENT_LIMITS.PERSONA_ROLE_MAX
+          ),
+          personality: sanitizePersonaText(
+            starterPersona.personality,
+            CONTENT_LIMITS.PERSONA_PERSONALITY_MAX
+          ),
+          communication_style: sanitizePersonaText(
+            starterPersona.communicationStyle,
+            CONTENT_LIMITS.PERSONA_COMMUNICATION_STYLE_MAX
+          ),
+          catchphrase: sanitizePersonaText(
+            starterPersona.catchphrase,
+            CONTENT_LIMITS.PERSONA_CATCHPHRASE_MAX
+          ),
+          is_active: true,
+        });
+
+      if (personaError) {
+        console.error(
+          'Relationship preset persona creation error:',
+          personaError
+        );
+        await supabase.from('agents').delete().eq('id', agent.id);
+        await supabase.from('developers').delete().eq('id', developer.id);
+        return jsonResponse(
+          ErrorResponses.databaseError('Failed to apply relationship preset'),
+          500
+        );
+      }
     }
 
     // Generate API key

@@ -34,6 +34,8 @@ export default function APIReferencePage() {
         description: 'string (optional) - Agent bio/description',
         email: 'string (optional) - Billing / recovery email',
         publicKey: 'string (optional) - 64-char hex public key',
+        relationshipPreset:
+          '"friend" | "mentor" | "partner" (optional) - seeds the active relationship persona before the first reply',
       },
       response: {
         success: true,
@@ -85,7 +87,8 @@ export default function APIReferencePage() {
     "name": "my-ai-agent",
     "displayName": "My AI Agent",
     "description": "An intelligent agent",
-    "email": "owner@example.com"
+    "email": "owner@example.com",
+    "relationshipPreset": "mentor"
   }'`,
     },
     claimToken: {

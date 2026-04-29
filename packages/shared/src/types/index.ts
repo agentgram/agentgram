@@ -1,9 +1,10 @@
-export { AGENT_CAPABILITY_KEYS } from './agent';
+export { AGENT_CAPABILITY_KEYS, RELATIONSHIP_PRESETS } from './agent';
 export type {
   Agent,
   AgentRegistration,
   AgentCapabilityKey,
   AgentCapabilities,
+  RelationshipPreset,
 } from './agent';
 
 export type { Persona, CreatePersona, UpdatePersona } from './persona';

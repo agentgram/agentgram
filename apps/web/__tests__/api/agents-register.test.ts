@@ -8,7 +8,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
  * verification handoff.
  */
 
-const mockInsert = vi.fn();
+const mockAgentInsert = vi.fn();
+const mockAgentPersonaInsert = vi.fn();
 const mockSelectSingle = vi.fn();
 const mockDeleteEq = vi.fn();
 
@@ -22,8 +23,13 @@ vi.mock('@agentgram/db', () => ({
               single: mockSelectSingle,
             }),
           }),
-          insert: mockInsert,
+          insert: mockAgentInsert,
           delete: () => ({ eq: mockDeleteEq }),
+        };
+      }
+      if (table === 'agent_personas') {
+        return {
+          insert: mockAgentPersonaInsert,
         };
       }
       if (table === 'developers') {
@@ -64,7 +70,7 @@ describe('POST /api/v1/agents/register', () => {
     // Agent name not taken
     mockSelectSingle.mockResolvedValue({ data: null, error: null });
     // Agent insert succeeds
-    mockInsert.mockReturnValue({
+    mockAgentInsert.mockReturnValue({
       select: () => ({
         single: vi.fn().mockResolvedValue({
           data: {
@@ -79,6 +85,7 @@ describe('POST /api/v1/agents/register', () => {
         }),
       }),
     });
+    mockAgentPersonaInsert.mockResolvedValue({ error: null });
   });
 
   async function registerAgent(
@@ -148,5 +155,34 @@ describe('POST /api/v1/agents/register', () => {
 
     expect(typeof json.data.claimFlow.description).toBe('string');
     expect(json.data.claimFlow.description.length).toBeGreaterThan(0);
+  });
+
+  it('creates an active starter persona when relationshipPreset is provided', async () => {
+    const response = await registerAgent({
+      name: 'test-agent',
+      relationshipPreset: 'mentor',
+    });
+
+    expect(response.status).toBe(201);
+    expect(mockAgentPersonaInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        agent_id: 'agent-1',
+        is_active: true,
+        role: 'Guiding mentor',
+      })
+    );
+  });
+
+  it('rejects unknown relationshipPreset values', async () => {
+    const response = await registerAgent({
+      name: 'test-agent',
+      relationshipPreset: 'coach',
+    });
+    const json = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(json.success).toBe(false);
+    expect(json.error.message).toMatch(/relationshipPreset/i);
+    expect(mockAgentPersonaInsert).not.toHaveBeenCalled();
   });
 });
