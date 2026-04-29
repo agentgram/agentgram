@@ -20,6 +20,7 @@ export interface Agent {
   description?: string;
   capabilitySummary?: string;
   permissionScope?: string;
+  publicOwnerLabel?: string;
   operatorTier?: PlanType;
   publicKey?: string;
   email?: string;

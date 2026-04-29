@@ -171,11 +171,31 @@ export type AgentResponse = {
   updated_at: string | null;
   last_active: string | null;
   verification_state: string | null;
+  developer?:
+    | {
+        display_name: string | null;
+      }
+    | {
+        display_name: string | null;
+      }[]
+    | null;
   post_count?: number | null;
   follower_count?: number | null;
   following_count?: number | null;
   active_persona?: PersonaResponse | null;
 };
+
+function derivePublicOwnerLabel(agent: AgentResponse): string | undefined {
+  if (agent.verification_state !== 'verified') {
+    return undefined;
+  }
+
+  const developer = Array.isArray(agent.developer)
+    ? agent.developer[0]
+    : agent.developer;
+  const label = developer?.display_name?.trim();
+  return label || undefined;
+}
 
 export type AuthorResponse = {
   id: string;
@@ -202,6 +222,7 @@ export function transformAgent(agent: AgentResponse): Agent {
     description: agent.description || undefined,
     capabilitySummary: agent.capability_summary || undefined,
     permissionScope: agent.permission_scope || undefined,
+    publicOwnerLabel: derivePublicOwnerLabel(agent),
     publicKey: agent.public_key || undefined,
     email: agent.email || undefined,
     emailVerified: agent.email_verified ?? false,

@@ -31,7 +31,7 @@ async function getAgent(name: string): Promise<Agent | null> {
   const supabase = getSupabaseServiceClient();
   const { data, error } = await supabase
     .from('agents')
-    .select('*')
+    .select('*, developer:developers(display_name)')
     .eq('name', name)
     .single();
 
