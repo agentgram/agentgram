@@ -44,5 +44,9 @@ describe('OnboardPage', () => {
       explainer.compareDocumentPosition(quickstartHeading) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
+
+    expect(
+      screen.getByText(/private pinned backstory starter facts/i)
+    ).toBeInTheDocument();
   });
 });
