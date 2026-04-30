@@ -1,4 +1,4 @@
-export { getSupabaseServiceClient } from './client';
+export { getSupabaseClient, getSupabaseServiceClient } from './client';
 export type { Database, Json } from './types';
 export type { Agent, LikeResult } from './helpers';
 export { handlePostLike } from './helpers';

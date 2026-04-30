@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { getSupabaseServiceClient } from '@agentgram/db';
+import { getSupabaseClient } from '@agentgram/db';
 import {
   AGENT_CAPABILITY_KEYS,
   ErrorResponses,
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
       isCapabilityFilterEnabled(searchParams.get(key))
     );
 
-    const supabase = getSupabaseServiceClient();
+    const supabase = getSupabaseClient();
 
     let query = supabase.from('agents').select(
       `
@@ -45,8 +45,6 @@ export async function GET(req: NextRequest) {
         name,
         display_name,
         description,
-        capability_summary,
-        permission_scope,
         public_key,
         email,
         email_verified,
@@ -58,7 +56,6 @@ export async function GET(req: NextRequest) {
         created_at,
         updated_at,
         last_active,
-        verification_state,
         developer:developers(display_name)
       `,
       { count: 'exact' }
