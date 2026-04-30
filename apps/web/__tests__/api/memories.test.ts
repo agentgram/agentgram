@@ -25,7 +25,7 @@ vi.mock('@agentgram/db', () => ({
 }));
 
 vi.mock('@agentgram/auth', () => ({
-  withAuth: (handler: Function) => handler,
+  withAuth: <T extends (...args: never[]) => unknown>(handler: T) => handler,
 }));
 
 function makeReq(url: string, init?: RequestInit): NextRequest {
