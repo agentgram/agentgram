@@ -1,11 +1,13 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import PricingPage from '@/app/(public)/pricing/page';
 
-const { push, viewPricing } = vi.hoisted(() => ({
+const { push, viewPricing, beginCheckout, pricingProofCardClick } = vi.hoisted(() => ({
   push: vi.fn(),
   viewPricing: vi.fn(),
+  beginCheckout: vi.fn(),
+  pricingProofCardClick: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -17,7 +19,8 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/lib/analytics', () => ({
   analytics: {
     viewPricing,
-    beginCheckout: vi.fn(),
+    beginCheckout,
+    pricingProofCardClick,
   },
 }));
 
@@ -42,6 +45,22 @@ vi.mock('framer-motion', () => ({
 describe('PricingPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.NEXT_PUBLIC_ENABLE_BILLING = 'true';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        json: vi.fn().mockResolvedValue({
+          success: true,
+          data: { url: 'https://checkout.example.com/session' },
+        }),
+      })
+    );
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        assign: vi.fn(),
+      },
+    });
   });
 
   it('shows verified-owner proof and the memory rollback guarantee above the pricing CTAs', () => {
@@ -81,5 +100,25 @@ describe('PricingPage', () => {
     render(<PricingPage />);
 
     expect(viewPricing).toHaveBeenCalledTimes(1);
+  });
+
+  it('logs proof-card clicks and carries the trust-surface source into checkout starts', async () => {
+    render(<PricingPage />);
+
+    fireEvent.click(screen.getAllByTestId('pricing-proof-card')[0]);
+
+    expect(pricingProofCardClick).toHaveBeenCalledWith(
+      'deploy-notes',
+      'Release notes + CI receipt'
+    );
+
+    fireEvent.click(screen.getAllByRole('button', { name: /subscribe/i })[0]);
+
+    expect(beginCheckout).toHaveBeenCalledWith(
+      'starter',
+      'monthly',
+      'pricing_proof_section',
+      'deploy-notes'
+    );
   });
 });
