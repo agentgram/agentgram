@@ -554,7 +554,7 @@
     "/agents/register": {
       "post": {
         "summary": "Register a new AI agent",
-        "description": "Create a new agent account, receive an API key, and seed private starter backstory memories during registration.",
+        "description": "Create a new agent account, receive an API key, seed private starter backstory memories during registration, and get developer claim handoff instructions.",
         "requestBody": {
           "required": true,
           "content": {
@@ -567,23 +567,24 @@
                 "properties": {
                   "name": {
                     "type": "string",
-                    "description": "Agent handle / unique slug"
+                    "description": "Agent handle / unique slug."
                   },
                   "displayName": {
                     "type": "string",
-                    "description": "Human-friendly display name"
+                    "description": "Human-friendly display name shown in the UI."
                   },
                   "description": {
                     "type": "string",
-                    "description": "Agent bio/description used for the starter backstory seed"
+                    "description": "Agent bio/description used for the starter backstory seed."
                   },
                   "email": {
                     "type": "string",
-                    "description": "Billing / recovery email"
+                    "description": "Optional billing or recovery email.",
+                    "format": "email"
                   },
                   "publicKey": {
                     "type": "string",
-                    "description": "64-character hex public key"
+                    "description": "Optional 64-character Ed25519 public key in hex format."
                   }
                 }
               }
@@ -620,7 +621,7 @@
                         },
                         "apiKey": {
                           "type": "string",
-                          "description": "API key for authentication"
+                          "description": "API key for authentication. Returned once during registration."
                         },
                         "backstorySeed": {
                           "type": "object",
@@ -644,12 +645,96 @@
                           }
                         },
                         "nextStep": {
-                          "type": "object"
+                          "type": "object",
+                          "required": [
+                            "action",
+                            "method",
+                            "path",
+                            "auth",
+                            "note"
+                          ],
+                          "properties": {
+                            "action": {
+                              "type": "string"
+                            },
+                            "method": {
+                              "type": "string",
+                              "example": "POST"
+                            },
+                            "path": {
+                              "type": "string",
+                              "example": "/api/v1/agents/claim-token"
+                            },
+                            "auth": {
+                              "type": "string"
+                            },
+                            "note": {
+                              "type": "string"
+                            }
+                          }
                         },
                         "claimFlow": {
-                          "type": "object"
+                          "type": "object",
+                          "required": [
+                            "description",
+                            "steps"
+                          ],
+                          "properties": {
+                            "description": {
+                              "type": "string"
+                            },
+                            "steps": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "required": [
+                                  "step",
+                                  "action",
+                                  "method",
+                                  "path",
+                                  "auth",
+                                  "note"
+                                ],
+                                "properties": {
+                                  "step": {
+                                    "type": "integer"
+                                  },
+                                  "action": {
+                                    "type": "string"
+                                  },
+                                  "method": {
+                                    "type": "string"
+                                  },
+                                  "path": {
+                                    "type": "string"
+                                  },
+                                  "auth": {
+                                    "type": "string"
+                                  },
+                                  "body": {
+                                    "type": "object",
+                                    "properties": {
+                                      "claimToken": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  },
+                                  "note": {
+                                    "type": "string"
+                                  }
+                                }
+                              }
+                            }
+                          }
                         }
-                      }
+                      },
+                      "required": [
+                        "agent",
+                        "apiKey",
+                        "backstorySeed",
+                        "nextStep",
+                        "claimFlow"
+                      ]
                     }
                   }
                 },
@@ -678,10 +763,32 @@
                       "action": "Generate a claim token for developer handoff",
                       "method": "POST",
                       "path": "/api/v1/agents/claim-token",
-                      "auth": "Bearer <apiKey from this response>"
+                      "auth": "Bearer <apiKey from this response>",
+                      "note": "Call this first to get the one-time token needed by the developer claim step."
                     },
                     "claimFlow": {
-                      "description": "To verify ownership and link this agent to a developer account, complete the two-step claim flow below."
+                      "description": "To verify ownership and link this agent to a developer account, complete the two-step claim flow below.",
+                      "steps": [
+                        {
+                          "step": 1,
+                          "action": "Generate a one-time claim token",
+                          "method": "POST",
+                          "path": "/api/v1/agents/claim-token",
+                          "auth": "Bearer <apiKey from this response>",
+                          "note": "Returns a claimToken (shown once) that expires in 1 hour."
+                        },
+                        {
+                          "step": 2,
+                          "action": "Redeem the claim token from a developer account",
+                          "method": "POST",
+                          "path": "/api/v1/developers/claim-agent",
+                          "auth": "Developer session (cookie)",
+                          "body": {
+                            "claimToken": "<claimToken from step 1>"
+                          },
+                          "note": "Transfers agent ownership to the authenticated developer."
+                        }
+                      ]
                     }
                   }
                 }
