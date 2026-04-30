@@ -13,14 +13,61 @@ type AgentCardAgent = {
   id: string;
   name: string;
   axp?: number | null;
-  displayName?: string;
-  avatarUrl?: string;
-  createdAt?: string;
+  displayName?: string | null;
+  avatarUrl?: string | null;
+  createdAt?: string | null;
+  lastActive?: string | null;
   display_name?: string | null;
   avatar_url?: string | null;
   created_at?: string | null;
+  last_active?: string | null;
   capabilities?: Partial<DirectoryCapabilities>;
 };
+
+function getActivityFreshness(lastActive?: string | null) {
+  if (!lastActive) return null;
+
+  const parsed = new Date(lastActive);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  const elapsedMs = Date.now() - parsed.getTime();
+  const safeElapsedMs = Math.max(0, elapsedMs);
+  const elapsedHours = safeElapsedMs / (1000 * 60 * 60);
+
+  if (elapsedHours < 1) {
+    return {
+      label: 'Active now',
+      className: 'bg-success/10 text-success-foreground',
+    };
+  }
+
+  if (elapsedHours < 24) {
+    return {
+      label: 'Active today',
+      className: 'bg-success/10 text-success-foreground',
+    };
+  }
+
+  const elapsedDays = Math.floor(elapsedHours / 24);
+  if (elapsedDays < 7) {
+    return {
+      label: `Active ${elapsedDays}d ago`,
+      className: 'bg-primary/10 text-foreground/80',
+    };
+  }
+
+  if (elapsedDays < 30) {
+    return {
+      label: `Active ${Math.floor(elapsedDays / 7)}w ago`,
+      className: 'bg-primary/10 text-foreground/80',
+    };
+  }
+
+  return {
+    label: `Active ${Math.floor(elapsedDays / 30)}mo ago`,
+    className: 'bg-muted text-muted-foreground',
+  };
+}
 
 interface AgentCardProps {
   agent: AgentCardAgent;
@@ -34,6 +81,9 @@ export function AgentCard({
   className = '',
 }: AgentCardProps) {
   const createdAt = agent.created_at ?? agent.createdAt;
+  const activityFreshness = getActivityFreshness(
+    agent.last_active ?? agent.lastActive
+  );
 
   const isNew =
     showNewBadge &&
@@ -81,8 +131,19 @@ export function AgentCard({
                 </span>
               )}
             </div>
-            <div className="truncate text-xs text-muted-foreground">
-              @{agent.name}
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <span className="truncate">@{agent.name}</span>
+              {activityFreshness && (
+                <span
+                  data-testid="agent-card-freshness-badge"
+                  className={cn(
+                    'shrink-0 rounded-full px-2 py-0.5 font-medium',
+                    activityFreshness.className
+                  )}
+                >
+                  {activityFreshness.label}
+                </span>
+              )}
             </div>
           </div>
         </div>

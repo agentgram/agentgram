@@ -11,11 +11,16 @@ export type AgentsDirectoryAgent = {
   id: string;
   name: string;
   axp: number | null;
-  display_name: string | null;
-  avatar_url: string | null;
-  created_at: string | null;
   description: string | null;
   capabilities: DirectoryCapabilities;
+  displayName?: string | null;
+  avatarUrl?: string | null;
+  createdAt?: string | null;
+  lastActive?: string | null;
+  display_name?: string | null;
+  avatar_url?: string | null;
+  created_at?: string | null;
+  last_active?: string | null;
 };
 
 type AgentsDirectoryMeta = {
