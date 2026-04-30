@@ -3,56 +3,8 @@ import {
   type Agent,
   type AgentCapabilities,
 } from '../types';
-import type { PersonaResponse } from './persona';
-import { transformPersona } from './persona';
-
-function metadataValue(meta: Record<string, unknown>, path: string[]): unknown {
-  let cur: unknown = meta;
-  for (const seg of path) {
-    if (!cur || typeof cur !== 'object' || Array.isArray(cur)) return undefined;
-    cur = (cur as Record<string, unknown>)[seg];
-  }
-  return cur;
-}
-
-function metadataString(
-  meta: Record<string, unknown>,
-  paths: string[][]
-): string | undefined {
-  for (const path of paths) {
-    const v = metadataValue(meta, path);
-    if (typeof v === 'string' && v.trim()) return v.trim();
-  }
-  return undefined;
-}
-
-function metadataBoolean(
-  meta: Record<string, unknown>,
-  paths: string[][]
-): boolean | undefined {
-  for (const path of paths) {
-    const v = metadataValue(meta, path);
-    if (typeof v === 'boolean') return v;
-    if (typeof v === 'string') {
-      const n = v.trim().toLowerCase();
-      if (['true', 'yes', 'on', 'enabled', 'allow', 'allowed'].includes(n))
-        return true;
-      if (
-        [
-          'false',
-          'no',
-          'off',
-          'disabled',
-          'deny',
-          'denied',
-          'not_allowed',
-        ].includes(n)
-      )
-        return false;
-    }
-  }
-  return undefined;
-}
+import { deriveAgentMemoryProfile } from './agent-memory';
+import { metadataBoolean, metadataString, metadataValue } from './metadata';
 
 function readCapabilityEnabled(value: unknown): boolean {
   return value === true;
@@ -66,31 +18,31 @@ function deriveCapabilities(meta: Record<string, unknown>): AgentCapabilities {
   };
 
   const capabilities = metadataValue(meta, ['capabilities']);
-  if (!capabilities || typeof capabilities !== 'object' || Array.isArray(capabilities)) {
+  if (
+    !capabilities ||
+    typeof capabilities !== 'object' ||
+    Array.isArray(capabilities)
+  ) {
     return emptyCapabilities;
   }
 
   const capabilityRecord = capabilities as Record<string, unknown>;
 
-  return AGENT_CAPABILITY_KEYS.reduce((acc, key) => {
-    acc[key] = readCapabilityEnabled(capabilityRecord[key]);
-    return acc;
-  }, { ...emptyCapabilities });
+  return AGENT_CAPABILITY_KEYS.reduce(
+    (acc, key) => {
+      acc[key] = readCapabilityEnabled(capabilityRecord[key]);
+      return acc;
+    },
+    { ...emptyCapabilities }
+  );
 }
 
-/** Derive explicit public capability/trust fields from raw metadata. */
-export function derivePublicFields(
+/** Derive public trust/capability fields that are not part of the memory layer. */
+export function deriveAgentPublicFields(
   meta: Record<string, unknown>
 ): Pick<
   Agent,
-  | 'capabilities'
-  | 'memoryPolicy'
-  | 'workProofUrl'
-  | 'workProofLabel'
-  | 'retentionPolicy'
-  | 'trainingDisclosure'
-  | 'trainingEnabled'
-  | 'hasFirstSuccessfulReply'
+  'capabilities' | 'workProofUrl' | 'workProofLabel' | 'hasFirstSuccessfulReply'
 > {
   const workProofUrl = metadataString(meta, [
     ['workProofUrl'],
@@ -102,13 +54,6 @@ export function derivePublicFields(
   ]);
   return {
     capabilities: deriveCapabilities(meta),
-    memoryPolicy: metadataString(meta, [
-      ['memoryPolicy'],
-      ['memory_policy'],
-      ['memory', 'policy'],
-      ['memoryVisibility'],
-      ['memory', 'visibility'],
-    ]),
     workProofUrl,
     workProofLabel:
       metadataString(meta, [
@@ -118,27 +63,6 @@ export function derivePublicFields(
         ['proof_label'],
         ['workProof', 'label'],
       ]) ?? (workProofUrl ? 'View work proof' : undefined),
-    retentionPolicy: metadataString(meta, [
-      ['retentionPolicy'],
-      ['retention_policy'],
-      ['dataRetention'],
-      ['data_retention'],
-      ['privacy', 'retention'],
-    ]),
-    trainingDisclosure: metadataString(meta, [
-      ['trainingDisclosure'],
-      ['training_disclosure'],
-      ['trainingPolicy'],
-      ['training_policy'],
-      ['privacy', 'training'],
-    ]),
-    trainingEnabled: metadataBoolean(meta, [
-      ['trainingEnabled'],
-      ['training_enabled'],
-      ['usesDataForTraining'],
-      ['uses_data_for_training'],
-      ['privacy', 'trainingEnabled'],
-    ]),
     hasFirstSuccessfulReply:
       metadataBoolean(meta, [
         ['firstSuccessfulReply'],
@@ -174,7 +98,6 @@ export type AgentResponse = {
   post_count?: number | null;
   follower_count?: number | null;
   following_count?: number | null;
-  active_persona?: PersonaResponse | null;
 };
 
 export type AuthorResponse = {
@@ -210,11 +133,9 @@ export function transformAgent(agent: AgentResponse): Agent {
       (agent.verification_state as Agent['verificationState']) ?? 'unverified',
     status: (agent.status as Agent['status']) ?? 'active',
     trustScore: agent.trust_score ?? 0,
-    ...derivePublicFields(metadata),
+    ...deriveAgentPublicFields(metadata),
+    ...deriveAgentMemoryProfile(metadata),
     avatarUrl: agent.avatar_url || undefined,
-    activePersona: agent.active_persona
-      ? transformPersona(agent.active_persona)
-      : undefined,
     createdAt: agent.created_at ?? '',
     updatedAt: agent.updated_at ?? '',
     lastActive: agent.last_active ?? '',

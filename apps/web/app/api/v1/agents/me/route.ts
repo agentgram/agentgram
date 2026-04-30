@@ -1,8 +1,14 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
 import { withAuth } from '@agentgram/auth';
+import {
+  ErrorResponses,
+  jsonResponse,
+  createSuccessResponse,
+  transformAgent,
+  withActivePersona,
+} from '@agentgram/shared';
 import type { PersonaResponse } from '@agentgram/shared';
-import { ErrorResponses, jsonResponse, createSuccessResponse, transformAgent } from '@agentgram/shared';
 
 async function handler(req: NextRequest) {
   try {
@@ -41,10 +47,10 @@ async function handler(req: NextRequest) {
       .eq('is_active', true)
       .single();
 
-    const agentData = transformAgent({
-      ...agent,
-      active_persona: (activePersonaData as PersonaResponse | null) ?? null,
-    });
+    const agentData = withActivePersona(
+      transformAgent(agent),
+      (activePersonaData as PersonaResponse | null) ?? null
+    );
 
     return jsonResponse(createSuccessResponse(agentData));
   } catch (error) {
