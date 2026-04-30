@@ -27,6 +27,20 @@ function formatOperatorTier(operatorTier: Agent['operatorTier']) {
   return operatorTier ? formatTokenLabel(operatorTier) : undefined;
 }
 
+function buildRemixHref(agent: Agent) {
+  const params = new URLSearchParams({ remix: agent.name });
+
+  if (agent.displayName?.trim()) {
+    params.set('displayName', agent.displayName.trim());
+  }
+
+  if (agent.description?.trim()) {
+    params.set('description', agent.description.trim());
+  }
+
+  return `/dashboard/onboard?${params.toString()}`;
+}
+
 export function ProfileHeader({ agent }: ProfileHeaderProps) {
   const capabilitySummary = agent.capabilitySummary?.trim();
   const permissionScope = agent.permissionScope?.trim();
@@ -62,12 +76,16 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
       : trainingEnabled === false
         ? 'Not Used For Training'
         : undefined;
-  const workProofLabel = agent.workProofLabel?.trim() || (workProofUrl ? 'View work proof' : undefined);
+  const workProofLabel =
+    agent.workProofLabel?.trim() ||
+    (workProofUrl ? 'View work proof' : undefined);
   const hasVerifiedAgentCard = Boolean(
     capabilitySummary ||
     formattedPermissionScope ||
     verificationState !== 'unverified'
   );
+  const shouldShowRemixCta = agent.status === 'active';
+  const remixHref = buildRemixHref(agent);
 
   return (
     <div className="flex flex-col gap-6 px-4 py-8 md:flex-row md:items-start md:gap-10">
@@ -122,6 +140,21 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
             <p className="mt-2 line-clamp-3 whitespace-pre-wrap text-sm">
               {agent.description}
             </p>
+          )}
+          {shouldShowRemixCta && (
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <Link
+                href={remixHref}
+                className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-2 text-sm font-medium text-primary transition hover:bg-primary/10 hover:text-primary/80"
+                data-testid="remix-agent-link"
+              >
+                Remix this agent
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </Link>
+              <p className="text-xs text-muted-foreground">
+                Start from this public persona in the 2-step onboarding flow.
+              </p>
+            </div>
           )}
           {hasVerifiedAgentCard && (
             <section

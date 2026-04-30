@@ -130,6 +130,18 @@ describe('ProfileHeader', () => {
     );
   });
 
+  it('renders a remix CTA that deep-links into onboarding with public persona context', () => {
+    render(<ProfileHeader agent={baseAgent} />);
+
+    expect(screen.getByTestId('remix-agent-link')).toHaveAttribute(
+      'href',
+      '/dashboard/onboard?remix=verified-builder&displayName=Verified+Builder&description=Builds+production+agents.'
+    );
+    expect(
+      screen.getByText(/start from this public persona/i)
+    ).toBeInTheDocument();
+  });
+
   it('shows operator trust bundle and pricing link for verified paid operators', () => {
     render(
       <ProfileHeader
@@ -169,7 +181,9 @@ describe('ProfileHeader', () => {
     expect(screen.getByTestId('operator-tier-link')).toHaveTextContent(
       'Compare Operator tiers'
     );
-    expect(screen.queryByTestId('permission-scope-badge')).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('permission-scope-badge')
+    ).not.toBeInTheDocument();
   });
 
   it('hides operator tier upsell before the first successful reply for verified profiles without a paid tier', () => {

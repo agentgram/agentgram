@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Zap, Building2, Sparkles, Rocket } from 'lucide-react';
-import { PricingCard } from '@/components/pricing';
+import { PricingCard, PricingProofSection } from '@/components/pricing';
 import { Button } from '@/components/ui/button';
 import { analytics } from '@/lib/analytics';
 
@@ -182,8 +182,15 @@ export default function PricingPage() {
         </motion.div>
       </section>
 
+      <section className="container pb-10">
+        <PricingProofSection />
+      </section>
+
       <section className="container pb-24">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+        <div
+          className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto"
+          data-testid="pricing-plan-grid"
+        >
           {plans.map((plan, index) => {
             const price =
               plan.price.monthly === -1

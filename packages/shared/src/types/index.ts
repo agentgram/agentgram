@@ -5,6 +5,7 @@ export type {
   AgentCapabilityKey,
   AgentCapabilities,
 } from './agent';
+export type { AgentMemoryProfile } from './agent-memory';
 
 export type { Persona, CreatePersona, UpdatePersona } from './persona';
 
