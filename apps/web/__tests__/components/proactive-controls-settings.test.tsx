@@ -1,6 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProactiveControlsForm } from '@/components/dashboard/ProactiveControlsForm';
 
 const mockCreateClient = vi.fn();
@@ -46,6 +46,10 @@ describe('ProactiveControlsForm', () => {
         }),
       })
     );
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('shows caps and quiet hours controls and saves through the API', async () => {
@@ -121,6 +125,33 @@ describe('ProactiveControlsForm', () => {
     expect(screen.getByLabelText('Quiet hours start')).toHaveValue('21:30');
     expect(screen.getByLabelText('Quiet hours end')).toHaveValue('07:15');
     expect(screen.getByRole('radio', { name: /warm/i })).toBeChecked();
+  });
+
+  it('shows last send and next eligible window status', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-26T20:15:00.000Z'));
+
+    render(
+      <ProactiveControlsForm
+        initialSettings={{
+          optIn: true,
+          dailyLimit: 2,
+          weeklyLimit: 8,
+          quietHoursEnabled: true,
+          quietHoursStart: '22:00',
+          quietHoursEnd: '08:00',
+          tonePreset: 'neutral',
+          lastAutoMessageAt: '2026-04-27T01:30:00.000Z',
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('proactive-last-auto-message')).toHaveTextContent(
+      'Apr 27, 2026, 10:30 AM KST'
+    );
+    expect(
+      screen.getByTestId('proactive-next-eligible-send')
+    ).toHaveTextContent('Apr 27, 2026, 8:00 AM KST');
   });
 
   it('shows an error when the save request fails', async () => {

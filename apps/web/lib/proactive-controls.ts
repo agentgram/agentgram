@@ -10,6 +10,8 @@ export interface ProactiveControlsSettings {
   quietHoursEnd: string;
   tonePreset: TonePreset;
   updatedAt?: string;
+  lastAutoMessageAt?: string;
+  nextEligibleSendAt?: string;
 }
 
 const DEFAULT_DAILY_LIMIT = 2;
@@ -20,6 +22,7 @@ const MAX_WEEKLY_LIMIT = 100;
 const DEFAULT_QUIET_HOURS_START = '22:00';
 const DEFAULT_QUIET_HOURS_END = '08:00';
 const DEFAULT_TONE_PRESET: TonePreset = 'neutral';
+const SEOUL_UTC_OFFSET_MS = 9 * 60 * 60 * 1000;
 
 export const DEFAULT_PROACTIVE_CONTROLS_SETTINGS: ProactiveControlsSettings = {
   optIn: false,
@@ -42,6 +45,19 @@ function toTimeString(value: unknown, fallback: string): string {
     return value;
   }
   return fallback;
+}
+
+function toIsoTimestamp(value: unknown): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return undefined;
+  }
+
+  return parsed.toISOString();
 }
 
 function toBoundedInteger(
@@ -90,6 +106,9 @@ export function normalizeProactiveControlsSettings(
       ? (value.tonePreset as TonePreset)
       : DEFAULT_TONE_PRESET;
 
+  const lastAutoMessageAt = toIsoTimestamp(value.lastAutoMessageAt);
+  const nextEligibleSendAt = toIsoTimestamp(value.nextEligibleSendAt);
+
   return {
     optIn: value.optIn === true,
     dailyLimit,
@@ -103,6 +122,8 @@ export function normalizeProactiveControlsSettings(
     tonePreset,
     updatedAt:
       typeof value.updatedAt === 'string' ? value.updatedAt : undefined,
+    ...(lastAutoMessageAt ? { lastAutoMessageAt } : {}),
+    ...(nextEligibleSendAt ? { nextEligibleSendAt } : {}),
   };
 }
 
@@ -114,6 +135,58 @@ export function readProactiveControlsFromMetadata(
   }
 
   return normalizeProactiveControlsSettings(metadata.proactiveControls);
+}
+
+function shiftToSeoul(date: Date): Date {
+  return new Date(date.getTime() + SEOUL_UTC_OFFSET_MS);
+}
+
+function shiftFromSeoul(date: Date): Date {
+  return new Date(date.getTime() - SEOUL_UTC_OFFSET_MS);
+}
+
+function applyTime(date: Date, hhmm: string): Date {
+  const [hours, minutes] = hhmm.split(':').map(Number);
+  const next = new Date(date);
+  next.setUTCHours(hours, minutes, 0, 0);
+  return next;
+}
+
+export function getNextEligibleSendAt(
+  settings: ProactiveControlsSettings,
+  now: Date = new Date()
+): string | null {
+  if (!settings.optIn) {
+    return null;
+  }
+
+  if (settings.nextEligibleSendAt) {
+    return settings.nextEligibleSendAt;
+  }
+
+  if (!settings.quietHoursEnabled) {
+    return now.toISOString();
+  }
+
+  const seoulNow = shiftToSeoul(now);
+  const quietStart = applyTime(seoulNow, settings.quietHoursStart);
+  const quietEnd = applyTime(seoulNow, settings.quietHoursEnd);
+  const isSameDayWindow = quietStart.getTime() <= quietEnd.getTime();
+
+  const withinQuietHours = isSameDayWindow
+    ? seoulNow >= quietStart && seoulNow < quietEnd
+    : seoulNow >= quietStart || seoulNow < quietEnd;
+
+  if (!withinQuietHours) {
+    return now.toISOString();
+  }
+
+  const nextEligible = new Date(quietEnd);
+  if (nextEligible <= seoulNow) {
+    nextEligible.setUTCDate(nextEligible.getUTCDate() + 1);
+  }
+
+  return shiftFromSeoul(nextEligible).toISOString();
 }
 
 export function writeProactiveControlsToMetadata(
