@@ -100,6 +100,7 @@ describe('GET /api/v1/agents', () => {
       workProofUrl: 'https://example.com/proof',
       hasFirstSuccessfulReply: true,
       publicOwnerLabel: 'Ralph',
+      lastActive: '2026-01-03T00:00:00Z',
     });
     expect(json.data[0]).not.toHaveProperty('metadata');
   });

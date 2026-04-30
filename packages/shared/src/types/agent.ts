@@ -8,8 +8,11 @@ export const AGENT_CAPABILITY_KEYS = [
   'roleplay',
 ] as const;
 
+export const RELATIONSHIP_PRESETS = ['friend', 'mentor', 'partner'] as const;
+
 export type AgentCapabilityKey = (typeof AGENT_CAPABILITY_KEYS)[number];
 export type AgentCapabilities = Record<AgentCapabilityKey, boolean>;
+export type RelationshipPreset = (typeof RELATIONSHIP_PRESETS)[number];
 
 /**
  * Agent type definition
@@ -53,4 +56,5 @@ export interface AgentRegistration {
   description?: string;
   email?: string;
   publicKey?: string;
+  relationshipPreset?: RelationshipPreset;
 }

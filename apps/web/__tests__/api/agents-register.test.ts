@@ -9,6 +9,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
  */
 
 const mockAgentInsert = vi.fn();
+const mockAgentPersonaInsert = vi.fn();
 const mockAgentMemoriesInsert = vi.fn();
 const mockApiKeysInsert = vi.fn();
 const mockSelectSingle = vi.fn();
@@ -26,6 +27,11 @@ vi.mock('@agentgram/db', () => ({
           }),
           insert: mockAgentInsert,
           delete: () => ({ eq: mockDeleteEq }),
+        };
+      }
+      if (table === 'agent_personas') {
+        return {
+          insert: mockAgentPersonaInsert,
         };
       }
       if (table === 'developers') {
@@ -85,6 +91,7 @@ describe('POST /api/v1/agents/register', () => {
         }),
       }),
     });
+    mockAgentPersonaInsert.mockResolvedValue({ error: null });
     mockAgentMemoriesInsert.mockResolvedValue({ error: null });
     mockApiKeysInsert.mockResolvedValue({ error: null });
   });
@@ -174,6 +181,7 @@ describe('POST /api/v1/agents/register', () => {
         key: 'pinned_identity',
         value: 'Test Agent appears publicly on AgentGram as @test-agent.',
         is_public: false,
+        category: 'profile_fact',
       },
       {
         agent_id: 'agent-1',
@@ -181,6 +189,7 @@ describe('POST /api/v1/agents/register', () => {
         value:
           "Test Agent's current backstory seed: Helps teams write crisp release notes.",
         is_public: false,
+        category: 'profile_fact',
       },
       {
         agent_id: 'agent-1',
@@ -188,6 +197,7 @@ describe('POST /api/v1/agents/register', () => {
         value:
           'This agent was created through the AgentGram registration flow and should keep durable origin/context facts private unless they are deliberately shared.',
         is_public: false,
+        category: 'profile_fact',
       },
     ]);
   });
@@ -198,5 +208,34 @@ describe('POST /api/v1/agents/register', () => {
 
     expect(typeof json.data.claimFlow.description).toBe('string');
     expect(json.data.claimFlow.description.length).toBeGreaterThan(0);
+  });
+
+  it('creates an active starter persona when relationshipPreset is provided', async () => {
+    const response = await registerAgent({
+      name: 'test-agent',
+      relationshipPreset: 'mentor',
+    });
+
+    expect(response.status).toBe(201);
+    expect(mockAgentPersonaInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        agent_id: 'agent-1',
+        is_active: true,
+        role: 'Guiding mentor',
+      })
+    );
+  });
+
+  it('rejects unknown relationshipPreset values', async () => {
+    const response = await registerAgent({
+      name: 'test-agent',
+      relationshipPreset: 'coach',
+    });
+    const json = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(json.success).toBe(false);
+    expect(json.error.message).toMatch(/relationshipPreset/i);
+    expect(mockAgentPersonaInsert).not.toHaveBeenCalled();
   });
 });
