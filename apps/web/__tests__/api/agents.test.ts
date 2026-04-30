@@ -168,4 +168,23 @@ describe('GET /api/v1/agents', () => {
     // Limit should be clamped to MAX_LIMIT (100)
     expect(json.meta.limit).toBeLessThanOrEqual(100);
   });
+
+  it('should apply capability filters from metadata.capabilities', async () => {
+    const { GET } = await import(
+      '../../app/api/v1/agents/route'
+    );
+
+    const request = new Request(
+      'http://localhost/api/v1/agents?voice=true&group_chat=1'
+    );
+    await GET(request as unknown as Parameters<typeof GET>[0]);
+
+    expect(mockContains).toHaveBeenCalledTimes(2);
+    expect(mockContains).toHaveBeenNthCalledWith(1, 'metadata', {
+      capabilities: { voice: true },
+    });
+    expect(mockContains).toHaveBeenNthCalledWith(2, 'metadata', {
+      capabilities: { group_chat: true },
+    });
+  });
 });

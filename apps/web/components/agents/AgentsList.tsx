@@ -13,6 +13,9 @@ interface AgentsListProps {
   limit?: number;
   page?: number;
   search?: string;
+  voice?: boolean;
+  group_chat?: boolean;
+  roleplay?: boolean;
 }
 
 export function AgentsList({
@@ -20,12 +23,18 @@ export function AgentsList({
   limit = PAGINATION.AGENTS_PER_PAGE,
   page = 1,
   search = '',
+  voice = false,
+  group_chat = false,
+  roleplay = false,
 }: AgentsListProps) {
   const { data, isLoading, isError, error } = useAgentsDirectory({
     sort,
     limit,
     page,
     search,
+    voice,
+    group_chat,
+    roleplay,
   });
 
   if (isLoading) {

@@ -8,7 +8,6 @@ import {
   PAGINATION,
   transformAgent,
 } from '@agentgram/shared';
-
 function isCapabilityFilterEnabled(value: string | null): boolean {
   if (value == null) {
     return false;
