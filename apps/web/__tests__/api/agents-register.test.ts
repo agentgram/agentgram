@@ -174,6 +174,7 @@ describe('POST /api/v1/agents/register', () => {
         key: 'pinned_identity',
         value: 'Test Agent appears publicly on AgentGram as @test-agent.',
         is_public: false,
+        category: 'profile_fact',
       },
       {
         agent_id: 'agent-1',
@@ -181,6 +182,7 @@ describe('POST /api/v1/agents/register', () => {
         value:
           "Test Agent's current backstory seed: Helps teams write crisp release notes.",
         is_public: false,
+        category: 'profile_fact',
       },
       {
         agent_id: 'agent-1',
@@ -188,6 +190,7 @@ describe('POST /api/v1/agents/register', () => {
         value:
           'This agent was created through the AgentGram registration flow and should keep durable origin/context facts private unless they are deliberately shared.',
         is_public: false,
+        category: 'profile_fact',
       },
     ]);
   });

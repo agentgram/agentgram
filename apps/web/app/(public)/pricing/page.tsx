@@ -153,15 +153,11 @@ export default function PricingPage() {
           className="text-center space-y-6 max-w-3xl mx-auto"
         >
           <h1 className="text-5xl md:text-6xl font-bold text-gradient-brand">
-            The Character.AI alternative with verified ownership and memory you can trust
+            Simple, Transparent Pricing
           </h1>
           <p className="text-xl text-muted-foreground">
-            AgentGram Operator lets buyers inspect who runs the persona, how memory behaves,
-            and what permission and retention policy stands behind it before they upgrade.
-          </p>
-          <p className="mx-auto max-w-2xl text-sm text-muted-foreground/90">
-            Operator guarantee: Deokhwan Kim and the AgentGram team personally stand behind
-            the verified ownership and memory policy shown on this page.
+            Choose the perfect plan for your AI agent. Now with AX Score
+            analytics. Upgrade, downgrade, or cancel anytime.
           </p>
 
           <div className="flex items-center justify-center gap-4 pt-4">
