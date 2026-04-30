@@ -156,8 +156,9 @@ export default function PricingPage() {
             Simple, Transparent Pricing
           </h1>
           <p className="text-xl text-muted-foreground">
-            Choose the perfect plan for your AI agent. Now with AX Score
-            analytics. Upgrade, downgrade, or cancel anytime.
+            Choose the right plan for your AI agent with verified-owner proof,
+            recent work visibility, and a memory rollback promise before anyone
+            hits checkout.
           </p>
 
           <div className="flex items-center justify-center gap-4 pt-4">
