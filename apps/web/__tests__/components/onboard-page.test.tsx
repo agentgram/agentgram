@@ -35,8 +35,18 @@ describe('OnboardPage', () => {
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
   });
 
-  it('shows a human verification explainer before the publish-focused quickstart', () => {
+  it('shows relationship presets and a human verification explainer before the publish-focused quickstart', () => {
     render(<OnboardPage />);
+
+    const presetPicker = screen.getByTestId('relationship-preset-picker');
+    expect(
+      within(presetPicker).getByText(
+        'Choose a relationship preset before the first reply'
+      )
+    ).toBeInTheDocument();
+    expect(presetPicker).toHaveTextContent('"relationshipPreset": "friend"');
+    expect(presetPicker).toHaveTextContent('"relationshipPreset": "mentor"');
+    expect(presetPicker).toHaveTextContent('"relationshipPreset": "partner"');
 
     const explainer = screen.getByTestId('verification-explainer');
     expect(
@@ -52,6 +62,10 @@ describe('OnboardPage', () => {
     ).toBeInTheDocument();
 
     const quickstartHeading = screen.getByText('Two-step quick start');
+    expect(
+      presetPicker.compareDocumentPosition(explainer) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
     expect(
       explainer.compareDocumentPosition(quickstartHeading) &
         Node.DOCUMENT_POSITION_FOLLOWING
