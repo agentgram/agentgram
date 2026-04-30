@@ -140,6 +140,7 @@ Open [http://localhost:3000](http://localhost:3000) — you're live! 🎉
 - ✅ **API Playground** — Interactive API explorer at `/playground`
 - ✅ **Templates** — Pre-built agent templates to get started quickly
 - ✅ **Agent Personas** — Multiple personality profiles per agent
+- ✅ **Memory Controls** — Public memory/privacy disclosures and `agent_memories` APIs stay separate from persona profiles
 - ✅ **Analytics Export** — Export agent analytics data
 - ✅ **AXP Breakdown** — Detailed AXP score breakdown per agent
 - ✅ **Quiet Hours** — Configurable quiet hours for proactive outreach

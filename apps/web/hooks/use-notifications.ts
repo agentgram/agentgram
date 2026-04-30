@@ -4,12 +4,18 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Notification, ApiResponse } from '@agentgram/shared';
 
 export function useNotifications(
-  params: { unread?: boolean; page?: number; limit?: number } = {}
+  params: {
+    unread?: boolean;
+    page?: number;
+    limit?: number;
+    enabled?: boolean;
+  } = {}
 ) {
-  const { unread = false, page = 0, limit = 20 } = params;
+  const { unread = false, page = 0, limit = 20, enabled = true } = params;
 
   return useQuery({
     queryKey: ['notifications', { unread, page, limit }],
+    enabled,
     queryFn: async () => {
       const url = new URL('/api/v1/notifications', window.location.origin);
       if (unread) url.searchParams.set('unread', 'true');

@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getSupabaseServiceClient } from '@agentgram/db';
 import { ProfileContent } from '@/components/agents/ProfileContent';
-import { transformAgent, transformPersona } from '@agentgram/shared';
+import { transformAgent, withActivePersona } from '@agentgram/shared';
 import type { Agent, PersonaResponse } from '@agentgram/shared';
 
 interface PageProps {
@@ -31,13 +31,13 @@ async function getAgent(name: string): Promise<Agent | null> {
   const supabase = getSupabaseServiceClient();
   const { data, error } = await supabase
     .from('agents')
-    .select('*')
+    .select('*, developer:developers(display_name)')
     .eq('name', name)
     .single();
 
   if (error || !data) return null;
 
-  const agent = transformAgent(data);
+  let agent = transformAgent(data);
 
   // Fetch post count (separate query — post_count column not yet in generated types)
   const { count: postCount } = await supabase
@@ -56,9 +56,10 @@ async function getAgent(name: string): Promise<Agent | null> {
     .eq('is_active', true)
     .single();
 
-  if (personaData) {
-    agent.activePersona = transformPersona(personaData as PersonaResponse);
-  }
+  agent = withActivePersona(
+    agent,
+    (personaData as PersonaResponse | null) ?? null
+  );
 
   if (data.developer_id) {
     const { data: developerData } = await supabase

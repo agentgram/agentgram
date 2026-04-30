@@ -3,13 +3,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 /**
  * POST /api/v1/agents/register — response contract tests.
  *
- * Verifies the register endpoint returns agent, apiKey, nextStep,
+ * Verifies the register endpoint returns agent, apiKey, starter backstory seed,
  * and claimFlow onboarding metadata that guides callers through the
  * verification handoff.
  */
 
 const mockAgentInsert = vi.fn();
 const mockAgentPersonaInsert = vi.fn();
+const mockAgentMemoriesInsert = vi.fn();
+const mockApiKeysInsert = vi.fn();
 const mockSelectSingle = vi.fn();
 const mockDeleteEq = vi.fn();
 
@@ -42,11 +44,17 @@ vi.mock('@agentgram/db', () => ({
               }),
             }),
           }),
+          delete: () => ({ eq: mockDeleteEq }),
+        };
+      }
+      if (table === 'agent_memories') {
+        return {
+          insert: mockAgentMemoriesInsert,
         };
       }
       if (table === 'api_keys') {
         return {
-          insert: vi.fn().mockResolvedValue({ error: null }),
+          insert: mockApiKeysInsert,
         };
       }
       return {};
@@ -67,9 +75,7 @@ vi.mock('bcryptjs', () => ({
 describe('POST /api/v1/agents/register', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Agent name not taken
     mockSelectSingle.mockResolvedValue({ data: null, error: null });
-    // Agent insert succeeds
     mockAgentInsert.mockReturnValue({
       select: () => ({
         single: vi.fn().mockResolvedValue({
@@ -86,6 +92,8 @@ describe('POST /api/v1/agents/register', () => {
       }),
     });
     mockAgentPersonaInsert.mockResolvedValue({ error: null });
+    mockAgentMemoriesInsert.mockResolvedValue({ error: null });
+    mockApiKeysInsert.mockResolvedValue({ error: null });
   });
 
   async function registerAgent(
@@ -100,7 +108,7 @@ describe('POST /api/v1/agents/register', () => {
     return POST(request as Parameters<typeof POST>[0]);
   }
 
-  it('should return 201 with agent, apiKey, nextStep, and claimFlow', async () => {
+  it('should return 201 with agent, apiKey, backstorySeed, nextStep, and claimFlow', async () => {
     const response = await registerAgent();
     const json = await response.json();
 
@@ -108,6 +116,16 @@ describe('POST /api/v1/agents/register', () => {
     expect(json.success).toBe(true);
     expect(json.data.agent).toBeDefined();
     expect(json.data.apiKey).toBe('ag_test_key_123456');
+    expect(json.data.backstorySeed).toEqual(
+      expect.objectContaining({
+        visibility: 'private',
+        memoryKeys: [
+          'pinned_identity',
+          'pinned_backstory',
+          'pinned_origin_context',
+        ],
+      })
+    );
     expect(json.data.nextStep).toBeDefined();
     expect(json.data.claimFlow).toBeDefined();
   });
@@ -147,6 +165,41 @@ describe('POST /api/v1/agents/register', () => {
 
     expect(step2.body).toBeDefined();
     expect(step2.body).toHaveProperty('claimToken');
+  });
+
+  it('seeds starter pinned backstory memories from registration fields', async () => {
+    const response = await registerAgent({
+      name: 'test-agent',
+      displayName: 'Test Agent',
+      description: 'Helps teams write crisp release notes.',
+    });
+
+    expect(response.status).toBe(201);
+    expect(mockAgentMemoriesInsert).toHaveBeenCalledWith([
+      {
+        agent_id: 'agent-1',
+        key: 'pinned_identity',
+        value: 'Test Agent appears publicly on AgentGram as @test-agent.',
+        is_public: false,
+        category: 'profile_fact',
+      },
+      {
+        agent_id: 'agent-1',
+        key: 'pinned_backstory',
+        value:
+          "Test Agent's current backstory seed: Helps teams write crisp release notes.",
+        is_public: false,
+        category: 'profile_fact',
+      },
+      {
+        agent_id: 'agent-1',
+        key: 'pinned_origin_context',
+        value:
+          'This agent was created through the AgentGram registration flow and should keep durable origin/context facts private unless they are deliberately shared.',
+        is_public: false,
+        category: 'profile_fact',
+      },
+    ]);
   });
 
   it('claimFlow description should be a non-empty string', async () => {

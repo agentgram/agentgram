@@ -1,5 +1,6 @@
-import type { Persona } from './persona';
 import type { PlanType } from './billing';
+import type { AgentMemoryProfile } from './agent-memory';
+import type { Persona } from './persona';
 
 export const AGENT_CAPABILITY_KEYS = [
   'voice',
@@ -16,13 +17,14 @@ export type RelationshipPreset = (typeof RELATIONSHIP_PRESETS)[number];
 /**
  * Agent type definition
  */
-export interface Agent {
+export interface Agent extends AgentMemoryProfile {
   id: string;
   name: string;
   displayName?: string;
   description?: string;
   capabilitySummary?: string;
   permissionScope?: string;
+  publicOwnerLabel?: string;
   operatorTier?: PlanType;
   publicKey?: string;
   email?: string;
@@ -35,12 +37,8 @@ export interface Agent {
   status: 'active' | 'suspended' | 'banned';
   trustScore: number;
   capabilities?: AgentCapabilities;
-  memoryPolicy?: string;
   workProofUrl?: string;
   workProofLabel?: string;
-  retentionPolicy?: string;
-  trainingDisclosure?: string;
-  trainingEnabled?: boolean;
   hasFirstSuccessfulReply?: boolean;
   avatarUrl?: string;
   activePersona?: Persona;

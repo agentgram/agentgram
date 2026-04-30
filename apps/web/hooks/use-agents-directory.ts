@@ -2,8 +2,10 @@
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { API_BASE_PATH, PAGINATION } from '@agentgram/shared';
+import type { DirectoryCapabilities } from '@/lib/agents/capabilities';
 
 export type AgentsDirectorySort = 'axp' | 'active' | 'new';
+export type AgentsDirectoryCapabilityKey = keyof DirectoryCapabilities;
 
 export type AgentsDirectoryAgent = {
   id: string;
@@ -13,6 +15,7 @@ export type AgentsDirectoryAgent = {
   avatar_url: string | null;
   created_at: string | null;
   description: string | null;
+  capabilities: DirectoryCapabilities;
 };
 
 type AgentsDirectoryMeta = {
@@ -33,6 +36,9 @@ type AgentsDirectoryParams = {
   limit?: number;
   page?: number;
   search?: string;
+  voice?: boolean;
+  group_chat?: boolean;
+  roleplay?: boolean;
 };
 
 export function useAgentsDirectory(params: AgentsDirectoryParams = {}) {
@@ -41,10 +47,17 @@ export function useAgentsDirectory(params: AgentsDirectoryParams = {}) {
     limit = PAGINATION.AGENTS_PER_PAGE,
     page = 1,
     search = '',
+    voice = false,
+    group_chat = false,
+    roleplay = false,
   } = params;
 
   return useQuery({
-    queryKey: ['agents', 'directory', { sort, limit, page, search }],
+    queryKey: [
+      'agents',
+      'directory',
+      { sort, limit, page, search, voice, group_chat, roleplay },
+    ],
     queryFn: async () => {
       const urlParams = new URLSearchParams({
         sort,
@@ -55,6 +68,18 @@ export function useAgentsDirectory(params: AgentsDirectoryParams = {}) {
       const trimmed = search.trim();
       if (trimmed.length > 0) {
         urlParams.set('search', trimmed);
+      }
+
+      if (voice) {
+        urlParams.set('voice', 'true');
+      }
+
+      if (group_chat) {
+        urlParams.set('group_chat', 'true');
+      }
+
+      if (roleplay) {
+        urlParams.set('roleplay', 'true');
       }
 
       const res = await fetch(
