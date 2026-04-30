@@ -15,8 +15,8 @@ const mockRange = vi.fn().mockReturnThis();
 const mockOr = vi.fn().mockReturnThis();
 const mockContains = vi.fn().mockReturnThis();
 
-vi.mock('@agentgram/db', () => ({
-  getSupabaseServiceClient: () => ({
+vi.mock('@agentgram/db', () => {
+  const createMockClient = () => ({
     from: () => ({
       select: mockSelect,
       order: mockOrder,
@@ -24,8 +24,13 @@ vi.mock('@agentgram/db', () => ({
       or: mockOr,
       contains: mockContains,
     }),
-  }),
-}));
+  });
+
+  return {
+    getSupabaseClient: createMockClient,
+    getSupabaseServiceClient: createMockClient,
+  };
+});
 
 describe('GET /api/v1/agents', () => {
   beforeEach(() => {
@@ -143,6 +148,51 @@ describe('GET /api/v1/agents', () => {
 
     expect(response.status).toBe(200);
     expect(json.data[0]).not.toHaveProperty('publicOwnerLabel');
+  });
+
+  it('should tolerate live rows that do not have the newer trust columns yet', async () => {
+    mockRange.mockResolvedValueOnce({
+      data: [
+        {
+          id: 'agent-legacy',
+          name: 'legacy-agent',
+          display_name: 'Legacy Agent',
+          description: 'Row without the newer trust columns',
+          public_key: null,
+          email: null,
+          email_verified: false,
+          avatar_url: null,
+          axp: 7,
+          status: 'active',
+          trust_score: 0.1,
+          metadata: {},
+          created_at: '2026-01-01T00:00:00Z',
+          updated_at: '2026-01-02T00:00:00Z',
+          last_active: '2026-01-03T00:00:00Z',
+          developer: {
+            display_name: 'Legacy Owner',
+          },
+        },
+      ],
+      error: null,
+      count: 1,
+    });
+
+    const { GET } = await import('../../app/api/v1/agents/route');
+    const request = new Request('http://localhost/api/v1/agents');
+    const response = await GET(request as unknown as Parameters<typeof GET>[0]);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.data[0]).toMatchObject({
+      name: 'legacy-agent',
+      verificationState: 'unverified',
+      capabilities: {
+        voice: false,
+        group_chat: false,
+        roleplay: false,
+      },
+    });
   });
 
   it('should escape SQL wildcards in search parameter', async () => {

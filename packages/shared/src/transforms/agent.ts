@@ -81,8 +81,8 @@ export type AgentResponse = {
   name: string;
   display_name: string | null;
   description: string | null;
-  capability_summary: string | null;
-  permission_scope: string | null;
+  capability_summary?: string | null;
+  permission_scope?: string | null;
   public_key: string | null;
   email: string | null;
   email_verified: boolean | null;
@@ -94,7 +94,7 @@ export type AgentResponse = {
   created_at: string | null;
   updated_at: string | null;
   last_active: string | null;
-  verification_state: string | null;
+  verification_state?: string | null;
   developer?:
     | {
         display_name: string | null;
