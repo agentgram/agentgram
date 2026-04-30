@@ -27,67 +27,18 @@ function formatOperatorTier(operatorTier: Agent['operatorTier']) {
   return operatorTier ? formatTokenLabel(operatorTier) : undefined;
 }
 
-function readMetadataValue(
-  metadata: Record<string, unknown>,
-  path: string[]
-): unknown {
-  let current: unknown = metadata;
+function buildRemixHref(agent: Agent) {
+  const params = new URLSearchParams({ remix: agent.name });
 
-  for (const segment of path) {
-    if (!current || typeof current !== 'object' || Array.isArray(current)) {
-      return undefined;
-    }
-
-    current = (current as Record<string, unknown>)[segment];
+  if (agent.displayName?.trim()) {
+    params.set('displayName', agent.displayName.trim());
   }
 
-  return current;
-}
-
-function readMetadataString(
-  metadata: Agent['metadata'],
-  paths: string[][]
-): string | undefined {
-  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
-    return undefined;
+  if (agent.description?.trim()) {
+    params.set('description', agent.description.trim());
   }
 
-  for (const path of paths) {
-    const value = readMetadataValue(metadata as Record<string, unknown>, path);
-    if (typeof value === 'string' && value.trim()) {
-      return value.trim();
-    }
-  }
-
-  return undefined;
-}
-
-function readMetadataBoolean(
-  metadata: Agent['metadata'],
-  paths: string[][]
-): boolean | undefined {
-  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
-    return undefined;
-  }
-
-  for (const path of paths) {
-    const value = readMetadataValue(metadata as Record<string, unknown>, path);
-    if (typeof value === 'boolean') {
-      return value;
-    }
-
-    if (typeof value === 'string') {
-      const normalized = value.trim().toLowerCase();
-      if (['true', 'yes', 'on', 'enabled', 'allow', 'allowed'].includes(normalized)) {
-        return true;
-      }
-      if (['false', 'no', 'off', 'disabled', 'deny', 'denied', 'not_allowed'].includes(normalized)) {
-        return false;
-      }
-    }
-  }
-
-  return undefined;
+  return `/dashboard/onboard?${params.toString()}`;
 }
 
 export function ProfileHeader({ agent }: ProfileHeaderProps) {
@@ -103,48 +54,21 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
     agent.operatorTier !== 'free'
       ? formatOperatorTier(agent.operatorTier)
       : undefined;
-  const memoryPolicy = readMetadataString(agent.metadata, [
-    ['memoryPolicy'],
-    ['memory_policy'],
-    ['memory', 'policy'],
-    ['memoryVisibility'],
-    ['memory', 'visibility'],
-  ]);
+  const hasFirstSuccessfulReply = agent.hasFirstSuccessfulReply === true;
+  const shouldShowOperatorTierSurface =
+    verificationState === 'verified' &&
+    (Boolean(formattedOperatorTier) || hasFirstSuccessfulReply);
+  const memoryPolicy = agent.memoryPolicy?.trim();
   const formattedMemoryPolicy = memoryPolicy
     ? formatTokenLabel(memoryPolicy)
     : undefined;
-  const workProofUrl = readMetadataString(agent.metadata, [
-    ['workProofUrl'],
-    ['work_proof_url'],
-    ['proofUrl'],
-    ['proof_url'],
-    ['workProof', 'url'],
-    ['workProof'],
-  ]);
-  const retentionDisclosure = readMetadataString(agent.metadata, [
-    ['retentionPolicy'],
-    ['retention_policy'],
-    ['dataRetention'],
-    ['data_retention'],
-    ['privacy', 'retention'],
-  ]);
+  const workProofUrl = agent.workProofUrl?.trim();
+  const retentionDisclosure = agent.retentionPolicy?.trim();
   const formattedRetentionDisclosure = retentionDisclosure
     ? formatTokenLabel(retentionDisclosure)
     : undefined;
-  const trainingDisclosure = readMetadataString(agent.metadata, [
-    ['trainingDisclosure'],
-    ['training_disclosure'],
-    ['trainingPolicy'],
-    ['training_policy'],
-    ['privacy', 'training'],
-  ]);
-  const trainingEnabled = readMetadataBoolean(agent.metadata, [
-    ['trainingEnabled'],
-    ['training_enabled'],
-    ['usesDataForTraining'],
-    ['uses_data_for_training'],
-    ['privacy', 'trainingEnabled'],
-  ]);
+  const trainingDisclosure = agent.trainingDisclosure?.trim();
+  const trainingEnabled = agent.trainingEnabled;
   const formattedTrainingDisclosure = trainingDisclosure
     ? formatTokenLabel(trainingDisclosure)
     : trainingEnabled === true
@@ -153,18 +77,15 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
         ? 'Not Used For Training'
         : undefined;
   const workProofLabel =
-    readMetadataString(agent.metadata, [
-      ['workProofLabel'],
-      ['work_proof_label'],
-      ['proofLabel'],
-      ['proof_label'],
-      ['workProof', 'label'],
-    ]) ?? (workProofUrl ? 'View work proof' : undefined);
+    agent.workProofLabel?.trim() ||
+    (workProofUrl ? 'View work proof' : undefined);
   const hasVerifiedAgentCard = Boolean(
     capabilitySummary ||
     formattedPermissionScope ||
     verificationState !== 'unverified'
   );
+  const shouldShowRemixCta = agent.status === 'active';
+  const remixHref = buildRemixHref(agent);
 
   return (
     <div className="flex flex-col gap-6 px-4 py-8 md:flex-row md:items-start md:gap-10">
@@ -220,6 +141,21 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
               {agent.description}
             </p>
           )}
+          {shouldShowRemixCta && (
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <Link
+                href={remixHref}
+                className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-2 text-sm font-medium text-primary transition hover:bg-primary/10 hover:text-primary/80"
+                data-testid="remix-agent-link"
+              >
+                Remix this agent
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </Link>
+              <p className="text-xs text-muted-foreground">
+                Start from this public persona in the 2-step onboarding flow.
+              </p>
+            </div>
+          )}
           {hasVerifiedAgentCard && (
             <section
               aria-label="Verified agent card"
@@ -246,7 +182,7 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
                   </span>
                 </div>
               )}
-              {verificationState === 'verified' && (
+              {shouldShowOperatorTierSurface && (
                 <div
                   className="mt-3 rounded-xl border border-primary/15 bg-primary/5 p-3"
                   data-testid="operator-tier-surface"

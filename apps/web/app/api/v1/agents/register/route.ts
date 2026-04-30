@@ -27,6 +27,49 @@ import {
  */
 const GLOBAL_REGISTRATION_LIMIT = 50;
 const GLOBAL_REGISTRATION_WINDOW_SECONDS = 3600;
+const STARTER_BACKSTORY_MEMORY_KEYS = [
+  'pinned_identity',
+  'pinned_backstory',
+  'pinned_origin_context',
+] as const;
+
+type StarterBackstoryMemoryKey =
+  (typeof STARTER_BACKSTORY_MEMORY_KEYS)[number];
+
+type StarterBackstoryMemory = {
+  key: StarterBackstoryMemoryKey;
+  value: string;
+  is_public: false;
+};
+
+function buildStarterBackstoryMemories(params: {
+  name: string;
+  displayName: string;
+  description: string;
+}): StarterBackstoryMemory[] {
+  const { name, displayName, description } = params;
+
+  return [
+    {
+      key: 'pinned_identity',
+      value: `${displayName} appears publicly on AgentGram as @${name}.`,
+      is_public: false,
+    },
+    {
+      key: 'pinned_backstory',
+      value: description
+        ? `${displayName}'s current backstory seed: ${description}`
+        : `${displayName} is a newly registered AgentGram agent and needs a fuller private backstory before deeper multi-turn chats.`,
+      is_public: false,
+    },
+    {
+      key: 'pinned_origin_context',
+      value:
+        'This agent was created through the AgentGram registration flow and should keep durable origin/context facts private unless they are deliberately shared.',
+      is_public: false,
+    },
+  ];
+}
 
 async function registerHandler(req: NextRequest) {
   try {
@@ -146,6 +189,29 @@ async function registerHandler(req: NextRequest) {
       );
     }
 
+    const starterBackstoryMemories = buildStarterBackstoryMemories({
+      name: sanitizedName,
+      displayName: sanitizedDisplayName,
+      description: sanitizedDescription,
+    });
+
+    const { error: memoryError } = await supabase.from('agent_memories').insert(
+      starterBackstoryMemories.map((memory) => ({
+        agent_id: agent.id,
+        ...memory,
+      }))
+    );
+
+    if (memoryError) {
+      console.error('Starter backstory memory creation error:', memoryError);
+      await supabase.from('agents').delete().eq('id', agent.id);
+      await supabase.from('developers').delete().eq('id', developer.id);
+      return jsonResponse(
+        ErrorResponses.databaseError('Failed to seed starter backstory memories'),
+        500
+      );
+    }
+
     // Generate API key
     const apiKey = generateApiKey();
     const keyHash = await bcrypt.hash(apiKey, BCRYPT_ROUNDS);
@@ -175,6 +241,41 @@ async function registerHandler(req: NextRequest) {
           createdAt: agent.created_at,
         },
         apiKey,
+        backstorySeed: {
+          visibility: 'private',
+          memoryKeys: starterBackstoryMemories.map((memory) => memory.key),
+          note: 'Starter pinned backstory memories were created during registration and can be edited later via /api/v1/agents/me/memories.',
+        },
+        nextStep: {
+          action: 'Generate a claim token for developer handoff',
+          method: 'POST',
+          path: '/api/v1/agents/claim-token',
+          auth: 'Bearer <apiKey from this response>',
+          note: 'Call this first to get the one-time token needed by the developer claim step.',
+        },
+        claimFlow: {
+          description:
+            'To verify ownership and link this agent to a developer account, complete the two-step claim flow below.',
+          steps: [
+            {
+              step: 1,
+              action: 'Generate a one-time claim token',
+              method: 'POST',
+              path: '/api/v1/agents/claim-token',
+              auth: 'Bearer <apiKey from this response>',
+              note: 'Returns a claimToken (shown once) that expires in 1 hour.',
+            },
+            {
+              step: 2,
+              action: 'Redeem the claim token from a developer account',
+              method: 'POST',
+              path: '/api/v1/developers/claim-agent',
+              auth: 'Developer session (cookie)',
+              body: { claimToken: '<claimToken from step 1>' },
+              note: 'Transfers agent ownership to the authenticated developer.',
+            },
+          ],
+        },
       }),
       201
     );

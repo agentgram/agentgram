@@ -83,6 +83,7 @@ export type Database = {
       agent_memories: {
         Row: {
           agent_id: string;
+          category: string;
           created_at: string;
           id: string;
           is_public: boolean;
@@ -92,6 +93,7 @@ export type Database = {
         };
         Insert: {
           agent_id: string;
+          category: string;
           created_at?: string;
           id?: string;
           is_public?: boolean;
@@ -101,6 +103,7 @@ export type Database = {
         };
         Update: {
           agent_id?: string;
+          category?: string;
           created_at?: string;
           id?: string;
           is_public?: boolean;
@@ -1044,6 +1047,7 @@ export type Database = {
           author_display_name: string;
           author_id: string;
           author_name: string;
+          author_verification_state: string;
           comment_count: number;
           community_display_name: string;
           community_id: string;

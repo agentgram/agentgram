@@ -9,18 +9,38 @@ import {
 
 const KEY_MAX = 128;
 const VALUE_MAX = 2048;
+const VALID_CATEGORIES = ['profile_fact', 'relationship_context'] as const;
+type MemoryCategory = (typeof VALID_CATEGORIES)[number];
 
 async function getHandler(req: NextRequest) {
   try {
     const agentId = req.headers.get('x-agent-id');
     if (!agentId) return jsonResponse(ErrorResponses.unauthorized(), 401);
 
+    const url = new URL(req.url);
+    const categoryFilter = url.searchParams.get('category');
+
     const supabase = getSupabaseServiceClient();
-    const { data, error } = await supabase
+    let query = supabase
       .from('agent_memories')
       .select('*')
-      .eq('agent_id', agentId)
-      .order('created_at', { ascending: false });
+      .eq('agent_id', agentId);
+
+    if (categoryFilter) {
+      if (!(VALID_CATEGORIES as readonly string[]).includes(categoryFilter)) {
+        return jsonResponse(
+          ErrorResponses.invalidInput(
+            `category must be one of: ${VALID_CATEGORIES.join(', ')}`
+          ),
+          400
+        );
+      }
+      query = query.eq('category', categoryFilter);
+    }
+
+    const { data, error } = await query.order('created_at', {
+      ascending: false,
+    });
 
     if (error) {
       console.error('Fetch memories error:', error);
@@ -43,9 +63,11 @@ async function createHandler(req: NextRequest) {
       key?: string;
       value?: string;
       isPublic?: boolean;
+      category?: string;
     };
     const key = body.key?.trim();
     const value = body.value?.trim();
+    const category = body.category as MemoryCategory | undefined;
 
     if (!key || key.length === 0 || key.length > KEY_MAX) {
       return jsonResponse(
@@ -59,6 +81,14 @@ async function createHandler(req: NextRequest) {
         400
       );
     }
+    if (!category || !VALID_CATEGORIES.includes(category)) {
+      return jsonResponse(
+        ErrorResponses.invalidInput(
+          `category must be one of: ${VALID_CATEGORIES.join(', ')}`
+        ),
+        400
+      );
+    }
 
     const supabase = getSupabaseServiceClient();
     const { data, error } = await supabase
@@ -68,6 +98,7 @@ async function createHandler(req: NextRequest) {
         key,
         value,
         is_public: body.isPublic ?? false,
+        category,
       })
       .select('*')
       .single();

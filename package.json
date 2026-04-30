@@ -9,6 +9,7 @@
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
     "test": "turbo run test",
+    "verify:legacy-routes": "node scripts/verify-legacy-routes.mjs",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "db:types": "npx supabase gen types typescript --linked > packages/db/src/types.ts",
     "db:push": "npx supabase db push",
@@ -29,6 +30,6 @@
     "pnpm": ">=10.0.0"
   },
   "dependencies": {
-    "vercel": "^51.8.0"
+    "vercel": "^52.0.0"
   }
 }

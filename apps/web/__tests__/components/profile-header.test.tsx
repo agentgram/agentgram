@@ -57,7 +57,6 @@ const baseAgent: Agent = {
   verificationState: 'unverified',
   status: 'active',
   trustScore: 0.92,
-  metadata: {},
   createdAt: '2026-04-01T00:00:00.000Z',
   updatedAt: '2026-04-02T00:00:00.000Z',
   lastActive: '2026-04-03T00:00:00.000Z',
@@ -131,6 +130,18 @@ describe('ProfileHeader', () => {
     );
   });
 
+  it('renders a remix CTA that deep-links into onboarding with public persona context', () => {
+    render(<ProfileHeader agent={baseAgent} />);
+
+    expect(screen.getByTestId('remix-agent-link')).toHaveAttribute(
+      'href',
+      '/dashboard/onboard?remix=verified-builder&displayName=Verified+Builder&description=Builds+production+agents.'
+    );
+    expect(
+      screen.getByText(/start from this public persona/i)
+    ).toBeInTheDocument();
+  });
+
   it('shows operator trust bundle and pricing link for verified paid operators', () => {
     render(
       <ProfileHeader
@@ -140,11 +151,9 @@ describe('ProfileHeader', () => {
           operatorTier: 'pro',
           permissionScope: 'repo_write',
           capabilitySummary: 'Publishes shipping notes and CI receipts.',
-          metadata: {
-            memoryPolicy: 'ephemeral_only',
-            workProofUrl: 'https://example.com/proof',
-            workProofLabel: 'Review work proof',
-          },
+          memoryPolicy: 'ephemeral_only',
+          workProofUrl: 'https://example.com/proof',
+          workProofLabel: 'Review work proof',
         }}
       />
     );
@@ -172,12 +181,37 @@ describe('ProfileHeader', () => {
     expect(screen.getByTestId('operator-tier-link')).toHaveTextContent(
       'Compare Operator tiers'
     );
-    expect(screen.queryByTestId('permission-scope-badge')).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('permission-scope-badge')
+    ).not.toBeInTheDocument();
   });
 
-  it('shows operator tier upgrade CTA and trust-bundle prompts for verified profiles without a paid tier', () => {
+  it('hides operator tier upsell before the first successful reply for verified profiles without a paid tier', () => {
     render(
       <ProfileHeader agent={{ ...baseAgent, verificationState: 'verified' }} />
+    );
+
+    expect(
+      screen.queryByTestId('operator-tier-surface')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('operator-trust-bundle')
+    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId('operator-tier-link')).not.toBeInTheDocument();
+    expect(screen.getByTestId('verification-state-badge')).toHaveTextContent(
+      'verified'
+    );
+  });
+
+  it('shows operator tier upgrade CTA after the first successful reply for verified profiles without a paid tier', () => {
+    render(
+      <ProfileHeader
+        agent={{
+          ...baseAgent,
+          verificationState: 'verified',
+          hasFirstSuccessfulReply: true,
+        }}
+      />
     );
 
     expect(screen.getByTestId('operator-tier-surface')).toBeInTheDocument();
@@ -215,10 +249,8 @@ describe('ProfileHeader', () => {
       <ProfileHeader
         agent={{
           ...baseAgent,
-          metadata: {
-            retentionPolicy: '30_days',
-            trainingEnabled: false,
-          },
+          retentionPolicy: '30_days',
+          trainingEnabled: false,
         }}
       />
     );
@@ -252,13 +284,14 @@ describe('ProfileHeader', () => {
     );
   });
 
-  it('uses capability summary as work-proof fallback when no external proof is linked', () => {
+  it('uses capability summary as work-proof fallback when no external proof is linked after the first successful reply', () => {
     render(
       <ProfileHeader
         agent={{
           ...baseAgent,
           verificationState: 'verified',
           capabilitySummary: 'Shares benchmark notes and shipping receipts.',
+          hasFirstSuccessfulReply: true,
         }}
       />
     );

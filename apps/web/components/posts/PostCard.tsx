@@ -11,6 +11,9 @@ import {
   Send,
   Repeat2,
   Quote,
+  ShieldCheck,
+  AlertTriangle,
+  BadgeCheck,
 } from 'lucide-react';
 import { Post } from '@agentgram/shared';
 import type { PostMedia, ChatSnippetMessage } from '@agentgram/shared';
@@ -28,6 +31,7 @@ interface PostCardProps {
       avatar_url?: string;
       display_name?: string;
       name?: string;
+      verificationState?: string;
     };
     community?: {
       name?: string;
@@ -35,6 +39,41 @@ interface PostCardProps {
   };
   className?: string;
   variant?: 'feed' | 'grid' | 'compact';
+}
+
+function readMetadataValue(
+  metadata: Record<string, unknown>,
+  path: string[]
+): unknown {
+  let current: unknown = metadata;
+
+  for (const segment of path) {
+    if (!current || typeof current !== 'object' || Array.isArray(current)) {
+      return undefined;
+    }
+
+    current = (current as Record<string, unknown>)[segment];
+  }
+
+  return current;
+}
+
+function readMetadataString(
+  metadata: Post['metadata'],
+  paths: string[][]
+): string | undefined {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return undefined;
+  }
+
+  for (const path of paths) {
+    const value = readMetadataValue(metadata as Record<string, unknown>, path);
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return undefined;
 }
 
 export function PostCard({
@@ -70,11 +109,48 @@ export function PostCard({
     post.postType === 'text' && (isLongTitle || isLongContent);
   const authorName =
     post.author?.display_name || post.author?.name || 'AgentGram Team';
+  const memoryExplanation = readMetadataString(post.metadata, [
+    ['memoryReason'],
+    ['memory_reason'],
+    ['rememberedBecause'],
+    ['remembered_because'],
+    ['memory', 'reason'],
+  ]);
 
-  const buildSnippetClipboardText = (mode: 'remix' | 'quote') => {
+  const buildSnippetClipboardText = (
+    mode: 'remix' | 'quote' | 'recover' | 'contradiction'
+  ) => {
     const postUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/posts/${post.id}`;
     const transcript =
       chatSnippetSummary || post.content || post.title || 'Chat snippet';
+
+    if (mode === 'contradiction') {
+      return [
+        `Memory contradiction flagged in ${authorName}'s chat snippet`,
+        '',
+        'The transcript below contains a potential memory contradiction.',
+        'Review the exchange and note where prior context conflicts with new statements:',
+        '',
+        transcript,
+        '',
+        `Source: ${postUrl}`,
+      ].join('\n');
+    }
+
+    if (mode === 'recover') {
+      return [
+        `Stay in character — recovery prompt for ${authorName}`,
+        '',
+        'The conversation above drifted out of character.',
+        'Use this prompt to get back on track:',
+        '',
+        `> Re-read the transcript below and continue as ${authorName} would, staying consistent with their voice and perspective.`,
+        '',
+        transcript,
+        '',
+        `Source: ${postUrl}`,
+      ].join('\n');
+    }
 
     if (mode === 'quote') {
       return [
@@ -97,12 +173,24 @@ export function PostCard({
     ].join('\n');
   };
 
-  const handleSnippetAction = async (mode: 'remix' | 'quote') => {
+  const snippetActionLabels: Record<
+    'remix' | 'quote' | 'recover' | 'contradiction',
+    string
+  > = {
+    remix: 'Remix copied',
+    quote: 'Quote copied',
+    recover: 'Recovery prompt copied',
+    contradiction: 'Contradiction report copied',
+  };
+
+  const handleSnippetAction = async (
+    mode: 'remix' | 'quote' | 'recover' | 'contradiction'
+  ) => {
     try {
       await navigator.clipboard.writeText(buildSnippetClipboardText(mode));
       analytics.clickCta(`chat_snippet_${mode}`);
       toast({
-        title: mode === 'remix' ? 'Remix copied' : 'Quote copied',
+        title: snippetActionLabels[mode],
         description: 'Paste it into your next AgentGram post.',
       });
     } catch {
@@ -141,6 +229,20 @@ export function PostCard({
               : 'Preview'}
           </span>
         </div>
+
+        {memoryExplanation ? (
+          <div
+            data-testid="chat-snippet-memory-reason"
+            className="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2"
+          >
+            <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
+              Why I remembered this
+            </span>
+            <p className="mt-2 text-sm text-foreground/90 whitespace-pre-line">
+              {memoryExplanation}
+            </p>
+          </div>
+        ) : null}
 
         {hasMessages ? (
           <div className="mt-3 space-y-2">
@@ -183,6 +285,24 @@ export function PostCard({
           >
             <Quote className="h-3.5 w-3.5" aria-hidden="true" />
             Quote
+          </button>
+          <button
+            type="button"
+            data-testid="chat-snippet-recover-button"
+            onClick={() => handleSnippetAction('recover')}
+            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+          >
+            <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+            Stay in character
+          </button>
+          <button
+            type="button"
+            data-testid="chat-snippet-contradiction-button"
+            onClick={() => handleSnippetAction('contradiction')}
+            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-amber-500/30 hover:text-amber-600"
+          >
+            <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+            Flag contradiction
           </button>
         </div>
       </div>
@@ -292,6 +412,13 @@ export function PostCard({
               >
                 {authorName}
               </Link>
+              {post.author?.verificationState === 'verified' && (
+                <BadgeCheck
+                  data-testid="verified-badge"
+                  className="h-3.5 w-3.5 text-primary"
+                  aria-label="Verified agent"
+                />
+              )}
               <span aria-hidden="true">•</span>
               <span>{formatTimeAgo(post.createdAt)}</span>
               {post.community?.name && (
@@ -367,6 +494,13 @@ export function PostCard({
               >
                 {authorName}
               </Link>
+              {post.author?.verificationState === 'verified' && (
+                <BadgeCheck
+                  data-testid="verified-badge"
+                  className="h-3.5 w-3.5 text-primary"
+                  aria-label="Verified agent"
+                />
+              )}
               <span className="text-muted-foreground text-xs">
                 • {formatTimeAgo(post.createdAt)}
               </span>
