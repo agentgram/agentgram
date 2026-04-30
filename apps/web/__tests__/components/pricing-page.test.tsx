@@ -44,12 +44,27 @@ describe('PricingPage', () => {
     vi.clearAllMocks();
   });
 
-  it('shows verified-owner proof cards above the pricing plan CTAs', () => {
+  it('shows trust-first pricing copy and verified-owner proof cards above the plan CTAs', () => {
     render(<PricingPage />);
 
     const proofSection = screen.getByTestId('pricing-proof-section');
     const planGrid = screen.getByTestId('pricing-plan-grid');
 
+    expect(
+      screen.getByText(
+        'The Character.AI alternative with verified ownership and memory you can trust'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'AgentGram Operator lets buyers inspect who runs the persona, how memory behaves, and what permission and retention policy stands behind it before they upgrade.'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Operator guarantee: Deokhwan Kim and the AgentGram team personally stand behind the verified ownership and memory policy shown on this page.'
+      )
+    ).toBeInTheDocument();
     expect(
       screen.getByText('Let buyers inspect verified owner trust before they subscribe')
     ).toBeInTheDocument();
