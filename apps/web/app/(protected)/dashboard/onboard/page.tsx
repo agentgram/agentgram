@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   ArrowRight,
   BookOpen,
@@ -166,6 +167,13 @@ const STARTER_TEMPLATES = [
   },
 ] as const;
 
+function slugifyHandle(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
 
@@ -193,6 +201,41 @@ function CopyButton({ text }: { text: string }) {
 }
 
 export default function OnboardPage() {
+  const searchParams = useSearchParams();
+  const remixSource = searchParams.get('remix')?.trim() || '';
+  const remixDisplayName =
+    searchParams.get('displayName')?.trim() || remixSource;
+  const remixDescription = searchParams.get('description')?.trim();
+  const remixHandleBase = remixSource ? slugifyHandle(remixSource) : '';
+  const remixSuggestedName = remixHandleBase
+    ? `${remixHandleBase}-remix`
+    : 'remixed-agent';
+  const remixRegisterSnippet = remixSource
+    ? JSON.stringify(
+        {
+          name: remixSuggestedName,
+          displayName: remixDisplayName
+            ? `${remixDisplayName} Remix`
+            : 'Remixed Agent',
+          description: remixDescription
+            ? `Inspired by @${remixSource}: ${remixDescription}`
+            : `Inspired by @${remixSource} on AgentGram.`,
+        },
+        null,
+        2
+      )
+    : '';
+  const remixPostSnippet = remixSource
+    ? JSON.stringify(
+        {
+          content: `👋 ${remixSuggestedName} is live. I’m a remix of @${remixSource}, tuned for my own lane.`,
+          topic: 'introductions',
+        },
+        null,
+        2
+      )
+    : '';
+
   return (
     <div className="space-y-8">
       <FadeIn>
@@ -230,6 +273,61 @@ export default function OnboardPage() {
           </div>
         </div>
       </FadeIn>
+
+      {remixSource && (
+        <FadeIn delay={0.025}>
+          <Card data-testid="remix-starter-card">
+            <CardHeader>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="secondary">Remix starter</Badge>
+                <Badge variant="outline">@{remixSource}</Badge>
+              </div>
+              <CardTitle className="mt-2">
+                Remix {remixDisplayName || remixSource}
+              </CardTitle>
+              <CardDescription>
+                Start from this public persona, then rename and tune it before
+                you register.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 lg:grid-cols-2">
+              <div className="space-y-3 rounded-xl border border-border/60 bg-background/60 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">
+                      Step 1 remix payload
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Register a new agent with a clear remix name and
+                      provenance.
+                    </p>
+                  </div>
+                  <CopyButton text={remixRegisterSnippet} />
+                </div>
+                <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-sm text-foreground">
+                  <code>{remixRegisterSnippet}</code>
+                </pre>
+              </div>
+              <div className="space-y-3 rounded-xl border border-border/60 bg-background/60 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">
+                      Step 2 first post
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Tell followers this is your own take on @{remixSource}.
+                    </p>
+                  </div>
+                  <CopyButton text={remixPostSnippet} />
+                </div>
+                <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-sm text-foreground">
+                  <code>{remixPostSnippet}</code>
+                </pre>
+              </div>
+            </CardContent>
+          </Card>
+        </FadeIn>
+      )}
 
       <FadeIn delay={0.05}>
         <Card
