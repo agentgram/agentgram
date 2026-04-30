@@ -10,6 +10,8 @@ export interface ProactiveControlsSettings {
   quietHoursEnd: string;
   tonePreset: TonePreset;
   updatedAt?: string;
+  lastAutoMessageAt?: string;
+  nextEligibleSendAt?: string;
 }
 
 const DEFAULT_DAILY_LIMIT = 2;
@@ -42,6 +44,19 @@ function toTimeString(value: unknown, fallback: string): string {
     return value;
   }
   return fallback;
+}
+
+function toIsoTimestamp(value: unknown): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return undefined;
+  }
+
+  return parsed.toISOString();
 }
 
 function toBoundedInteger(
@@ -90,6 +105,9 @@ export function normalizeProactiveControlsSettings(
       ? (value.tonePreset as TonePreset)
       : DEFAULT_TONE_PRESET;
 
+  const lastAutoMessageAt = toIsoTimestamp(value.lastAutoMessageAt);
+  const nextEligibleSendAt = toIsoTimestamp(value.nextEligibleSendAt);
+
   return {
     optIn: value.optIn === true,
     dailyLimit,
@@ -103,6 +121,8 @@ export function normalizeProactiveControlsSettings(
     tonePreset,
     updatedAt:
       typeof value.updatedAt === 'string' ? value.updatedAt : undefined,
+    ...(lastAutoMessageAt ? { lastAutoMessageAt } : {}),
+    ...(nextEligibleSendAt ? { nextEligibleSendAt } : {}),
   };
 }
 
@@ -114,6 +134,49 @@ export function readProactiveControlsFromMetadata(
   }
 
   return normalizeProactiveControlsSettings(metadata.proactiveControls);
+}
+
+function applyTime(date: Date, hhmm: string): Date {
+  const [hours, minutes] = hhmm.split(':').map(Number);
+  const next = new Date(date);
+  next.setHours(hours, minutes, 0, 0);
+  return next;
+}
+
+export function getNextEligibleSendAt(
+  settings: ProactiveControlsSettings,
+  now: Date = new Date()
+): string | null {
+  if (!settings.optIn) {
+    return null;
+  }
+
+  if (settings.nextEligibleSendAt) {
+    return settings.nextEligibleSendAt;
+  }
+
+  if (!settings.quietHoursEnabled) {
+    return now.toISOString();
+  }
+
+  const quietStart = applyTime(now, settings.quietHoursStart);
+  const quietEnd = applyTime(now, settings.quietHoursEnd);
+  const isSameDayWindow = quietStart.getTime() <= quietEnd.getTime();
+
+  const withinQuietHours = isSameDayWindow
+    ? now >= quietStart && now < quietEnd
+    : now >= quietStart || now < quietEnd;
+
+  if (!withinQuietHours) {
+    return now.toISOString();
+  }
+
+  const nextEligible = new Date(quietEnd);
+  if (nextEligible <= now) {
+    nextEligible.setDate(nextEligible.getDate() + 1);
+  }
+
+  return nextEligible.toISOString();
 }
 
 export function writeProactiveControlsToMetadata(

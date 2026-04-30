@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_PROACTIVE_CONTROLS_SETTINGS,
+  getNextEligibleSendAt,
   TONE_PRESETS,
   normalizeProactiveControlsSettings,
   readProactiveControlsFromMetadata,
@@ -108,6 +109,8 @@ describe('proactive controls helper', () => {
           quietHoursEnd: '06:30',
           tonePreset: 'warm',
           updatedAt: '2026-04-26T00:00:00.000Z',
+          lastAutoMessageAt: '2026-04-26T02:15:00.000Z',
+          nextEligibleSendAt: '2026-04-26T06:30:00.000Z',
         },
       })
     ).toEqual({
@@ -119,6 +122,8 @@ describe('proactive controls helper', () => {
       quietHoursEnd: '06:30',
       tonePreset: 'warm',
       updatedAt: '2026-04-26T00:00:00.000Z',
+      lastAutoMessageAt: '2026-04-26T02:15:00.000Z',
+      nextEligibleSendAt: '2026-04-26T06:30:00.000Z',
     });
 
     expect(readProactiveControlsFromMetadata(null)).toEqual(
@@ -138,6 +143,8 @@ describe('proactive controls helper', () => {
           quietHoursStart: '21:00',
           quietHoursEnd: '06:00',
           tonePreset: 'warm',
+          lastAutoMessageAt: '2026-04-26T02:15:00.000Z',
+          nextEligibleSendAt: '2026-04-26T06:00:00.000Z',
         },
         '2026-04-26T03:06:00.000Z'
       )
@@ -152,7 +159,60 @@ describe('proactive controls helper', () => {
         quietHoursEnd: '06:00',
         tonePreset: 'warm',
         updatedAt: '2026-04-26T03:06:00.000Z',
+        lastAutoMessageAt: '2026-04-26T02:15:00.000Z',
+        nextEligibleSendAt: '2026-04-26T06:00:00.000Z',
       },
     });
+  });
+
+  it('derives the next eligible send time from quiet hours when no explicit timestamp exists', () => {
+    expect(
+      getNextEligibleSendAt(
+        {
+          optIn: true,
+          dailyLimit: 2,
+          weeklyLimit: 8,
+          quietHoursEnabled: true,
+          quietHoursStart: '22:00',
+          quietHoursEnd: '08:00',
+          tonePreset: 'neutral',
+        },
+        new Date('2026-04-26T20:15:00.000Z')
+      )
+    ).toBe('2026-04-26T23:00:00.000Z');
+  });
+
+  it('returns the current instant when outreach is eligible now and null when opt-in is disabled', () => {
+    const now = new Date('2026-04-27T12:45:00.000Z');
+
+    expect(
+      getNextEligibleSendAt(
+        {
+          optIn: true,
+          dailyLimit: 2,
+          weeklyLimit: 8,
+          quietHoursEnabled: false,
+          quietHoursStart: '22:00',
+          quietHoursEnd: '08:00',
+          tonePreset: 'neutral',
+        },
+        now
+      )
+    ).toBe('2026-04-27T12:45:00.000Z');
+
+    expect(
+      getNextEligibleSendAt(
+        {
+          optIn: false,
+          dailyLimit: 2,
+          weeklyLimit: 8,
+          quietHoursEnabled: false,
+          quietHoursStart: '22:00',
+          quietHoursEnd: '08:00',
+          tonePreset: 'neutral',
+        },
+        now
+      )
+    ).toBeNull();
   });
 });
