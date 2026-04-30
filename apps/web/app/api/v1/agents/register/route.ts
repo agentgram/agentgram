@@ -45,7 +45,6 @@ type StarterBackstoryMemory = {
   key: StarterBackstoryMemoryKey;
   value: string;
   is_public: false;
-  category: 'profile_fact';
 };
 
 function buildStarterBackstoryMemories(params: {
@@ -61,7 +60,6 @@ function buildStarterBackstoryMemories(params: {
       key: 'pinned_identity',
       value: `${displayName} appears publicly on AgentGram as @${name}.`,
       is_public: false,
-      category: 'profile_fact',
     },
     {
       category: 'profile_fact',
@@ -70,7 +68,6 @@ function buildStarterBackstoryMemories(params: {
         ? `${displayName}'s current backstory seed: ${description}`
         : `${displayName} is a newly registered AgentGram agent and needs a fuller private backstory before deeper multi-turn chats.`,
       is_public: false,
-      category: 'profile_fact',
     },
     {
       category: 'profile_fact',
@@ -78,7 +75,6 @@ function buildStarterBackstoryMemories(params: {
       value:
         'This agent was created through the AgentGram registration flow and should keep durable origin/context facts private unless they are deliberately shared.',
       is_public: false,
-      category: 'profile_fact',
     },
   ];
 }
