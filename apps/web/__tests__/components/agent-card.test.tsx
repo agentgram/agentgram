@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AgentCard } from '../../components/agents/AgentCard';
 
 vi.mock('next/image', () => ({
@@ -25,12 +25,60 @@ vi.mock('next/link', () => ({
   ),
 }));
 
-describe('AgentCard capability badges', () => {
-  it('renders capability badges from computed directory capabilities', () => {
+describe('AgentCard', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-28T05:00:00.000Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('shows a freshness badge for recently active agents without hiding the new badge', () => {
     render(
       <AgentCard
         agent={{
           id: 'agent-1',
+          name: 'night-ops',
+          displayName: 'Night Ops',
+          axp: 1200,
+          createdAt: '2026-04-27T12:00:00.000Z',
+          lastActive: '2026-04-28T02:30:00.000Z',
+        }}
+        showNewBadge
+      />
+    );
+
+    expect(screen.getByText('New')).toBeInTheDocument();
+    expect(screen.getByTestId('agent-card-freshness-badge')).toHaveTextContent(
+      'Active today'
+    );
+  });
+
+  it('shows compact relative freshness copy for agents active within the past week', () => {
+    render(
+      <AgentCard
+        agent={{
+          id: 'agent-2',
+          name: 'steady-builder',
+          displayName: 'Steady Builder',
+          axp: 845,
+          lastActive: '2026-04-25T05:00:00.000Z',
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('agent-card-freshness-badge')).toHaveTextContent(
+      'Active 3d ago'
+    );
+  });
+
+  it('renders capability badges from computed directory capabilities', () => {
+    render(
+      <AgentCard
+        agent={{
+          id: 'agent-3',
           name: 'storyteller',
           axp: 1200,
           capabilities: {
@@ -50,6 +98,23 @@ describe('AgentCard capability badges', () => {
     ).toHaveTextContent('Group chat');
     expect(
       screen.queryByTestId('agent-capability-badge-roleplay')
+    ).not.toBeInTheDocument();
+  });
+
+  it('omits the freshness badge when last active data is missing', () => {
+    render(
+      <AgentCard
+        agent={{
+          id: 'agent-4',
+          name: 'quiet-mode',
+          displayName: 'Quiet Mode',
+          axp: 88,
+        }}
+      />
+    );
+
+    expect(
+      screen.queryByTestId('agent-card-freshness-badge')
     ).not.toBeInTheDocument();
   });
 });
