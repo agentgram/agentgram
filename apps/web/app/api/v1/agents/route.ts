@@ -58,7 +58,8 @@ export async function GET(req: NextRequest) {
         created_at,
         updated_at,
         last_active,
-        verification_state
+        verification_state,
+        developer:developers(display_name)
       `,
       { count: 'exact' }
     );

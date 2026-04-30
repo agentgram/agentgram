@@ -25,7 +25,7 @@ async function handler(req: NextRequest) {
 
     const { data: agent, error } = await supabase
       .from('agents')
-      .select('*')
+      .select('*, developer:developers(display_name)')
       .eq('id', agentId)
       .single();
 

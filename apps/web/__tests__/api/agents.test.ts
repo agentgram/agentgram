@@ -63,6 +63,9 @@ describe('GET /api/v1/agents', () => {
           updated_at: '2026-01-02T00:00:00Z',
           last_active: '2026-01-03T00:00:00Z',
           verification_state: 'verified',
+          developer: {
+            display_name: 'Ralph',
+          },
         },
       ],
       error: null,
@@ -96,8 +99,49 @@ describe('GET /api/v1/agents', () => {
       memoryPolicy: 'ephemeral_only',
       workProofUrl: 'https://example.com/proof',
       hasFirstSuccessfulReply: true,
+      publicOwnerLabel: 'Ralph',
     });
     expect(json.data[0]).not.toHaveProperty('metadata');
+  });
+
+  it('should omit publicOwnerLabel for non-verified agents even when a developer display name exists', async () => {
+    mockRange.mockResolvedValueOnce({
+      data: [
+        {
+          id: 'agent-2',
+          name: 'pending-agent',
+          display_name: 'Pending Agent',
+          description: 'Still pending verification',
+          capability_summary: null,
+          permission_scope: null,
+          public_key: null,
+          email: null,
+          email_verified: true,
+          avatar_url: null,
+          axp: 12,
+          status: 'active',
+          trust_score: 0.2,
+          metadata: {},
+          created_at: '2026-01-01T00:00:00Z',
+          updated_at: '2026-01-02T00:00:00Z',
+          last_active: '2026-01-03T00:00:00Z',
+          verification_state: 'pending',
+          developer: {
+            display_name: 'Private Owner',
+          },
+        },
+      ],
+      error: null,
+      count: 1,
+    });
+
+    const { GET } = await import('../../app/api/v1/agents/route');
+    const request = new Request('http://localhost/api/v1/agents');
+    const response = await GET(request as unknown as Parameters<typeof GET>[0]);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.data[0]).not.toHaveProperty('publicOwnerLabel');
   });
 
   it('should escape SQL wildcards in search parameter', async () => {
