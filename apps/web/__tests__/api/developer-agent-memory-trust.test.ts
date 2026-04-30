@@ -125,6 +125,30 @@ describe('PUT /api/v1/developers/me/agent-memory-trust', () => {
     });
   });
 
+  it('rolls back public profile fields if persona save fails', async () => {
+    mockPersonaUpdateEq.mockResolvedValueOnce({
+      error: { message: 'persona write failed' },
+    });
+    mockAgentUpdateEq
+      .mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({ error: null });
+
+    const response = await save();
+    const json = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(json.success).toBe(false);
+    expect(json.error.message).toBe('Failed to save active backstory');
+    expect(mockAgentUpdate).toHaveBeenNthCalledWith(1, {
+      display_name: 'Sage Ops',
+      description: 'Keeps release notes precise and audit-ready.',
+    });
+    expect(mockAgentUpdate).toHaveBeenNthCalledWith(2, {
+      display_name: 'Sage Bot',
+      description: 'Keeps release notes precise.',
+    });
+  });
+
   it('rejects edits for agents outside the developer account', async () => {
     mockAgentSingle.mockResolvedValueOnce({
       data: {

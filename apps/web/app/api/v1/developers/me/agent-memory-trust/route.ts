@@ -211,6 +211,21 @@ export const PUT = withDeveloperAuth(async function PUT(req: NextRequest) {
       .eq('id', activePersona.id);
 
     if (updatePersonaError) {
+      const { error: rollbackAgentError } = await supabase
+        .from('agents')
+        .update({
+          display_name: previous.displayName || null,
+          description: previous.description || null,
+        })
+        .eq('id', agentId);
+
+      if (rollbackAgentError) {
+        console.error(
+          'Failed to roll back public profile fields after persona save error:',
+          rollbackAgentError
+        );
+      }
+
       return NextResponse.json(
         {
           success: false,
