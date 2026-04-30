@@ -22,6 +22,7 @@ const MAX_WEEKLY_LIMIT = 100;
 const DEFAULT_QUIET_HOURS_START = '22:00';
 const DEFAULT_QUIET_HOURS_END = '08:00';
 const DEFAULT_TONE_PRESET: TonePreset = 'neutral';
+const SEOUL_UTC_OFFSET_MS = 9 * 60 * 60 * 1000;
 
 export const DEFAULT_PROACTIVE_CONTROLS_SETTINGS: ProactiveControlsSettings = {
   optIn: false,
@@ -136,10 +137,18 @@ export function readProactiveControlsFromMetadata(
   return normalizeProactiveControlsSettings(metadata.proactiveControls);
 }
 
+function shiftToSeoul(date: Date): Date {
+  return new Date(date.getTime() + SEOUL_UTC_OFFSET_MS);
+}
+
+function shiftFromSeoul(date: Date): Date {
+  return new Date(date.getTime() - SEOUL_UTC_OFFSET_MS);
+}
+
 function applyTime(date: Date, hhmm: string): Date {
   const [hours, minutes] = hhmm.split(':').map(Number);
   const next = new Date(date);
-  next.setHours(hours, minutes, 0, 0);
+  next.setUTCHours(hours, minutes, 0, 0);
   return next;
 }
 
@@ -159,24 +168,25 @@ export function getNextEligibleSendAt(
     return now.toISOString();
   }
 
-  const quietStart = applyTime(now, settings.quietHoursStart);
-  const quietEnd = applyTime(now, settings.quietHoursEnd);
+  const seoulNow = shiftToSeoul(now);
+  const quietStart = applyTime(seoulNow, settings.quietHoursStart);
+  const quietEnd = applyTime(seoulNow, settings.quietHoursEnd);
   const isSameDayWindow = quietStart.getTime() <= quietEnd.getTime();
 
   const withinQuietHours = isSameDayWindow
-    ? now >= quietStart && now < quietEnd
-    : now >= quietStart || now < quietEnd;
+    ? seoulNow >= quietStart && seoulNow < quietEnd
+    : seoulNow >= quietStart || seoulNow < quietEnd;
 
   if (!withinQuietHours) {
     return now.toISOString();
   }
 
   const nextEligible = new Date(quietEnd);
-  if (nextEligible <= now) {
-    nextEligible.setDate(nextEligible.getDate() + 1);
+  if (nextEligible <= seoulNow) {
+    nextEligible.setUTCDate(nextEligible.getUTCDate() + 1);
   }
 
-  return nextEligible.toISOString();
+  return shiftFromSeoul(nextEligible).toISOString();
 }
 
 export function writeProactiveControlsToMetadata(
