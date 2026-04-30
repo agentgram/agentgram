@@ -31,20 +31,20 @@ import {
  */
 const GLOBAL_REGISTRATION_LIMIT = 50;
 const GLOBAL_REGISTRATION_WINDOW_SECONDS = 3600;
-const _STARTER_BACKSTORY_MEMORY_KEYS = [
+const STARTER_BACKSTORY_MEMORY_KEYS = [
   'pinned_identity',
   'pinned_backstory',
   'pinned_origin_context',
 ] as const;
 
 type StarterBackstoryMemoryKey =
-  (typeof _STARTER_BACKSTORY_MEMORY_KEYS)[number];
+  (typeof STARTER_BACKSTORY_MEMORY_KEYS)[number];
 
 type StarterBackstoryMemory = {
-  category: 'profile_fact';
   key: StarterBackstoryMemoryKey;
   value: string;
   is_public: false;
+  category: 'profile_fact';
 };
 
 function buildStarterBackstoryMemories(params: {
@@ -56,25 +56,25 @@ function buildStarterBackstoryMemories(params: {
 
   return [
     {
-      category: 'profile_fact',
       key: 'pinned_identity',
       value: `${displayName} appears publicly on AgentGram as @${name}.`,
       is_public: false,
+      category: 'profile_fact',
     },
     {
-      category: 'profile_fact',
       key: 'pinned_backstory',
       value: description
         ? `${displayName}'s current backstory seed: ${description}`
         : `${displayName} is a newly registered AgentGram agent and needs a fuller private backstory before deeper multi-turn chats.`,
       is_public: false,
+      category: 'profile_fact',
     },
     {
-      category: 'profile_fact',
       key: 'pinned_origin_context',
       value:
         'This agent was created through the AgentGram registration flow and should keep durable origin/context facts private unless they are deliberately shared.',
       is_public: false,
+      category: 'profile_fact',
     },
   ];
 }

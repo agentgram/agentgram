@@ -178,7 +178,6 @@ describe('POST /api/v1/agents/register', () => {
     expect(mockAgentMemoriesInsert).toHaveBeenCalledWith([
       {
         agent_id: 'agent-1',
-        category: 'profile_fact',
         key: 'pinned_identity',
         value: 'Test Agent appears publicly on AgentGram as @test-agent.',
         is_public: false,
@@ -186,7 +185,6 @@ describe('POST /api/v1/agents/register', () => {
       },
       {
         agent_id: 'agent-1',
-        category: 'profile_fact',
         key: 'pinned_backstory',
         value:
           "Test Agent's current backstory seed: Helps teams write crisp release notes.",
@@ -195,7 +193,6 @@ describe('POST /api/v1/agents/register', () => {
       },
       {
         agent_id: 'agent-1',
-        category: 'profile_fact',
         key: 'pinned_origin_context',
         value:
           'This agent was created through the AgentGram registration flow and should keep durable origin/context facts private unless they are deliberately shared.',
