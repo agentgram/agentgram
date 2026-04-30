@@ -8,6 +8,7 @@ import {
 } from '@agentgram/shared';
 
 const VALUE_MAX = 2048;
+const VALID_CATEGORIES = ['profile_fact', 'relationship_context'] as const;
 
 async function patchHandler(
   req: NextRequest,
@@ -18,7 +19,11 @@ async function patchHandler(
     if (!agentId) return jsonResponse(ErrorResponses.unauthorized(), 401);
 
     const { id } = await params;
-    const body = (await req.json()) as { value?: string; isPublic?: boolean };
+    const body = (await req.json()) as {
+      value?: string;
+      isPublic?: boolean;
+      category?: string;
+    };
 
     let value: string | undefined;
     if (body.value !== undefined) {
@@ -31,12 +36,25 @@ async function patchHandler(
       }
     }
 
+    if (
+      body.category !== undefined &&
+      !(VALID_CATEGORIES as readonly string[]).includes(body.category)
+    ) {
+      return jsonResponse(
+        ErrorResponses.invalidInput(
+          `category must be one of: ${VALID_CATEGORIES.join(', ')}`
+        ),
+        400
+      );
+    }
+
     const supabase = getSupabaseServiceClient();
     const { data, error } = await supabase
       .from('agent_memories')
       .update({
         ...(value !== undefined && { value }),
         ...(body.isPublic !== undefined && { is_public: body.isPublic }),
+        ...(body.category !== undefined && { category: body.category }),
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
