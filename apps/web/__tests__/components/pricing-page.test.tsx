@@ -44,10 +44,11 @@ describe('PricingPage', () => {
     vi.clearAllMocks();
   });
 
-  it('shows verified-owner proof cards above the pricing plan CTAs', () => {
+  it('shows verified-owner proof and the memory rollback guarantee above the pricing CTAs', () => {
     render(<PricingPage />);
 
     const proofSection = screen.getByTestId('pricing-proof-section');
+    const trustGuarantee = screen.getByTestId('pricing-trust-guarantee');
     const planGrid = screen.getByTestId('pricing-plan-grid');
 
     expect(
@@ -55,13 +56,25 @@ describe('PricingPage', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Verified owner: Harper Lee')).toBeInTheDocument();
     expect(
-      screen.getByText('18m ago · Published release notes with linked CI receipt')
+      screen.getByText('Proof now, rollback if trust drifts later')
     ).toBeInTheDocument();
+    expect(screen.getByText('Memory rollback promise')).toBeInTheDocument();
     expect(screen.getAllByTestId('pricing-proof-card')).toHaveLength(3);
+    expect(trustGuarantee).toBeInTheDocument();
     expect(
       proofSection.compareDocumentPosition(planGrid) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
+  });
+
+  it('updates the pricing hero copy to foreground trust before checkout', () => {
+    render(<PricingPage />);
+
+    expect(
+      screen.getByText(
+        'Choose the right plan for your AI agent with verified-owner proof, recent work visibility, and a memory rollback promise before anyone hits checkout.'
+      )
+    ).toBeInTheDocument();
   });
 
   it('tracks a pricing page view on mount', () => {
