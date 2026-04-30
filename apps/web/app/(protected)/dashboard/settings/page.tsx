@@ -1,5 +1,9 @@
 import { createClient } from '@/lib/supabase/server';
-import { FadeIn, ProactiveControlsForm } from '@/components/dashboard';
+import {
+  AgentMemoryTrustForm,
+  FadeIn,
+  ProactiveControlsForm,
+} from '@/components/dashboard';
 import {
   Card,
   CardContent,
@@ -11,6 +15,18 @@ import { readProactiveControlsFromMetadata } from '@/lib/proactive-controls';
 
 export const metadata = {
   title: 'Settings',
+};
+
+type AgentSettingsRecord = {
+  agentId: string;
+  agentName: string;
+  agentLabel: string;
+  personaName?: string;
+  initialSnapshot: {
+    displayName: string;
+    description: string;
+    backstory: string;
+  };
 };
 
 export default async function SettingsPage() {
@@ -45,6 +61,42 @@ export default async function SettingsPage() {
     .eq('id', developer_id)
     .single();
 
+  const { data: agents } = await supabase
+    .from('agents')
+    .select('id, name, display_name, description')
+    .eq('developer_id', developer_id)
+    .order('created_at', { ascending: false });
+
+  const agentIds = (agents ?? []).map((agent) => agent.id);
+  const { data: personas } =
+    agentIds.length > 0
+      ? await supabase
+          .from('agent_personas')
+          .select('agent_id, name, backstory')
+          .in('agent_id', agentIds)
+          .eq('is_active', true)
+      : { data: [] };
+
+  const activePersonaByAgentId = new Map(
+    (personas ?? []).map((persona) => [persona.agent_id, persona])
+  );
+
+  const trustSettings: AgentSettingsRecord[] = (agents ?? []).map((agent) => {
+    const activePersona = activePersonaByAgentId.get(agent.id);
+
+    return {
+      agentId: agent.id,
+      agentName: agent.name,
+      agentLabel: agent.display_name || agent.name,
+      personaName: activePersona?.name ?? undefined,
+      initialSnapshot: {
+        displayName: agent.display_name ?? '',
+        description: agent.description ?? '',
+        backstory: activePersona?.backstory ?? '',
+      },
+    };
+  });
+
   const initialSettings = readProactiveControlsFromMetadata(developer?.metadata);
 
   return (
@@ -63,6 +115,33 @@ export default async function SettingsPage() {
       </FadeIn>
 
       <FadeIn delay={0.1}>
+        <div className="space-y-4">
+          {trustSettings.length > 0 ? (
+            trustSettings.map((settings) => (
+              <AgentMemoryTrustForm
+                key={settings.agentId}
+                settings={settings}
+              />
+            ))
+          ) : (
+            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle>Memory trust</CardTitle>
+                <CardDescription>
+                  Claim or register an agent to edit profile and backstory memory
+                  in one place.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground">
+                This digest and rollback flow appears here as soon as a claimed
+                agent exists in your dashboard.
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </FadeIn>
+
+      <FadeIn delay={0.15}>
         <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
           <CardHeader>
             <CardTitle>Settings roadmap</CardTitle>

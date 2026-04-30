@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Memory Trust Digest + Rollback CTA</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f7fb;
+        --card: rgba(255, 255, 255, 0.9);
+        --border: rgba(15, 23, 42, 0.08);
+        --text: #0f172a;
+        --muted: #5b6475;
+        --primary: #0f766e;
+        --primary-soft: rgba(15, 118, 110, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family:
+          "SF Pro Display",
+          "Inter",
+          system-ui,
+          sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(15, 118, 110, 0.14), transparent 32%),
+          linear-gradient(180deg, #f9fafc 0%, var(--bg) 100%);
+        color: var(--text);
+      }
+
+      .page {
+        width: 1280px;
+        margin: 0 auto;
+        padding: 56px;
+      }
+
+      .stack {
+        display: grid;
+        gap: 24px;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        box-shadow: 0 30px 60px rgba(15, 23, 42, 0.08);
+        backdrop-filter: blur(18px);
+      }
+
+      .hero {
+        padding: 32px;
+      }
+
+      .hero h1 {
+        margin: 0 0 10px;
+        font-size: 40px;
+        line-height: 1.05;
+      }
+
+      .hero p {
+        margin: 0;
+        font-size: 18px;
+        line-height: 1.6;
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .form-card {
+        padding: 32px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .title-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: 18px;
+        align-items: start;
+      }
+
+      .title-row h2 {
+        margin: 0;
+        font-size: 30px;
+      }
+
+      .title-row p {
+        margin: 10px 0 0;
+        color: var(--muted);
+        line-height: 1.6;
+        max-width: 760px;
+      }
+
+      .slug {
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .slug code {
+        color: var(--text);
+        font-family:
+          "SFMono-Regular",
+          ui-monospace,
+          monospace;
+      }
+
+      .grid {
+        margin-top: 28px;
+        display: grid;
+        gap: 18px;
+      }
+
+      .field {
+        display: grid;
+        gap: 10px;
+      }
+
+      .field-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        font-size: 14px;
+      }
+
+      .field-head strong {
+        font-size: 15px;
+      }
+
+      .count {
+        color: var(--muted);
+      }
+
+      .input,
+      .textarea {
+        width: 100%;
+        border-radius: 18px;
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        background: #ffffff;
+        padding: 16px 18px;
+        font-size: 15px;
+        line-height: 1.5;
+      }
+
+      .textarea {
+        min-height: 128px;
+      }
+
+      .status {
+        margin-top: 22px;
+        padding: 14px 16px;
+        border-radius: 18px;
+        border: 1px solid rgba(15, 118, 110, 0.25);
+        background: var(--primary-soft);
+        font-size: 14px;
+      }
+
+      .actions {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        margin-top: 20px;
+      }
+
+      .button {
+        border-radius: 999px;
+        padding: 12px 18px;
+        border: 1px solid transparent;
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      .button.primary {
+        background: var(--primary);
+        color: #ffffff;
+      }
+
+      .button.secondary {
+        background: #ffffff;
+        color: var(--text);
+        border-color: rgba(15, 23, 42, 0.12);
+      }
+
+      .pending {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .digest {
+        margin-top: 26px;
+        border-radius: 22px;
+        border: 1px solid rgba(15, 118, 110, 0.2);
+        background: var(--primary-soft);
+        padding: 22px;
+      }
+
+      .digest-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: start;
+      }
+
+      .digest-head h3 {
+        margin: 0 0 8px;
+        font-size: 22px;
+      }
+
+      .digest-head p,
+      .digest-head span {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .digest-list {
+        display: grid;
+        gap: 14px;
+        margin-top: 20px;
+      }
+
+      .digest-item {
+        background: rgba(255, 255, 255, 0.92);
+        border-radius: 18px;
+        border: 1px solid var(--border);
+        padding: 18px;
+      }
+
+      .digest-item header {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .tag {
+        color: var(--muted);
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+      }
+
+      .digest-item p {
+        margin: 10px 0 0;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .compare {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-top: 14px;
+      }
+
+      .compare-label {
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .compare-value {
+        margin-top: 6px;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="stack">
+        <div class="card hero">
+          <div class="eyebrow">Dashboard Settings</div>
+          <h1>Memory trust now shows the exact changes you just made.</h1>
+          <p>
+            After profile or backstory edits, the settings flow renders a recent
+            memory change digest and a rollback CTA on the same card so operators
+            can review trust-facing changes before continuing.
+          </p>
+        </div>
+
+        <div class="card form-card">
+          <div class="eyebrow">Memory Trust</div>
+          <div class="title-row">
+            <div>
+              <h2>Memory trust for Sage Bot</h2>
+              <p>
+                Edit the public profile summary and active backstory together,
+                then review a recent-memory-change digest before moving on.
+              </p>
+              <div class="slug">
+                Agent slug: <code>sage-bot</code> · Active persona:
+                <strong>Release Sage</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid">
+            <label class="field">
+              <div class="field-head">
+                <strong>Display name</strong>
+                <span class="count">8/100</span>
+              </div>
+              <div class="input">Sage Ops</div>
+            </label>
+
+            <label class="field">
+              <div class="field-head">
+                <strong>Profile summary</strong>
+                <span class="count">44/500</span>
+              </div>
+              <div class="textarea">
+                Keeps release notes precise and audit-ready.
+              </div>
+            </label>
+
+            <label class="field">
+              <div class="field-head">
+                <strong>Active backstory</strong>
+                <span class="count">61/5000</span>
+              </div>
+              <div class="textarea">
+                Started as a release engineer and now guards memory trust.
+              </div>
+            </label>
+          </div>
+
+          <div class="status">
+            Profile memory settings saved.
+          </div>
+
+          <div class="actions">
+            <div class="button primary">Save profile memory</div>
+            <div class="button secondary">Roll back previous snapshot</div>
+            <div class="pending">Unsaved changes pending review.</div>
+          </div>
+
+          <div class="digest">
+            <div class="digest-head">
+              <div>
+                <h3>Recent memory change digest</h3>
+                <p>
+                  3 trust-facing memory fields changed. Review before
+                  continuing.
+                </p>
+              </div>
+              <span>Apr 30, 10:00 AM</span>
+            </div>
+
+            <div class="digest-list">
+              <article class="digest-item">
+                <header>
+                  <strong>Display name</strong>
+                  <span class="tag">updated</span>
+                </header>
+                <p>
+                  Other developers and tools will see a new identity label
+                  first.
+                </p>
+                <div class="compare">
+                  <div>
+                    <div class="compare-label">Before</div>
+                    <div class="compare-value">Sage Bot</div>
+                  </div>
+                  <div>
+                    <div class="compare-label">After</div>
+                    <div class="compare-value">Sage Ops</div>
+                  </div>
+                </div>
+              </article>
+
+              <article class="digest-item">
+                <header>
+                  <strong>Profile summary</strong>
+                  <span class="tag">updated</span>
+                </header>
+                <p>
+                  The public summary that frames this agent for readers has
+                  changed.
+                </p>
+                <div class="compare">
+                  <div>
+                    <div class="compare-label">Before</div>
+                    <div class="compare-value">
+                      Keeps release notes precise.
+                    </div>
+                  </div>
+                  <div>
+                    <div class="compare-label">After</div>
+                    <div class="compare-value">
+                      Keeps release notes precise and audit-ready.
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <article class="digest-item">
+                <header>
+                  <strong>Active backstory</strong>
+                  <span class="tag">updated</span>
+                </header>
+                <p>
+                  Future conversations can anchor on a different private pinned
+                  backstory.
+                </p>
+                <div class="compare">
+                  <div>
+                    <div class="compare-label">Before</div>
+                    <div class="compare-value">
+                      Started as a release engineer with a trust-first playbook.
+                    </div>
+                  </div>
+                  <div>
+                    <div class="compare-label">After</div>
+                    <div class="compare-value">
+                      Started as a release engineer and now guards memory trust.
+                    </div>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
