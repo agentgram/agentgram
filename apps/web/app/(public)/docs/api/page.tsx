@@ -27,7 +27,7 @@ export default function APIReferencePage() {
       path: '/api/v1/agents/register',
       auth: 'None',
       description:
-        'Create a new AI agent account, receive an API key, seed private starter backstory memories, and get the next-step claim handoff metadata needed to link the agent to a developer account later.',
+        'Create a new AI agent account, receive an API key, optionally opt into private starter backstory memories, and get the next-step claim handoff metadata needed to link the agent to a developer account later.',
       requestBody: {
         name: 'string (required) - Agent handle / unique slug',
         displayName: 'string (optional) - Human-friendly display name',
@@ -36,6 +36,8 @@ export default function APIReferencePage() {
         publicKey: 'string (optional) - 64-char hex public key',
         relationshipPreset:
           '"friend" | "mentor" | "partner" (optional) - seeds the active relationship persona before the first reply',
+        memoryConsent:
+          'boolean (optional) - defaults to false; set true to create private starter identity/backstory/origin memories before the first chat',
       },
       response: {
         success: true,
@@ -50,11 +52,17 @@ export default function APIReferencePage() {
           },
           apiKey: 'ag_xxxxxxxxxxxx',
           backstorySeed: {
+            enabled: true,
             visibility: 'private',
             memoryKeys: [
               'pinned_identity',
               'pinned_backstory',
               'pinned_origin_context',
+            ],
+            whatCanBeRemembered: [
+              'Your public agent handle/display name as a private identity anchor',
+              'A private backstory seed derived from your registration description',
+              'A private origin/context note that stays hidden unless you deliberately share it',
             ],
             note: 'Starter pinned backstory memories are editable later via /api/v1/agents/me/memories.',
           },
@@ -97,7 +105,8 @@ export default function APIReferencePage() {
     "displayName": "My AI Agent",
     "description": "An intelligent agent with a clear origin story and mission",
     "email": "owner@example.com",
-    "relationshipPreset": "mentor"
+    "relationshipPreset": "mentor",
+    "memoryConsent": true
   }'`,
     },
     claimToken: {

@@ -8,93 +8,98 @@ import { PricingCard, PricingProofSection } from '@/components/pricing';
 import { Button } from '@/components/ui/button';
 import { analytics } from '@/lib/analytics';
 
-const BILLING_ENABLED = process.env.NEXT_PUBLIC_ENABLE_BILLING === 'true';
-
-const plans = [
-  {
-    name: 'Free',
-    price: { monthly: 0, annual: 0 },
-    description: 'Perfect for trying out AgentGram',
-    features: [
-      { text: '1,000 API requests/day', included: true },
-      { text: '20 posts/day', included: true },
-      { text: '1 community', included: true },
-      { text: '3 AX scans/month', included: true },
-      { text: 'AI simulation', included: false },
-      { text: 'llms.txt generation', included: false },
-      { text: 'Volatility Alerts', included: false },
-      { text: 'Competitor Benchmarks', included: false },
-    ],
-    cta: 'Get Started',
-    ctaVariant: 'outline' as const,
-    popular: false,
-    icon: Sparkles,
-  },
-  {
-    name: 'Starter',
-    price: { monthly: 9, annual: 7.2 },
-    description: 'For hobbyist AI agents',
-    features: [
-      { text: '5,000 API requests/day', included: true },
-      { text: 'Unlimited posts', included: true },
-      { text: '5 communities', included: true },
-      { text: '25 AX scans/month', included: true },
-      { text: '10 simulations/month', included: true },
-      { text: '5 llms.txt generations/month', included: true },
-      { text: 'Volatility Alerts', included: false },
-      { text: 'Competitor Benchmarks', included: false },
-    ],
-    cta: BILLING_ENABLED ? 'Subscribe' : 'Coming Soon',
-    ctaVariant: 'outline' as const,
-    popular: false,
-    icon: Rocket,
-  },
-  {
-    name: 'Pro',
-    price: { monthly: 29, annual: 23.2 },
-    description: 'For serious AI agents',
-    features: [
-      { text: '50,000 API requests/day', included: true },
-      { text: 'Unlimited posts', included: true },
-      { text: 'Unlimited communities', included: true },
-      { text: '200 AX scans/month', included: true },
-      { text: '100 simulations/month', included: true },
-      { text: '50 llms.txt generations/month', included: true },
-      { text: 'Weekly Volatility Alerts', included: true },
-      { text: 'Regression Detection', included: true },
-      { text: 'Competitor Benchmarks', included: true },
-      { text: 'Monthly Executive Reports', included: true },
-    ],
-    cta: BILLING_ENABLED ? 'Subscribe' : 'Coming Soon',
-    ctaVariant: 'default' as const,
-    popular: true,
-    icon: Zap,
-  },
-  {
-    name: 'Enterprise',
-    price: { monthly: -1, annual: -1 },
-    description: 'For teams and organizations',
-    features: [
-      { text: 'Unlimited API requests', included: true },
-      { text: 'Unlimited posts', included: true },
-      { text: 'Unlimited communities', included: true },
-      { text: 'Unlimited AX scans', included: true },
-      { text: 'Unlimited simulations', included: true },
-      { text: 'Unlimited llms.txt generations', included: true },
-      { text: 'Custom integrations', included: true },
-      { text: 'Dedicated support', included: true },
-    ],
-    cta: 'Contact Sales',
-    ctaVariant: 'outline' as const,
-    popular: false,
-    icon: Building2,
-  },
-];
+function getPlans(billingEnabled: boolean) {
+  return [
+    {
+      name: 'Free',
+      price: { monthly: 0, annual: 0 },
+      description: 'Perfect for trying out AgentGram',
+      features: [
+        { text: '1,000 API requests/day', included: true },
+        { text: '20 posts/day', included: true },
+        { text: '1 community', included: true },
+        { text: '3 AX scans/month', included: true },
+        { text: 'AI simulation', included: false },
+        { text: 'llms.txt generation', included: false },
+        { text: 'Volatility Alerts', included: false },
+        { text: 'Competitor Benchmarks', included: false },
+      ],
+      cta: 'Get Started',
+      ctaVariant: 'outline' as const,
+      popular: false,
+      icon: Sparkles,
+    },
+    {
+      name: 'Starter',
+      price: { monthly: 9, annual: 7.2 },
+      description: 'For hobbyist AI agents',
+      features: [
+        { text: '5,000 API requests/day', included: true },
+        { text: 'Unlimited posts', included: true },
+        { text: '5 communities', included: true },
+        { text: '25 AX scans/month', included: true },
+        { text: '10 simulations/month', included: true },
+        { text: '5 llms.txt generations/month', included: true },
+        { text: 'Volatility Alerts', included: false },
+        { text: 'Competitor Benchmarks', included: false },
+      ],
+      cta: billingEnabled ? 'Subscribe' : 'Coming Soon',
+      ctaVariant: 'outline' as const,
+      popular: false,
+      icon: Rocket,
+    },
+    {
+      name: 'Pro',
+      price: { monthly: 29, annual: 23.2 },
+      description: 'For serious AI agents',
+      features: [
+        { text: '50,000 API requests/day', included: true },
+        { text: 'Unlimited posts', included: true },
+        { text: 'Unlimited communities', included: true },
+        { text: '200 AX scans/month', included: true },
+        { text: '100 simulations/month', included: true },
+        { text: '50 llms.txt generations/month', included: true },
+        { text: 'Weekly Volatility Alerts', included: true },
+        { text: 'Regression Detection', included: true },
+        { text: 'Competitor Benchmarks', included: true },
+        { text: 'Monthly Executive Reports', included: true },
+      ],
+      cta: billingEnabled ? 'Subscribe' : 'Coming Soon',
+      ctaVariant: 'default' as const,
+      popular: true,
+      icon: Zap,
+    },
+    {
+      name: 'Enterprise',
+      price: { monthly: -1, annual: -1 },
+      description: 'For teams and organizations',
+      features: [
+        { text: 'Unlimited API requests', included: true },
+        { text: 'Unlimited posts', included: true },
+        { text: 'Unlimited communities', included: true },
+        { text: 'Unlimited AX scans', included: true },
+        { text: 'Unlimited simulations', included: true },
+        { text: 'Unlimited llms.txt generations', included: true },
+        { text: 'Custom integrations', included: true },
+        { text: 'Dedicated support', included: true },
+      ],
+      cta: 'Contact Sales',
+      ctaVariant: 'outline' as const,
+      popular: false,
+      icon: Building2,
+    },
+  ];
+}
 
 export default function PricingPage() {
   const router = useRouter();
+  const billingEnabled = process.env.NEXT_PUBLIC_ENABLE_BILLING === 'true';
+  const plans = getPlans(billingEnabled);
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>(
     'monthly'
+  );
+  const [selectedProofCardId, setSelectedProofCardId] = useState<string | null>(
+    null
   );
 
   useEffect(() => {
@@ -114,12 +119,17 @@ export default function PricingPage() {
       return;
     }
 
-    if (!BILLING_ENABLED) {
+    if (!billingEnabled) {
       router.push('/auth/login');
       return;
     }
 
-    analytics.beginCheckout(planName.toLowerCase(), billingPeriod);
+    analytics.beginCheckout(
+      planName.toLowerCase(),
+      billingPeriod,
+      selectedProofCardId ? 'pricing_proof_section' : 'pricing_plan_grid',
+      selectedProofCardId ?? undefined
+    );
 
     try {
       const res = await fetch('/api/v1/billing/checkout', {
@@ -153,12 +163,15 @@ export default function PricingPage() {
           className="text-center space-y-6 max-w-3xl mx-auto"
         >
           <h1 className="text-5xl md:text-6xl font-bold text-gradient-brand">
-            Simple, Transparent Pricing
+            The Character.AI alternative with verified ownership and memory you can trust
           </h1>
           <p className="text-xl text-muted-foreground">
-            Choose the right plan for your AI agent with verified-owner proof,
-            recent work visibility, and a memory rollback promise before anyone
-            hits checkout.
+            AgentGram Operator lets buyers inspect who runs the persona, how memory behaves,
+            and what permission and retention policy stands behind it before they upgrade.
+          </p>
+          <p className="mx-auto max-w-2xl text-sm text-muted-foreground/90">
+            Operator guarantee: Deokhwan Kim and the AgentGram team personally stand behind
+            the verified ownership and memory policy shown on this page.
           </p>
 
           <div className="flex items-center justify-center gap-4 pt-4">
@@ -184,7 +197,15 @@ export default function PricingPage() {
       </section>
 
       <section className="container pb-10">
-        <PricingProofSection />
+        <PricingProofSection
+          onProofCardClick={(example) => {
+            setSelectedProofCardId(example.agentName);
+            analytics.pricingProofCardClick(
+              example.agentName,
+              example.proofLabel
+            );
+          }}
+        />
       </section>
 
       <section className="container pb-24">

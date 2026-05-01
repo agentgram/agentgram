@@ -27,7 +27,26 @@ function formatOperatorTier(operatorTier: Agent['operatorTier']) {
   return operatorTier ? formatTokenLabel(operatorTier) : undefined;
 }
 
-function buildRemixHref(agent: Agent) {
+function formatLastActive(lastActive?: string) {
+  if (!lastActive) return undefined;
+
+  const parsed = new Date(lastActive);
+  if (Number.isNaN(parsed.getTime())) return undefined;
+
+  const elapsedMs = Math.max(0, Date.now() - parsed.getTime());
+  const elapsedHours = elapsedMs / (1000 * 60 * 60);
+
+  if (elapsedHours < 1) return 'Active now';
+  if (elapsedHours < 24) return 'Active today';
+
+  const elapsedDays = Math.floor(elapsedHours / 24);
+  if (elapsedDays < 7) return `Active ${elapsedDays}d ago`;
+  if (elapsedDays < 30) return `Active ${Math.floor(elapsedDays / 7)}w ago`;
+
+  return `Active ${Math.floor(elapsedDays / 30)}mo ago`;
+}
+
+function buildOnboardHref(agent: Agent, starter?: 'group_chat') {
   const params = new URLSearchParams({ remix: agent.name });
 
   if (agent.displayName?.trim()) {
@@ -36,6 +55,10 @@ function buildRemixHref(agent: Agent) {
 
   if (agent.description?.trim()) {
     params.set('description', agent.description.trim());
+  }
+
+  if (starter) {
+    params.set('starter', starter);
   }
 
   return `/dashboard/onboard?${params.toString()}`;
@@ -62,6 +85,8 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
   const formattedMemoryPolicy = memoryPolicy
     ? formatTokenLabel(memoryPolicy)
     : undefined;
+  const publicOwnerLabel = agent.publicOwnerLabel?.trim();
+  const formattedLastActive = formatLastActive(agent.lastActive);
   const workProofUrl = agent.workProofUrl?.trim();
   const retentionDisclosure = agent.retentionPolicy?.trim();
   const formattedRetentionDisclosure = retentionDisclosure
@@ -79,13 +104,20 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
   const workProofLabel =
     agent.workProofLabel?.trim() ||
     (workProofUrl ? 'View work proof' : undefined);
+  const hasPublicTrustBundle =
+    verificationState === 'verified' &&
+    Boolean(publicOwnerLabel || formattedMemoryPolicy || formattedLastActive);
   const hasVerifiedAgentCard = Boolean(
     capabilitySummary ||
     formattedPermissionScope ||
-    verificationState !== 'unverified'
+    verificationState !== 'unverified' ||
+    hasPublicTrustBundle
   );
   const shouldShowRemixCta = agent.status === 'active';
-  const remixHref = buildRemixHref(agent);
+  const shouldShowGroupConversationStarterCta =
+    shouldShowRemixCta && agent.capabilities?.group_chat === true;
+  const remixHref = buildOnboardHref(agent);
+  const groupConversationStarterHref = buildOnboardHref(agent, 'group_chat');
 
   return (
     <div className="flex flex-col gap-6 px-4 py-8 md:flex-row md:items-start md:gap-10">
@@ -130,6 +162,15 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
             <span className="font-bold">{agent.followingCount || 0}</span>
             <span className="text-muted-foreground">following</span>
           </div>
+          {(agent.remixCount || 0) > 0 && (
+            <div
+              className="flex flex-col items-center md:flex-row md:gap-1"
+              data-testid="profile-remix-count"
+            >
+              <span className="font-bold">{agent.remixCount || 0}</span>
+              <span className="text-muted-foreground">remixes</span>
+            </div>
+          )}
         </div>
 
         <div className="max-w-md text-center md:text-left">
@@ -151,9 +192,28 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
                 Remix this agent
                 <ArrowUpRight className="h-3.5 w-3.5" />
               </Link>
+              {shouldShowGroupConversationStarterCta && (
+                <Link
+                  href={groupConversationStarterHref}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-background px-3 py-2 text-sm font-medium text-foreground transition hover:border-primary/30 hover:text-primary"
+                  data-testid="group-chat-starter-link"
+                >
+                  Start a group chat remix
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                </Link>
+              )}
               <p className="text-xs text-muted-foreground">
                 Start from this public persona in the 2-step onboarding flow.
               </p>
+              {shouldShowGroupConversationStarterCta && (
+                <p
+                  className="text-xs text-muted-foreground"
+                  data-testid="group-chat-starter-copy"
+                >
+                  Includes a starter payload for group conversation and
+                  multi-agent intros.
+                </p>
+              )}
             </div>
           )}
           {hasVerifiedAgentCard && (
@@ -180,6 +240,78 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
                   >
                     {verificationState}
                   </span>
+                </div>
+              )}
+              {hasPublicTrustBundle && (
+                <div
+                  className="mt-3 rounded-xl border border-primary/15 bg-primary/5 p-3"
+                  data-testid="profile-public-trust-bundle"
+                >
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                    Public trust bundle
+                  </p>
+                  <div className="mt-3 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-medium text-foreground">
+                        Verified owner
+                      </p>
+                      {publicOwnerLabel ? (
+                        <span
+                          className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary"
+                          data-testid="profile-owner-label"
+                        >
+                          {publicOwnerLabel}
+                        </span>
+                      ) : (
+                        <span
+                          className="text-xs text-muted-foreground"
+                          data-testid="profile-owner-status"
+                        >
+                          Owner label not published
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-medium text-foreground">
+                        Memory consent
+                      </p>
+                      {formattedMemoryPolicy ? (
+                        <span
+                          className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary"
+                          data-testid="profile-memory-consent-badge"
+                        >
+                          {formattedMemoryPolicy}
+                        </span>
+                      ) : (
+                        <span
+                          className="text-xs text-muted-foreground"
+                          data-testid="profile-memory-consent-status"
+                        >
+                          Not disclosed
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-medium text-foreground">
+                        Last active
+                      </p>
+                      {formattedLastActive ? (
+                        <span
+                          className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary"
+                          data-testid="profile-last-active-badge"
+                        >
+                          {formattedLastActive}
+                        </span>
+                      ) : (
+                        <span
+                          className="text-xs text-muted-foreground"
+                          data-testid="profile-last-active-status"
+                        >
+                          Activity not published
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
               {shouldShowOperatorTierSurface && (

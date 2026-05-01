@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Bot, Award } from 'lucide-react';
+import { Bot, Award, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import {
@@ -21,8 +21,21 @@ type AgentCardAgent = {
   avatar_url?: string | null;
   created_at?: string | null;
   last_active?: string | null;
+  verificationState?: 'unverified' | 'pending' | 'verified' | null;
+  publicOwnerLabel?: string | null;
+  memoryPolicy?: string | null;
   capabilities?: Partial<DirectoryCapabilities>;
+  remixCount?: number | null;
 };
+
+function formatTokenLabel(value: string) {
+  return value
+    .trim()
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
+    .join(' ');
+}
 
 function getActivityFreshness(lastActive?: string | null) {
   if (!lastActive) return null;
@@ -84,6 +97,13 @@ export function AgentCard({
   const activityFreshness = getActivityFreshness(
     agent.last_active ?? agent.lastActive
   );
+  const publicOwnerLabel = agent.publicOwnerLabel?.trim();
+  const formattedMemoryPolicy = agent.memoryPolicy?.trim()
+    ? formatTokenLabel(agent.memoryPolicy)
+    : undefined;
+  const shouldShowPublicTrustBundle =
+    agent.verificationState === 'verified' &&
+    Boolean(publicOwnerLabel || formattedMemoryPolicy || activityFreshness);
 
   const isNew =
     showNewBadge &&
@@ -133,7 +153,7 @@ export function AgentCard({
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <span className="truncate">@{agent.name}</span>
-              {activityFreshness && (
+              {activityFreshness && !shouldShowPublicTrustBundle && (
                 <span
                   data-testid="agent-card-freshness-badge"
                   className={cn(
@@ -149,27 +169,79 @@ export function AgentCard({
         </div>
       </div>
 
-      <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-        <Award className="h-3.5 w-3.5" />
-        <span className="font-medium text-foreground/90">
-          {(agent.axp || 0).toLocaleString()}
-        </span>
-        <span className="text-xs">AXP</span>
+      <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <Award className="h-3.5 w-3.5" />
+          <span className="font-medium text-foreground/90">
+            {(agent.axp || 0).toLocaleString()}
+          </span>
+          <span className="text-xs">AXP</span>
+        </div>
+        {(agent.remixCount ?? 0) > 0 && (
+          <div
+            className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-foreground/80"
+            data-testid="agent-card-remix-count"
+          >
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            <span>{(agent.remixCount ?? 0).toLocaleString()} remixes</span>
+          </div>
+        )}
       </div>
+
+      {shouldShowPublicTrustBundle && (
+        <div
+          className="mt-3 rounded-xl border border-primary/15 bg-primary/5 p-3"
+          data-testid="agent-card-trust-bundle"
+        >
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+            Public trust bundle
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-foreground/80">
+            {publicOwnerLabel && (
+              <span
+                className="inline-flex items-center rounded-full bg-background px-2.5 py-1 font-medium"
+                data-testid="agent-card-owner-label"
+              >
+                Verified owner: {publicOwnerLabel}
+              </span>
+            )}
+            {formattedMemoryPolicy && (
+              <span
+                className="inline-flex items-center rounded-full bg-background px-2.5 py-1 font-medium"
+                data-testid="agent-card-memory-consent"
+              >
+                Memory consent: {formattedMemoryPolicy}
+              </span>
+            )}
+            {activityFreshness && (
+              <span
+                className={cn(
+                  'inline-flex items-center rounded-full px-2.5 py-1 font-medium',
+                  activityFreshness.className
+                )}
+                data-testid="agent-card-trust-last-active"
+              >
+                {activityFreshness.label}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       {agent.capabilities && (
         <div className="mt-3 flex flex-wrap gap-2">
-          {DIRECTORY_CAPABILITY_KEYS.filter((key) => agent.capabilities?.[key])
-            .map((key) => (
-              <Badge
-                key={key}
-                variant="outline"
-                className="text-[10px] uppercase tracking-wide"
-                data-testid={`agent-capability-badge-${key}`}
-              >
-                {DIRECTORY_CAPABILITY_LABELS[key]}
-              </Badge>
-            ))}
+          {DIRECTORY_CAPABILITY_KEYS.filter(
+            (key) => agent.capabilities?.[key]
+          ).map((key) => (
+            <Badge
+              key={key}
+              variant="outline"
+              className="text-[10px] uppercase tracking-wide"
+              data-testid={`agent-capability-badge-${key}`}
+            >
+              {DIRECTORY_CAPABILITY_LABELS[key]}
+            </Badge>
+          ))}
         </div>
       )}
     </Link>

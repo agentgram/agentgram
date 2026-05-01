@@ -1,12 +1,17 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProactiveControlsForm } from '@/components/dashboard/ProactiveControlsForm';
 
 const mockCreateClient = vi.fn();
 const mockFadeIn = vi.fn(({ children }: { children: React.ReactNode }) => (
   <div data-testid="fade-in">{children}</div>
 ));
+const mockAgentMemoryTrustForm = vi.fn(
+  ({ settings }: { settings: unknown }) => (
+    <div data-testid="agent-memory-trust-form">{JSON.stringify(settings)}</div>
+  )
+);
 const mockProactiveControlsForm = vi.fn(
   ({ initialSettings }: { initialSettings: unknown }) => (
     <div data-testid="proactive-controls-form">
@@ -21,12 +26,108 @@ vi.mock('@/lib/supabase/server', () => ({
 
 vi.mock('@/components/dashboard', () => ({
   FadeIn: mockFadeIn,
+  AgentMemoryTrustForm: mockAgentMemoryTrustForm,
   ProactiveControlsForm: mockProactiveControlsForm,
 }));
+
+function createSettingsPageClient() {
+  return {
+    auth: {
+      getUser: vi.fn().mockResolvedValue({
+        data: { user: { id: 'user-1', email: 'dev@example.com' } },
+      }),
+    },
+    from: vi.fn((table: string) => {
+      if (table === 'developer_members') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: { developer_id: 'dev-1' },
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'developers') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: {
+                  metadata: {
+                    proactiveControls: {
+                      optIn: false,
+                      dailyLimit: 2,
+                      weeklyLimit: 8,
+                      quietHoursEnabled: true,
+                      quietHoursStart: '23:00',
+                      quietHoursEnd: '06:30',
+                      tonePreset: 'brief',
+                    },
+                  },
+                },
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'agents') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({
+                data: [
+                  {
+                    id: 'agent-1',
+                    name: 'sage-bot',
+                    display_name: 'Sage Bot',
+                    description: 'Keeps release notes precise.',
+                  },
+                ],
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'agent_personas') {
+        return {
+          select: vi.fn().mockReturnValue({
+            in: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({
+                data: [
+                  {
+                    agent_id: 'agent-1',
+                    name: 'Release Sage',
+                    backstory: 'Trust-first release engineer.',
+                  },
+                ],
+              }),
+            }),
+          }),
+        };
+      }
+
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: null,
+            }),
+          }),
+        }),
+      };
+    }),
+  };
+}
 
 describe('ProactiveControlsForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockCreateClient.mockResolvedValue(createSettingsPageClient());
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -46,6 +147,10 @@ describe('ProactiveControlsForm', () => {
         }),
       })
     );
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('shows caps and quiet hours controls and saves through the API', async () => {
@@ -123,6 +228,33 @@ describe('ProactiveControlsForm', () => {
     expect(screen.getByRole('radio', { name: /warm/i })).toBeChecked();
   });
 
+  it('shows last send and next eligible window status', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-26T20:15:00.000Z'));
+
+    render(
+      <ProactiveControlsForm
+        initialSettings={{
+          optIn: true,
+          dailyLimit: 2,
+          weeklyLimit: 8,
+          quietHoursEnabled: true,
+          quietHoursStart: '22:00',
+          quietHoursEnd: '08:00',
+          tonePreset: 'neutral',
+          lastAutoMessageAt: '2026-04-27T01:30:00.000Z',
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('proactive-last-auto-message')).toHaveTextContent(
+      'Apr 27, 2026, 10:30 AM KST'
+    );
+    expect(
+      screen.getByTestId('proactive-next-eligible-send')
+    ).toHaveTextContent('Apr 27, 2026, 8:00 AM KST');
+  });
+
   it('shows an error when the save request fails', async () => {
     vi.stubGlobal(
       'fetch',
@@ -157,52 +289,10 @@ describe('ProactiveControlsForm', () => {
 describe('SettingsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockCreateClient.mockResolvedValue(createSettingsPageClient());
   });
 
   it('loads proactive controls from developer metadata for the settings form', async () => {
-    mockCreateClient.mockResolvedValue({
-      auth: {
-        getUser: vi.fn().mockResolvedValue({
-          data: { user: { id: 'user-1', email: 'dev@example.com' } },
-        }),
-      },
-      from: vi.fn((table: string) => {
-        if (table === 'developer_members') {
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: { developer_id: 'dev-1' },
-                }),
-              }),
-            }),
-          };
-        }
-
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: {
-                  metadata: {
-                    proactiveControls: {
-                      optIn: false,
-                      dailyLimit: 2,
-                      weeklyLimit: 8,
-                      quietHoursEnabled: true,
-                      quietHoursStart: '23:00',
-                      quietHoursEnd: '06:30',
-                      tonePreset: 'brief',
-                    },
-                  },
-                },
-              }),
-            }),
-          }),
-        };
-      }),
-    });
-
     const { default: SettingsPage } = await import(
       '@/app/(protected)/dashboard/settings/page'
     );
@@ -225,7 +315,26 @@ describe('SettingsPage', () => {
       },
       undefined
     );
+    expect(mockAgentMemoryTrustForm).toHaveBeenCalledWith(
+      {
+        settings: {
+          agentId: 'agent-1',
+          agentName: 'sage-bot',
+          agentLabel: 'Sage Bot',
+          personaName: 'Release Sage',
+          initialSnapshot: {
+            displayName: 'Sage Bot',
+            description: 'Keeps release notes precise.',
+            backstory: 'Trust-first release engineer.',
+          },
+        },
+      },
+      undefined
+    );
     expect(screen.getByTestId('proactive-controls-form')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('agent-memory-trust-form')
+    ).toBeInTheDocument();
   });
 
   it('renders the unavailable state when the user has no developer membership', async () => {

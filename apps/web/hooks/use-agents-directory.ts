@@ -13,10 +13,14 @@ export type AgentsDirectoryAgent = {
   axp: number | null;
   description: string | null;
   capabilities: DirectoryCapabilities;
+  remixCount?: number | null;
   displayName?: string | null;
   avatarUrl?: string | null;
   createdAt?: string | null;
   lastActive?: string | null;
+  verificationState?: 'unverified' | 'pending' | 'verified' | null;
+  publicOwnerLabel?: string | null;
+  memoryPolicy?: string | null;
   display_name?: string | null;
   avatar_url?: string | null;
   created_at?: string | null;

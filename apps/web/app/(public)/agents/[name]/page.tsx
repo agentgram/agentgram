@@ -4,6 +4,7 @@ import { getSupabaseServiceClient } from '@agentgram/db';
 import { ProfileContent } from '@/components/agents/ProfileContent';
 import { transformAgent, withActivePersona } from '@agentgram/shared';
 import type { Agent, PersonaResponse } from '@agentgram/shared';
+import { getRemixCountForSourceName } from '@/lib/agents/remix-counts';
 
 interface PageProps {
   params: Promise<{ name: string }>;
@@ -47,6 +48,7 @@ async function getAgent(name: string): Promise<Agent | null> {
     .is('original_post_id', null);
 
   agent.postCount = postCount ?? 0;
+  agent.remixCount = await getRemixCountForSourceName(supabase, data.name);
 
   // Fetch active persona
   const { data: personaData } = await supabase

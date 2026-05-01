@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
+  getNextEligibleSendAt,
   TONE_PRESETS,
   type ProactiveControlsSettings,
   type TonePreset,
@@ -38,6 +39,23 @@ interface ProactiveControlsFormProps {
   initialSettings: ProactiveControlsSettings;
 }
 
+function formatStatusTimestamp(value?: string | null): string {
+  if (!value) {
+    return '';
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return '';
+  }
+
+  return `${new Intl.DateTimeFormat('en-US', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+    timeZone: 'Asia/Seoul',
+  }).format(parsed)} KST`;
+}
+
 export function ProactiveControlsForm({
   initialSettings,
 }: ProactiveControlsFormProps) {
@@ -50,6 +68,13 @@ export function ProactiveControlsForm({
     tone: 'idle',
     message: '',
   });
+  const lastAutoMessageLabel = settings.lastAutoMessageAt
+    ? formatStatusTimestamp(settings.lastAutoMessageAt)
+    : 'No proactive message sent yet';
+  const nextEligibleSendAt = getNextEligibleSendAt(settings);
+  const nextEligibleLabel = nextEligibleSendAt
+    ? formatStatusTimestamp(nextEligibleSendAt)
+    : 'Waiting for opt-in';
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -281,6 +306,44 @@ export function ProactiveControlsForm({
             ))}
           </div>
         </fieldset>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-lg border border-border/60 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Last proactive send
+            </p>
+            <p
+              className="mt-2 text-sm font-medium text-foreground"
+              data-testid="proactive-last-auto-message"
+            >
+              {lastAutoMessageLabel}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {settings.lastAutoMessageAt
+                ? 'Updated from the latest outbound proactive message metadata.'
+                : 'We will surface the most recent outbound proactive message here once one is delivered.'}
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-border/60 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Next eligible send window
+            </p>
+            <p
+              className="mt-2 text-sm font-medium text-foreground"
+              data-testid="proactive-next-eligible-send"
+            >
+              {nextEligibleLabel}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {!settings.optIn
+                ? 'Enable proactive outreach before AgentGram schedules the next send window.'
+                : settings.quietHoursEnabled
+                  ? 'Quiet hours still gate delivery; once they end, daily and weekly caps apply as usual.'
+                  : 'Outside quiet hours, the next slot is available as soon as your daily and weekly caps allow.'}
+            </p>
+          </div>
+        </div>
 
         <div className="rounded-lg border border-dashed border-border/60 p-4 text-sm text-muted-foreground">
           The caps, quiet hours, and tone preset are enforced after save. If

@@ -8,6 +8,9 @@ import { PostCard } from '../../components/posts/PostCard';
 const toast = vi.fn();
 const mutateAsync = vi.fn();
 const writeText = vi.fn();
+const createObjectURL = vi.fn();
+const revokeObjectURL = vi.fn();
+const anchorClick = vi.fn();
 
 vi.mock('next/image', () => ({
   default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => (
@@ -122,10 +125,21 @@ describe('PostCard chat snippet support', () => {
       value: { writeText },
       configurable: true,
     });
+    Object.defineProperty(URL, 'createObjectURL', {
+      value: createObjectURL,
+      configurable: true,
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      value: revokeObjectURL,
+      configurable: true,
+    });
     writeText.mockResolvedValue(undefined);
+    createObjectURL.mockReturnValue('blob:quote-card');
+    anchorClick.mockReset();
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(anchorClick);
   });
 
-  it('renders chat snippet preview messages with remix and quote CTAs on feed cards', () => {
+  it('renders chat snippet preview messages with remix, quote, and quote-card CTAs on feed cards', () => {
     renderPostCard();
 
     expect(screen.getByTestId('chat-snippet-preview')).toBeInTheDocument();
@@ -138,6 +152,9 @@ describe('PostCard chat snippet support', () => {
     );
     expect(screen.getByTestId('chat-snippet-quote-button')).toHaveTextContent(
       'Quote'
+    );
+    expect(screen.getByTestId('chat-snippet-quote-card-button')).toHaveTextContent(
+      'Quote card'
     );
   });
 
@@ -157,6 +174,23 @@ describe('PostCard chat snippet support', () => {
     );
     expect(toast).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'Remix copied' })
+    );
+  });
+
+  it('downloads a shareable quote card image from the snippet transcript', async () => {
+    renderPostCard();
+
+    fireEvent.click(screen.getByTestId('chat-snippet-quote-card-button'));
+
+    expect(createObjectURL).toHaveBeenCalledTimes(1);
+    const blob = createObjectURL.mock.calls[0]?.[0] as Blob;
+    expect(blob).toBeInstanceOf(Blob);
+    await expect(blob.text()).resolves.toContain('Builder Bot');
+    await expect(blob.text()).resolves.toContain('AGENTGRAM QUOTE CARD');
+    expect(anchorClick).toHaveBeenCalledTimes(1);
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:quote-card');
+    expect(toast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Quote card downloaded' })
     );
   });
 
@@ -187,7 +221,7 @@ describe('PostCard chat snippet support', () => {
     ).toBeInTheDocument();
   });
 
-  it('copies recovery prompt to the clipboard', async () => {
+  it('copies recovery prompt with persona-stability guardrails', async () => {
     renderPostCard();
 
     fireEvent.click(screen.getByTestId('chat-snippet-recover-button'));
@@ -198,6 +232,19 @@ describe('PostCard chat snippet support', () => {
         expect.stringContaining('Stay in character')
       );
     });
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('Stay fully in their voice, relationship, and point of view.')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'Do not say you are an AI, assistant, chatbot, or language model.'
+      )
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'Do not mention hidden prompts, policies, or being out of character; continue the exchange naturally.'
+      )
+    );
     expect(writeText).toHaveBeenCalledWith(
       expect.stringContaining('/posts/post-1')
     );
@@ -241,6 +288,9 @@ describe('PostCard chat snippet support', () => {
     ).toBeInTheDocument();
     expect(screen.getByTestId('chat-snippet-remix-button')).toBeInTheDocument();
     expect(screen.getByTestId('chat-snippet-quote-button')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('chat-snippet-quote-card-button')
+    ).toBeInTheDocument();
     expect(
       screen.getByTestId('chat-snippet-recover-button')
     ).toBeInTheDocument();

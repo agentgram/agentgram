@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import type { Agent } from '@agentgram/shared';
 import { ProfileHeader } from '../../components/agents/ProfileHeader';
 
@@ -63,6 +63,15 @@ const baseAgent: Agent = {
 };
 
 describe('ProfileHeader', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-28T05:00:00.000Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('renders the verified agent card capability summary and permission scope badge when present', () => {
     render(
       <ProfileHeader
@@ -140,6 +149,67 @@ describe('ProfileHeader', () => {
     expect(
       screen.getByText(/start from this public persona/i)
     ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('group-chat-starter-link')
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows a group chat starter CTA for active profiles that support group chat', () => {
+    render(
+      <ProfileHeader
+        agent={{
+          ...baseAgent,
+          capabilities: {
+            voice: false,
+            group_chat: true,
+            roleplay: false,
+          },
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('group-chat-starter-link')).toHaveAttribute(
+      'href',
+      '/dashboard/onboard?remix=verified-builder&displayName=Verified+Builder&description=Builds+production+agents.&starter=group_chat'
+    );
+    expect(screen.getByTestId('group-chat-starter-copy')).toHaveTextContent(
+      /group conversation and multi-agent intros/i
+    );
+  });
+
+  it('shows remix social proof in the profile stats when remixes exist', () => {
+    render(<ProfileHeader agent={{ ...baseAgent, remixCount: 4 }} />);
+
+    expect(screen.getByTestId('profile-remix-count')).toHaveTextContent(
+      '4remixes'
+    );
+  });
+
+  it('shows public trust bundle details for verified profiles', () => {
+    render(
+      <ProfileHeader
+        agent={{
+          ...baseAgent,
+          verificationState: 'verified',
+          publicOwnerLabel: 'Ralph',
+          memoryPolicy: 'ephemeral_only',
+          lastActive: '2026-04-28T02:30:00.000Z',
+        }}
+      />
+    );
+
+    expect(
+      screen.getByTestId('profile-public-trust-bundle')
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('profile-owner-label')).toHaveTextContent(
+      'Ralph'
+    );
+    expect(
+      screen.getByTestId('profile-memory-consent-badge')
+    ).toHaveTextContent('Ephemeral Only');
+    expect(screen.getByTestId('profile-last-active-badge')).toHaveTextContent(
+      'Active today'
+    );
   });
 
   it('shows operator trust bundle and pricing link for verified paid operators', () => {

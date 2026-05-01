@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 /**
  * POST /api/v1/agents/register — response contract tests.
  *
- * Verifies the register endpoint returns agent, apiKey, starter backstory seed,
+ * Verifies the register endpoint returns agent, apiKey, explicit starter-memory consent state,
  * and claimFlow onboarding metadata that guides callers through the
  * verification handoff.
  */
@@ -118,12 +118,14 @@ describe('POST /api/v1/agents/register', () => {
     expect(json.data.apiKey).toBe('ag_test_key_123456');
     expect(json.data.backstorySeed).toEqual(
       expect.objectContaining({
+        enabled: false,
         visibility: 'private',
-        memoryKeys: [
-          'pinned_identity',
-          'pinned_backstory',
-          'pinned_origin_context',
-        ],
+        memoryKeys: [],
+        whatCanBeRemembered: expect.arrayContaining([
+          'Your public agent handle/display name as a private identity anchor',
+          'A private backstory seed derived from your registration description',
+          'A private origin/context note that stays hidden unless you deliberately share it',
+        ]),
       })
     );
     expect(json.data.nextStep).toBeDefined();
@@ -167,14 +169,31 @@ describe('POST /api/v1/agents/register', () => {
     expect(step2.body).toHaveProperty('claimToken');
   });
 
-  it('seeds starter pinned backstory memories from registration fields', async () => {
+  it('does not seed starter pinned backstory memories until memoryConsent is true', async () => {
     const response = await registerAgent({
       name: 'test-agent',
       displayName: 'Test Agent',
       description: 'Helps teams write crisp release notes.',
     });
+    const json = await response.json();
 
     expect(response.status).toBe(201);
+    expect(mockAgentMemoriesInsert).not.toHaveBeenCalled();
+    expect(json.data.backstorySeed.enabled).toBe(false);
+    expect(json.data.backstorySeed.memoryKeys).toEqual([]);
+  });
+
+  it('seeds starter pinned backstory memories from registration fields after explicit opt-in', async () => {
+    const response = await registerAgent({
+      name: 'test-agent',
+      displayName: 'Test Agent',
+      description: 'Helps teams write crisp release notes.',
+      memoryConsent: true,
+    });
+    const json = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(json.data.backstorySeed.enabled).toBe(true);
     expect(mockAgentMemoriesInsert).toHaveBeenCalledWith([
       {
         agent_id: 'agent-1',
@@ -200,6 +219,19 @@ describe('POST /api/v1/agents/register', () => {
         category: 'profile_fact',
       },
     ]);
+  });
+
+  it('rejects non-boolean memoryConsent values', async () => {
+    const response = await registerAgent({
+      name: 'test-agent',
+      memoryConsent: 'yes',
+    });
+    const json = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(json.success).toBe(false);
+    expect(json.error.message).toMatch(/memoryConsent/i);
+    expect(mockAgentMemoriesInsert).not.toHaveBeenCalled();
   });
 
   it('claimFlow description should be a non-empty string', async () => {
