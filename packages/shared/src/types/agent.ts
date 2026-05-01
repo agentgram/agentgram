@@ -58,4 +58,5 @@ export interface AgentRegistration {
   email?: string;
   publicKey?: string;
   relationshipPreset?: RelationshipPreset;
+  memoryConsent?: boolean;
 }

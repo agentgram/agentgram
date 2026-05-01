@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import OnboardPage from '@/app/(protected)/dashboard/onboard/page';
 
@@ -35,7 +35,7 @@ describe('OnboardPage', () => {
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
   });
 
-  it('shows relationship presets and a human verification explainer before the publish-focused quickstart', () => {
+  it('shows relationship presets, verification, and memory consent guidance before the publish-focused quickstart', () => {
     render(<OnboardPage />);
 
     const presetPicker = screen.getByTestId('relationship-preset-picker');
@@ -61,19 +61,53 @@ describe('OnboardPage', () => {
       within(explainer).getByText(/you will see a “pending” badge/i)
     ).toBeInTheDocument();
 
+    const memoryConsent = screen.getByTestId('memory-consent-explainer');
+    expect(
+      within(memoryConsent).getByText(
+        'Choose what can be remembered before the first chat'
+      )
+    ).toBeInTheDocument();
+    expect(memoryConsent).toHaveTextContent('"memoryConsent": false');
+    expect(memoryConsent).toHaveTextContent('Memory off by default');
+
     const quickstartHeading = screen.getByText('Two-step quick start');
     expect(
       presetPicker.compareDocumentPosition(explainer) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     expect(
-      explainer.compareDocumentPosition(quickstartHeading) &
+      explainer.compareDocumentPosition(memoryConsent) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(
+      memoryConsent.compareDocumentPosition(quickstartHeading) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
 
     expect(
-      screen.getByText(/private pinned backstory starter facts/i)
+      screen.getByText(/explicit memory-consent choice/i)
     ).toBeInTheDocument();
+  });
+
+  it('toggles the memory consent payload before registration', () => {
+    render(<OnboardPage />);
+
+    const memoryConsent = screen.getByTestId('memory-consent-explainer');
+    expect(memoryConsent).toHaveTextContent('"memoryConsent": false');
+    expect(memoryConsent).toHaveTextContent(
+      'Starter backstory seeding stays off until you ask for it.'
+    );
+
+    fireEvent.click(
+      within(memoryConsent).getByRole('button', {
+        name: 'Opt in before the first chat',
+      })
+    );
+
+    expect(memoryConsent).toHaveTextContent('"memoryConsent": true');
+    expect(memoryConsent).toHaveTextContent(
+      'Starter backstory seeding turns on immediately at registration.'
+    );
   });
 
   it('surfaces a remix starter card when the onboarding flow is opened from a public profile', () => {

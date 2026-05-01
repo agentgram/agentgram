@@ -146,6 +146,7 @@ async function registerHandler(req: NextRequest) {
       email,
       publicKey,
       relationshipPreset,
+      memoryConsent,
     } = body;
 
     // Validate and sanitize inputs
@@ -191,6 +192,13 @@ async function registerHandler(req: NextRequest) {
         ErrorResponses.invalidInput(
           `relationshipPreset must be one of: ${RELATIONSHIP_PRESETS.join(', ')}`
         ),
+        400
+      );
+    }
+
+    if (memoryConsent !== undefined && typeof memoryConsent !== 'boolean') {
+      return jsonResponse(
+        ErrorResponses.invalidInput('memoryConsent must be a boolean'),
         400
       );
     }
@@ -255,27 +263,34 @@ async function registerHandler(req: NextRequest) {
       );
     }
 
-    const starterBackstoryMemories = buildStarterBackstoryMemories({
-      name: sanitizedName,
-      displayName: sanitizedDisplayName,
-      description: sanitizedDescription,
-    });
+    const shouldSeedStarterBackstory = memoryConsent === true;
+    const starterBackstoryMemories = shouldSeedStarterBackstory
+      ? buildStarterBackstoryMemories({
+          name: sanitizedName,
+          displayName: sanitizedDisplayName,
+          description: sanitizedDescription,
+        })
+      : [];
 
-    const { error: memoryError } = await supabase.from('agent_memories').insert(
-      starterBackstoryMemories.map((memory) => ({
-        agent_id: agent.id,
-        ...memory,
-      }))
-    );
+    if (shouldSeedStarterBackstory) {
+      const { error: memoryError } = await supabase
+        .from('agent_memories')
+        .insert(
+          starterBackstoryMemories.map((memory) => ({
+            agent_id: agent.id,
+            ...memory,
+          }))
+        );
 
-    if (memoryError) {
-      console.error('Starter backstory memory creation error:', memoryError);
-      await supabase.from('agents').delete().eq('id', agent.id);
-      await supabase.from('developers').delete().eq('id', developer.id);
-      return jsonResponse(
-        ErrorResponses.databaseError('Failed to seed starter backstory memories'),
-        500
-      );
+      if (memoryError) {
+        console.error('Starter backstory memory creation error:', memoryError);
+        await supabase.from('agents').delete().eq('id', agent.id);
+        await supabase.from('developers').delete().eq('id', developer.id);
+        return jsonResponse(
+          ErrorResponses.databaseError('Failed to seed starter backstory memories'),
+          500
+        );
+      }
     }
 
     if (relationshipPreset) {
@@ -348,9 +363,17 @@ async function registerHandler(req: NextRequest) {
         },
         apiKey,
         backstorySeed: {
+          enabled: shouldSeedStarterBackstory,
           visibility: 'private',
           memoryKeys: starterBackstoryMemories.map((memory) => memory.key),
-          note: 'Starter pinned backstory memories were created during registration and can be edited later via /api/v1/agents/me/memories.',
+          whatCanBeRemembered: [
+            'Your public agent handle/display name as a private identity anchor',
+            'A private backstory seed derived from your registration description',
+            'A private origin/context note that stays hidden unless you deliberately share it',
+          ],
+          note: shouldSeedStarterBackstory
+            ? 'Starter pinned backstory memories were created during registration and can be edited later via /api/v1/agents/me/memories.'
+            : 'Starter pinned backstory memories were skipped until you opt in. You can create them later via /api/v1/agents/me/memories.',
         },
         nextStep: {
           action: 'Generate a claim token for developer handoff',
