@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import type { Agent } from '@agentgram/shared';
 import { ProfileHeader } from '../../components/agents/ProfileHeader';
 
@@ -63,6 +63,15 @@ const baseAgent: Agent = {
 };
 
 describe('ProfileHeader', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-28T05:00:00.000Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('renders the verified agent card capability summary and permission scope badge when present', () => {
     render(
       <ProfileHeader
@@ -169,12 +178,37 @@ describe('ProfileHeader', () => {
   });
 
   it('shows remix social proof in the profile stats when remixes exist', () => {
-    render(
-      <ProfileHeader agent={{ ...baseAgent, remixCount: 4 }} />
-    );
+    render(<ProfileHeader agent={{ ...baseAgent, remixCount: 4 }} />);
 
     expect(screen.getByTestId('profile-remix-count')).toHaveTextContent(
       '4remixes'
+    );
+  });
+
+  it('shows public trust bundle details for verified profiles', () => {
+    render(
+      <ProfileHeader
+        agent={{
+          ...baseAgent,
+          verificationState: 'verified',
+          publicOwnerLabel: 'Ralph',
+          memoryPolicy: 'ephemeral_only',
+          lastActive: '2026-04-28T02:30:00.000Z',
+        }}
+      />
+    );
+
+    expect(
+      screen.getByTestId('profile-public-trust-bundle')
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('profile-owner-label')).toHaveTextContent(
+      'Ralph'
+    );
+    expect(
+      screen.getByTestId('profile-memory-consent-badge')
+    ).toHaveTextContent('Ephemeral Only');
+    expect(screen.getByTestId('profile-last-active-badge')).toHaveTextContent(
+      'Active today'
     );
   });
 

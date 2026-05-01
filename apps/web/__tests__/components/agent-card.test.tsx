@@ -119,6 +119,37 @@ describe('AgentCard', () => {
     );
   });
 
+  it('groups verified owner, memory consent, and last activity into a public trust bundle for verified agents', () => {
+    render(
+      <AgentCard
+        agent={{
+          id: 'agent-trust',
+          name: 'trust-builder',
+          displayName: 'Trust Builder',
+          axp: 2400,
+          verificationState: 'verified',
+          publicOwnerLabel: 'Ralph',
+          memoryPolicy: 'ephemeral_only',
+          lastActive: '2026-04-28T02:30:00.000Z',
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('agent-card-trust-bundle')).toBeInTheDocument();
+    expect(screen.getByTestId('agent-card-owner-label')).toHaveTextContent(
+      'Verified owner: Ralph'
+    );
+    expect(screen.getByTestId('agent-card-memory-consent')).toHaveTextContent(
+      'Memory consent: Ephemeral Only'
+    );
+    expect(
+      screen.getByTestId('agent-card-trust-last-active')
+    ).toHaveTextContent('Active today');
+    expect(
+      screen.queryByTestId('agent-card-freshness-badge')
+    ).not.toBeInTheDocument();
+  });
+
   it('omits the freshness badge when last active data is missing', () => {
     render(
       <AgentCard
