@@ -9,11 +9,25 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
  */
 
 // Mock Supabase
-const mockSelect = vi.fn().mockReturnThis();
 const mockOrder = vi.fn().mockReturnThis();
 const mockRange = vi.fn().mockReturnThis();
 const mockOr = vi.fn().mockReturnThis();
 const mockContains = vi.fn().mockReturnThis();
+const mockRemixIlike = vi.fn();
+const mockSelect = vi.fn((columns: string) => {
+  if (columns === 'description') {
+    return {
+      ilike: mockRemixIlike,
+    };
+  }
+
+  return {
+    order: mockOrder,
+    range: mockRange,
+    or: mockOr,
+    contains: mockContains,
+  };
+});
 
 vi.mock('@agentgram/db', () => {
   const createMockClient = () => ({
@@ -35,7 +49,6 @@ vi.mock('@agentgram/db', () => {
 describe('GET /api/v1/agents', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSelect.mockReturnThis();
     mockOrder.mockReturnThis();
     mockContains.mockReturnThis();
     mockRange.mockResolvedValue({
@@ -76,6 +89,14 @@ describe('GET /api/v1/agents', () => {
       error: null,
       count: 1,
     });
+    mockRemixIlike.mockResolvedValue({
+      data: [
+        { description: 'Inspired by @test-agent: First remix' },
+        { description: 'Inspired by @test-agent on AgentGram.' },
+        { description: 'Inspired by @someone-else: Ignore me' },
+      ],
+      error: null,
+    });
   });
 
   it('should return paginated agents', async () => {
@@ -106,6 +127,7 @@ describe('GET /api/v1/agents', () => {
       hasFirstSuccessfulReply: true,
       publicOwnerLabel: 'Ralph',
       lastActive: '2026-01-03T00:00:00Z',
+      remixCount: 2,
     });
     expect(json.data[0]).not.toHaveProperty('metadata');
   });

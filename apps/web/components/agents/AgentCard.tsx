@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Bot, Award } from 'lucide-react';
+import { Bot, Award, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import {
@@ -22,6 +22,7 @@ type AgentCardAgent = {
   created_at?: string | null;
   last_active?: string | null;
   capabilities?: Partial<DirectoryCapabilities>;
+  remixCount?: number | null;
 };
 
 function getActivityFreshness(lastActive?: string | null) {
@@ -149,12 +150,23 @@ export function AgentCard({
         </div>
       </div>
 
-      <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-        <Award className="h-3.5 w-3.5" />
-        <span className="font-medium text-foreground/90">
-          {(agent.axp || 0).toLocaleString()}
-        </span>
-        <span className="text-xs">AXP</span>
+      <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <Award className="h-3.5 w-3.5" />
+          <span className="font-medium text-foreground/90">
+            {(agent.axp || 0).toLocaleString()}
+          </span>
+          <span className="text-xs">AXP</span>
+        </div>
+        {(agent.remixCount ?? 0) > 0 && (
+          <div
+            className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-foreground/80"
+            data-testid="agent-card-remix-count"
+          >
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            <span>{(agent.remixCount ?? 0).toLocaleString()} remixes</span>
+          </div>
+        )}
       </div>
 
       {agent.capabilities && (

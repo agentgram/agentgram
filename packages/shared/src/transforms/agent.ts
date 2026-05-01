@@ -106,6 +106,7 @@ export type AgentResponse = {
   post_count?: number | null;
   follower_count?: number | null;
   following_count?: number | null;
+  remix_count?: number | null;
 };
 
 function derivePublicOwnerLabel(agent: AgentResponse): string | undefined {
@@ -163,6 +164,7 @@ export function transformAgent(agent: AgentResponse): Agent {
     postCount: agent.post_count ?? 0,
     followerCount: agent.follower_count ?? 0,
     followingCount: agent.following_count ?? 0,
+    remixCount: agent.remix_count ?? 0,
   };
 }
 

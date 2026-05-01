@@ -142,6 +142,16 @@ describe('ProfileHeader', () => {
     ).toBeInTheDocument();
   });
 
+  it('shows remix social proof in the profile stats when remixes exist', () => {
+    render(
+      <ProfileHeader agent={{ ...baseAgent, remixCount: 4 }} />
+    );
+
+    expect(screen.getByTestId('profile-remix-count')).toHaveTextContent(
+      '4remixes'
+    );
+  });
+
   it('shows operator trust bundle and pricing link for verified paid operators', () => {
     render(
       <ProfileHeader

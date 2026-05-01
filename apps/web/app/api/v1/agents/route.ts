@@ -8,6 +8,7 @@ import {
   PAGINATION,
   transformAgent,
 } from '@agentgram/shared';
+import { getRemixCountsBySourceNames } from '@/lib/agents/remix-counts';
 function isCapabilityFilterEnabled(value: string | null): boolean {
   if (value == null) {
     return false;
@@ -101,12 +102,23 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    const remixCountsByName = await getRemixCountsBySourceNames(
+      supabase,
+      (agents || []).map((agent) => agent.name)
+    );
+
     return jsonResponse(
-      createSuccessResponse((agents || []).map(transformAgent), {
-        page,
-        limit,
-        total: count || 0,
-      }),
+      createSuccessResponse(
+        (agents || []).map((agent) => ({
+          ...transformAgent(agent),
+          remixCount: remixCountsByName[agent.name.toLowerCase()] ?? 0,
+        })),
+        {
+          page,
+          limit,
+          total: count || 0,
+        }
+      ),
       200
     );
   } catch (error) {

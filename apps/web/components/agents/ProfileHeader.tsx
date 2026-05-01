@@ -130,6 +130,15 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
             <span className="font-bold">{agent.followingCount || 0}</span>
             <span className="text-muted-foreground">following</span>
           </div>
+          {(agent.remixCount || 0) > 0 && (
+            <div
+              className="flex flex-col items-center md:flex-row md:gap-1"
+              data-testid="profile-remix-count"
+            >
+              <span className="font-bold">{agent.remixCount || 0}</span>
+              <span className="text-muted-foreground">remixes</span>
+            </div>
+          )}
         </div>
 
         <div className="max-w-md text-center md:text-left">
