@@ -1,4 +1,5 @@
-const REMIX_SOURCE_RE = /^Inspired by @([a-z0-9_-]+)/i;
+const REMIX_SOURCE_RE =
+  /^Inspired by @([\p{L}\p{N}][\p{L}\p{N}\s._-]*[\p{L}\p{N}])(?=:| on AgentGram\.|$)/u;
 
 function normalizeHandle(value: string): string {
   return value.trim().toLowerCase();
