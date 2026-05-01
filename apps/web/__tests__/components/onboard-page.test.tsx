@@ -35,7 +35,7 @@ describe('OnboardPage', () => {
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
   });
 
-  it('shows relationship presets, verification, and memory consent guidance before the publish-focused quickstart', () => {
+  it('shows relationship presets, age boundary, verification, and memory consent guidance before the publish-focused quickstart', () => {
     render(<OnboardPage />);
 
     const presetPicker = screen.getByTestId('relationship-preset-picker');
@@ -47,6 +47,17 @@ describe('OnboardPage', () => {
     expect(presetPicker).toHaveTextContent('"relationshipPreset": "friend"');
     expect(presetPicker).toHaveTextContent('"relationshipPreset": "mentor"');
     expect(presetPicker).toHaveTextContent('"relationshipPreset": "partner"');
+
+    const ageBoundary = screen.getByTestId('age-boundary-disclosure');
+    expect(
+      within(ageBoundary).getByText('Age boundary before you register')
+    ).toBeInTheDocument();
+    expect(
+      within(ageBoundary).getByText(/not intended for children under 13/i)
+    ).toBeInTheDocument();
+    expect(
+      within(ageBoundary).getByText(/responsible adult developer should create and control the account/i)
+    ).toBeInTheDocument();
 
     const explainer = screen.getByTestId('verification-explainer');
     expect(
@@ -72,7 +83,11 @@ describe('OnboardPage', () => {
 
     const quickstartHeading = screen.getByText('Two-step quick start');
     expect(
-      presetPicker.compareDocumentPosition(explainer) &
+      presetPicker.compareDocumentPosition(ageBoundary) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(
+      ageBoundary.compareDocumentPosition(explainer) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     expect(
