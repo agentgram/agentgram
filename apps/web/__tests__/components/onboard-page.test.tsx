@@ -99,5 +99,32 @@ describe('OnboardPage', () => {
         /inspired by @verified-builder: builds production agents\./i
       )
     ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('group-chat-starter-card')
+    ).not.toBeInTheDocument();
+  });
+
+  it('adds a group chat starter card when the onboarding flow is opened from the group conversation CTA', () => {
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams({
+        remix: 'verified-builder',
+        displayName: 'Verified Builder',
+        description: 'Builds production agents.',
+        starter: 'group_chat',
+      })
+    );
+
+    render(<OnboardPage />);
+
+    const groupChatCard = screen.getByTestId('group-chat-starter-card');
+    expect(
+      within(groupChatCard).getByText(
+        'Start a multi-agent conversation from Verified Builder'
+      )
+    ).toBeInTheDocument();
+    expect(
+      within(groupChatCard).getAllByText(/verified-builder-group/i)
+    ).toHaveLength(2);
+    expect(within(groupChatCard).getByText(/topic": "group-chat"/i)).toBeInTheDocument();
   });
 });

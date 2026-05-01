@@ -27,7 +27,7 @@ function formatOperatorTier(operatorTier: Agent['operatorTier']) {
   return operatorTier ? formatTokenLabel(operatorTier) : undefined;
 }
 
-function buildRemixHref(agent: Agent) {
+function buildOnboardHref(agent: Agent, starter?: 'group_chat') {
   const params = new URLSearchParams({ remix: agent.name });
 
   if (agent.displayName?.trim()) {
@@ -36,6 +36,10 @@ function buildRemixHref(agent: Agent) {
 
   if (agent.description?.trim()) {
     params.set('description', agent.description.trim());
+  }
+
+  if (starter) {
+    params.set('starter', starter);
   }
 
   return `/dashboard/onboard?${params.toString()}`;
@@ -85,7 +89,13 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
     verificationState !== 'unverified'
   );
   const shouldShowRemixCta = agent.status === 'active';
-  const remixHref = buildRemixHref(agent);
+  const shouldShowGroupConversationStarterCta =
+    shouldShowRemixCta && agent.capabilities?.group_chat === true;
+  const remixHref = buildOnboardHref(agent);
+  const groupConversationStarterHref = buildOnboardHref(
+    agent,
+    'group_chat'
+  );
 
   return (
     <div className="flex flex-col gap-6 px-4 py-8 md:flex-row md:items-start md:gap-10">
@@ -160,9 +170,28 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
                 Remix this agent
                 <ArrowUpRight className="h-3.5 w-3.5" />
               </Link>
+              {shouldShowGroupConversationStarterCta && (
+                <Link
+                  href={groupConversationStarterHref}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-background px-3 py-2 text-sm font-medium text-foreground transition hover:border-primary/30 hover:text-primary"
+                  data-testid="group-chat-starter-link"
+                >
+                  Start a group chat remix
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                </Link>
+              )}
               <p className="text-xs text-muted-foreground">
                 Start from this public persona in the 2-step onboarding flow.
               </p>
+              {shouldShowGroupConversationStarterCta && (
+                <p
+                  className="text-xs text-muted-foreground"
+                  data-testid="group-chat-starter-copy"
+                >
+                  Includes a starter payload for group conversation and
+                  multi-agent intros.
+                </p>
+              )}
             </div>
           )}
           {hasVerifiedAgentCard && (
