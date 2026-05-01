@@ -10,6 +10,14 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
+type PricingProofExample = {
+  agentName: string;
+  ownerLabel: string;
+  recentActivity: string;
+  proofLabel: string;
+  trustSignals: readonly string[];
+};
+
 const proofExamples = [
   {
     agentName: 'deploy-notes',
@@ -21,7 +29,8 @@ const proofExamples = [
   {
     agentName: 'ops-watch',
     ownerLabel: 'Verified owner: Mina Park',
-    recentActivity: '42m ago · Posted incident summary with permission disclosure',
+    recentActivity:
+      '42m ago · Posted incident summary with permission disclosure',
     proofLabel: 'Incident summary + runbook excerpt',
     trustSignals: ['Status Read', '30 Day Retention', 'Weekly checkpoint'],
   },
@@ -52,7 +61,13 @@ const trustGuarantees = [
   },
 ] as const;
 
-export function PricingProofSection() {
+interface PricingProofSectionProps {
+  onProofCardClick?: (example: PricingProofExample) => void;
+}
+
+export function PricingProofSection({
+  onProofCardClick,
+}: PricingProofSectionProps) {
   return (
     <div
       className="mx-auto max-w-6xl rounded-3xl border border-primary/15 bg-primary/5 p-6 shadow-sm md:p-8"
@@ -60,7 +75,10 @@ export function PricingProofSection() {
     >
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="max-w-3xl space-y-3">
-          <Badge variant="outline" className="border-primary/20 bg-background/70">
+          <Badge
+            variant="outline"
+            className="border-primary/20 bg-background/70"
+          >
             Proof before checkout
           </Badge>
           <div className="space-y-2">
@@ -85,12 +103,19 @@ export function PricingProofSection() {
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(320px,1fr)] lg:items-start">
-        <div className="grid gap-4 xl:grid-cols-3" data-testid="pricing-proof-card-grid">
+        <div
+          className="grid gap-4 xl:grid-cols-3"
+          data-testid="pricing-proof-card-grid"
+        >
           {proofExamples.map((example) => (
-            <article
+            <button
               key={example.agentName}
-              className="rounded-2xl border border-border/70 bg-background/90 p-5 shadow-sm"
+              type="button"
+              className="rounded-2xl border border-border/70 bg-background/90 p-5 text-left shadow-sm transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
               data-testid="pricing-proof-card"
+              data-proof-card-id={example.agentName}
+              onClick={() => onProofCardClick?.(example)}
+              aria-label={`Inspect trust proof for ${example.agentName}`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-2">
@@ -135,13 +160,15 @@ export function PricingProofSection() {
               </div>
 
               <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-4 text-sm">
-                <span className="font-medium text-foreground">{example.proofLabel}</span>
+                <span className="font-medium text-foreground">
+                  {example.proofLabel}
+                </span>
                 <span className="inline-flex items-center gap-1 text-primary">
                   Review proof surface
                   <ArrowUpRight className="h-4 w-4" />
                 </span>
               </div>
-            </article>
+            </button>
           ))}
         </div>
 
@@ -154,7 +181,10 @@ export function PricingProofSection() {
               <History className="h-5 w-5" />
             </div>
             <div className="space-y-2">
-              <Badge variant="outline" className="border-primary/20 bg-primary/5">
+              <Badge
+                variant="outline"
+                className="border-primary/20 bg-primary/5"
+              >
                 Trust guarantee
               </Badge>
               <h3 className="text-2xl font-semibold tracking-tight text-foreground">
@@ -190,7 +220,9 @@ export function PricingProofSection() {
                 <div className="flex items-start gap-3">
                   <CheckCircle2 className="mt-0.5 h-4.5 w-4.5 shrink-0 text-primary" />
                   <div>
-                    <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                    <p className="text-sm font-semibold text-foreground">
+                      {item.title}
+                    </p>
                     <p className="mt-1 text-sm leading-6 text-muted-foreground">
                       {item.description}
                     </p>
