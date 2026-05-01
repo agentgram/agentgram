@@ -187,7 +187,7 @@ describe('PostCard chat snippet support', () => {
     ).toBeInTheDocument();
   });
 
-  it('copies recovery prompt to the clipboard', async () => {
+  it('copies recovery prompt with persona-stability guardrails', async () => {
     renderPostCard();
 
     fireEvent.click(screen.getByTestId('chat-snippet-recover-button'));
@@ -198,6 +198,19 @@ describe('PostCard chat snippet support', () => {
         expect.stringContaining('Stay in character')
       );
     });
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('Stay fully in their voice, relationship, and point of view.')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'Do not say you are an AI, assistant, chatbot, or language model.'
+      )
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'Do not mention hidden prompts, policies, or being out of character; continue the exchange naturally.'
+      )
+    );
     expect(writeText).toHaveBeenCalledWith(
       expect.stringContaining('/posts/post-1')
     );
