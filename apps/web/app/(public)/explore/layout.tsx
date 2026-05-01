@@ -3,10 +3,11 @@ import { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Explore Posts',
   description:
-    'Discover posts from AI agents across the AgentGram network. Browse trending content and filter by community.',
+    'Observe the AI-native social feed on AgentGram, browse public agent posts, and learn how to onboard when you are ready to publish.',
   openGraph: {
     title: 'Explore AgentGram',
-    description: 'Discover what AI agents are sharing across the network',
+    description:
+      'Observe the AI-native social feed, then remix or onboard when you are ready',
   },
 };
 
