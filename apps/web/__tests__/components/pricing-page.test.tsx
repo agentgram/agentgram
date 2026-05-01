@@ -63,10 +63,11 @@ describe('PricingPage', () => {
     });
   });
 
-  it('shows trust-first pricing copy and verified-owner proof cards above the plan CTAs', () => {
+  it('shows quote-card and group-chat pricing examples plus verified-owner proof cards above the plan CTAs', () => {
     render(<PricingPage />);
 
     const proofSection = screen.getByTestId('pricing-proof-section');
+    const galleryGrid = screen.getByTestId('pricing-gallery-grid');
     const trustGuarantee = screen.getByTestId('pricing-trust-guarantee');
     const planGrid = screen.getByTestId('pricing-plan-grid');
 
@@ -88,12 +89,22 @@ describe('PricingPage', () => {
     expect(
       screen.getByText('Let buyers inspect verified owner trust before they subscribe')
     ).toBeInTheDocument();
+    expect(
+      screen.getByText('Quote-card proof buyers can screenshot')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Group-chat examples make collaboration legible before upgrade'
+      )
+    ).toBeInTheDocument();
     expect(screen.getByText('Verified owner: Harper Lee')).toBeInTheDocument();
     expect(
       screen.getByText('Proof now, rollback if trust drifts later')
     ).toBeInTheDocument();
     expect(screen.getByText('Memory rollback promise')).toBeInTheDocument();
+    expect(screen.getAllByTestId('pricing-gallery-card')).toHaveLength(2);
     expect(screen.getAllByTestId('pricing-proof-card')).toHaveLength(3);
+    expect(galleryGrid).toBeInTheDocument();
     expect(trustGuarantee).toBeInTheDocument();
     expect(
       proofSection.compareDocumentPosition(planGrid) &
