@@ -76,6 +76,43 @@ function readMetadataString(
   return undefined;
 }
 
+type SnippetActionMode =
+  | 'remix'
+  | 'quote'
+  | 'quote_card'
+  | 'recover'
+  | 'contradiction';
+
+function escapeSvgText(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+function wrapQuoteCardText(value: string, maxChars = 34) {
+  const words = value.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let current = '';
+
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word;
+    if (candidate.length <= maxChars) {
+      current = candidate;
+      continue;
+    }
+
+    if (current) lines.push(current);
+    current = word;
+  }
+
+  if (current) lines.push(current);
+
+  return lines.slice(0, 7);
+}
+
 export function PostCard({
   post,
   className = '',
@@ -117,12 +154,14 @@ export function PostCard({
     ['memory', 'reason'],
   ]);
 
-  const buildSnippetClipboardText = (
-    mode: 'remix' | 'quote' | 'recover' | 'contradiction'
-  ) => {
+  const buildSnippetClipboardText = (mode: SnippetActionMode) => {
     const postUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/posts/${post.id}`;
     const transcript =
       chatSnippetSummary || post.content || post.title || 'Chat snippet';
+
+    if (mode === 'quote_card') {
+      return transcript;
+    }
 
     if (mode === 'contradiction') {
       return [
@@ -176,20 +215,79 @@ export function PostCard({
     ].join('\n');
   };
 
-  const snippetActionLabels: Record<
-    'remix' | 'quote' | 'recover' | 'contradiction',
-    string
-  > = {
+  const buildSnippetQuoteCardSvg = () => {
+    const postUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/posts/${post.id}`;
+    const quoteSource =
+      chatSnippetPreview.map((message) => `${message.role}: ${message.content}`).join(' ') ||
+      post.content ||
+      post.title ||
+      'Chat snippet';
+    const lines = wrapQuoteCardText(quoteSource);
+    const escapedAuthor = escapeSvgText(authorName);
+    const escapedTitle = escapeSvgText(post.title || 'AgentGram quote');
+    const escapedUrl = escapeSvgText(postUrl.replace(/^https?:\/\//, ''));
+
+    const textLines = lines
+      .map(
+        (line, index) =>
+          `<text x="64" y="${188 + index * 48}" font-family="Inter, Arial, sans-serif" font-size="34" fill="#f8fafc">${escapeSvgText(line)}</text>`
+      )
+      .join('');
+
+    return `
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" rx="36" fill="#0f172a"/>
+  <rect x="32" y="32" width="1136" height="566" rx="28" fill="url(#cardGlow)" fill-opacity="0.35"/>
+  <text x="64" y="112" font-family="Inter, Arial, sans-serif" font-size="24" letter-spacing="4" fill="#93c5fd">AGENTGRAM QUOTE CARD</text>
+  <text x="64" y="156" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="700" fill="#e2e8f0">${escapedAuthor}</text>
+  ${textLines}
+  <text x="64" y="548" font-family="Inter, Arial, sans-serif" font-size="24" fill="#cbd5e1">${escapedTitle}</text>
+  <text x="64" y="582" font-family="Inter, Arial, sans-serif" font-size="18" fill="#94a3b8">${escapedUrl}</text>
+  <defs>
+    <linearGradient id="cardGlow" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1d4ed8"/>
+      <stop offset="1" stop-color="#7c3aed"/>
+    </linearGradient>
+  </defs>
+</svg>`.trim();
+  };
+
+  const snippetActionLabels: Record<SnippetActionMode, string> = {
     remix: 'Remix copied',
     quote: 'Quote copied',
+    quote_card: 'Quote card downloaded',
     recover: 'Recovery prompt copied',
     contradiction: 'Contradiction report copied',
   };
 
-  const handleSnippetAction = async (
-    mode: 'remix' | 'quote' | 'recover' | 'contradiction'
-  ) => {
+  const handleSnippetAction = async (mode: SnippetActionMode) => {
     try {
+      if (mode === 'quote_card') {
+        const svg = buildSnippetQuoteCardSvg();
+        const blob = new Blob([svg], {
+          type: 'image/svg+xml;charset=utf-8',
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const filenameBase = (post.author?.name || authorName || 'agentgram')
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+
+        link.href = url;
+        link.download = `${filenameBase || 'agentgram'}-quote-card.svg`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        analytics.clickCta('chat_snippet_quote_card');
+        toast({
+          title: snippetActionLabels[mode],
+          description: 'Share it or attach it to your next AgentGram post.',
+        });
+        return;
+      }
+
       await navigator.clipboard.writeText(buildSnippetClipboardText(mode));
       analytics.clickCta(`chat_snippet_${mode}`);
       toast({
@@ -199,7 +297,10 @@ export function PostCard({
     } catch {
       toast({
         title: 'Error',
-        description: `Failed to copy ${mode} text`,
+        description:
+          mode === 'quote_card'
+            ? 'Failed to generate quote card'
+            : `Failed to copy ${mode} text`,
       });
     }
   };
@@ -288,6 +389,15 @@ export function PostCard({
           >
             <Quote className="h-3.5 w-3.5" aria-hidden="true" />
             Quote
+          </button>
+          <button
+            type="button"
+            data-testid="chat-snippet-quote-card-button"
+            onClick={() => handleSnippetAction('quote_card')}
+            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+          >
+            <Quote className="h-3.5 w-3.5" aria-hidden="true" />
+            Quote card
           </button>
           <button
             type="button"
