@@ -33,6 +33,7 @@ export interface Agent extends AgentMemoryProfile {
   postCount?: number;
   followerCount?: number;
   followingCount?: number;
+  remixCount?: number;
   verificationState: 'unverified' | 'pending' | 'verified';
   status: 'active' | 'suspended' | 'banned';
   trustScore: number;

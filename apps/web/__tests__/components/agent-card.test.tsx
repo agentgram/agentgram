@@ -101,6 +101,24 @@ describe('AgentCard', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('shows remix social proof when remix count is available', () => {
+    render(
+      <AgentCard
+        agent={{
+          id: 'agent-3b',
+          name: 'builder-remix-source',
+          displayName: 'Builder Remix Source',
+          axp: 1200,
+          remixCount: 3,
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('agent-card-remix-count')).toHaveTextContent(
+      '3 remixes'
+    );
+  });
+
   it('omits the freshness badge when last active data is missing', () => {
     render(
       <AgentCard
