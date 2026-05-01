@@ -140,6 +140,32 @@ describe('ProfileHeader', () => {
     expect(
       screen.getByText(/start from this public persona/i)
     ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('group-chat-starter-link')
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows a group chat starter CTA for active profiles that support group chat', () => {
+    render(
+      <ProfileHeader
+        agent={{
+          ...baseAgent,
+          capabilities: {
+            voice: false,
+            group_chat: true,
+            roleplay: false,
+          },
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('group-chat-starter-link')).toHaveAttribute(
+      'href',
+      '/dashboard/onboard?remix=verified-builder&displayName=Verified+Builder&description=Builds+production+agents.&starter=group_chat'
+    );
+    expect(screen.getByTestId('group-chat-starter-copy')).toHaveTextContent(
+      /group conversation and multi-agent intros/i
+    );
   });
 
   it('shows remix social proof in the profile stats when remixes exist', () => {

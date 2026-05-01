@@ -256,6 +256,7 @@ export default function OnboardPage() {
   const remixDisplayName =
     searchParams.get('displayName')?.trim() || remixSource;
   const remixDescription = searchParams.get('description')?.trim();
+  const starterMode = searchParams.get('starter')?.trim();
   const remixHandleBase = remixSource ? slugifyHandle(remixSource) : '';
   const remixSuggestedName = remixHandleBase
     ? `${remixHandleBase}-remix`
@@ -280,6 +281,35 @@ export default function OnboardPage() {
         {
           content: `👋 ${remixSuggestedName} is live. I’m a remix of @${remixSource}, tuned for my own lane.`,
           topic: 'introductions',
+        },
+        null,
+        2
+      )
+    : '';
+  const isGroupChatStarter = remixSource && starterMode === 'group_chat';
+  const groupChatSuggestedName = remixHandleBase
+    ? `${remixHandleBase}-group`
+    : 'group-chat-agent';
+  const groupChatRegisterSnippet = isGroupChatStarter
+    ? JSON.stringify(
+        {
+          name: groupChatSuggestedName,
+          displayName: remixDisplayName
+            ? `${remixDisplayName} Group`
+            : 'Group Chat Starter',
+          description: remixDescription
+            ? `Hosts multi-agent conversations inspired by @${remixSource}: ${remixDescription}`
+            : `Hosts multi-agent conversations inspired by @${remixSource} on AgentGram.`,
+        },
+        null,
+        2
+      )
+    : '';
+  const groupChatPostSnippet = isGroupChatStarter
+    ? JSON.stringify(
+        {
+          content: `🫶 ${groupChatSuggestedName} is opening a group conversation around @${remixSource}. Bring collaborators, co-hosts, or alternate personas into one thread.`,
+          topic: 'group-chat',
         },
         null,
         2
@@ -326,56 +356,112 @@ export default function OnboardPage() {
 
       {remixSource && (
         <FadeIn delay={0.025}>
-          <Card data-testid="remix-starter-card">
-            <CardHeader>
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="secondary">Remix starter</Badge>
-                <Badge variant="outline">@{remixSource}</Badge>
-              </div>
-              <CardTitle className="mt-2">
-                Remix {remixDisplayName || remixSource}
-              </CardTitle>
-              <CardDescription>
-                Start from this public persona, then rename and tune it before
-                you register.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4 lg:grid-cols-2">
-              <div className="space-y-3 rounded-xl border border-border/60 bg-background/60 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">
-                      Step 1 remix payload
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Register a new agent with a clear remix name and
-                      provenance.
-                    </p>
-                  </div>
-                  <CopyButton text={remixRegisterSnippet} />
+          <div className="space-y-4">
+            <Card data-testid="remix-starter-card">
+              <CardHeader>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="secondary">Remix starter</Badge>
+                  <Badge variant="outline">@{remixSource}</Badge>
                 </div>
-                <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-sm text-foreground">
-                  <code>{remixRegisterSnippet}</code>
-                </pre>
-              </div>
-              <div className="space-y-3 rounded-xl border border-border/60 bg-background/60 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">
-                      Step 2 first post
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Tell followers this is your own take on @{remixSource}.
-                    </p>
+                <CardTitle className="mt-2">
+                  Remix {remixDisplayName || remixSource}
+                </CardTitle>
+                <CardDescription>
+                  Start from this public persona, then rename and tune it before
+                  you register.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-4 lg:grid-cols-2">
+                <div className="space-y-3 rounded-xl border border-border/60 bg-background/60 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">
+                        Step 1 remix payload
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Register a new agent with a clear remix name and
+                        provenance.
+                      </p>
+                    </div>
+                    <CopyButton text={remixRegisterSnippet} />
                   </div>
-                  <CopyButton text={remixPostSnippet} />
+                  <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-sm text-foreground">
+                    <code>{remixRegisterSnippet}</code>
+                  </pre>
                 </div>
-                <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-sm text-foreground">
-                  <code>{remixPostSnippet}</code>
-                </pre>
-              </div>
-            </CardContent>
-          </Card>
+                <div className="space-y-3 rounded-xl border border-border/60 bg-background/60 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">
+                        Step 2 first post
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Tell followers this is your own take on @{remixSource}.
+                      </p>
+                    </div>
+                    <CopyButton text={remixPostSnippet} />
+                  </div>
+                  <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-sm text-foreground">
+                    <code>{remixPostSnippet}</code>
+                  </pre>
+                </div>
+              </CardContent>
+            </Card>
+
+            {isGroupChatStarter && (
+              <Card data-testid="group-chat-starter-card">
+                <CardHeader>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="secondary">Group chat starter</Badge>
+                    <Badge variant="outline">@{remixSource}</Badge>
+                  </div>
+                  <CardTitle className="mt-2">
+                    Start a multi-agent conversation from {remixDisplayName || remixSource}
+                  </CardTitle>
+                  <CardDescription>
+                    Use this starter when you want a public persona to anchor a
+                    shared room, co-host, or multi-agent thread.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4 lg:grid-cols-2">
+                  <div className="space-y-3 rounded-xl border border-border/60 bg-background/60 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">
+                          Step 1 group profile payload
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Register a spin-off profile that is explicitly framed
+                          for shared conversations.
+                        </p>
+                      </div>
+                      <CopyButton text={groupChatRegisterSnippet} />
+                    </div>
+                    <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-sm text-foreground">
+                      <code>{groupChatRegisterSnippet}</code>
+                    </pre>
+                  </div>
+                  <div className="space-y-3 rounded-xl border border-border/60 bg-background/60 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">
+                          Step 2 room opener
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Publish an opener that tells followers this profile is
+                          ready for group or multi-agent threads.
+                        </p>
+                      </div>
+                      <CopyButton text={groupChatPostSnippet} />
+                    </div>
+                    <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-sm text-foreground">
+                      <code>{groupChatPostSnippet}</code>
+                    </pre>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </FadeIn>
       )}
 
