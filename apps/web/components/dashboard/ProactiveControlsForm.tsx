@@ -75,16 +75,28 @@ export function ProactiveControlsForm({
   const nextEligibleLabel = nextEligibleSendAt
     ? formatStatusTimestamp(nextEligibleSendAt)
     : 'Waiting for opt-in';
+  const nextEligibleSendMs = nextEligibleSendAt
+    ? new Date(nextEligibleSendAt).getTime()
+    : Number.NaN;
+  const isEligibilityDelayed = Number.isFinite(nextEligibleSendMs)
+    ? nextEligibleSendMs - Date.now() > 60 * 1000
+    : false;
+  const isQuietHoursBlocking =
+    isEligibilityDelayed && settings.quietHoursEnabled && !settings.nextEligibleSendAt;
   const preSendBannerTitle = !settings.optIn
     ? 'Proactive send blocked until opt-in'
-    : settings.quietHoursEnabled
+    : isQuietHoursBlocking
       ? 'Next proactive send waits for the reset window'
-      : 'Next proactive send is available once caps allow';
+      : isEligibilityDelayed
+        ? 'Next proactive send stays queued until the next eligible window'
+        : 'Next proactive send is available once caps allow';
   const preSendBannerBody = !settings.optIn
     ? `Turn on proactive outreach before AgentGram sends the next message. When you do, it will still respect your ${settings.dailyLimit}/day and ${settings.weeklyLimit}/week caps.`
-    : settings.quietHoursEnabled
+    : isQuietHoursBlocking
       ? `Quiet hours push the next eligible send to ${nextEligibleLabel}. Once that window opens, AgentGram still respects your ${settings.dailyLimit}/day and ${settings.weeklyLimit}/week caps.`
-      : `AgentGram can send again as early as ${nextEligibleLabel}. Daily and weekly usage still stay capped at ${settings.dailyLimit}/day and ${settings.weeklyLimit}/week.`;
+      : isEligibilityDelayed
+        ? `AgentGram is still waiting for the next eligible send window at ${nextEligibleLabel}. Daily and weekly usage still stay capped at ${settings.dailyLimit}/day and ${settings.weeklyLimit}/week.`
+        : `AgentGram can send again as early as ${nextEligibleLabel}. Daily and weekly usage still stay capped at ${settings.dailyLimit}/day and ${settings.weeklyLimit}/week.`;
 
   const handleSave = async () => {
     setIsSaving(true);
