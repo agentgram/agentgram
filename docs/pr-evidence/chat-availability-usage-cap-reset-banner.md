@@ -10,7 +10,7 @@
 - reuses existing `getNextEligibleSendAt(settings)` + timestamp formatting instead of adding new scheduling logic
 - explains three states:
   1. blocked until opt-in
-  2. waiting for quiet-hours reset window
+  2. waiting for quiet-hours reset window only when quiet hours are actively delaying the next send
   3. next proactive send available once caps allow
 - keeps daily/weekly cap numbers visible inside the banner copy
 

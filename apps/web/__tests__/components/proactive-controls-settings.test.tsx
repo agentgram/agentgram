@@ -290,6 +290,38 @@ describe('ProactiveControlsForm', () => {
     ).toHaveTextContent('3/day and 9/week caps');
   });
 
+  it('does not show reset-window copy when quiet hours are configured but currently inactive', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-27T04:00:00.000Z'));
+
+    render(
+      <ProactiveControlsForm
+        initialSettings={{
+          optIn: true,
+          dailyLimit: 2,
+          weeklyLimit: 8,
+          quietHoursEnabled: true,
+          quietHoursStart: '22:00',
+          quietHoursEnd: '08:00',
+          tonePreset: 'neutral',
+        }}
+      />
+    );
+
+    expect(
+      screen.getByTestId('proactive-pre-send-banner-title')
+    ).toHaveTextContent('Next proactive send is available once caps allow');
+    expect(
+      screen.getByTestId('proactive-pre-send-banner-body')
+    ).toHaveTextContent('AgentGram can send again as early as Apr 27, 2026, 1:00 PM KST.');
+    expect(
+      screen.getByTestId('proactive-pre-send-banner-body')
+    ).toHaveTextContent('2/day and 8/week');
+    expect(
+      screen.getByTestId('proactive-pre-send-banner-body')
+    ).not.toHaveTextContent('Quiet hours push');
+  });
+
   it('shows an error when the save request fails', async () => {
     vi.stubGlobal(
       'fetch',
