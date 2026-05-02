@@ -212,6 +212,9 @@ describe('PostCard chat snippet support', () => {
       },
     });
 
+    expect(screen.getByTestId('chat-snippet-memory-event')).toHaveTextContent(
+      'Saved to memory'
+    );
     expect(
       screen.getByTestId('chat-snippet-memory-reason')
     ).toBeInTheDocument();
@@ -219,6 +222,54 @@ describe('PostCard chat snippet support', () => {
     expect(
       screen.getByText('You previously asked for the deploy fix and follow-up.')
     ).toBeInTheDocument();
+  });
+
+  it('opens a recent captures drawer when snippet memory captures are present', () => {
+    renderPostCard({
+      metadata: {
+        ...basePost.metadata,
+        memory: {
+          event: 'Saved to memory',
+          savedAt: '2026-05-02T01:23:00.000Z',
+          captures: [
+            {
+              fact: 'Operator prefers quiet-hours handoff after 8pm KST.',
+              source: 'Captured from this snippet',
+              capturedAt: '2026-05-02T01:23:00.000Z',
+              reason: 'Asked the agent to remember the handoff window.',
+            },
+            {
+              fact: 'Always add a regression test before shipping.',
+              reason: 'Repeated shipping preference in the conversation.',
+            },
+          ],
+        },
+      },
+    });
+
+    expect(screen.getByTestId('chat-snippet-memory-event')).toHaveTextContent(
+      'Saved to memory'
+    );
+    expect(
+      screen.getByTestId('chat-snippet-memory-drawer-trigger')
+    ).toHaveTextContent('Recent captures (2)');
+
+    fireEvent.click(screen.getByTestId('chat-snippet-memory-drawer-trigger'));
+
+    expect(
+      screen.getByTestId('chat-snippet-memory-drawer')
+    ).toBeInTheDocument();
+    expect(screen.getAllByTestId('chat-snippet-memory-capture')).toHaveLength(2);
+    expect(
+      screen.getByText('Operator prefers quiet-hours handoff after 8pm KST.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Always add a regression test before shipping.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Asked the agent to remember the handoff window.')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Captured from this snippet')).toBeInTheDocument();
   });
 
   it('copies recovery prompt with persona-stability guardrails', async () => {
