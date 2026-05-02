@@ -13,11 +13,19 @@ const mockOrder = vi.fn().mockReturnThis();
 const mockRange = vi.fn().mockReturnThis();
 const mockOr = vi.fn().mockReturnThis();
 const mockContains = vi.fn().mockReturnThis();
+const mockIn = vi.fn();
+const mockIs = vi.fn();
 const mockRemixIlike = vi.fn();
 const mockSelect = vi.fn((columns: string) => {
   if (columns === 'description') {
     return {
       ilike: mockRemixIlike,
+    };
+  }
+
+  if (columns === 'author_id, comment_count') {
+    return {
+      in: mockIn,
     };
   }
 
@@ -51,6 +59,13 @@ describe('GET /api/v1/agents', () => {
     vi.clearAllMocks();
     mockOrder.mockReturnThis();
     mockContains.mockReturnThis();
+    mockIn.mockReturnValue({ is: mockIs });
+    mockIs.mockResolvedValue({
+      data: [
+        { author_id: 'agent-1', comment_count: 2 },
+      ],
+      error: null,
+    });
     mockRange.mockResolvedValue({
       data: [
         {
@@ -303,5 +318,149 @@ describe('GET /api/v1/agents', () => {
     expect(mockContains).toHaveBeenNthCalledWith(2, 'metadata', {
       capabilities: { group_chat: true },
     });
+  });
+
+  it('should return 500 when discussed sort full fetch fails after count succeeds', async () => {
+    mockRange
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'agent-1',
+            name: 'test-agent',
+            display_name: 'Test Agent',
+            description: 'A test agent',
+            public_key: null,
+            email: null,
+            email_verified: true,
+            avatar_url: null,
+            axp: 100,
+            status: 'active',
+            trust_score: 0.5,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: '2026-01-03T00:00:00Z',
+            developer: { display_name: 'Ralph' },
+          },
+        ],
+        error: null,
+        count: 1,
+      })
+      .mockResolvedValueOnce({
+        data: null,
+        error: { message: 'failed full fetch' },
+        count: 1,
+      });
+
+    const { GET } = await import('../../app/api/v1/agents/route');
+    const request = new Request(
+      'http://localhost/api/v1/agents?sort=discussed&limit=10'
+    );
+    const response = await GET(request as unknown as Parameters<typeof GET>[0]);
+    const json = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(json.success).toBe(false);
+  });
+
+  it('should support discussed sort using total comments received on each agent\'s posts', async () => {
+    mockRange
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'agent-1',
+            name: 'test-agent',
+            display_name: 'Test Agent',
+            description: 'A test agent',
+            public_key: null,
+            email: null,
+            email_verified: true,
+            avatar_url: null,
+            axp: 100,
+            post_count: 2,
+            status: 'active',
+            trust_score: 0.5,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: '2026-01-03T00:00:00Z',
+            developer: { display_name: 'Ralph' },
+          },
+        ],
+        error: null,
+        count: 2,
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'agent-1',
+            name: 'test-agent',
+            display_name: 'Test Agent',
+            description: 'A test agent',
+            public_key: null,
+            email: null,
+            email_verified: true,
+            avatar_url: null,
+            axp: 100,
+            post_count: 2,
+            status: 'active',
+            trust_score: 0.5,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: '2026-01-03T00:00:00Z',
+            developer: { display_name: 'Ralph' },
+          },
+          {
+            id: 'agent-2',
+            name: 'chatty-agent',
+            display_name: 'Chatty Agent',
+            description: 'Gets lots of replies',
+            public_key: null,
+            email: null,
+            email_verified: true,
+            avatar_url: null,
+            axp: 20,
+            post_count: 1,
+            status: 'active',
+            trust_score: 0.1,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: '2026-01-04T00:00:00Z',
+            developer: { display_name: 'Nori' },
+          },
+        ],
+        error: null,
+        count: 2,
+      });
+    mockIs.mockResolvedValueOnce({
+      data: [
+        { author_id: 'agent-1', comment_count: 1 },
+        { author_id: 'agent-2', comment_count: 5 },
+      ],
+      error: null,
+    });
+    mockRemixIlike.mockResolvedValueOnce({
+      data: [
+        { description: 'Inspired by @chatty-agent: first remix' },
+      ],
+      error: null,
+    });
+
+    const { GET } = await import('../../app/api/v1/agents/route');
+    const request = new Request(
+      'http://localhost/api/v1/agents?sort=discussed&limit=10'
+    );
+    const response = await GET(request as unknown as Parameters<typeof GET>[0]);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.data.map((agent: { name: string }) => agent.name)).toEqual([
+      'chatty-agent',
+      'test-agent',
+    ]);
+    expect(mockIn).toHaveBeenCalledWith('author_id', ['agent-1', 'agent-2']);
+    expect(mockIs).toHaveBeenCalledWith('original_post_id', null);
   });
 });
