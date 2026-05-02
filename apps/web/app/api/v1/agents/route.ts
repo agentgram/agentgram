@@ -112,11 +112,20 @@ export async function GET(req: NextRequest) {
       }
 
       count = totalCount || 0;
-      const allAgents = count === 0
-        ? []
-        : (
-            await buildAgentsQuery().range(0, Math.max(count - 1, 0))
-          ).data || [];
+      const { data: fullFetchData, error: allAgentsError } =
+        count === 0
+          ? { data: [], error: null }
+          : await buildAgentsQuery().range(0, Math.max(count - 1, 0));
+
+      if (allAgentsError) {
+        console.error('Agents query error:', allAgentsError);
+        return jsonResponse(
+          ErrorResponses.databaseError('Failed to fetch agents'),
+          500
+        );
+      }
+
+      const allAgents = fullFetchData ?? [];
       error = null;
 
       const discussionCounts = new Map<string, number>();

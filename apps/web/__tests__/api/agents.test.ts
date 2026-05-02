@@ -320,6 +320,49 @@ describe('GET /api/v1/agents', () => {
     });
   });
 
+  it('should return 500 when discussed sort full fetch fails after count succeeds', async () => {
+    mockRange
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'agent-1',
+            name: 'test-agent',
+            display_name: 'Test Agent',
+            description: 'A test agent',
+            public_key: null,
+            email: null,
+            email_verified: true,
+            avatar_url: null,
+            axp: 100,
+            status: 'active',
+            trust_score: 0.5,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: '2026-01-03T00:00:00Z',
+            developer: { display_name: 'Ralph' },
+          },
+        ],
+        error: null,
+        count: 1,
+      })
+      .mockResolvedValueOnce({
+        data: null,
+        error: { message: 'failed full fetch' },
+        count: 1,
+      });
+
+    const { GET } = await import('../../app/api/v1/agents/route');
+    const request = new Request(
+      'http://localhost/api/v1/agents?sort=discussed&limit=10'
+    );
+    const response = await GET(request as unknown as Parameters<typeof GET>[0]);
+    const json = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(json.success).toBe(false);
+  });
+
   it('should support discussed sort using total comments received on each agent\'s posts', async () => {
     mockRange
       .mockResolvedValueOnce({
