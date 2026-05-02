@@ -61,6 +61,7 @@ export function ProactiveControlsForm({
 }: ProactiveControlsFormProps) {
   const [settings, setSettings] = useState(initialSettings);
   const [isSaving, setIsSaving] = useState(false);
+  const [renderedAtMs, setRenderedAtMs] = useState(() => Date.now());
   const [status, setStatus] = useState<{
     tone: 'idle' | 'success' | 'error';
     message: string;
@@ -78,9 +79,12 @@ export function ProactiveControlsForm({
   const nextEligibleSendMs = nextEligibleSendAt
     ? new Date(nextEligibleSendAt).getTime()
     : Number.NaN;
-  const isEligibilityDelayed = Number.isFinite(nextEligibleSendMs)
-    ? nextEligibleSendMs - Date.now() > 60 * 1000
-    : false;
+  const isEligibilityDelayed =
+    Number.isFinite(nextEligibleSendMs) && nextEligibleSendMs - renderedAtMs > 60 * 1000;
+  const updateSettings = (value: Parameters<typeof setSettings>[0]) => {
+    setRenderedAtMs(Date.now());
+    setSettings(value);
+  };
   const isQuietHoursBlocking =
     isEligibilityDelayed && settings.quietHoursEnabled && !settings.nextEligibleSendAt;
   const preSendBannerTitle = !settings.optIn
@@ -120,7 +124,7 @@ export function ProactiveControlsForm({
         throw new Error('Failed to save proactive controls');
       }
 
-      setSettings(payload.data);
+      updateSettings(payload.data);
       setStatus({
         tone: 'success',
         message: 'Proactive outreach preferences saved.',
@@ -154,7 +158,7 @@ export function ProactiveControlsForm({
             checked={settings.optIn}
             className="mt-1 h-4 w-4 rounded border-input"
             onChange={(event) =>
-              setSettings((current) => ({
+              updateSettings((current) => ({
                 ...current,
                 optIn: event.target.checked,
               }))
@@ -184,7 +188,7 @@ export function ProactiveControlsForm({
               min={1}
               max={25}
               onChange={(event) =>
-                setSettings((current) => ({
+                updateSettings((current) => ({
                   ...current,
                   dailyLimit: Number(event.target.value),
                 }))
@@ -207,7 +211,7 @@ export function ProactiveControlsForm({
               min={1}
               max={100}
               onChange={(event) =>
-                setSettings((current) => ({
+                updateSettings((current) => ({
                   ...current,
                   weeklyLimit: Number(event.target.value),
                 }))
@@ -227,7 +231,7 @@ export function ProactiveControlsForm({
               checked={settings.quietHoursEnabled}
               className="mt-1 h-4 w-4 rounded border-input"
               onChange={(event) =>
-                setSettings((current) => ({
+                updateSettings((current) => ({
                   ...current,
                   quietHoursEnabled: event.target.checked,
                 }))
@@ -255,7 +259,7 @@ export function ProactiveControlsForm({
                 <Input
                   aria-label="Quiet hours start"
                   onChange={(event) =>
-                    setSettings((current) => ({
+                    updateSettings((current) => ({
                       ...current,
                       quietHoursStart: event.target.value,
                     }))
@@ -272,7 +276,7 @@ export function ProactiveControlsForm({
                 <Input
                   aria-label="Quiet hours end"
                   onChange={(event) =>
-                    setSettings((current) => ({
+                    updateSettings((current) => ({
                       ...current,
                       quietHoursEnd: event.target.value,
                     }))
@@ -308,7 +312,7 @@ export function ProactiveControlsForm({
                   className="mt-0.5 h-4 w-4"
                   name="tonePreset"
                   onChange={() =>
-                    setSettings((current) => ({
+                    updateSettings((current) => ({
                       ...current,
                       tonePreset: preset,
                     }))
