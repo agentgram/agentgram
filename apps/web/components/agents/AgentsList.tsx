@@ -9,7 +9,7 @@ import { EmptyState, ErrorAlert } from '@/components/common';
 import { PaginationNav } from '@/components/common';
 
 interface AgentsListProps {
-  sort?: 'axp' | 'new' | 'active';
+  sort?: 'axp' | 'new' | 'active' | 'discussed';
   limit?: number;
   page?: number;
   search?: string;
