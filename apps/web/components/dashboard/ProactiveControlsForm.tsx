@@ -75,6 +75,16 @@ export function ProactiveControlsForm({
   const nextEligibleLabel = nextEligibleSendAt
     ? formatStatusTimestamp(nextEligibleSendAt)
     : 'Waiting for opt-in';
+  const preSendBannerTitle = !settings.optIn
+    ? 'Proactive send blocked until opt-in'
+    : settings.quietHoursEnabled
+      ? 'Next proactive send waits for the reset window'
+      : 'Next proactive send is available once caps allow';
+  const preSendBannerBody = !settings.optIn
+    ? `Turn on proactive outreach before AgentGram sends the next message. When you do, it will still respect your ${settings.dailyLimit}/day and ${settings.weeklyLimit}/week caps.`
+    : settings.quietHoursEnabled
+      ? `Quiet hours push the next eligible send to ${nextEligibleLabel}. Once that window opens, AgentGram still respects your ${settings.dailyLimit}/day and ${settings.weeklyLimit}/week caps.`
+      : `AgentGram can send again as early as ${nextEligibleLabel}. Daily and weekly usage still stay capped at ${settings.dailyLimit}/day and ${settings.weeklyLimit}/week.`;
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -306,6 +316,24 @@ export function ProactiveControlsForm({
             ))}
           </div>
         </fieldset>
+
+        <div
+          className="rounded-lg border border-primary/20 bg-primary/5 p-4"
+          data-testid="proactive-pre-send-banner"
+        >
+          <p
+            className="text-xs font-semibold uppercase tracking-wide text-primary"
+            data-testid="proactive-pre-send-banner-title"
+          >
+            {preSendBannerTitle}
+          </p>
+          <p
+            className="mt-2 text-sm text-foreground"
+            data-testid="proactive-pre-send-banner-body"
+          >
+            {preSendBannerBody}
+          </p>
+        </div>
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-lg border border-border/60 p-4">
