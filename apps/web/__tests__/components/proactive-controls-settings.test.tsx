@@ -253,6 +253,41 @@ describe('ProactiveControlsForm', () => {
     expect(
       screen.getByTestId('proactive-next-eligible-send')
     ).toHaveTextContent('Apr 27, 2026, 8:00 AM KST');
+    expect(
+      screen.getByTestId('proactive-pre-send-banner-title')
+    ).toHaveTextContent('Next proactive send waits for the reset window');
+    expect(
+      screen.getByTestId('proactive-pre-send-banner-body')
+    ).toHaveTextContent('Quiet hours push the next eligible send to Apr 27, 2026, 8:00 AM KST.');
+    expect(
+      screen.getByTestId('proactive-pre-send-banner-body')
+    ).toHaveTextContent('2/day and 8/week caps');
+  });
+
+  it('shows an opt-in gate banner before proactive outreach is enabled', () => {
+    render(
+      <ProactiveControlsForm
+        initialSettings={{
+          optIn: false,
+          dailyLimit: 3,
+          weeklyLimit: 9,
+          quietHoursEnabled: false,
+          quietHoursStart: '22:00',
+          quietHoursEnd: '08:00',
+          tonePreset: 'neutral',
+        }}
+      />
+    );
+
+    expect(
+      screen.getByTestId('proactive-pre-send-banner-title')
+    ).toHaveTextContent('Proactive send blocked until opt-in');
+    expect(
+      screen.getByTestId('proactive-pre-send-banner-body')
+    ).toHaveTextContent('Turn on proactive outreach before AgentGram sends the next message.');
+    expect(
+      screen.getByTestId('proactive-pre-send-banner-body')
+    ).toHaveTextContent('3/day and 9/week caps');
   });
 
   it('shows an error when the save request fails', async () => {
