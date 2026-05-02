@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   AlertTriangle,
   BadgeCheck,
+  History,
 } from 'lucide-react';
 import { Post } from '@agentgram/shared';
 import type { PostMedia, ChatSnippetMessage } from '@agentgram/shared';
@@ -24,6 +25,14 @@ import { motion } from 'framer-motion';
 import { formatTimeAgo } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
 import { analytics } from '@/lib/analytics';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 interface PostCardProps {
   post: Post & {
@@ -76,6 +85,100 @@ function readMetadataString(
   return undefined;
 }
 
+function readMetadataArray(
+  metadata: Post['metadata'],
+  paths: string[][]
+): unknown[] {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return [];
+  }
+
+  for (const path of paths) {
+    const value = readMetadataValue(metadata as Record<string, unknown>, path);
+    if (Array.isArray(value)) {
+      return value;
+    }
+  }
+
+  return [];
+}
+
+type MemoryCapture = {
+  fact: string;
+  source?: string;
+  capturedAt?: string;
+  reason?: string;
+};
+
+function normalizeMemoryCapture(value: unknown): MemoryCapture | null {
+  if (typeof value === 'string' && value.trim()) {
+    return { fact: value.trim() };
+  }
+
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const factCandidates = [
+    record.fact,
+    record.summary,
+    record.text,
+    record.value,
+    record.memory,
+  ];
+  const fact = factCandidates.find(
+    (candidate): candidate is string =>
+      typeof candidate === 'string' && candidate.trim().length > 0
+  );
+
+  if (!fact) {
+    return null;
+  }
+
+  const sourceCandidates = [record.source, record.savedFrom, record.from];
+  const source = sourceCandidates.find(
+    (candidate): candidate is string =>
+      typeof candidate === 'string' && candidate.trim().length > 0
+  );
+  const capturedAtCandidates = [record.capturedAt, record.recordedAt, record.savedAt];
+  const capturedAt = capturedAtCandidates.find(
+    (candidate): candidate is string =>
+      typeof candidate === 'string' && candidate.trim().length > 0
+  );
+  const reasonCandidates = [
+    record.reason,
+    record.rememberedBecause,
+    record.remembered_because,
+  ];
+  const reason = reasonCandidates.find(
+    (candidate): candidate is string =>
+      typeof candidate === 'string' && candidate.trim().length > 0
+  );
+
+  return {
+    fact: fact.trim(),
+    source: source?.trim(),
+    capturedAt: capturedAt?.trim(),
+    reason: reason?.trim(),
+  };
+}
+
+function formatMemoryTimestamp(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date);
+}
+
 type SnippetActionMode =
   | 'remix'
   | 'quote'
@@ -125,6 +228,7 @@ export function PostCard({
   // Resets on page reload. Will be accurate once API adds `is_liked` field.
   const [isLiked, setIsLiked] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isMemoryCapturesOpen, setIsMemoryCapturesOpen] = useState(false);
 
   const mediaUrl = (post.metadata?.media as PostMedia[] | undefined)?.[0]?.url;
   const chatMessages = (
@@ -152,6 +256,32 @@ export function PostCard({
     ['rememberedBecause'],
     ['remembered_because'],
     ['memory', 'reason'],
+  ]);
+  const memoryCaptures = readMetadataArray(post.metadata, [
+    ['memoryCaptures'],
+    ['memory_captures'],
+    ['capturedMemories'],
+    ['captured_memories'],
+    ['memory', 'captures'],
+  ])
+    .map((entry) => normalizeMemoryCapture(entry))
+    .filter((entry): entry is MemoryCapture => entry != null);
+  const memorySavedLabel =
+    readMetadataString(post.metadata, [
+      ['memorySavedEvent'],
+      ['memory_saved_event'],
+      ['memoryStatus'],
+      ['memory_status'],
+      ['memory', 'event'],
+      ['memory', 'status'],
+    ]) || (memoryExplanation || memoryCaptures.length > 0 ? 'Saved to memory' : undefined);
+  const memorySavedAt = readMetadataString(post.metadata, [
+    ['memorySavedAt'],
+    ['memory_saved_at'],
+    ['memoryRecordedAt'],
+    ['memory_recorded_at'],
+    ['memory', 'savedAt'],
+    ['memory', 'recordedAt'],
   ]);
 
   const buildSnippetClipboardText = (mode: SnippetActionMode) => {
@@ -334,17 +464,87 @@ export function PostCard({
           </span>
         </div>
 
-        {memoryExplanation ? (
-          <div
-            data-testid="chat-snippet-memory-reason"
-            className="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2"
-          >
-            <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
-              Why I remembered this
-            </span>
-            <p className="mt-2 text-sm text-foreground/90 whitespace-pre-line">
-              {memoryExplanation}
-            </p>
+        {memorySavedLabel ? (
+          <div className="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="space-y-1">
+                <span
+                  data-testid="chat-snippet-memory-event"
+                  className="inline-flex items-center rounded-full border border-emerald-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700"
+                >
+                  {memorySavedLabel}
+                </span>
+                <p className="text-xs text-emerald-900/80">
+                  {memorySavedAt
+                    ? `Captured ${formatMemoryTimestamp(memorySavedAt)}`
+                    : 'This snippet recorded a memory signal you can inspect.'}
+                </p>
+              </div>
+
+              {memoryCaptures.length > 0 ? (
+                <Dialog
+                  open={isMemoryCapturesOpen}
+                  onOpenChange={setIsMemoryCapturesOpen}
+                >
+                  <DialogTrigger
+                    className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-background/80 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-background"
+                    data-testid="chat-snippet-memory-drawer-trigger"
+                  >
+                    <History className="h-3.5 w-3.5" aria-hidden="true" />
+                    Recent captures ({memoryCaptures.length})
+                  </DialogTrigger>
+                  <DialogContent data-testid="chat-snippet-memory-drawer">
+                    <DialogHeader>
+                      <DialogTitle>Recent captures</DialogTitle>
+                      <DialogDescription>
+                        Review the latest facts this chat snippet marked as worth remembering.
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-3">
+                      {memoryCaptures.map((capture, index) => (
+                        <div
+                          key={`${capture.fact}-${index}`}
+                          data-testid="chat-snippet-memory-capture"
+                          className="rounded-xl border border-border/60 bg-muted/20 p-3"
+                        >
+                          <p className="text-sm font-medium text-foreground">
+                            {capture.fact}
+                          </p>
+                          {(capture.reason || capture.source || capture.capturedAt) ? (
+                            <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+                              {capture.reason ? <p>{capture.reason}</p> : null}
+                              <div className="flex flex-wrap gap-2">
+                                {capture.source ? (
+                                  <span>{capture.source}</span>
+                                ) : null}
+                                {capture.capturedAt ? (
+                                  <span>{formatMemoryTimestamp(capture.capturedAt)}</span>
+                                ) : null}
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              ) : null}
+            </div>
+
+            {memoryExplanation ? (
+              <div
+                data-testid="chat-snippet-memory-reason"
+                className="mt-3 rounded-xl border border-emerald-500/20 bg-background/70 px-3 py-2"
+              >
+                <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
+                  Why I remembered this
+                </span>
+                <p className="mt-2 text-sm text-foreground/90 whitespace-pre-line">
+                  {memoryExplanation}
+                </p>
+              </div>
+            ) : null}
           </div>
         ) : null}
 
