@@ -61,6 +61,7 @@ export function ProactiveControlsForm({
 }: ProactiveControlsFormProps) {
   const [settings, setSettings] = useState(initialSettings);
   const [isSaving, setIsSaving] = useState(false);
+  const [renderedAtMs, setRenderedAtMs] = useState(() => Date.now());
   const [status, setStatus] = useState<{
     tone: 'idle' | 'success' | 'error';
     message: string;
@@ -75,6 +76,31 @@ export function ProactiveControlsForm({
   const nextEligibleLabel = nextEligibleSendAt
     ? formatStatusTimestamp(nextEligibleSendAt)
     : 'Waiting for opt-in';
+  const nextEligibleSendMs = nextEligibleSendAt
+    ? new Date(nextEligibleSendAt).getTime()
+    : Number.NaN;
+  const isEligibilityDelayed =
+    Number.isFinite(nextEligibleSendMs) && nextEligibleSendMs - renderedAtMs > 60 * 1000;
+  const updateSettings = (value: Parameters<typeof setSettings>[0]) => {
+    setRenderedAtMs(Date.now());
+    setSettings(value);
+  };
+  const isQuietHoursBlocking =
+    isEligibilityDelayed && settings.quietHoursEnabled && !settings.nextEligibleSendAt;
+  const preSendBannerTitle = !settings.optIn
+    ? 'Proactive send blocked until opt-in'
+    : isQuietHoursBlocking
+      ? 'Next proactive send waits for the reset window'
+      : isEligibilityDelayed
+        ? 'Next proactive send stays queued until the next eligible window'
+        : 'Next proactive send is available once caps allow';
+  const preSendBannerBody = !settings.optIn
+    ? `Turn on proactive outreach before AgentGram sends the next message. When you do, it will still respect your ${settings.dailyLimit}/day and ${settings.weeklyLimit}/week caps.`
+    : isQuietHoursBlocking
+      ? `Quiet hours push the next eligible send to ${nextEligibleLabel}. Once that window opens, AgentGram still respects your ${settings.dailyLimit}/day and ${settings.weeklyLimit}/week caps.`
+      : isEligibilityDelayed
+        ? `AgentGram is still waiting for the next eligible send window at ${nextEligibleLabel}. Daily and weekly usage still stay capped at ${settings.dailyLimit}/day and ${settings.weeklyLimit}/week.`
+        : `AgentGram can send again as early as ${nextEligibleLabel}. Daily and weekly usage still stay capped at ${settings.dailyLimit}/day and ${settings.weeklyLimit}/week.`;
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -98,7 +124,7 @@ export function ProactiveControlsForm({
         throw new Error('Failed to save proactive controls');
       }
 
-      setSettings(payload.data);
+      updateSettings(payload.data);
       setStatus({
         tone: 'success',
         message: 'Proactive outreach preferences saved.',
@@ -132,7 +158,7 @@ export function ProactiveControlsForm({
             checked={settings.optIn}
             className="mt-1 h-4 w-4 rounded border-input"
             onChange={(event) =>
-              setSettings((current) => ({
+              updateSettings((current) => ({
                 ...current,
                 optIn: event.target.checked,
               }))
@@ -162,7 +188,7 @@ export function ProactiveControlsForm({
               min={1}
               max={25}
               onChange={(event) =>
-                setSettings((current) => ({
+                updateSettings((current) => ({
                   ...current,
                   dailyLimit: Number(event.target.value),
                 }))
@@ -185,7 +211,7 @@ export function ProactiveControlsForm({
               min={1}
               max={100}
               onChange={(event) =>
-                setSettings((current) => ({
+                updateSettings((current) => ({
                   ...current,
                   weeklyLimit: Number(event.target.value),
                 }))
@@ -205,7 +231,7 @@ export function ProactiveControlsForm({
               checked={settings.quietHoursEnabled}
               className="mt-1 h-4 w-4 rounded border-input"
               onChange={(event) =>
-                setSettings((current) => ({
+                updateSettings((current) => ({
                   ...current,
                   quietHoursEnabled: event.target.checked,
                 }))
@@ -233,7 +259,7 @@ export function ProactiveControlsForm({
                 <Input
                   aria-label="Quiet hours start"
                   onChange={(event) =>
-                    setSettings((current) => ({
+                    updateSettings((current) => ({
                       ...current,
                       quietHoursStart: event.target.value,
                     }))
@@ -250,7 +276,7 @@ export function ProactiveControlsForm({
                 <Input
                   aria-label="Quiet hours end"
                   onChange={(event) =>
-                    setSettings((current) => ({
+                    updateSettings((current) => ({
                       ...current,
                       quietHoursEnd: event.target.value,
                     }))
@@ -286,7 +312,7 @@ export function ProactiveControlsForm({
                   className="mt-0.5 h-4 w-4"
                   name="tonePreset"
                   onChange={() =>
-                    setSettings((current) => ({
+                    updateSettings((current) => ({
                       ...current,
                       tonePreset: preset,
                     }))
@@ -306,6 +332,24 @@ export function ProactiveControlsForm({
             ))}
           </div>
         </fieldset>
+
+        <div
+          className="rounded-lg border border-primary/20 bg-primary/5 p-4"
+          data-testid="proactive-pre-send-banner"
+        >
+          <p
+            className="text-xs font-semibold uppercase tracking-wide text-primary"
+            data-testid="proactive-pre-send-banner-title"
+          >
+            {preSendBannerTitle}
+          </p>
+          <p
+            className="mt-2 text-sm text-foreground"
+            data-testid="proactive-pre-send-banner-body"
+          >
+            {preSendBannerBody}
+          </p>
+        </div>
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-lg border border-border/60 p-4">

@@ -81,4 +81,25 @@ describe('AgentsPageContent capability browse controls', () => {
       })
     );
   });
+
+  it('accepts the discussed sort and keeps it in the rendered directory props', () => {
+    searchParamsState.value = new URLSearchParams('sort=discussed&page=2');
+
+    render(<AgentsPageContent />);
+
+    expect(screen.getByRole('link', { name: /top discussed/i })).toHaveAttribute(
+      'href',
+      '/agents?sort=discussed'
+    );
+    expect(screen.getByTestId('agents-list-props')).toHaveTextContent(
+      JSON.stringify({
+        sort: 'discussed',
+        page: 2,
+        search: '',
+        voice: false,
+        group_chat: false,
+        roleplay: false,
+      })
+    );
+  });
 });

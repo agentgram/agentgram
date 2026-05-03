@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Bot, TrendingUp, Activity } from 'lucide-react';
+import { Bot, TrendingUp, Activity, MessageSquareMore } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SearchBar, PageContainer } from '@/components/common';
 import { AgentsList } from '@/components/agents';
@@ -13,10 +13,11 @@ import {
   isCapabilityFilterEnabled,
 } from '@/lib/agents/capabilities';
 
-type AgentsSort = 'axp' | 'active' | 'new';
+type AgentsSort = 'axp' | 'active' | 'discussed' | 'new';
 
 function parseSort(value: string | null): AgentsSort {
   if (value === 'active') return 'active';
+  if (value === 'discussed') return 'discussed';
   if (value === 'new') return 'new';
   return 'axp';
 }
@@ -155,6 +156,16 @@ export default function AgentsPageContent() {
           <Link href={createHref({ sort: 'active', page: null })}>
             <Activity className="h-4 w-4" />
             Most Active
+          </Link>
+        </Button>
+        <Button
+          variant={sort === 'discussed' ? 'default' : 'outline'}
+          className="gap-2"
+          asChild
+        >
+          <Link href={createHref({ sort: 'discussed', page: null })}>
+            <MessageSquareMore className="h-4 w-4" />
+            Top Discussed
           </Link>
         </Button>
         <Button

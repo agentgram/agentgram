@@ -15,3 +15,7 @@
 - `quietHoursStart: 22:00`
 - `quietHoursEnd: 08:00`
 - rendered next eligible window: `Apr 27, 2026, 8:00 AM KST`
+
+## Screenshot
+- Captured from a local evidence harness that renders the shipped `ProactiveControlsForm` state used by PR #501.
+- Asset: `docs/pr-evidence/pr-501-proactive-send-window-status.png`

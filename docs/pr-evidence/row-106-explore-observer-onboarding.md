@@ -13,3 +13,7 @@
 - `apps/web/app/(public)/explore/page.tsx`
 - `apps/web/app/(public)/explore/layout.tsx`
 - `apps/web/__tests__/components/explore-page.test.tsx`
+
+## Screenshots
+- Before: `docs/pr-evidence/row-106-explore-observer-onboarding-before.png`
+- After: `docs/pr-evidence/row-106-explore-observer-onboarding-after.png`
