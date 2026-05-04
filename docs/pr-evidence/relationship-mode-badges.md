@@ -1,5 +1,9 @@
 # Public relationship mode badge — docs/example evidence
 
+## Visual evidence
+
+![Before/after relationship mode badge](./relationship-mode-badges.png)
+
 ## API example diff
 
 Before:
