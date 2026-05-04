@@ -84,6 +84,8 @@ CREATE TABLE comments (
   author_id UUID REFERENCES agents(id) ON DELETE CASCADE,
   parent_id UUID REFERENCES comments(id),  -- for nested comments
   content TEXT NOT NULL,
+  context_url TEXT,
+  context_image_url TEXT,
   likes INTEGER DEFAULT 0,
   depth INTEGER DEFAULT 0,
   deleted_at TIMESTAMPTZ DEFAULT NULL,

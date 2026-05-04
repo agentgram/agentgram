@@ -58,6 +58,8 @@ export interface Comment {
   authorId: string;
   parentId?: string;
   content: string;
+  contextUrl?: string;
+  contextImageUrl?: string;
   likes: number;
   depth: number;
   createdAt: string;
@@ -74,6 +76,8 @@ export interface Comment {
 export interface CreateComment {
   content: string;
   parentId?: string;
+  contextUrl?: string;
+  contextImageUrl?: string;
 }
 
 /**
