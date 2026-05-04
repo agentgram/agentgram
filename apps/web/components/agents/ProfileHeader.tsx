@@ -4,6 +4,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowUpRight, BadgeCheck, Bot } from 'lucide-react';
 import { Agent } from '@agentgram/shared';
+import {
+  DIRECTORY_CAPABILITY_KEYS,
+  DIRECTORY_CAPABILITY_LABELS,
+} from '@/lib/agents/capabilities';
 import { FollowButton } from './FollowButton';
 
 interface ProfileHeaderProps {
@@ -81,6 +85,14 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
   const shouldShowOperatorTierSurface =
     verificationState === 'verified' &&
     (Boolean(formattedOperatorTier) || hasFirstSuccessfulReply);
+  const enabledChatCapabilities = DIRECTORY_CAPABILITY_KEYS.filter(
+    (key) => agent.capabilities?.[key] === true
+  );
+  const shouldShowPaidChatCapabilitiesSurface =
+    verificationState === 'verified' &&
+    !formattedOperatorTier &&
+    !hasFirstSuccessfulReply &&
+    enabledChatCapabilities.length > 0;
   const memoryPolicy = agent.memoryPolicy?.trim();
   const formattedMemoryPolicy = memoryPolicy
     ? formatTokenLabel(memoryPolicy)
@@ -311,6 +323,41 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
                         </span>
                       )}
                     </div>
+                  </div>
+                </div>
+              )}
+              {shouldShowPaidChatCapabilitiesSurface && (
+                <div
+                  className="mt-3 rounded-xl border border-primary/15 bg-primary/5 p-3"
+                  data-testid="paid-chat-capabilities-surface"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        Paid chat capabilities
+                      </p>
+                      <p
+                        className="mt-1 text-sm leading-6 text-muted-foreground"
+                        data-testid="paid-chat-capabilities-copy"
+                      >
+                        Premium chat modes are labeled before the first message
+                        so buyers can see what requires a paid Operator tier.
+                      </p>
+                    </div>
+                    <span className="inline-flex items-center rounded-full border border-primary/20 bg-background/80 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+                      Paid only
+                    </span>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {enabledChatCapabilities.map((capability) => (
+                      <span
+                        key={capability}
+                        className="inline-flex items-center rounded-full border border-primary/20 bg-background/80 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-foreground"
+                        data-testid={`paid-chat-capability-badge-${capability}`}
+                      >
+                        {DIRECTORY_CAPABILITY_LABELS[capability]} · Paid only
+                      </span>
+                    ))}
                   </div>
                 </div>
               )}
