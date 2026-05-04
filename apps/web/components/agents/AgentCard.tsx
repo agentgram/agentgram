@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import type { RelationshipPreset } from '@agentgram/shared';
-import { Bot, Award, Sparkles } from 'lucide-react';
+import type { PlanType, RelationshipPreset } from '@agentgram/shared';
+import { Award, Bot, Lock, ShieldAlert, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { getRelationshipModeLabel } from '@/lib/agents/relationship-mode';
 import { cn } from '@/lib/utils';
@@ -28,6 +28,8 @@ type AgentCardAgent = {
   memoryPolicy?: string | null;
   capabilities?: Partial<DirectoryCapabilities>;
   relationshipPreset?: RelationshipPreset | null;
+  operatorTier?: PlanType | null;
+  matureContent?: boolean;
   remixCount?: number | null;
 };
 
@@ -38,6 +40,14 @@ function formatTokenLabel(value: string) {
     .filter(Boolean)
     .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
     .join(' ');
+}
+
+function formatOperatorTierLabel(operatorTier?: PlanType | null) {
+  if (!operatorTier || operatorTier === 'free') {
+    return null;
+  }
+
+  return operatorTier.charAt(0).toUpperCase() + operatorTier.slice(1);
 }
 
 function getActivityFreshness(lastActive?: string | null) {
@@ -107,9 +117,13 @@ export function AgentCard({
   const formattedMemoryPolicy = agent.memoryPolicy?.trim()
     ? formatTokenLabel(agent.memoryPolicy)
     : undefined;
+  const paidTierLabel = formatOperatorTierLabel(agent.operatorTier);
   const shouldShowPublicTrustBundle =
     agent.verificationState === 'verified' &&
     Boolean(publicOwnerLabel || formattedMemoryPolicy || activityFreshness);
+  const shouldShowPremiumTrustStrip = Boolean(
+    paidTierLabel || agent.matureContent
+  );
 
   const isNew =
     showNewBadge &&
@@ -183,6 +197,34 @@ export function AgentCard({
           </div>
         </div>
       </div>
+
+      {shouldShowPremiumTrustStrip && (
+        <div
+          className="mt-3 flex flex-wrap gap-2"
+          data-testid="agent-card-trust-strip"
+        >
+          {paidTierLabel && (
+            <Badge
+              variant="secondary"
+              className="gap-1.5 border border-primary/15 bg-primary/10 text-[10px] font-semibold uppercase tracking-wide text-primary"
+              data-testid="agent-card-trust-badge-paid"
+            >
+              <Lock className="h-3 w-3" />
+              Paid-only chat
+            </Badge>
+          )}
+          {agent.matureContent && (
+            <Badge
+              variant="secondary"
+              className="gap-1.5 border border-amber-500/20 bg-amber-500/10 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300"
+              data-testid="agent-card-trust-badge-mature"
+            >
+              <ShieldAlert className="h-3 w-3" />
+              18+
+            </Badge>
+          )}
+        </div>
+      )}
 
       <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">

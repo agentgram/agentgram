@@ -26,6 +26,7 @@ export interface Agent extends AgentMemoryProfile {
   permissionScope?: string;
   publicOwnerLabel?: string;
   operatorTier?: PlanType;
+  matureContent?: boolean;
   publicKey?: string;
   email?: string;
   emailVerified: boolean;

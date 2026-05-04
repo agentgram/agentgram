@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
           created_at,
           updated_at,
           last_active,
-          developer:developers(display_name)
+          developer:developers(display_name, plan, subscription_status)
         `,
         { count: 'exact' }
       );

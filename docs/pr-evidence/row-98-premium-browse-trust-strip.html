@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Row 98 — Premium browse trust strip evidence</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f6f7fb;
+        color: #111827;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 32px;
+        background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 24px;
+      }
+      p.lead {
+        margin: 0 0 24px;
+        color: #475569;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px;
+      }
+      .panel {
+        background: white;
+        border: 1px solid #dbe4ff;
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+      }
+      .eyebrow {
+        display: inline-flex;
+        margin-bottom: 16px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        background: #eef2ff;
+        color: #4338ca;
+      }
+      .card {
+        border: 1px solid #e5e7eb;
+        border-radius: 18px;
+        padding: 18px;
+        background: #fff;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #ddd6fe, #bfdbfe);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+      }
+      .name {
+        font-weight: 700;
+      }
+      .handle {
+        margin-top: 4px;
+        color: #64748b;
+        font-size: 13px;
+      }
+      .badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 999px;
+        padding: 7px 10px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .badge.relationship {
+        background: #eef2ff;
+        color: #4338ca;
+      }
+      .badge.capability {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        color: #334155;
+      }
+      .badge.paid {
+        background: #eef2ff;
+        border: 1px solid #c7d2fe;
+        color: #4338ca;
+      }
+      .badge.mature {
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        color: #b45309;
+      }
+      .stats {
+        margin-top: 16px;
+        display: flex;
+        gap: 18px;
+        color: #475569;
+        font-size: 14px;
+      }
+      .stats strong {
+        color: #111827;
+      }
+      .callout {
+        margin-top: 14px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        color: #475569;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Row 98 — Premium browse trust strip</h1>
+    <p class="lead">Before: browse cards only show relationship/capability badges. After: the same public card also discloses paid-only chat and 18+ content before a user clicks into chat/profile.</p>
+    <div class="grid">
+      <section class="panel">
+        <div class="eyebrow">Before</div>
+        <div class="card">
+          <div class="row">
+            <div class="avatar">🤖</div>
+            <div>
+              <div class="name">Night Club Guide</div>
+              <div class="handle">@night-club-guide</div>
+            </div>
+          </div>
+          <div class="badges">
+            <span class="badge relationship">Mentor mode</span>
+            <span class="badge capability">Voice</span>
+            <span class="badge capability">Group chat</span>
+          </div>
+          <div class="stats"><span><strong>980</strong> AXP</span><span><strong>3</strong> remixes</span></div>
+          <div class="callout">Users cannot tell from browse whether chat is paid-only or intended for mature audiences until after they click through.</div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="eyebrow">After</div>
+        <div class="card">
+          <div class="row">
+            <div class="avatar">🤖</div>
+            <div>
+              <div class="name">Night Club Guide</div>
+              <div class="handle">@night-club-guide</div>
+            </div>
+          </div>
+          <div class="badges">
+            <span class="badge relationship">Mentor mode</span>
+            <span class="badge paid">🔒 Paid-only chat</span>
+            <span class="badge mature">⚠️ 18+</span>
+            <span class="badge capability">Voice</span>
+            <span class="badge capability">Group chat</span>
+          </div>
+          <div class="stats"><span><strong>980</strong> AXP</span><span><strong>3</strong> remixes</span></div>
+          <div class="callout">The trust strip makes premium access and age-sensitive content visible on the browse card, so people know the constraint before starting chat.</div>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>

@@ -2,7 +2,7 @@
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { API_BASE_PATH, PAGINATION } from '@agentgram/shared';
-import type { RelationshipPreset } from '@agentgram/shared';
+import type { PlanType, RelationshipPreset } from '@agentgram/shared';
 import type { DirectoryCapabilities } from '@/lib/agents/capabilities';
 
 export type AgentsDirectorySort = 'axp' | 'active' | 'discussed' | 'new';
@@ -15,6 +15,8 @@ export type AgentsDirectoryAgent = {
   description: string | null;
   capabilities: DirectoryCapabilities;
   relationshipPreset?: RelationshipPreset | null;
+  operatorTier?: PlanType | null;
+  matureContent?: boolean;
   remixCount?: number | null;
   displayName?: string | null;
   avatarUrl?: string | null;
