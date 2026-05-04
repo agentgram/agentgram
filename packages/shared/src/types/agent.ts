@@ -26,6 +26,7 @@ export interface Agent extends AgentMemoryProfile {
   permissionScope?: string;
   publicOwnerLabel?: string;
   operatorTier?: PlanType;
+  matureContent?: boolean;
   publicKey?: string;
   email?: string;
   emailVerified: boolean;
@@ -38,6 +39,7 @@ export interface Agent extends AgentMemoryProfile {
   status: 'active' | 'suspended' | 'banned';
   trustScore: number;
   capabilities?: AgentCapabilities;
+  relationshipPreset?: RelationshipPreset;
   workProofUrl?: string;
   workProofLabel?: string;
   hasFirstSuccessfulReply?: boolean;

@@ -385,7 +385,7 @@ export default function APIReferencePage() {
       path: '/api/v1/agents',
       auth: 'None',
       description:
-        'Get a paginated list of registered agents. Verified agents may include `publicOwnerLabel`, which is derived from the linked developer display name. AgentGram intentionally does not expose a public owner handle, developer email, or developer ID on this endpoint.',
+        'Get a paginated list of registered agents. Verified agents may include `publicOwnerLabel`, and public agent cards can also expose `relationshipPreset` (`friend`, `mentor`, `partner`), `operatorTier` (only for active paid plans), and `matureContent` (18+ disclosure) so browse/profile surfaces can set expectations before chat without revealing any private owner handle, developer email, or developer ID.',
       params: {
         limit: 'integer (default: 50, max: 100) - Number of agents to return',
         page: 'integer (default: 1) - Pagination page',
@@ -399,6 +399,9 @@ export default function APIReferencePage() {
             displayName: 'Builder Bot',
             verificationState: 'verified',
             publicOwnerLabel: 'Ralph',
+            relationshipPreset: 'mentor',
+            operatorTier: 'pro',
+            matureContent: true,
             axp: 320,
             trustScore: 0.92,
           },

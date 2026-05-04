@@ -139,9 +139,16 @@ describe('ProfileHeader', () => {
     );
   });
 
-  it('renders a remix CTA that deep-links into onboarding with public persona context', () => {
-    render(<ProfileHeader agent={baseAgent} />);
+  it('renders a remix CTA and relationship mode badge when public persona metadata is present', () => {
+    render(
+      <ProfileHeader
+        agent={{ ...baseAgent, relationshipPreset: 'partner' }}
+      />
+    );
 
+    expect(screen.getByTestId('profile-relationship-badge')).toHaveTextContent(
+      'Partner mode'
+    );
     expect(screen.getByTestId('remix-agent-link')).toHaveAttribute(
       'href',
       '/dashboard/onboard?remix=verified-builder&displayName=Verified+Builder&description=Builds+production+agents.'
@@ -224,11 +231,19 @@ describe('ProfileHeader', () => {
           memoryPolicy: 'ephemeral_only',
           workProofUrl: 'https://example.com/proof',
           workProofLabel: 'Review work proof',
+          capabilities: {
+            voice: true,
+            group_chat: true,
+            roleplay: false,
+          },
         }}
       />
     );
 
     expect(screen.getByTestId('operator-tier-surface')).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('paid-chat-capabilities-surface')
+    ).not.toBeInTheDocument();
     expect(screen.getByTestId('operator-tier-badge')).toHaveTextContent('Pro');
     expect(screen.getByTestId('operator-trust-bundle')).toBeInTheDocument();
     expect(screen.getByTestId('memory-policy-badge')).toHaveTextContent(
@@ -268,9 +283,48 @@ describe('ProfileHeader', () => {
       screen.queryByTestId('operator-trust-bundle')
     ).not.toBeInTheDocument();
     expect(screen.queryByTestId('operator-tier-link')).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('paid-chat-capabilities-surface')
+    ).not.toBeInTheDocument();
     expect(screen.getByTestId('verification-state-badge')).toHaveTextContent(
       'verified'
     );
+  });
+
+  it('labels paid-only chat capabilities before the first successful reply for verified profiles without a paid tier', () => {
+    render(
+      <ProfileHeader
+        agent={{
+          ...baseAgent,
+          verificationState: 'verified',
+          capabilities: {
+            voice: true,
+            group_chat: true,
+            roleplay: false,
+          },
+        }}
+      />
+    );
+
+    expect(
+      screen.getByTestId('paid-chat-capabilities-surface')
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('paid-chat-capabilities-copy')).toHaveTextContent(
+      /before the first message/i
+    );
+    expect(
+      screen.getByTestId('paid-chat-capability-badge-voice')
+    ).toHaveTextContent('Voice · Paid only');
+    expect(
+      screen.getByTestId('paid-chat-capability-badge-group_chat')
+    ).toHaveTextContent('Group chat · Paid only');
+    expect(
+      screen.queryByTestId('paid-chat-capability-badge-roleplay')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('operator-tier-surface')
+    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId('operator-tier-link')).not.toBeInTheDocument();
   });
 
   it('shows operator tier upgrade CTA after the first successful reply for verified profiles without a paid tier', () => {
@@ -280,11 +334,19 @@ describe('ProfileHeader', () => {
           ...baseAgent,
           verificationState: 'verified',
           hasFirstSuccessfulReply: true,
+          capabilities: {
+            voice: true,
+            group_chat: true,
+            roleplay: false,
+          },
         }}
       />
     );
 
     expect(screen.getByTestId('operator-tier-surface')).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('paid-chat-capabilities-surface')
+    ).not.toBeInTheDocument();
     expect(screen.getByTestId('operator-trust-bundle')).toBeInTheDocument();
     expect(screen.queryByTestId('operator-tier-badge')).not.toBeInTheDocument();
     expect(screen.getByTestId('memory-policy-status')).toHaveTextContent(

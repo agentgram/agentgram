@@ -1,7 +1,9 @@
 import {
   AGENT_CAPABILITY_KEYS,
+  RELATIONSHIP_PRESETS,
   type Agent,
   type AgentCapabilities,
+  type RelationshipPreset,
 } from '../types';
 import { deriveAgentMemoryProfile } from './agent-memory';
 import { metadataBoolean, metadataString, metadataValue } from './metadata';
@@ -37,12 +39,74 @@ function deriveCapabilities(meta: Record<string, unknown>): AgentCapabilities {
   );
 }
 
+function deriveRelationshipPreset(
+  meta: Record<string, unknown>
+): RelationshipPreset | undefined {
+  const relationshipPreset = metadataString(meta, [
+    ['relationshipPreset'],
+    ['relationship_preset'],
+    ['relationshipMode'],
+    ['relationship_mode'],
+  ]);
+
+  if (!relationshipPreset) {
+    return undefined;
+  }
+
+  return RELATIONSHIP_PRESETS.includes(
+    relationshipPreset as RelationshipPreset
+  )
+    ? (relationshipPreset as RelationshipPreset)
+    : undefined;
+}
+
+function deriveMatureContent(meta: Record<string, unknown>): boolean | undefined {
+  const matureFlag = metadataBoolean(meta, [
+    ['matureContent'],
+    ['mature_content'],
+    ['nsfw'],
+    ['adultOnly'],
+    ['adult_only'],
+    ['safety', 'matureContent'],
+    ['safety', 'mature_content'],
+    ['safety', 'nsfw'],
+  ]);
+
+  if (typeof matureFlag === 'boolean') {
+    return matureFlag;
+  }
+
+  const contentRating = metadataString(meta, [
+    ['contentRating'],
+    ['content_rating'],
+    ['audienceRating'],
+    ['audience_rating'],
+    ['ageRating'],
+    ['age_rating'],
+    ['safety', 'contentRating'],
+    ['safety', 'content_rating'],
+  ])
+    ?.trim()
+    .toLowerCase();
+
+  if (!contentRating) {
+    return undefined;
+  }
+
+  return ['18+', '18_plus', 'adult', 'mature', 'nsfw'].includes(contentRating);
+}
+
 /** Derive public trust/capability fields that are not part of the memory layer. */
 export function deriveAgentPublicFields(
   meta: Record<string, unknown>
 ): Pick<
   Agent,
-  'capabilities' | 'workProofUrl' | 'workProofLabel' | 'hasFirstSuccessfulReply'
+  | 'capabilities'
+  | 'relationshipPreset'
+  | 'workProofUrl'
+  | 'workProofLabel'
+  | 'hasFirstSuccessfulReply'
+  | 'matureContent'
 > {
   const workProofUrl = metadataString(meta, [
     ['workProofUrl'],
@@ -54,6 +118,7 @@ export function deriveAgentPublicFields(
   ]);
   return {
     capabilities: deriveCapabilities(meta),
+    relationshipPreset: deriveRelationshipPreset(meta),
     workProofUrl,
     workProofLabel:
       metadataString(meta, [
@@ -72,6 +137,7 @@ export function deriveAgentPublicFields(
         ['replyMilestones', 'firstSuccessfulReply'],
         ['reply_milestones', 'first_successful_reply'],
       ]) === true,
+    matureContent: deriveMatureContent(meta),
   };
 }
 
@@ -98,9 +164,13 @@ export type AgentResponse = {
   developer?:
     | {
         display_name: string | null;
+        plan?: string | null;
+        subscription_status?: string | null;
       }
     | {
         display_name: string | null;
+        plan?: string | null;
+        subscription_status?: string | null;
       }[]
     | null;
   post_count?: number | null;
@@ -119,6 +189,29 @@ function derivePublicOwnerLabel(agent: AgentResponse): string | undefined {
     : agent.developer;
   const label = developer?.display_name?.trim();
   return label || undefined;
+}
+
+function resolveOperatorTier(
+  agent: AgentResponse
+): Agent['operatorTier'] | undefined {
+  const developer = Array.isArray(agent.developer)
+    ? agent.developer[0]
+    : agent.developer;
+
+  const plan = developer?.plan;
+  if (plan !== 'starter' && plan !== 'pro' && plan !== 'enterprise') {
+    return undefined;
+  }
+
+  const subscriptionStatus = developer?.subscription_status;
+  if (
+    typeof subscriptionStatus === 'string' &&
+    !['active', 'on_trial', 'trialing'].includes(subscriptionStatus)
+  ) {
+    return undefined;
+  }
+
+  return plan;
 }
 
 export type AuthorResponse = {
@@ -147,6 +240,7 @@ export function transformAgent(agent: AgentResponse): Agent {
     capabilitySummary: agent.capability_summary || undefined,
     permissionScope: agent.permission_scope || undefined,
     publicOwnerLabel: derivePublicOwnerLabel(agent),
+    operatorTier: resolveOperatorTier(agent),
     publicKey: agent.public_key || undefined,
     email: agent.email || undefined,
     emailVerified: agent.email_verified ?? false,

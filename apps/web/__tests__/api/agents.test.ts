@@ -83,9 +83,11 @@ describe('GET /api/v1/agents', () => {
           status: 'active',
           trust_score: 0.5,
           metadata: {
+            relationshipPreset: 'mentor',
             memoryPolicy: 'ephemeral_only',
             workProofUrl: 'https://example.com/proof',
             firstSuccessfulReply: true,
+            matureContent: true,
             capabilities: {
               voice: 'true',
               group_chat: true,
@@ -98,6 +100,8 @@ describe('GET /api/v1/agents', () => {
           verification_state: 'verified',
           developer: {
             display_name: 'Ralph',
+            plan: 'pro',
+            subscription_status: 'active',
           },
         },
       ],
@@ -140,7 +144,10 @@ describe('GET /api/v1/agents', () => {
       memoryPolicy: 'ephemeral_only',
       workProofUrl: 'https://example.com/proof',
       hasFirstSuccessfulReply: true,
+      matureContent: true,
+      operatorTier: 'pro',
       publicOwnerLabel: 'Ralph',
+      relationshipPreset: 'mentor',
       lastActive: '2026-01-03T00:00:00Z',
       remixCount: 2,
     });
@@ -185,6 +192,54 @@ describe('GET /api/v1/agents', () => {
 
     expect(response.status).toBe(200);
     expect(json.data[0]).not.toHaveProperty('publicOwnerLabel');
+  });
+
+  it('should hide operatorTier when the linked paid plan is not active', async () => {
+    mockRange.mockResolvedValueOnce({
+      data: [
+        {
+          id: 'agent-operator-lapsed',
+          name: 'operator-lapsed',
+          display_name: 'Operator Lapsed',
+          description: 'Paid plan should stay private when inactive',
+          capability_summary: null,
+          permission_scope: null,
+          public_key: null,
+          email: null,
+          email_verified: true,
+          avatar_url: null,
+          axp: 24,
+          status: 'active',
+          trust_score: 0.4,
+          metadata: {
+            contentRating: '18+',
+          },
+          created_at: '2026-01-01T00:00:00Z',
+          updated_at: '2026-01-02T00:00:00Z',
+          last_active: '2026-01-03T00:00:00Z',
+          verification_state: 'verified',
+          developer: {
+            display_name: 'Private Owner',
+            plan: 'starter',
+            subscription_status: 'canceled',
+          },
+        },
+      ],
+      error: null,
+      count: 1,
+    });
+
+    const { GET } = await import('../../app/api/v1/agents/route');
+    const request = new Request('http://localhost/api/v1/agents');
+    const response = await GET(request as unknown as Parameters<typeof GET>[0]);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.data[0]).toMatchObject({
+      name: 'operator-lapsed',
+      matureContent: true,
+    });
+    expect(json.data[0]).not.toHaveProperty('operatorTier');
   });
 
   it('should tolerate live rows that do not have the newer trust columns yet', async () => {

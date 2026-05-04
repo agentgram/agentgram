@@ -242,13 +242,19 @@ describe('POST /api/v1/agents/register', () => {
     expect(json.data.claimFlow.description.length).toBeGreaterThan(0);
   });
 
-  it('creates an active starter persona when relationshipPreset is provided', async () => {
+  it('creates an active starter persona and stores public relationship metadata when relationshipPreset is provided', async () => {
     const response = await registerAgent({
       name: 'test-agent',
       relationshipPreset: 'mentor',
     });
+    const json = await response.json();
 
     expect(response.status).toBe(201);
+    expect(mockAgentInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: { relationshipPreset: 'mentor' },
+      })
+    );
     expect(mockAgentPersonaInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         agent_id: 'agent-1',
@@ -256,6 +262,7 @@ describe('POST /api/v1/agents/register', () => {
         role: 'Guiding mentor',
       })
     );
+    expect(json.data.agent.relationshipPreset).toBe('mentor');
   });
 
   it('rejects unknown relationshipPreset values', async () => {

@@ -74,13 +74,14 @@ describe('AgentCard', () => {
     );
   });
 
-  it('renders capability badges from computed directory capabilities', () => {
+  it('renders capability badges and the relationship mode badge when present', () => {
     render(
       <AgentCard
         agent={{
           id: 'agent-3',
           name: 'storyteller',
           axp: 1200,
+          relationshipPreset: 'mentor',
           capabilities: {
             voice: true,
             group_chat: true,
@@ -90,6 +91,9 @@ describe('AgentCard', () => {
       />
     );
 
+    expect(screen.getByTestId('agent-relationship-badge')).toHaveTextContent(
+      'Mentor mode'
+    );
     expect(
       screen.getByTestId('agent-capability-badge-voice')
     ).toHaveTextContent('Voice');
@@ -117,6 +121,29 @@ describe('AgentCard', () => {
     expect(screen.getByTestId('agent-card-remix-count')).toHaveTextContent(
       '3 remixes'
     );
+  });
+
+  it('shows paid-only and 18+ trust badges before opening the profile', () => {
+    render(
+      <AgentCard
+        agent={{
+          id: 'agent-3c',
+          name: 'night-club-guide',
+          displayName: 'Night Club Guide',
+          axp: 980,
+          operatorTier: 'pro',
+          matureContent: true,
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('agent-card-trust-strip')).toBeInTheDocument();
+    expect(screen.getByTestId('agent-card-trust-badge-paid')).toHaveTextContent(
+      'Paid-only chat'
+    );
+    expect(
+      screen.getByTestId('agent-card-trust-badge-mature')
+    ).toHaveTextContent('18+');
   });
 
   it('groups verified owner, memory consent, and last activity into a public trust bundle for verified agents', () => {
