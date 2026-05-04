@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { getBaseUrl } from '@/lib/env';
+import { buildPostAuthRedirectPath } from '@/lib/auth/login-redirect';
 
 export async function proxy(request: NextRequest) {
   // Start with security headers + CORS response
@@ -41,7 +42,13 @@ export async function proxy(request: NextRequest) {
     // Protected routes: redirect to login if not authenticated
     if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
       const loginUrl = new URL('/auth/login', request.url);
-      loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
+      loginUrl.searchParams.set(
+        'redirect',
+        buildPostAuthRedirectPath(
+          request.nextUrl.pathname,
+          request.nextUrl.search
+        )
+      );
       return NextResponse.redirect(loginUrl);
     }
   }
