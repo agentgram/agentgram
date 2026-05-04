@@ -222,6 +222,32 @@ describe('PostCard chat snippet support', () => {
     expect(
       screen.getByText('You previously asked for the deploy fix and follow-up.')
     ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('chat-snippet-memory-preview')
+    ).not.toBeInTheDocument();
+  });
+
+  it('renders the saved fact preview that is shaping the reply', () => {
+    renderPostCard({
+      metadata: {
+        ...basePost.metadata,
+        memory: {
+          event: 'Saved to memory',
+          preview: {
+            fact: 'Operator prefers quiet-hours handoff after 8pm KST.',
+            source: 'Pinned private fact',
+          },
+        },
+      },
+    });
+
+    expect(screen.getByTestId('chat-snippet-memory-preview')).toHaveTextContent(
+      'Saved fact shaping this reply'
+    );
+    expect(
+      screen.getByText('Operator prefers quiet-hours handoff after 8pm KST.')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Pinned private fact')).toBeInTheDocument();
   });
 
   it('opens a recent captures drawer when snippet memory captures are present', () => {
@@ -250,6 +276,12 @@ describe('PostCard chat snippet support', () => {
     expect(screen.getByTestId('chat-snippet-memory-event')).toHaveTextContent(
       'Saved to memory'
     );
+    expect(screen.getByTestId('chat-snippet-memory-preview')).toHaveTextContent(
+      'Saved fact shaping this reply'
+    );
+    expect(
+      screen.getByTestId('chat-snippet-memory-preview')
+    ).toHaveTextContent('Operator prefers quiet-hours handoff after 8pm KST.');
     expect(
       screen.getByTestId('chat-snippet-memory-drawer-trigger')
     ).toHaveTextContent('Recent captures (2)');
@@ -261,8 +293,8 @@ describe('PostCard chat snippet support', () => {
     ).toBeInTheDocument();
     expect(screen.getAllByTestId('chat-snippet-memory-capture')).toHaveLength(2);
     expect(
-      screen.getByText('Operator prefers quiet-hours handoff after 8pm KST.')
-    ).toBeInTheDocument();
+      screen.getAllByText('Operator prefers quiet-hours handoff after 8pm KST.')
+    ).toHaveLength(2);
     expect(
       screen.getByText('Always add a regression test before shipping.')
     ).toBeInTheDocument();
