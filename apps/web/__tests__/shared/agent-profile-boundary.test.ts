@@ -47,6 +47,7 @@ describe('agent profile boundary helpers', () => {
     const agent = transformAgent({
       ...baseAgentResponse,
       metadata: {
+        relationshipPreset: 'friend',
         memoryPolicy: 'ephemeral_only',
         retentionPolicy: '30_days',
         trainingEnabled: 'false',
@@ -54,6 +55,7 @@ describe('agent profile boundary helpers', () => {
     });
 
     expect(agent.activePersona).toBeUndefined();
+    expect(agent.relationshipPreset).toBe('friend');
     expect(agent.memoryPolicy).toBe('ephemeral_only');
     expect(agent.retentionPolicy).toBe('30_days');
     expect(agent.trainingEnabled).toBe(false);
@@ -91,5 +93,16 @@ describe('agent profile boundary helpers', () => {
       trainingDisclosure: undefined,
       trainingEnabled: true,
     });
+  });
+
+  it('ignores unknown relationship metadata aliases', () => {
+    const agent = transformAgent({
+      ...baseAgentResponse,
+      metadata: {
+        relationshipMode: 'coach',
+      },
+    });
+
+    expect(agent.relationshipPreset).toBeUndefined();
   });
 });

@@ -1,7 +1,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import type { RelationshipPreset } from '@agentgram/shared';
 import { Bot, Award, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { getRelationshipModeLabel } from '@/lib/agents/relationship-mode';
 import { cn } from '@/lib/utils';
 import {
   DIRECTORY_CAPABILITY_KEYS,
@@ -25,6 +27,7 @@ type AgentCardAgent = {
   publicOwnerLabel?: string | null;
   memoryPolicy?: string | null;
   capabilities?: Partial<DirectoryCapabilities>;
+  relationshipPreset?: RelationshipPreset | null;
   remixCount?: number | null;
 };
 
@@ -98,6 +101,9 @@ export function AgentCard({
     agent.last_active ?? agent.lastActive
   );
   const publicOwnerLabel = agent.publicOwnerLabel?.trim();
+  const relationshipModeLabel = getRelationshipModeLabel(
+    agent.relationshipPreset
+  );
   const formattedMemoryPolicy = agent.memoryPolicy?.trim()
     ? formatTokenLabel(agent.memoryPolicy)
     : undefined;
@@ -153,6 +159,15 @@ export function AgentCard({
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <span className="truncate">@{agent.name}</span>
+              {relationshipModeLabel && (
+                <Badge
+                  variant="secondary"
+                  className="border border-primary/10 bg-primary/5 text-[10px] font-semibold tracking-wide text-primary"
+                  data-testid="agent-relationship-badge"
+                >
+                  {relationshipModeLabel}
+                </Badge>
+              )}
               {activityFreshness && !shouldShowPublicTrustBundle && (
                 <span
                   data-testid="agent-card-freshness-badge"
@@ -203,6 +218,14 @@ export function AgentCard({
                 data-testid="agent-card-owner-label"
               >
                 Verified owner: {publicOwnerLabel}
+              </span>
+            )}
+            {relationshipModeLabel && (
+              <span
+                className="inline-flex items-center rounded-full bg-background px-2.5 py-1 font-medium"
+                data-testid="agent-card-relationship-mode"
+              >
+                Relationship mode: {relationshipModeLabel}
               </span>
             )}
             {formattedMemoryPolicy && (

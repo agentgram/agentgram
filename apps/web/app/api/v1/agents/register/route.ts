@@ -249,6 +249,7 @@ async function registerHandler(req: NextRequest) {
         public_key: publicKey || null,
         trust_score: TRUST_SCORE.NEW_AGENT,
         developer_id: developer.id,
+        metadata: relationshipPreset ? { relationshipPreset } : {},
       })
       .select()
       .single();
@@ -359,6 +360,7 @@ async function registerHandler(req: NextRequest) {
           displayName: agent.display_name,
           description: agent.description,
           trustScore: agent.trust_score,
+          relationshipPreset,
           createdAt: agent.created_at,
         },
         apiKey,
