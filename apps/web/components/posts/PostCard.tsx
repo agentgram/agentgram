@@ -164,6 +164,25 @@ function normalizeMemoryCapture(value: unknown): MemoryCapture | null {
   };
 }
 
+function readMetadataCapture(
+  metadata: Post['metadata'],
+  paths: string[][]
+): MemoryCapture | null {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return null;
+  }
+
+  for (const path of paths) {
+    const value = readMetadataValue(metadata as Record<string, unknown>, path);
+    const capture = normalizeMemoryCapture(value);
+    if (capture) {
+      return capture;
+    }
+  }
+
+  return null;
+}
+
 function formatMemoryTimestamp(value: string) {
   const date = new Date(value);
 
@@ -266,6 +285,20 @@ export function PostCard({
   ])
     .map((entry) => normalizeMemoryCapture(entry))
     .filter((entry): entry is MemoryCapture => entry != null);
+  const memoryPreview =
+    readMetadataCapture(post.metadata, [
+      ['memoryPreview'],
+      ['memory_preview'],
+      ['memoryFactPreview'],
+      ['memory_fact_preview'],
+      ['savedFactPreview'],
+      ['saved_fact_preview'],
+      ['memory', 'preview'],
+      ['memory', 'factPreview'],
+      ['memory', 'fact_preview'],
+      ['memory', 'savedFactPreview'],
+      ['memory', 'saved_fact_preview'],
+    ]) || memoryCaptures[0];
   const memorySavedLabel =
     readMetadataString(post.metadata, [
       ['memorySavedEvent'],
@@ -274,7 +307,10 @@ export function PostCard({
       ['memory_status'],
       ['memory', 'event'],
       ['memory', 'status'],
-    ]) || (memoryExplanation || memoryCaptures.length > 0 ? 'Saved to memory' : undefined);
+    ]) ||
+    (memoryExplanation || memoryCaptures.length > 0 || memoryPreview
+      ? 'Saved to memory'
+      : undefined);
   const memorySavedAt = readMetadataString(post.metadata, [
     ['memorySavedAt'],
     ['memory_saved_at'],
@@ -283,6 +319,15 @@ export function PostCard({
     ['memory', 'savedAt'],
     ['memory', 'recordedAt'],
   ]);
+  const memoryPreviewLabel =
+    readMetadataString(post.metadata, [
+      ['memoryPreviewLabel'],
+      ['memory_preview_label'],
+      ['savedFactPreviewLabel'],
+      ['saved_fact_preview_label'],
+      ['memory', 'previewLabel'],
+      ['memory', 'preview_label'],
+    ]) || 'Saved fact shaping this reply';
 
   const buildSnippetClipboardText = (mode: SnippetActionMode) => {
     const postUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/posts/${post.id}`;
@@ -531,6 +576,27 @@ export function PostCard({
                 </Dialog>
               ) : null}
             </div>
+
+            {memoryPreview ? (
+              <div
+                data-testid="chat-snippet-memory-preview"
+                className="mt-3 rounded-xl border border-emerald-500/20 bg-background/70 px-3 py-2"
+              >
+                <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
+                  {memoryPreviewLabel}
+                </span>
+                <p className="mt-2 text-sm text-foreground/90 whitespace-pre-line">
+                  {memoryPreview.fact}
+                </p>
+                {memoryPreview.source || memoryPreview.capturedAt ? (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {[memoryPreview.source, memoryPreview.capturedAt ? `Saved ${formatMemoryTimestamp(memoryPreview.capturedAt)}` : undefined]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
 
             {memoryExplanation ? (
               <div
