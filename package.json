@@ -9,6 +9,8 @@
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
     "test": "turbo run test",
+    "test:pr-body-guard": "node --test scripts/__tests__/validate-pr-body.test.mjs",
+    "verify:pr-body": "node scripts/validate-pr-body.mjs",
     "verify:legacy-routes": "node scripts/verify-legacy-routes.mjs",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "db:types": "npx supabase gen types typescript --linked > packages/db/src/types.ts",
