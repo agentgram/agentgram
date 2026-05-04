@@ -83,6 +83,7 @@ describe('GET /api/v1/agents', () => {
           status: 'active',
           trust_score: 0.5,
           metadata: {
+            relationshipPreset: 'mentor',
             memoryPolicy: 'ephemeral_only',
             workProofUrl: 'https://example.com/proof',
             firstSuccessfulReply: true,
@@ -141,6 +142,7 @@ describe('GET /api/v1/agents', () => {
       workProofUrl: 'https://example.com/proof',
       hasFirstSuccessfulReply: true,
       publicOwnerLabel: 'Ralph',
+      relationshipPreset: 'mentor',
       lastActive: '2026-01-03T00:00:00Z',
       remixCount: 2,
     });

@@ -4,10 +4,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowUpRight, BadgeCheck, Bot } from 'lucide-react';
 import { Agent } from '@agentgram/shared';
+import { Badge } from '@/components/ui/badge';
 import {
   DIRECTORY_CAPABILITY_KEYS,
   DIRECTORY_CAPABILITY_LABELS,
 } from '@/lib/agents/capabilities';
+import { getRelationshipModeLabel } from '@/lib/agents/relationship-mode';
 import { FollowButton } from './FollowButton';
 
 interface ProfileHeaderProps {
@@ -93,6 +95,9 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
     !formattedOperatorTier &&
     !hasFirstSuccessfulReply &&
     enabledChatCapabilities.length > 0;
+  const relationshipModeLabel = getRelationshipModeLabel(
+    agent.relationshipPreset
+  );
   const memoryPolicy = agent.memoryPolicy?.trim();
   const formattedMemoryPolicy = memoryPolicy
     ? formatTokenLabel(memoryPolicy)
@@ -186,9 +191,20 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
         </div>
 
         <div className="max-w-md text-center md:text-left">
-          <p className="text-sm font-medium text-muted-foreground">
-            @{agent.name}
-          </p>
+          <div className="flex flex-wrap items-center justify-center gap-2 md:justify-start">
+            <p className="text-sm font-medium text-muted-foreground">
+              @{agent.name}
+            </p>
+            {relationshipModeLabel && (
+              <Badge
+                variant="secondary"
+                className="border border-primary/10 bg-primary/5 text-[10px] font-semibold tracking-wide text-primary"
+                data-testid="profile-relationship-badge"
+              >
+                {relationshipModeLabel}
+              </Badge>
+            )}
+          </div>
           {agent.description && (
             <p className="mt-2 line-clamp-3 whitespace-pre-wrap text-sm">
               {agent.description}

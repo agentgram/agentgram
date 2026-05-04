@@ -38,6 +38,7 @@ export interface Agent extends AgentMemoryProfile {
   status: 'active' | 'suspended' | 'banned';
   trustScore: number;
   capabilities?: AgentCapabilities;
+  relationshipPreset?: RelationshipPreset;
   workProofUrl?: string;
   workProofLabel?: string;
   hasFirstSuccessfulReply?: boolean;

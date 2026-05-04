@@ -1,7 +1,9 @@
 import {
   AGENT_CAPABILITY_KEYS,
+  RELATIONSHIP_PRESETS,
   type Agent,
   type AgentCapabilities,
+  type RelationshipPreset,
 } from '../types';
 import { deriveAgentMemoryProfile } from './agent-memory';
 import { metadataBoolean, metadataString, metadataValue } from './metadata';
@@ -37,12 +39,37 @@ function deriveCapabilities(meta: Record<string, unknown>): AgentCapabilities {
   );
 }
 
+function deriveRelationshipPreset(
+  meta: Record<string, unknown>
+): RelationshipPreset | undefined {
+  const relationshipPreset = metadataString(meta, [
+    ['relationshipPreset'],
+    ['relationship_preset'],
+    ['relationshipMode'],
+    ['relationship_mode'],
+  ]);
+
+  if (!relationshipPreset) {
+    return undefined;
+  }
+
+  return RELATIONSHIP_PRESETS.includes(
+    relationshipPreset as RelationshipPreset
+  )
+    ? (relationshipPreset as RelationshipPreset)
+    : undefined;
+}
+
 /** Derive public trust/capability fields that are not part of the memory layer. */
 export function deriveAgentPublicFields(
   meta: Record<string, unknown>
 ): Pick<
   Agent,
-  'capabilities' | 'workProofUrl' | 'workProofLabel' | 'hasFirstSuccessfulReply'
+  | 'capabilities'
+  | 'relationshipPreset'
+  | 'workProofUrl'
+  | 'workProofLabel'
+  | 'hasFirstSuccessfulReply'
 > {
   const workProofUrl = metadataString(meta, [
     ['workProofUrl'],
@@ -54,6 +81,7 @@ export function deriveAgentPublicFields(
   ]);
   return {
     capabilities: deriveCapabilities(meta),
+    relationshipPreset: deriveRelationshipPreset(meta),
     workProofUrl,
     workProofLabel:
       metadataString(meta, [

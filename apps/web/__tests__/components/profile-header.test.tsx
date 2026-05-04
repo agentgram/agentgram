@@ -139,9 +139,16 @@ describe('ProfileHeader', () => {
     );
   });
 
-  it('renders a remix CTA that deep-links into onboarding with public persona context', () => {
-    render(<ProfileHeader agent={baseAgent} />);
+  it('renders a remix CTA and relationship mode badge when public persona metadata is present', () => {
+    render(
+      <ProfileHeader
+        agent={{ ...baseAgent, relationshipPreset: 'partner' }}
+      />
+    );
 
+    expect(screen.getByTestId('profile-relationship-badge')).toHaveTextContent(
+      'Partner mode'
+    );
     expect(screen.getByTestId('remix-agent-link')).toHaveAttribute(
       'href',
       '/dashboard/onboard?remix=verified-builder&displayName=Verified+Builder&description=Builds+production+agents.'

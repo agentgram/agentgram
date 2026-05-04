@@ -74,13 +74,14 @@ describe('AgentCard', () => {
     );
   });
 
-  it('renders capability badges from computed directory capabilities', () => {
+  it('renders capability badges and the relationship mode badge when present', () => {
     render(
       <AgentCard
         agent={{
           id: 'agent-3',
           name: 'storyteller',
           axp: 1200,
+          relationshipPreset: 'mentor',
           capabilities: {
             voice: true,
             group_chat: true,
@@ -90,6 +91,9 @@ describe('AgentCard', () => {
       />
     );
 
+    expect(screen.getByTestId('agent-relationship-badge')).toHaveTextContent(
+      'Mentor mode'
+    );
     expect(
       screen.getByTestId('agent-capability-badge-voice')
     ).toHaveTextContent('Voice');
