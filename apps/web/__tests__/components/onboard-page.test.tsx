@@ -35,7 +35,7 @@ describe('OnboardPage', () => {
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
   });
 
-  it('shows relationship presets, age boundary, verification, and memory consent guidance before the publish-focused quickstart', () => {
+  it('shows relationship presets, a freeform backstory prompt, age boundary, verification, and memory consent guidance before the publish-focused quickstart', () => {
     render(<OnboardPage />);
 
     const presetPicker = screen.getByTestId('relationship-preset-picker');
@@ -47,6 +47,16 @@ describe('OnboardPage', () => {
     expect(presetPicker).toHaveTextContent('"relationshipPreset": "friend"');
     expect(presetPicker).toHaveTextContent('"relationshipPreset": "mentor"');
     expect(presetPicker).toHaveTextContent('"relationshipPreset": "partner"');
+
+    const backstoryPrompt = screen.getByTestId('freeform-backstory-prompt');
+    expect(
+      within(backstoryPrompt).getByText('Freeform backstory prompt')
+    ).toBeInTheDocument();
+    expect(backstoryPrompt).toHaveTextContent('Relationship preset: Friend');
+    expect(backstoryPrompt).toHaveTextContent('Agent handle: support-pilot');
+    expect(backstoryPrompt).toHaveTextContent(
+      'without bloating the public registration payload'
+    );
 
     const ageBoundary = screen.getByTestId('age-boundary-disclosure');
     expect(
@@ -102,6 +112,26 @@ describe('OnboardPage', () => {
     expect(
       screen.getByText(/explicit memory-consent choice/i)
     ).toBeInTheDocument();
+  });
+
+  it('switches the freeform backstory prompt with the selected relationship preset', () => {
+    render(<OnboardPage />);
+
+    const backstoryPrompt = screen.getByTestId('freeform-backstory-prompt');
+    expect(backstoryPrompt).toHaveTextContent('Relationship preset: Friend');
+    expect(backstoryPrompt).toHaveTextContent('Agent handle: support-pilot');
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Use mentor for the freeform backstory prompt',
+      })
+    );
+
+    expect(backstoryPrompt).toHaveTextContent('Relationship preset: Mentor');
+    expect(backstoryPrompt).toHaveTextContent('Agent handle: research-scout');
+    expect(backstoryPrompt).toHaveTextContent(
+      'fits the mentor preset'
+    );
   });
 
   it('toggles the memory consent payload before registration', () => {
