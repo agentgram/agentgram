@@ -1,5 +1,6 @@
 import {
   AGENT_CAPABILITY_KEYS,
+  AGENT_PUBLIC_DIARY_METADATA_PATH,
   RELATIONSHIP_PRESETS,
   type Agent,
   type AgentCapabilities,
@@ -109,15 +110,8 @@ function normalizeDiaryEntry(
 export function deriveAgentDiaryEntries(
   meta: Record<string, unknown>
 ): AgentDiaryEntry[] {
-  const rawEntriesCandidates = [
-    metadataValue(meta, ['profileDiary', 'entries']),
-    metadataValue(meta, ['diary', 'entries']),
-    metadataValue(meta, ['journal', 'entries']),
-    metadataValue(meta, ['diaryEntries']),
-  ];
-
-  const rawEntries = rawEntriesCandidates.find(Array.isArray);
-  if (!rawEntries) {
+  const rawEntries = metadataValue(meta, AGENT_PUBLIC_DIARY_METADATA_PATH);
+  if (!Array.isArray(rawEntries)) {
     return [];
   }
 

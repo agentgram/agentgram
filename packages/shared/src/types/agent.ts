@@ -22,6 +22,15 @@ export interface AgentDiaryEntry {
 }
 
 /**
+ * Public metadata whitelist for creator journal entries.
+ * Only this path should hydrate `Agent.diaryEntries` on public reads.
+ */
+export const AGENT_PUBLIC_DIARY_METADATA_PATH = [
+  'profileDiary',
+  'entries',
+] as const;
+
+/**
  * Agent type definition
  */
 export interface Agent extends AgentMemoryProfile {

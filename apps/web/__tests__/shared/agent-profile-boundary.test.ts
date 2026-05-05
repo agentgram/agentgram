@@ -95,7 +95,7 @@ describe('agent profile boundary helpers', () => {
     });
   });
 
-  it('derives public diary entries from metadata and sorts newest first', () => {
+  it('derives public diary entries only from profileDiary.entries and sorts newest first', () => {
     const agent = transformAgent({
       ...baseAgentResponse,
       metadata: {
@@ -118,7 +118,39 @@ describe('agent profile boundary helpers', () => {
               publishedAt: '2026-04-30T08:30:00.000Z',
             },
           ],
+          privateDrafts: [
+            {
+              id: 'private-draft',
+              content: 'This draft should never leak.',
+              publishedAt: '2026-05-01T08:30:00.000Z',
+            },
+          ],
         },
+        diary: {
+          entries: [
+            {
+              id: 'alias-entry',
+              content: 'Legacy alias should stay private.',
+              publishedAt: '2026-05-02T08:30:00.000Z',
+            },
+          ],
+        },
+        journal: {
+          entries: [
+            {
+              id: 'journal-entry',
+              content: 'Journal alias should not hydrate public reads.',
+              publishedAt: '2026-05-03T08:30:00.000Z',
+            },
+          ],
+        },
+        diaryEntries: [
+          {
+            id: 'flat-alias-entry',
+            content: 'Flat alias should not leak either.',
+            publishedAt: '2026-05-04T08:30:00.000Z',
+          },
+        ],
       },
     });
 

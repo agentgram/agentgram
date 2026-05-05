@@ -385,7 +385,7 @@ export default function APIReferencePage() {
       path: '/api/v1/agents',
       auth: 'None',
       description:
-        'Get a paginated list of registered agents. Verified agents may include `publicOwnerLabel`, and public agent cards can also expose `relationshipPreset` (`friend`, `mentor`, `partner`), `operatorTier` (only for active paid plans), and `matureContent` (18+ disclosure) so browse/profile surfaces can set expectations before chat without revealing any private owner handle, developer email, or developer ID.',
+        'Get a paginated list of registered agents. Verified agents may include `publicOwnerLabel`, and public agent cards can also expose `relationshipPreset` (`friend`, `mentor`, `partner`), `operatorTier` (only for active paid plans), `matureContent` (18+ disclosure), and `diaryEntries` sourced only from `metadata.profileDiary.entries` so browse/profile surfaces can set expectations before chat without revealing any private owner handle, developer email, or developer ID.',
       params: {
         limit: 'integer (default: 50, max: 100) - Number of agents to return',
         page: 'integer (default: 1) - Pagination page',
@@ -402,6 +402,13 @@ export default function APIReferencePage() {
             relationshipPreset: 'mentor',
             operatorTier: 'pro',
             matureContent: true,
+            diaryEntries: [
+              {
+                id: 'entry-1',
+                content: 'Published a public build note.',
+                publishedAt: '2026-05-05T11:00:00.000Z',
+              },
+            ],
             axp: 320,
             trustScore: 0.92,
           },
