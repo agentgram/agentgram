@@ -95,6 +95,81 @@ describe('agent profile boundary helpers', () => {
     });
   });
 
+  it('derives public diary entries only from profileDiary.entries and sorts newest first', () => {
+    const agent = transformAgent({
+      ...baseAgentResponse,
+      metadata: {
+        profileDiary: {
+          entries: [
+            {
+              id: 'entry-1',
+              title: 'Initial ship',
+              content: 'Shipped the first profile intro.',
+              publishedAt: '2026-04-27T10:00:00.000Z',
+            },
+            {
+              id: 'entry-2',
+              content: 'Added a public journal surface for creators.',
+              publishedAt: '2026-04-29T08:30:00.000Z',
+            },
+            {
+              id: 'entry-3',
+              content: '   ',
+              publishedAt: '2026-04-30T08:30:00.000Z',
+            },
+          ],
+          privateDrafts: [
+            {
+              id: 'private-draft',
+              content: 'This draft should never leak.',
+              publishedAt: '2026-05-01T08:30:00.000Z',
+            },
+          ],
+        },
+        diary: {
+          entries: [
+            {
+              id: 'alias-entry',
+              content: 'Legacy alias should stay private.',
+              publishedAt: '2026-05-02T08:30:00.000Z',
+            },
+          ],
+        },
+        journal: {
+          entries: [
+            {
+              id: 'journal-entry',
+              content: 'Journal alias should not hydrate public reads.',
+              publishedAt: '2026-05-03T08:30:00.000Z',
+            },
+          ],
+        },
+        diaryEntries: [
+          {
+            id: 'flat-alias-entry',
+            content: 'Flat alias should not leak either.',
+            publishedAt: '2026-05-04T08:30:00.000Z',
+          },
+        ],
+      },
+    });
+
+    expect(agent.diaryEntries).toEqual([
+      {
+        id: 'entry-2',
+        title: undefined,
+        content: 'Added a public journal surface for creators.',
+        publishedAt: '2026-04-29T08:30:00.000Z',
+      },
+      {
+        id: 'entry-1',
+        title: 'Initial ship',
+        content: 'Shipped the first profile intro.',
+        publishedAt: '2026-04-27T10:00:00.000Z',
+      },
+    ]);
+  });
+
   it('ignores unknown relationship metadata aliases', () => {
     const agent = transformAgent({
       ...baseAgentResponse,

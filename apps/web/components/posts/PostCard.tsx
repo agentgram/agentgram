@@ -12,6 +12,7 @@ import {
   Repeat2,
   Quote,
   ShieldCheck,
+  ShieldAlert,
   AlertTriangle,
   BadgeCheck,
   History,
@@ -203,6 +204,7 @@ type SnippetActionMode =
   | 'quote'
   | 'quote_card'
   | 'recover'
+  | 'safer_rewrite'
   | 'contradiction';
 
 function escapeSvgText(value: string) {
@@ -328,6 +330,55 @@ export function PostCard({
       ['memory', 'previewLabel'],
       ['memory', 'preview_label'],
     ]) || 'Saved fact shaping this reply';
+  const blockedMessage = readMetadataString(post.metadata, [
+    ['blockedMessage'],
+    ['blocked_message'],
+    ['originalMessage'],
+    ['original_message'],
+    ['moderation', 'blockedMessage'],
+    ['moderation', 'blocked_message'],
+    ['moderation', 'originalMessage'],
+    ['moderation', 'original_message'],
+    ['safety', 'blockedMessage'],
+    ['safety', 'blocked_message'],
+  ]);
+  const safetyReason = readMetadataString(post.metadata, [
+    ['safetyReason'],
+    ['safety_reason'],
+    ['moderationReason'],
+    ['moderation_reason'],
+    ['moderation', 'reason'],
+    ['safety', 'reason'],
+  ]);
+  const suggestedSaferRewrite = readMetadataString(post.metadata, [
+    ['saferRewrite'],
+    ['safer_rewrite'],
+    ['rewriteSuggestion'],
+    ['rewrite_suggestion'],
+    ['moderation', 'saferRewrite'],
+    ['moderation', 'safer_rewrite'],
+    ['safety', 'saferRewrite'],
+    ['safety', 'safer_rewrite'],
+  ]);
+  const safetyPolicyUrl = readMetadataString(post.metadata, [
+    ['policyUrl'],
+    ['policy_url'],
+    ['safetyPolicyUrl'],
+    ['safety_policy_url'],
+    ['moderation', 'policyUrl'],
+    ['moderation', 'policy_url'],
+    ['safety', 'policyUrl'],
+    ['safety', 'policy_url'],
+  ]);
+  const latestUserMessage = [...chatMessages]
+    .reverse()
+    .find((message) => ['user', 'operator', 'human'].includes(message.role.toLowerCase()))
+    ?.content;
+  const saferRewriteSource =
+    blockedMessage || latestUserMessage || post.content || post.title;
+  const hasSafetyRewriteContext = Boolean(
+    blockedMessage || safetyReason || suggestedSaferRewrite || safetyPolicyUrl
+  );
 
   const buildSnippetClipboardText = (mode: SnippetActionMode) => {
     const postUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/posts/${post.id}`;
@@ -367,6 +418,31 @@ export function PostCard({
         '',
         `Source: ${postUrl}`,
       ].join('\n');
+    }
+
+    if (mode === 'safer_rewrite') {
+      return [
+        `Safer rewrite for ${authorName}`,
+        '',
+        'The message below was blocked by a safety guardrail.',
+        safetyReason ? `Why it likely got blocked: ${safetyReason}` : '',
+        'Rewrite it so the core intent stays helpful while the wording becomes calmer and safer:',
+        '- keep the original goal, but remove explicit, hateful, violent, or coercive phrasing',
+        '- ask for support, comfort, or high-level guidance instead of risky instructions',
+        '- keep it respectful, boundary-aware, and easy for the other person to answer',
+        '',
+        'Original message:',
+        saferRewriteSource,
+        '',
+        'Suggested safer rewrite:',
+        suggestedSaferRewrite ||
+          'Can you help me say this in a calmer, safer, and more respectful way while keeping the same intent?',
+        safetyPolicyUrl ? `Safety policy: ${safetyPolicyUrl}` : '',
+        '',
+        `Source: ${postUrl}`,
+      ]
+        .filter(Boolean)
+        .join('\n');
     }
 
     if (mode === 'quote') {
@@ -432,6 +508,7 @@ export function PostCard({
     quote: 'Quote copied',
     quote_card: 'Quote card downloaded',
     recover: 'Recovery prompt copied',
+    safer_rewrite: 'Safer rewrite copied',
     contradiction: 'Contradiction report copied',
   };
 
@@ -614,6 +691,37 @@ export function PostCard({
           </div>
         ) : null}
 
+        {hasSafetyRewriteContext ? (
+          <div
+            data-testid="chat-snippet-safety-note"
+            className="mt-3 rounded-xl border border-amber-500/25 bg-amber-500/10 px-3 py-2"
+          >
+            <span className="inline-flex items-center rounded-full border border-amber-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-700">
+              Safety recovery
+            </span>
+            <p className="mt-2 text-sm text-foreground/90 whitespace-pre-line">
+              Blocked by a guardrail? Copy a calmer rewrite that keeps the same goal.
+            </p>
+            {safetyReason ? (
+              <p
+                data-testid="chat-snippet-safety-reason"
+                className="mt-2 text-xs text-muted-foreground"
+              >
+                Latest block reason: {safetyReason}
+              </p>
+            ) : null}
+            {safetyPolicyUrl ? (
+              <a
+                data-testid="chat-snippet-safety-policy-link"
+                href={safetyPolicyUrl}
+                className="mt-2 inline-flex text-xs font-semibold text-amber-700 underline underline-offset-2"
+              >
+                Review the safety policy
+              </a>
+            ) : null}
+          </div>
+        ) : null}
+
         {hasMessages ? (
           <div className="mt-3 space-y-2">
             {previewMessages.map((message, index) => (
@@ -673,6 +781,15 @@ export function PostCard({
           >
             <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
             Stay in character
+          </button>
+          <button
+            type="button"
+            data-testid="chat-snippet-safer-rewrite-button"
+            onClick={() => handleSnippetAction('safer_rewrite')}
+            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-amber-500/30 hover:text-amber-700"
+          >
+            <ShieldAlert className="h-3.5 w-3.5" aria-hidden="true" />
+            Safer rewrite
           </button>
           <button
             type="button"

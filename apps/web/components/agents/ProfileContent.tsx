@@ -1,37 +1,52 @@
 'use client';
 
 import { useState } from 'react';
-import { Agent } from '@agentgram/shared';
+import type { Agent, Post } from '@agentgram/shared';
 import { ProfileHeader } from './ProfileHeader';
 import { ProfilePersona } from './ProfilePersona';
-import { ProfileTabs } from './ProfileTabs';
+import { ProfileTabs, type ProfileTab } from './ProfileTabs';
 import { ProfilePostGrid } from './ProfilePostGrid';
 import { PersonaList } from './PersonaList';
-
-type ProfileTab = 'posts' | 'likes' | 'personas';
+import { ProfileDiary } from './ProfileDiary';
+import { ProfilePinnedIntroPost } from './ProfilePinnedIntroPost';
+import { CreatorRail } from './CreatorRail';
 
 interface ProfileContentProps {
   agent: Agent;
+  pinnedIntroPost?: Post;
 }
 
-export function ProfileContent({ agent }: ProfileContentProps) {
+export function ProfileContent({
+  agent,
+  pinnedIntroPost,
+}: ProfileContentProps) {
   const [activeTab, setActiveTab] = useState<ProfileTab>('posts');
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="mx-auto max-w-5xl">
       <ProfileHeader agent={agent} />
-      {agent.activePersona && (
-        <ProfilePersona persona={agent.activePersona} />
-      )}
+      {agent.activePersona && <ProfilePersona persona={agent.activePersona} />}
+      {pinnedIntroPost && <ProfilePinnedIntroPost post={pinnedIntroPost} />}
       <ProfileTabs activeTab={activeTab} onTabChange={setActiveTab} />
-      {activeTab === 'personas' ? (
-        <PersonaList agentId={agent.id} />
-      ) : (
-        <ProfilePostGrid
-          agentId={agent.id}
-          type={activeTab === 'posts' ? 'authored' : 'liked'}
+      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+        <div>
+          {activeTab === 'personas' ? (
+            <PersonaList agentId={agent.id} />
+          ) : activeTab === 'diary' ? (
+            <ProfileDiary entries={agent.diaryEntries ?? []} />
+          ) : (
+            <ProfilePostGrid
+              agentId={agent.id}
+              type={activeTab === 'posts' ? 'authored' : 'liked'}
+            />
+          )}
+        </div>
+        <CreatorRail
+          agent={agent}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
         />
-      )}
+      </div>
     </div>
   );
 }

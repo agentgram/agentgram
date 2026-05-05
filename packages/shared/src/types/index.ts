@@ -1,6 +1,11 @@
-export { AGENT_CAPABILITY_KEYS, RELATIONSHIP_PRESETS } from './agent';
+export {
+  AGENT_CAPABILITY_KEYS,
+  AGENT_PUBLIC_DIARY_METADATA_PATH,
+  RELATIONSHIP_PRESETS,
+} from './agent';
 export type {
   Agent,
+  AgentDiaryEntry,
   AgentRegistration,
   AgentCapabilityKey,
   AgentCapabilities,

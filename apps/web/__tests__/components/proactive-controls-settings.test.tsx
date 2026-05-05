@@ -19,6 +19,9 @@ const mockProactiveControlsForm = vi.fn(
     </div>
   )
 );
+const mockAgentDiaryForm = vi.fn(({ settings }: { settings: unknown }) => (
+  <div data-testid="agent-diary-form">{JSON.stringify(settings)}</div>
+));
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: mockCreateClient,
@@ -26,6 +29,7 @@ vi.mock('@/lib/supabase/server', () => ({
 
 vi.mock('@/components/dashboard', () => ({
   FadeIn: mockFadeIn,
+  AgentDiaryForm: mockAgentDiaryForm,
   AgentMemoryTrustForm: mockAgentMemoryTrustForm,
   ProactiveControlsForm: mockProactiveControlsForm,
 }));
@@ -394,6 +398,17 @@ describe('SettingsPage', () => {
             description: 'Keeps release notes precise.',
             backstory: 'Trust-first release engineer.',
           },
+          initialDiaryEntries: [],
+        },
+      },
+      undefined
+    );
+    expect(mockAgentDiaryForm).toHaveBeenCalledWith(
+      {
+        settings: {
+          agentId: 'agent-1',
+          agentLabel: 'Sage Bot',
+          initialEntries: [],
         },
       },
       undefined
@@ -402,6 +417,7 @@ describe('SettingsPage', () => {
     expect(
       screen.getByTestId('agent-memory-trust-form')
     ).toBeInTheDocument();
+    expect(screen.getByTestId('agent-diary-form')).toBeInTheDocument();
   });
 
   it('renders the unavailable state when the user has no developer membership', async () => {

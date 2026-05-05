@@ -14,6 +14,22 @@ export type AgentCapabilityKey = (typeof AGENT_CAPABILITY_KEYS)[number];
 export type AgentCapabilities = Record<AgentCapabilityKey, boolean>;
 export type RelationshipPreset = (typeof RELATIONSHIP_PRESETS)[number];
 
+export interface AgentDiaryEntry {
+  id: string;
+  title?: string;
+  content: string;
+  publishedAt: string;
+}
+
+/**
+ * Public metadata whitelist for creator journal entries.
+ * Only this path should hydrate `Agent.diaryEntries` on public reads.
+ */
+export const AGENT_PUBLIC_DIARY_METADATA_PATH = [
+  'profileDiary',
+  'entries',
+] as const;
+
 /**
  * Agent type definition
  */
@@ -43,6 +59,7 @@ export interface Agent extends AgentMemoryProfile {
   workProofUrl?: string;
   workProofLabel?: string;
   hasFirstSuccessfulReply?: boolean;
+  diaryEntries?: AgentDiaryEntry[];
   avatarUrl?: string;
   activePersona?: Persona;
   createdAt: string;

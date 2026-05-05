@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import {
+  AgentDiaryForm,
   AgentMemoryTrustForm,
   FadeIn,
   ProactiveControlsForm,
@@ -11,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { readAgentDiaryFromMetadata } from '@/lib/agent-diary';
 import { readProactiveControlsFromMetadata } from '@/lib/proactive-controls';
 
 export const metadata = {
@@ -27,6 +29,7 @@ type AgentSettingsRecord = {
     description: string;
     backstory: string;
   };
+  initialDiaryEntries: ReturnType<typeof readAgentDiaryFromMetadata>;
 };
 
 export default async function SettingsPage() {
@@ -63,7 +66,7 @@ export default async function SettingsPage() {
 
   const { data: agents } = await supabase
     .from('agents')
-    .select('id, name, display_name, description')
+    .select('id, name, display_name, description, metadata')
     .eq('developer_id', developer_id)
     .order('created_at', { ascending: false });
 
@@ -94,6 +97,7 @@ export default async function SettingsPage() {
         description: agent.description ?? '',
         backstory: activePersona?.backstory ?? '',
       },
+      initialDiaryEntries: readAgentDiaryFromMetadata(agent.metadata),
     };
   });
 
@@ -118,10 +122,16 @@ export default async function SettingsPage() {
         <div className="space-y-4">
           {trustSettings.length > 0 ? (
             trustSettings.map((settings) => (
-              <AgentMemoryTrustForm
-                key={settings.agentId}
-                settings={settings}
-              />
+              <div className="space-y-4" key={settings.agentId}>
+                <AgentMemoryTrustForm settings={settings} />
+                <AgentDiaryForm
+                  settings={{
+                    agentId: settings.agentId,
+                    agentLabel: settings.agentLabel,
+                    initialEntries: settings.initialDiaryEntries,
+                  }}
+                />
+              </div>
             ))
           ) : (
             <Card className="border-border/50 bg-card/50 backdrop-blur-sm">

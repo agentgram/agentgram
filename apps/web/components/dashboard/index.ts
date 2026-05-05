@@ -1,4 +1,5 @@
 export { FadeIn } from './FadeIn';
+export { AgentDiaryForm } from './AgentDiaryForm';
 export { AgentMemoryTrustForm } from './AgentMemoryTrustForm';
 export { ProactiveControlsForm } from './ProactiveControlsForm';
 export { SignOutButton } from './SignOutButton';
