@@ -52,6 +52,158 @@ function formatLastActive(lastActive?: string) {
   return `Active ${Math.floor(elapsedDays / 30)}mo ago`;
 }
 
+function escapeSvgText(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function wrapSvgText(value: string, maxLineLength: number, maxLines: number) {
+  const words = value.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return [] as string[];
+
+  const lines: string[] = [];
+  let currentLine = '';
+
+  for (const word of words) {
+    const nextLine = currentLine ? `${currentLine} ${word}` : word;
+    if (nextLine.length <= maxLineLength) {
+      currentLine = nextLine;
+      continue;
+    }
+
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+    currentLine = word;
+
+    if (lines.length === maxLines) {
+      break;
+    }
+  }
+
+  if (lines.length < maxLines && currentLine) {
+    lines.push(currentLine);
+  }
+
+  if (lines.length > maxLines) {
+    return lines.slice(0, maxLines);
+  }
+
+  const consumedWords = lines.join(' ').split(/\s+/).filter(Boolean).length;
+  if (consumedWords < words.length && lines.length > 0) {
+    lines[lines.length - 1] = `${lines[lines.length - 1].replace(/[.…]+$/u, '')}…`;
+  }
+
+  return lines;
+}
+
+function getAgentInitials(agent: Agent) {
+  const source = agent.displayName?.trim() || agent.name;
+  return source
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((token) => token.charAt(0).toUpperCase())
+    .join('');
+}
+
+function buildCharacterCardSvg({
+  agent,
+  relationshipModeLabel,
+  verificationState,
+  enabledChatCapabilities,
+  publicOwnerLabel,
+  formattedLastActive,
+  capabilitySummary,
+}: {
+  agent: Agent;
+  relationshipModeLabel?: string;
+  verificationState: Agent['verificationState'];
+  enabledChatCapabilities: Array<(typeof DIRECTORY_CAPABILITY_KEYS)[number]>;
+  publicOwnerLabel?: string;
+  formattedLastActive?: string;
+  capabilitySummary?: string;
+}) {
+  const title = escapeSvgText(agent.displayName?.trim() || agent.name);
+  const handle = escapeSvgText(`@${agent.name}`);
+  const verificationLabel =
+    verificationState === 'verified'
+      ? 'Verified'
+      : verificationState === 'pending'
+        ? 'Pending review'
+        : 'Public profile';
+  const descriptionLines = wrapSvgText(
+    agent.description?.trim() || capabilitySummary || 'Public AgentGram profile.',
+    34,
+    4
+  );
+  const capabilityLabels = enabledChatCapabilities
+    .slice(0, 3)
+    .map((capability) => DIRECTORY_CAPABILITY_LABELS[capability])
+    .filter(Boolean);
+  const metaChips = [
+    relationshipModeLabel,
+    publicOwnerLabel ? `Owner · ${publicOwnerLabel}` : undefined,
+    formattedLastActive,
+  ].filter(Boolean) as string[];
+  const initials = escapeSvgText(getAgentInitials(agent) || 'AG');
+
+  const descriptionMarkup = descriptionLines
+    .map(
+      (line, index) =>
+        `<text x="72" y="${338 + index * 34}" font-size="24" fill="#d6d6ef">${escapeSvgText(line)}</text>`
+    )
+    .join('');
+
+  const capabilityMarkup = capabilityLabels
+    .map((label, index) => {
+      const x = 72 + index * 176;
+      return `<rect x="${x}" y="510" rx="20" ry="20" width="156" height="44" fill="#ffffff" fill-opacity="0.09" stroke="#ffffff" stroke-opacity="0.14"/><text x="${x + 18}" y="538" font-size="18" font-weight="600" fill="#f7f7ff">${escapeSvgText(label)}</text>`;
+    })
+    .join('');
+
+  const metaMarkup = metaChips
+    .slice(0, 3)
+    .map((label, index) => {
+      const y = 640 + index * 34;
+      return `<text x="72" y="${y}" font-size="20" fill="#c3c4dd">${escapeSvgText(label)}</text>`;
+    })
+    .join('');
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="960" height="1200" viewBox="0 0 960 1200" role="img" aria-label="${title} character card preview">
+    <defs>
+      <linearGradient id="cardBg" x1="0" x2="1" y1="0" y2="1">
+        <stop offset="0%" stop-color="#1f1b3a"/>
+        <stop offset="55%" stop-color="#312c67"/>
+        <stop offset="100%" stop-color="#151225"/>
+      </linearGradient>
+      <linearGradient id="accentGlow" x1="0" x2="1" y1="0" y2="1">
+        <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.95"/>
+        <stop offset="100%" stop-color="#22d3ee" stop-opacity="0.9"/>
+      </linearGradient>
+    </defs>
+    <rect width="960" height="1200" rx="44" ry="44" fill="url(#cardBg)"/>
+    <circle cx="772" cy="182" r="148" fill="url(#accentGlow)" fill-opacity="0.22"/>
+    <circle cx="172" cy="170" r="74" fill="#ffffff" fill-opacity="0.11" stroke="#ffffff" stroke-opacity="0.2"/>
+    <text x="172" y="188" text-anchor="middle" font-size="44" font-weight="700" fill="#f7f7ff">${initials}</text>
+    <text x="72" y="94" font-size="22" font-weight="700" fill="#c4b5fd" letter-spacing="3">AGENTGRAM CHARACTER CARD</text>
+    <text x="72" y="266" font-size="64" font-weight="700" fill="#ffffff">${title}</text>
+    <text x="72" y="306" font-size="28" fill="#c3c4dd">${handle}</text>
+    ${descriptionMarkup}
+    <rect x="72" y="438" rx="22" ry="22" width="196" height="52" fill="#ffffff" fill-opacity="0.09" stroke="#ffffff" stroke-opacity="0.14"/>
+    <text x="96" y="471" font-size="22" font-weight="700" fill="#f7f7ff">${escapeSvgText(verificationLabel)}</text>
+    ${capabilityMarkup}
+    ${metaMarkup}
+    <rect x="72" y="1032" rx="26" ry="26" width="816" height="96" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.14"/>
+    <text x="104" y="1086" font-size="24" font-weight="600" fill="#ffffff">Share from the public profile</text>
+    <text x="104" y="1118" font-size="20" fill="#c3c4dd">agentgram.ai/agents/${escapeSvgText(agent.name)}</text>
+  </svg>`;
+}
+
 function buildOnboardHref(agent: Agent, starter?: 'group_chat') {
   const params = new URLSearchParams({ remix: agent.name });
 
@@ -133,6 +285,16 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
   const shouldShowRemixCta = agent.status === 'active';
   const shouldShowGroupConversationStarterCta =
     shouldShowRemixCta && agent.capabilities?.group_chat === true;
+  const characterCardSvg = buildCharacterCardSvg({
+    agent,
+    relationshipModeLabel,
+    verificationState,
+    enabledChatCapabilities,
+    publicOwnerLabel,
+    formattedLastActive,
+    capabilitySummary,
+  });
+  const characterCardDownloadHref = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(characterCardSvg)}`;
   const remixHref = buildOnboardHref(agent);
   const groupConversationStarterHref = buildOnboardHref(agent, 'group_chat');
 
@@ -244,6 +406,97 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
               )}
             </div>
           )}
+          <section
+            aria-label="Profile share card"
+            className="mt-4 overflow-hidden rounded-3xl border border-border/80 bg-card/80 shadow-sm"
+            data-testid="profile-share-card-section"
+          >
+            <div className="border-b border-border/70 px-4 py-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">
+                    Character Card-style share preview
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Generate a lightweight share card straight from this public
+                    profile.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <a
+                    href={characterCardDownloadHref}
+                    download={`${agent.name}-character-card.svg`}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-2 text-sm font-medium text-primary transition hover:bg-primary/10 hover:text-primary/80"
+                    data-testid="profile-share-card-download"
+                  >
+                    Download card
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </a>
+                  <Link
+                    href={`/agents/${agent.name}`}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-background px-3 py-2 text-sm font-medium text-foreground transition hover:border-primary/30 hover:text-primary"
+                    data-testid="profile-share-card-open-profile"
+                  >
+                    Open public profile
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gradient-to-br from-[#1f1b3a] via-[#312c67] to-[#151225] px-4 py-5 text-white">
+              <div
+                className="mx-auto w-full max-w-md rounded-[28px] border border-white/15 bg-white/5 p-5 shadow-2xl backdrop-blur"
+                data-testid="profile-share-card-preview"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-violet-200/90">
+                      AgentGram Character Card
+                    </p>
+                    <h2 className="mt-3 text-2xl font-semibold text-white">
+                      {agent.displayName || agent.name}
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-200">@{agent.name}</p>
+                  </div>
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full border border-white/15 bg-white/10 text-lg font-semibold text-white">
+                    {getAgentInitials(agent) || 'AG'}
+                  </div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/95">
+                    {verificationState === 'verified'
+                      ? 'Verified'
+                      : verificationState === 'pending'
+                        ? 'Pending review'
+                        : 'Public profile'}
+                  </span>
+                  {relationshipModeLabel && (
+                    <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/95">
+                      {relationshipModeLabel}
+                    </span>
+                  )}
+                  {enabledChatCapabilities.slice(0, 2).map((capability) => (
+                    <span
+                      key={capability}
+                      className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/95"
+                    >
+                      {DIRECTORY_CAPABILITY_LABELS[capability]}
+                    </span>
+                  ))}
+                </div>
+                <p className="mt-4 line-clamp-4 text-sm leading-6 text-slate-100/90">
+                  {agent.description ||
+                    capabilitySummary ||
+                    'Public AgentGram profile ready to share.'}
+                </p>
+                <div className="mt-5 grid gap-2 text-xs text-slate-200/90">
+                  {publicOwnerLabel && <p>Verified owner · {publicOwnerLabel}</p>}
+                  {formattedLastActive && <p>{formattedLastActive}</p>}
+                  <p>Share from agentgram.ai/agents/{agent.name}</p>
+                </div>
+              </div>
+            </div>
+          </section>
           {hasVerifiedAgentCard && (
             <section
               aria-label="Verified agent card"
