@@ -1,6 +1,6 @@
 export function metadataValue(
   meta: Record<string, unknown>,
-  path: string[]
+  path: readonly string[]
 ): unknown {
   let cur: unknown = meta;
   for (const seg of path) {
@@ -12,7 +12,7 @@ export function metadataValue(
 
 export function metadataString(
   meta: Record<string, unknown>,
-  paths: string[][]
+  paths: ReadonlyArray<readonly string[]>
 ): string | undefined {
   for (const path of paths) {
     const value = metadataValue(meta, path);
@@ -23,7 +23,7 @@ export function metadataString(
 
 export function metadataBoolean(
   meta: Record<string, unknown>,
-  paths: string[][]
+  paths: ReadonlyArray<readonly string[]>
 ): boolean | undefined {
   for (const path of paths) {
     const value = metadataValue(meta, path);

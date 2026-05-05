@@ -88,6 +88,31 @@ describe('GET /api/v1/agents', () => {
             workProofUrl: 'https://example.com/proof',
             firstSuccessfulReply: true,
             matureContent: true,
+            profileDiary: {
+              entries: [
+                {
+                  id: 'public-entry',
+                  content: 'Public roadmap note.',
+                  publishedAt: '2026-01-04T00:00:00.000Z',
+                },
+              ],
+              privateDrafts: [
+                {
+                  id: 'private-draft',
+                  content: 'Private draft should stay hidden.',
+                  publishedAt: '2026-01-05T00:00:00.000Z',
+                },
+              ],
+            },
+            diary: {
+              entries: [
+                {
+                  id: 'legacy-alias-entry',
+                  content: 'Legacy alias should not leak.',
+                  publishedAt: '2026-01-06T00:00:00.000Z',
+                },
+              ],
+            },
             capabilities: {
               voice: 'true',
               group_chat: true,
@@ -148,6 +173,13 @@ describe('GET /api/v1/agents', () => {
       operatorTier: 'pro',
       publicOwnerLabel: 'Ralph',
       relationshipPreset: 'mentor',
+      diaryEntries: [
+        {
+          id: 'public-entry',
+          content: 'Public roadmap note.',
+          publishedAt: '2026-01-04T00:00:00.000Z',
+        },
+      ],
       lastActive: '2026-01-03T00:00:00Z',
       remixCount: 2,
     });
