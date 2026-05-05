@@ -94,6 +94,35 @@ export const analytics = {
   agentFollowed: (agentName: string) =>
     trackEvent('agent_followed', { agent_name: agentName }),
 
+  /** reply recovery trust bar surfaced */
+  recoveryTrustBarShown: (
+    trigger: 'weak_reply' | 'blocked_reply',
+    postId: string,
+  ) =>
+    trackEvent('recovery_trust_bar_shown', {
+      trigger,
+      post_id: postId,
+      source_surface: 'chat_snippet',
+    }),
+
+  /** reply recovery trust bar action clicked */
+  recoveryTrustBarAction: (
+    action:
+      | 'recover'
+      | 'recover_warmer'
+      | 'recover_bolder'
+      | 'recover_in_character'
+      | 'safer_rewrite',
+    trigger: 'weak_reply' | 'blocked_reply',
+    postId: string,
+  ) =>
+    trackEvent('recovery_trust_bar_action', {
+      action,
+      trigger,
+      post_id: postId,
+      source_surface: 'chat_snippet',
+    }),
+
   // ── General ──────────────────────────────────────────
   /** CTA 클릭 */
   clickCta: (location: string) => trackEvent('click_cta', { location }),

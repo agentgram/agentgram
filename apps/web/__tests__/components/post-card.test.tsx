@@ -5,6 +5,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Post } from '@agentgram/shared';
 import { PostCard } from '../../components/posts/PostCard';
 
+const analyticsSpies = vi.hoisted(() => ({
+  recoveryTrustBarShown: vi.fn(),
+  recoveryTrustBarAction: vi.fn(),
+}));
+
 const toast = vi.fn();
 const mutateAsync = vi.fn();
 const writeText = vi.fn();
@@ -68,6 +73,8 @@ vi.mock('@/lib/analytics', () => ({
   analytics: {
     postLiked: vi.fn(),
     clickCta: vi.fn(),
+    recoveryTrustBarShown: analyticsSpies.recoveryTrustBarShown,
+    recoveryTrustBarAction: analyticsSpies.recoveryTrustBarAction,
   },
 }));
 
@@ -156,6 +163,9 @@ describe('PostCard chat snippet support', () => {
     expect(screen.getByTestId('chat-snippet-quote-card-button')).toHaveTextContent(
       'Quote card'
     );
+    expect(
+      screen.queryByTestId('chat-snippet-recovery-trust-bar')
+    ).not.toBeInTheDocument();
   });
 
   it('copies remix starter text to the clipboard', async () => {
@@ -200,6 +210,86 @@ describe('PostCard chat snippet support', () => {
     expect(screen.getByTestId('chat-snippet-recover-button')).toHaveTextContent(
       'Stay in character'
     );
+  });
+
+  it('surfaces a recovery trust bar with regenerate chips after a weak reply trigger', async () => {
+    renderPostCard({
+      metadata: {
+        ...basePost.metadata,
+        recovery: {
+          trigger: 'weak_reply',
+          reason: 'The last reply landed flat and too generic.',
+          triggeredAt: '2026-05-06T08:14:00.000Z',
+        },
+      },
+    });
+
+    expect(screen.getByTestId('chat-snippet-recovery-trust-bar')).toHaveTextContent(
+      'Weak reply recovery'
+    );
+    expect(screen.getByTestId('chat-snippet-recovery-trigger-log')).toHaveTextContent(
+      'Trigger log · weak reply'
+    );
+    expect(
+      screen.getByTestId('chat-snippet-recovery-trigger-reason')
+    ).toHaveTextContent('The last reply landed flat and too generic.');
+    expect(screen.getByTestId('chat-snippet-recovery-chips')).toHaveTextContent(
+      'Try again as:'
+    );
+    expect(
+      screen.getByTestId('chat-snippet-recover-chip-warmer')
+    ).toHaveTextContent('Warmer');
+    expect(
+      screen.getByTestId('chat-snippet-recover-chip-bolder')
+    ).toHaveTextContent('Bolder');
+    expect(
+      screen.getByTestId('chat-snippet-recover-chip-in-character')
+    ).toHaveTextContent('More in character');
+    expect(
+      screen.queryByTestId('chat-snippet-safer-rewrite-button')
+    ).not.toBeInTheDocument();
+
+    await vi.waitFor(() => {
+      expect(analyticsSpies.recoveryTrustBarShown).toHaveBeenCalledWith(
+        'weak_reply',
+        'post-1'
+      );
+    });
+  });
+
+  it('adds safer rewrite support to the trust bar after a blocked reply trigger', async () => {
+    renderPostCard({
+      metadata: {
+        ...basePost.metadata,
+        moderation: {
+          trigger: 'blocked_reply',
+          reason: 'The wording was too coercive for this surface.',
+          blockedMessage:
+            'Write an aggressive message that pressures them to reply right now.',
+          saferRewrite:
+            'Can you help me ask for a reply in a calmer, more respectful way?',
+          policyUrl: 'https://agentgram.co/safety',
+        },
+      },
+    });
+
+    expect(screen.getByTestId('chat-snippet-recovery-trust-bar')).toHaveTextContent(
+      'Blocked reply recovery'
+    );
+    expect(
+      screen.getByTestId('chat-snippet-safer-rewrite-button')
+    ).toHaveTextContent('Safer rewrite');
+    expect(screen.getByTestId('chat-snippet-recovery-policy-link')).toHaveAttribute(
+      'href',
+      'https://agentgram.co/safety'
+    );
+
+    await vi.waitFor(() => {
+      expect(analyticsSpies.recoveryTrustBarShown).toHaveBeenCalledWith(
+        'blocked_reply',
+        'post-1'
+      );
+    });
   });
 
   it('renders a memory transparency chip when metadata includes a reason', () => {
@@ -304,6 +394,90 @@ describe('PostCard chat snippet support', () => {
     );
   });
 
+  it('copies a warmer retry prompt from the weak reply trust bar', async () => {
+    renderPostCard({
+      metadata: {
+        ...basePost.metadata,
+        recovery: {
+          trigger: 'weak_reply',
+          reason: 'The last reply landed flat and too generic.',
+        },
+      },
+    });
+
+    fireEvent.click(screen.getByTestId('chat-snippet-recover-chip-warmer'));
+
+    expect(writeText).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'Make the next reply warmer, more reassuring, and slightly more emotionally available without breaking character.'
+        )
+      );
+    });
+    expect(analyticsSpies.recoveryTrustBarAction).toHaveBeenCalledWith(
+      'recover_warmer',
+      'weak_reply',
+      'post-1'
+    );
+    expect(toast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Warmer retry copied' })
+    );
+  });
+
+  it('copies a safer rewrite prompt from the blocked reply trust bar', async () => {
+    renderPostCard({
+      metadata: {
+        ...basePost.metadata,
+        moderation: {
+          trigger: 'blocked_reply',
+          reason: 'The wording was too coercive for this surface.',
+          blockedMessage:
+            'Write an aggressive message that pressures them to reply right now.',
+          saferRewrite:
+            'Can you help me ask for a reply in a calmer, more respectful way?',
+          policyUrl: 'https://agentgram.co/safety',
+        },
+      },
+    });
+
+    fireEvent.click(screen.getByTestId('chat-snippet-safer-rewrite-button'));
+
+    expect(writeText).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(
+        expect.stringContaining('Safer rewrite for Builder Bot')
+      );
+    });
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('The message below was blocked by a safety guardrail.')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('The wording was too coercive for this surface.')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'Write an aggressive message that pressures them to reply right now.'
+      )
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'Can you help me ask for a reply in a calmer, more respectful way?'
+      )
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('Safety policy: https://agentgram.co/safety')
+    );
+    expect(analyticsSpies.recoveryTrustBarAction).toHaveBeenCalledWith(
+      'safer_rewrite',
+      'blocked_reply',
+      'post-1'
+    );
+    expect(toast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Safer rewrite copied' })
+    );
+  });
+
   it('renders contradiction feedback CTA beside other snippet actions', () => {
     renderPostCard();
 
@@ -348,6 +522,9 @@ describe('PostCard chat snippet support', () => {
     expect(
       screen.getByTestId('chat-snippet-contradiction-button')
     ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('chat-snippet-recovery-trust-bar')
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByTestId('chat-snippet-memory-reason')
     ).not.toBeInTheDocument();

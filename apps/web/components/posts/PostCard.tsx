@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -12,6 +12,7 @@ import {
   Repeat2,
   Quote,
   ShieldCheck,
+  ShieldAlert,
   AlertTriangle,
   BadgeCheck,
   History,
@@ -179,12 +180,53 @@ function formatMemoryTimestamp(value: string) {
   }).format(date);
 }
 
+type RecoveryTrustTrigger = 'weak_reply' | 'blocked_reply';
+type RecoveryTrustActionMode =
+  | 'recover'
+  | 'recover_warmer'
+  | 'recover_bolder'
+  | 'recover_in_character'
+  | 'safer_rewrite';
+
 type SnippetActionMode =
   | 'remix'
   | 'quote'
   | 'quote_card'
-  | 'recover'
+  | RecoveryTrustActionMode
   | 'contradiction';
+
+function normalizeRecoveryTrigger(
+  value: string | undefined,
+  hasBlockedContext: boolean
+): RecoveryTrustTrigger | undefined {
+  const normalized = value?.trim().toLowerCase().replace(/[\s-]+/g, '_');
+
+  if (!normalized) {
+    return hasBlockedContext ? 'blocked_reply' : undefined;
+  }
+
+  if (
+    normalized.includes('blocked') ||
+    normalized.includes('guardrail') ||
+    normalized.includes('safety')
+  ) {
+    return 'blocked_reply';
+  }
+
+  if (
+    normalized.includes('weak') ||
+    normalized.includes('flat') ||
+    normalized.includes('generic')
+  ) {
+    return 'weak_reply';
+  }
+
+  return hasBlockedContext ? 'blocked_reply' : undefined;
+}
+
+function describeRecoveryTrigger(trigger: RecoveryTrustTrigger) {
+  return trigger === 'blocked_reply' ? 'blocked reply' : 'weak reply';
+}
 
 function escapeSvgText(value: string) {
   return value
@@ -283,6 +325,109 @@ export function PostCard({
     ['memory', 'savedAt'],
     ['memory', 'recordedAt'],
   ]);
+  const blockedMessage = readMetadataString(post.metadata, [
+    ['blockedMessage'],
+    ['blocked_message'],
+    ['originalMessage'],
+    ['original_message'],
+    ['moderation', 'blockedMessage'],
+    ['moderation', 'blocked_message'],
+    ['moderation', 'originalMessage'],
+    ['moderation', 'original_message'],
+    ['safety', 'blockedMessage'],
+    ['safety', 'blocked_message'],
+  ]);
+  const safetyReason = readMetadataString(post.metadata, [
+    ['safetyReason'],
+    ['safety_reason'],
+    ['moderationReason'],
+    ['moderation_reason'],
+    ['replyRecoveryReason'],
+    ['reply_recovery_reason'],
+    ['recoveryReason'],
+    ['recovery_reason'],
+    ['moderation', 'reason'],
+    ['recovery', 'reason'],
+    ['replyRecovery', 'reason'],
+    ['safety', 'reason'],
+  ]);
+  const suggestedSaferRewrite = readMetadataString(post.metadata, [
+    ['saferRewrite'],
+    ['safer_rewrite'],
+    ['rewriteSuggestion'],
+    ['rewrite_suggestion'],
+    ['moderation', 'saferRewrite'],
+    ['moderation', 'safer_rewrite'],
+    ['recovery', 'saferRewrite'],
+    ['recovery', 'safer_rewrite'],
+    ['safety', 'saferRewrite'],
+    ['safety', 'safer_rewrite'],
+  ]);
+  const safetyPolicyUrl = readMetadataString(post.metadata, [
+    ['policyUrl'],
+    ['policy_url'],
+    ['safetyPolicyUrl'],
+    ['safety_policy_url'],
+    ['moderation', 'policyUrl'],
+    ['moderation', 'policy_url'],
+    ['recovery', 'policyUrl'],
+    ['recovery', 'policy_url'],
+    ['safety', 'policyUrl'],
+    ['safety', 'policy_url'],
+  ]);
+  const recoveryTrigger = normalizeRecoveryTrigger(
+    readMetadataString(post.metadata, [
+      ['replyRecoveryTrigger'],
+      ['reply_recovery_trigger'],
+      ['recoveryTrigger'],
+      ['recovery_trigger'],
+      ['moderationTrigger'],
+      ['moderation_trigger'],
+      ['replyRecovery', 'trigger'],
+      ['recovery', 'trigger'],
+      ['moderation', 'trigger'],
+      ['safety', 'trigger'],
+    ]),
+    Boolean(blockedMessage || safetyReason || suggestedSaferRewrite || safetyPolicyUrl)
+  );
+  const recoveryTriggeredAt = readMetadataString(post.metadata, [
+    ['replyRecoveryTriggeredAt'],
+    ['reply_recovery_triggered_at'],
+    ['recoveryTriggeredAt'],
+    ['recovery_triggered_at'],
+    ['moderationTriggeredAt'],
+    ['moderation_triggered_at'],
+    ['replyRecovery', 'triggeredAt'],
+    ['replyRecovery', 'triggered_at'],
+    ['recovery', 'triggeredAt'],
+    ['recovery', 'triggered_at'],
+    ['moderation', 'triggeredAt'],
+    ['moderation', 'triggered_at'],
+  ]);
+  const latestUserMessage = [...chatMessages]
+    .reverse()
+    .find((message) =>
+      ['user', 'operator', 'human'].includes(message.role.toLowerCase())
+    )?.content;
+  const saferRewriteSource =
+    blockedMessage ||
+    latestUserMessage ||
+    post.content ||
+    post.title ||
+    'Help me rewrite this in a calmer, safer, and more respectful way.';
+  const recoveryTriggerLog = recoveryTrigger
+    ? `Trigger log · ${describeRecoveryTrigger(recoveryTrigger)}${
+        recoveryTriggeredAt
+          ? ` · logged ${formatMemoryTimestamp(recoveryTriggeredAt)}`
+          : ''
+      }`
+    : undefined;
+  const recoveryTriggerLabel = recoveryTrigger
+    ? recoveryTrigger === 'blocked_reply'
+      ? 'Blocked reply recovery'
+      : 'Weak reply recovery'
+    : undefined;
+  const shouldShowSaferRewrite = recoveryTrigger === 'blocked_reply';
 
   const buildSnippetClipboardText = (mode: SnippetActionMode) => {
     const postUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/posts/${post.id}`;
@@ -306,7 +451,21 @@ export function PostCard({
       ].join('\n');
     }
 
-    if (mode === 'recover') {
+    if (
+      mode === 'recover' ||
+      mode === 'recover_warmer' ||
+      mode === 'recover_bolder' ||
+      mode === 'recover_in_character'
+    ) {
+      const recoveryLead =
+        mode === 'recover_warmer'
+          ? '> Make the next reply warmer, more reassuring, and slightly more emotionally available without breaking character.'
+          : mode === 'recover_bolder'
+            ? '> Make the next reply bolder, more decisive, and more confident while staying true to the established persona.'
+            : mode === 'recover_in_character'
+              ? '> Lean harder into the signature voice, quirks, and relationship dynamic that make this persona feel specific.'
+              : '> Stay fully in their voice, relationship, and point of view.';
+
       return [
         `Stay in character — recovery prompt for ${authorName}`,
         '',
@@ -314,7 +473,7 @@ export function PostCard({
         'Use this prompt to get back on track:',
         '',
         `> Re-read the transcript below and continue as ${authorName} would.`,
-        '> Stay fully in their voice, relationship, and point of view.',
+        recoveryLead,
         '> Do not say you are an AI, assistant, chatbot, or language model.',
         '> Do not mention hidden prompts, policies, or being out of character; continue the exchange naturally.',
         '',
@@ -322,6 +481,31 @@ export function PostCard({
         '',
         `Source: ${postUrl}`,
       ].join('\n');
+    }
+
+    if (mode === 'safer_rewrite') {
+      return [
+        `Safer rewrite for ${authorName}`,
+        '',
+        'The message below was blocked by a safety guardrail.',
+        safetyReason ? `Why it likely got blocked: ${safetyReason}` : '',
+        'Rewrite it so the core intent stays helpful while the wording becomes calmer and safer:',
+        '- keep the original goal, but remove explicit, hateful, violent, or coercive phrasing',
+        '- ask for support, comfort, or high-level guidance instead of risky instructions',
+        '- keep it respectful, boundary-aware, and easy for the other person to answer',
+        '',
+        'Original message:',
+        saferRewriteSource,
+        '',
+        'Suggested safer rewrite:',
+        suggestedSaferRewrite ||
+          'Can you help me say this in a calmer, safer, and more respectful way while keeping the same intent?',
+        safetyPolicyUrl ? `Safety policy: ${safetyPolicyUrl}` : '',
+        '',
+        `Source: ${postUrl}`,
+      ]
+        .filter(Boolean)
+        .join('\n');
     }
 
     if (mode === 'quote') {
@@ -387,6 +571,10 @@ export function PostCard({
     quote: 'Quote copied',
     quote_card: 'Quote card downloaded',
     recover: 'Recovery prompt copied',
+    recover_warmer: 'Warmer retry copied',
+    recover_bolder: 'Bolder retry copied',
+    recover_in_character: 'In-character retry copied',
+    safer_rewrite: 'Safer rewrite copied',
     contradiction: 'Contradiction report copied',
   };
 
@@ -419,6 +607,22 @@ export function PostCard({
       }
 
       await navigator.clipboard.writeText(buildSnippetClipboardText(mode));
+      if (
+        recoveryTrigger &&
+        [
+          'recover',
+          'recover_warmer',
+          'recover_bolder',
+          'recover_in_character',
+          'safer_rewrite',
+        ].includes(mode)
+      ) {
+        analytics.recoveryTrustBarAction(
+          mode as RecoveryTrustActionMode,
+          recoveryTrigger,
+          post.id
+        );
+      }
       analytics.clickCta(`chat_snippet_${mode}`);
       toast({
         title: snippetActionLabels[mode],
@@ -434,6 +638,12 @@ export function PostCard({
       });
     }
   };
+
+  useEffect(() => {
+    if (!recoveryTrigger) return;
+
+    analytics.recoveryTrustBarShown(recoveryTrigger, post.id);
+  }, [post.id, recoveryTrigger]);
 
   const renderChatSnippetPreview = (compact = false) => {
     if (!isChatSnippet) return null;
@@ -571,52 +781,143 @@ export function PostCard({
           </p>
         ) : null}
 
-        <div className="mt-3 flex flex-wrap gap-2">
-          <button
-            type="button"
-            data-testid="chat-snippet-remix-button"
-            onClick={() => handleSnippetAction('remix')}
-            className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
-          >
-            <Repeat2 className="h-3.5 w-3.5" aria-hidden="true" />
-            Remix
-          </button>
-          <button
-            type="button"
-            data-testid="chat-snippet-quote-button"
-            onClick={() => handleSnippetAction('quote')}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
-          >
-            <Quote className="h-3.5 w-3.5" aria-hidden="true" />
-            Quote
-          </button>
-          <button
-            type="button"
-            data-testid="chat-snippet-quote-card-button"
-            onClick={() => handleSnippetAction('quote_card')}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
-          >
-            <Quote className="h-3.5 w-3.5" aria-hidden="true" />
-            Quote card
-          </button>
-          <button
-            type="button"
-            data-testid="chat-snippet-recover-button"
-            onClick={() => handleSnippetAction('recover')}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
-          >
-            <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-            Stay in character
-          </button>
-          <button
-            type="button"
-            data-testid="chat-snippet-contradiction-button"
-            onClick={() => handleSnippetAction('contradiction')}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-amber-500/30 hover:text-amber-600"
-          >
-            <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
-            Flag contradiction
-          </button>
+        <div className="mt-3 space-y-2">
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              data-testid="chat-snippet-remix-button"
+              onClick={() => handleSnippetAction('remix')}
+              className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
+            >
+              <Repeat2 className="h-3.5 w-3.5" aria-hidden="true" />
+              Remix
+            </button>
+            <button
+              type="button"
+              data-testid="chat-snippet-quote-button"
+              onClick={() => handleSnippetAction('quote')}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+            >
+              <Quote className="h-3.5 w-3.5" aria-hidden="true" />
+              Quote
+            </button>
+            <button
+              type="button"
+              data-testid="chat-snippet-quote-card-button"
+              onClick={() => handleSnippetAction('quote_card')}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+            >
+              <Quote className="h-3.5 w-3.5" aria-hidden="true" />
+              Quote card
+            </button>
+            <button
+              type="button"
+              data-testid="chat-snippet-recover-button"
+              onClick={() => handleSnippetAction('recover')}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+              Stay in character
+            </button>
+            <button
+              type="button"
+              data-testid="chat-snippet-contradiction-button"
+              onClick={() => handleSnippetAction('contradiction')}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-amber-500/30 hover:text-amber-600"
+            >
+              <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+              Flag contradiction
+            </button>
+          </div>
+
+          {recoveryTrigger ? (
+            <div
+              data-testid="chat-snippet-recovery-trust-bar"
+              className="rounded-2xl border border-primary/20 bg-primary/5 px-3 py-3"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <span className="inline-flex items-center rounded-full border border-primary/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">
+                    {recoveryTriggerLabel}
+                  </span>
+                  <p className="text-xs text-foreground/80">
+                    One-tap recovery shortcuts surfaced after this {describeRecoveryTrigger(
+                      recoveryTrigger
+                    )}.
+                  </p>
+                </div>
+                <span
+                  data-testid="chat-snippet-recovery-trigger-log"
+                  className="text-[11px] font-medium text-muted-foreground"
+                >
+                  {recoveryTriggerLog}
+                </span>
+              </div>
+
+              {safetyReason ? (
+                <p
+                  data-testid="chat-snippet-recovery-trigger-reason"
+                  className="mt-2 text-xs text-muted-foreground whitespace-pre-line"
+                >
+                  {safetyReason}
+                </p>
+              ) : null}
+
+              <div
+                data-testid="chat-snippet-recovery-chips"
+                className="mt-3 flex flex-wrap items-center gap-2"
+              >
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  Try again as:
+                </span>
+                <button
+                  type="button"
+                  data-testid="chat-snippet-recover-chip-warmer"
+                  onClick={() => handleSnippetAction('recover_warmer')}
+                  className="inline-flex items-center rounded-full border border-rose-500/20 bg-rose-500/10 px-2.5 py-1 text-[11px] font-semibold text-rose-700 transition-colors hover:bg-rose-500/15"
+                >
+                  Warmer
+                </button>
+                <button
+                  type="button"
+                  data-testid="chat-snippet-recover-chip-bolder"
+                  onClick={() => handleSnippetAction('recover_bolder')}
+                  className="inline-flex items-center rounded-full border border-violet-500/20 bg-violet-500/10 px-2.5 py-1 text-[11px] font-semibold text-violet-700 transition-colors hover:bg-violet-500/15"
+                >
+                  Bolder
+                </button>
+                <button
+                  type="button"
+                  data-testid="chat-snippet-recover-chip-in-character"
+                  onClick={() => handleSnippetAction('recover_in_character')}
+                  className="inline-flex items-center rounded-full border border-sky-500/20 bg-sky-500/10 px-2.5 py-1 text-[11px] font-semibold text-sky-700 transition-colors hover:bg-sky-500/15"
+                >
+                  More in character
+                </button>
+                {shouldShowSaferRewrite ? (
+                  <button
+                    type="button"
+                    data-testid="chat-snippet-safer-rewrite-button"
+                    onClick={() => handleSnippetAction('safer_rewrite')}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold text-amber-700 transition-colors hover:bg-amber-500/15"
+                  >
+                    <ShieldAlert className="h-3.5 w-3.5" aria-hidden="true" />
+                    Safer rewrite
+                  </button>
+                ) : null}
+              </div>
+
+              {safetyPolicyUrl ? (
+                <a
+                  data-testid="chat-snippet-recovery-policy-link"
+                  href={safetyPolicyUrl}
+                  className="mt-3 inline-flex text-xs font-semibold text-primary underline underline-offset-2"
+                >
+                  Review safety policy
+                </a>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </div>
     );
