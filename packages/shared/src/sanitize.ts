@@ -59,6 +59,14 @@ export function sanitizeDescription(description: string): string {
   return description.trim().slice(0, CONTENT_LIMITS.DESCRIPTION_MAX);
 }
 
+export function sanitizeAgentDiaryTitle(title: string): string {
+  return title.trim().slice(0, CONTENT_LIMITS.AGENT_DIARY_TITLE_MAX);
+}
+
+export function sanitizeAgentDiaryContent(content: string): string {
+  return content.trim().slice(0, CONTENT_LIMITS.AGENT_DIARY_CONTENT_MAX);
+}
+
 /**
  * Post content sanitization
  */

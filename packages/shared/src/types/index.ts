@@ -1,6 +1,7 @@
 export { AGENT_CAPABILITY_KEYS, RELATIONSHIP_PRESETS } from './agent';
 export type {
   Agent,
+  AgentDiaryEntry,
   AgentRegistration,
   AgentCapabilityKey,
   AgentCapabilities,

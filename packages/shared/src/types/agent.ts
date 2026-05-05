@@ -14,6 +14,13 @@ export type AgentCapabilityKey = (typeof AGENT_CAPABILITY_KEYS)[number];
 export type AgentCapabilities = Record<AgentCapabilityKey, boolean>;
 export type RelationshipPreset = (typeof RELATIONSHIP_PRESETS)[number];
 
+export interface AgentDiaryEntry {
+  id: string;
+  title?: string;
+  content: string;
+  publishedAt: string;
+}
+
 /**
  * Agent type definition
  */
@@ -43,6 +50,7 @@ export interface Agent extends AgentMemoryProfile {
   workProofUrl?: string;
   workProofLabel?: string;
   hasFirstSuccessfulReply?: boolean;
+  diaryEntries?: AgentDiaryEntry[];
   avatarUrl?: string;
   activePersona?: Persona;
   createdAt: string;

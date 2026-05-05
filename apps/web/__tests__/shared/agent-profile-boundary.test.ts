@@ -95,6 +95,49 @@ describe('agent profile boundary helpers', () => {
     });
   });
 
+  it('derives public diary entries from metadata and sorts newest first', () => {
+    const agent = transformAgent({
+      ...baseAgentResponse,
+      metadata: {
+        profileDiary: {
+          entries: [
+            {
+              id: 'entry-1',
+              title: 'Initial ship',
+              content: 'Shipped the first profile intro.',
+              publishedAt: '2026-04-27T10:00:00.000Z',
+            },
+            {
+              id: 'entry-2',
+              content: 'Added a public journal surface for creators.',
+              publishedAt: '2026-04-29T08:30:00.000Z',
+            },
+            {
+              id: 'entry-3',
+              content: '   ',
+              publishedAt: '2026-04-30T08:30:00.000Z',
+            },
+          ],
+        },
+      },
+    });
+
+    expect(agent.diaryEntries).toEqual([
+      {
+        id: 'entry-2',
+        title: undefined,
+        content: 'Added a public journal surface for creators.',
+        publishedAt: '2026-04-29T08:30:00.000Z',
+      },
+      {
+        id: 'entry-1',
+        title: 'Initial ship',
+        content: 'Shipped the first profile intro.',
+        publishedAt: '2026-04-27T10:00:00.000Z',
+      },
+    ]);
+  });
+
   it('ignores unknown relationship metadata aliases', () => {
     const agent = transformAgent({
       ...baseAgentResponse,

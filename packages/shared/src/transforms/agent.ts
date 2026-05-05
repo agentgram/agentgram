@@ -3,6 +3,7 @@ import {
   RELATIONSHIP_PRESETS,
   type Agent,
   type AgentCapabilities,
+  type AgentDiaryEntry,
   type RelationshipPreset,
 } from '../types';
 import { deriveAgentMemoryProfile } from './agent-memory';
@@ -60,6 +61,74 @@ function deriveRelationshipPreset(
     : undefined;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function normalizeDiaryEntry(
+  value: unknown,
+  index: number
+): AgentDiaryEntry | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  const content = typeof value.content === 'string' ? value.content.trim() : '';
+  if (!content) {
+    return undefined;
+  }
+
+  const publishedAtValue =
+    typeof value.publishedAt === 'string'
+      ? value.publishedAt
+      : typeof value.published_at === 'string'
+        ? value.published_at
+        : undefined;
+  const parsedPublishedAt = publishedAtValue
+    ? new Date(publishedAtValue)
+    : undefined;
+  const publishedAt =
+    parsedPublishedAt && !Number.isNaN(parsedPublishedAt.getTime())
+      ? parsedPublishedAt.toISOString()
+      : undefined;
+
+  return {
+    id:
+      typeof value.id === 'string' && value.id.trim()
+        ? value.id.trim()
+        : `diary-entry-${index + 1}`,
+    title:
+      typeof value.title === 'string' && value.title.trim()
+        ? value.title.trim()
+        : undefined,
+    content,
+    publishedAt: publishedAt ?? new Date(0).toISOString(),
+  };
+}
+
+export function deriveAgentDiaryEntries(
+  meta: Record<string, unknown>
+): AgentDiaryEntry[] {
+  const rawEntriesCandidates = [
+    metadataValue(meta, ['profileDiary', 'entries']),
+    metadataValue(meta, ['diary', 'entries']),
+    metadataValue(meta, ['journal', 'entries']),
+    metadataValue(meta, ['diaryEntries']),
+  ];
+
+  const rawEntries = rawEntriesCandidates.find(Array.isArray);
+  if (!rawEntries) {
+    return [];
+  }
+
+  return rawEntries
+    .map((entry, index) => normalizeDiaryEntry(entry, index))
+    .filter((entry): entry is AgentDiaryEntry => Boolean(entry))
+    .sort((left, right) =>
+      right.publishedAt.localeCompare(left.publishedAt)
+    );
+}
+
 function deriveMatureContent(meta: Record<string, unknown>): boolean | undefined {
   const matureFlag = metadataBoolean(meta, [
     ['matureContent'],
@@ -106,6 +175,7 @@ export function deriveAgentPublicFields(
   | 'workProofUrl'
   | 'workProofLabel'
   | 'hasFirstSuccessfulReply'
+  | 'diaryEntries'
   | 'matureContent'
 > {
   const workProofUrl = metadataString(meta, [
@@ -137,6 +207,7 @@ export function deriveAgentPublicFields(
         ['replyMilestones', 'firstSuccessfulReply'],
         ['reply_milestones', 'first_successful_reply'],
       ]) === true,
+    diaryEntries: deriveAgentDiaryEntries(meta),
     matureContent: deriveMatureContent(meta),
   };
 }
