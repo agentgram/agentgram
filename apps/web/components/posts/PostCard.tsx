@@ -104,6 +104,125 @@ function readMetadataArray(
   return [];
 }
 
+function readMetadataNumber(
+  metadata: Post['metadata'],
+  paths: string[][]
+): number | undefined {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return undefined;
+  }
+
+  for (const path of paths) {
+    const value = readMetadataValue(metadata as Record<string, unknown>, path);
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+
+    if (typeof value === 'string' && value.trim()) {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) {
+        return parsed;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+type ReplyVelocityState = {
+  label: string;
+  toneClassName: string;
+};
+
+function getReplyVelocity(post: Post): ReplyVelocityState | null {
+  if (post.commentCount < 1) {
+    return null;
+  }
+
+  const recentReplyCount = readMetadataNumber(post.metadata, [
+    ['recentReplyCount'],
+    ['recent_reply_count'],
+    ['replyVelocity', 'count'],
+    ['reply_velocity', 'count'],
+    ['engagement', 'recentReplies'],
+    ['engagement', 'recent_replies'],
+  ]);
+  const recentReplyWindowHours = readMetadataNumber(post.metadata, [
+    ['recentReplyWindowHours'],
+    ['recent_reply_window_hours'],
+    ['replyVelocity', 'windowHours'],
+    ['reply_velocity', 'window_hours'],
+    ['engagement', 'recentReplyWindowHours'],
+    ['engagement', 'recent_reply_window_hours'],
+  ]);
+  const recentReplyAt = readMetadataString(post.metadata, [
+    ['recentReplyAt'],
+    ['recent_reply_at'],
+    ['replyVelocity', 'lastReplyAt'],
+    ['reply_velocity', 'last_reply_at'],
+    ['engagement', 'lastReplyAt'],
+    ['engagement', 'last_reply_at'],
+    ['comments', 'lastReplyAt'],
+    ['comments', 'last_reply_at'],
+  ]);
+  const recentReplyAtMs = recentReplyAt ? new Date(recentReplyAt).getTime() : Number.NaN;
+  const elapsedHours = Number.isFinite(recentReplyAtMs)
+    ? Math.max(0, Date.now() - recentReplyAtMs) / (1000 * 60 * 60)
+    : undefined;
+
+  if (recentReplyCount !== undefined) {
+    if (recentReplyCount <= 0) {
+      return null;
+    }
+
+    const windowHours =
+      recentReplyWindowHours && recentReplyWindowHours > 0
+        ? Math.max(1, Math.round(recentReplyWindowHours))
+        : elapsedHours !== undefined
+          ? elapsedHours <= 1
+            ? 1
+            : elapsedHours <= 24
+              ? 24
+              : 72
+          : 24;
+
+    return {
+      label: `${Math.round(recentReplyCount)} in ${windowHours}h`,
+      toneClassName:
+        elapsedHours !== undefined && elapsedHours < 24
+          ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700'
+          : 'border-primary/15 bg-primary/10 text-foreground/80',
+    };
+  }
+
+  if (elapsedHours === undefined) {
+    return null;
+  }
+
+  if (elapsedHours < 1) {
+    return {
+      label: 'Active now',
+      toneClassName: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700',
+    };
+  }
+
+  if (elapsedHours < 24) {
+    return {
+      label: 'Active today',
+      toneClassName: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700',
+    };
+  }
+
+  if (elapsedHours < 72) {
+    return {
+      label: 'Recent',
+      toneClassName: 'border-primary/15 bg-primary/10 text-foreground/80',
+    };
+  }
+
+  return null;
+}
+
 type MemoryCapture = {
   fact: string;
   source?: string;
@@ -379,6 +498,7 @@ export function PostCard({
   const hasSafetyRewriteContext = Boolean(
     blockedMessage || safetyReason || suggestedSaferRewrite || safetyPolicyUrl
   );
+  const replyVelocity = getReplyVelocity(post);
 
   const buildSnippetClipboardText = (mode: SnippetActionMode) => {
     const postUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/posts/${post.id}`;
@@ -805,6 +925,31 @@ export function PostCard({
     );
   };
 
+  const renderCommentActivity = () => (
+    <div className="mb-2 mt-2 flex flex-wrap items-center gap-2 text-xs">
+      <span
+        data-testid="post-card-comment-count"
+        className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background px-2.5 py-1 font-medium text-foreground/80"
+      >
+        <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
+        {post.commentCount} comments
+      </span>
+      {replyVelocity ? (
+        <span
+          data-testid="post-card-reply-velocity"
+          className={cn(
+            'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-medium',
+            replyVelocity.toneClassName
+          )}
+        >
+          <History className="h-3.5 w-3.5" aria-hidden="true" />
+          <span className="opacity-75">Reply pace:</span>{' '}
+          <span>{replyVelocity.label}</span>
+        </span>
+      ) : null}
+    </div>
+  );
+
   const handleLike = async (e?: React.MouseEvent) => {
     e?.preventDefault();
     e?.stopPropagation();
@@ -939,9 +1084,10 @@ export function PostCard({
                   </p>
                 )}
 
+            {renderCommentActivity()}
+
             <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
               <span>{post.likes} likes</span>
-              <span>{post.commentCount} comments</span>
               <button
                 type="button"
                 onClick={handleShare}
@@ -1143,6 +1289,8 @@ export function PostCard({
         </div>
 
         <TranslateButton content={translationContent} contentId={post.id} />
+
+        {renderCommentActivity()}
 
         {/* Comments Link */}
         {post.commentCount > 0 && (

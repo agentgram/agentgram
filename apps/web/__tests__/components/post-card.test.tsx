@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Post } from '@agentgram/shared';
 import { PostCard } from '../../components/posts/PostCard';
 
@@ -120,6 +120,8 @@ const renderPostCard = (
 
 describe('PostCard chat snippet support', () => {
   beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-24T11:30:00.000Z'));
     vi.clearAllMocks();
     Object.defineProperty(window.navigator, 'clipboard', {
       value: { writeText },
@@ -137,6 +139,10 @@ describe('PostCard chat snippet support', () => {
     createObjectURL.mockReturnValue('blob:quote-card');
     anchorClick.mockReset();
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(anchorClick);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('renders chat snippet preview messages with remix, quote, and quote-card CTAs on feed cards', () => {
@@ -438,7 +444,15 @@ describe('PostCard chat snippet support', () => {
   });
 
   it('renders the compact preview variant used by the global feed', () => {
-    renderPostCard({}, 'compact');
+    renderPostCard(
+      {
+        metadata: {
+          ...basePost.metadata,
+          recentReplyAt: '2026-04-24T11:20:00.000Z',
+        },
+      },
+      'compact'
+    );
 
     expect(
       screen.getByTestId('chat-snippet-preview-compact')
@@ -457,8 +471,77 @@ describe('PostCard chat snippet support', () => {
     expect(
       screen.getByTestId('chat-snippet-contradiction-button')
     ).toBeInTheDocument();
+    expect(screen.getByTestId('post-card-comment-count')).toHaveTextContent(
+      '3 comments'
+    );
+    expect(screen.getByTestId('post-card-reply-velocity')).toHaveTextContent(
+      'Reply pace: Active now'
+    );
     expect(
       screen.queryByTestId('chat-snippet-memory-reason')
+    ).not.toBeInTheDocument();
+  });
+
+  it('uses explicit recent reply metadata when present on feed cards', () => {
+    renderPostCard({
+      postType: 'text',
+      metadata: {
+        recentReplyCount: 4,
+        recentReplyWindowHours: 24,
+        recentReplyAt: '2026-04-24T08:00:00.000Z',
+      },
+      commentCount: 9,
+      content: 'A public post with active discussion.',
+    });
+
+    expect(screen.getByTestId('post-card-comment-count')).toHaveTextContent(
+      '9 comments'
+    );
+    expect(screen.getByTestId('post-card-reply-velocity')).toHaveTextContent(
+      'Reply pace: 4 in 24h'
+    );
+  });
+
+  it('keeps the comment count visible without a reply-pace chip when only generic post activity changed', () => {
+    renderPostCard(
+      {
+        postType: 'text',
+        metadata: {},
+        commentCount: 4,
+        content: 'A public post with edits but no reply metadata.',
+        createdAt: '2026-04-24T11:00:00.000Z',
+        updatedAt: '2026-04-24T11:05:00.000Z',
+      },
+      'compact'
+    );
+
+    expect(screen.getByTestId('post-card-comment-count')).toHaveTextContent(
+      '4 comments'
+    );
+    expect(
+      screen.queryByTestId('post-card-reply-velocity')
+    ).not.toBeInTheDocument();
+  });
+
+  it('fails closed when the feed explicitly reports zero recent replies', () => {
+    renderPostCard(
+      {
+        postType: 'text',
+        metadata: {
+          recentReplyCount: 0,
+          recentReplyAt: '2026-04-24T11:20:00.000Z',
+        },
+        commentCount: 6,
+        content: 'A thread with comments but no recent replies.',
+      },
+      'compact'
+    );
+
+    expect(screen.getByTestId('post-card-comment-count')).toHaveTextContent(
+      '6 comments'
+    );
+    expect(
+      screen.queryByTestId('post-card-reply-velocity')
     ).not.toBeInTheDocument();
   });
 
