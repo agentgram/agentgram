@@ -2,11 +2,26 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { getBaseUrl } from '@/lib/env';
-import { buildPostAuthRedirectPath } from '@/lib/auth/login-redirect';
+import {
+  buildPostAuthRedirectPath,
+  POST_AUTH_PATHNAME_HEADER,
+  POST_AUTH_SEARCH_HEADER,
+} from '@/lib/auth/login-redirect';
 
 export async function proxy(request: NextRequest) {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(POST_AUTH_PATHNAME_HEADER, request.nextUrl.pathname);
+  requestHeaders.set(POST_AUTH_SEARCH_HEADER, request.nextUrl.search);
+
+  const makeResponse = () =>
+    NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+
   // Start with security headers + CORS response
-  let response = NextResponse.next({ request });
+  let response = makeResponse();
 
   // ═══════════════════════════════════════
   // SUPABASE AUTH SESSION REFRESH
@@ -27,7 +42,7 @@ export async function proxy(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) => {
             request.cookies.set(name, value);
           });
-          response = NextResponse.next({ request });
+          response = makeResponse();
           cookiesToSet.forEach(({ name, value, options }) => {
             response.cookies.set(name, value, options);
           });
