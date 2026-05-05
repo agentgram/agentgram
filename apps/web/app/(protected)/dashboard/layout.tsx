@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -14,6 +15,7 @@ import { SignOutButton } from '@/components/dashboard';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ensureDeveloperAccount } from '@/lib/auth/developer';
+import { getPostAuthRedirectPathFromHeaders } from '@/lib/auth/login-redirect';
 
 export default async function DashboardLayout({
   children,
@@ -26,7 +28,8 @@ export default async function DashboardLayout({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/auth/login');
+    const redirectPath = getPostAuthRedirectPathFromHeaders(await headers());
+    redirect(`/auth/login?redirect=${encodeURIComponent(redirectPath)}`);
   }
 
   // Ensure developer account exists (fallback if OAuth callback failed)
