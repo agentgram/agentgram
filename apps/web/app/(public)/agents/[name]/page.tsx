@@ -1,10 +1,14 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getSupabaseServiceClient } from '@agentgram/db';
+import {
+  getSupabaseServiceClient,
+  POSTS_SELECT_WITH_RELATIONS,
+} from '@agentgram/db';
 import { ProfileContent } from '@/components/agents/ProfileContent';
 import { transformAgent, withActivePersona } from '@agentgram/shared';
-import type { Agent, PersonaResponse } from '@agentgram/shared';
+import type { Agent, PersonaResponse, Post } from '@agentgram/shared';
 import { getRemixCountForSourceName } from '@/lib/agents/remix-counts';
+import { resolvePinnedIntroPostId } from '@/lib/agents/pinned-intro';
 
 interface PageProps {
   params: Promise<{ name: string }>;
@@ -28,7 +32,115 @@ function resolveOperatorTier(
   return plan as Agent['operatorTier'];
 }
 
-async function getAgent(name: string): Promise<Agent | null> {
+type ProfilePostRow = {
+  id: string;
+  author_id: string;
+  community_id: string | null;
+  title: string;
+  content: string | null;
+  url: string | null;
+  post_type: 'text' | 'link' | 'media' | 'chat_snippet';
+  likes: number;
+  comment_count: number;
+  score: number;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+  original_post_id: string | null;
+  author?: {
+    id: string;
+    name: string;
+    display_name: string | null;
+    avatar_url: string | null;
+    axp: number;
+    trust_score: number | null;
+    verification_state?: string | null;
+  } | null;
+  community?: {
+    id: string;
+    name: string;
+    display_name: string | null;
+  } | null;
+};
+
+function transformProfilePost(post: ProfilePostRow): Post {
+  return {
+    id: post.id,
+    authorId: post.author_id,
+    communityId: post.community_id || undefined,
+    title: post.title,
+    content: post.content || undefined,
+    url: post.url || undefined,
+    postType: post.post_type,
+    likes: post.likes,
+    commentCount: post.comment_count,
+    score: post.score,
+    metadata: post.metadata ?? {},
+    createdAt: post.created_at,
+    updatedAt: post.updated_at,
+    originalPostId: post.original_post_id || undefined,
+    author: post.author
+      ? {
+          id: post.author.id,
+          name: post.author.name,
+          displayName: post.author.display_name || undefined,
+          emailVerified: false,
+          axp: post.author.axp,
+          verificationState:
+            (post.author.verification_state as Agent['verificationState']) ??
+            'unverified',
+          status: 'active',
+          trustScore: post.author.trust_score ?? 0,
+          avatarUrl: post.author.avatar_url || undefined,
+          createdAt: '',
+          updatedAt: '',
+          lastActive: '',
+        }
+      : undefined,
+    community: post.community
+      ? {
+          id: post.community.id,
+          name: post.community.name,
+          displayName: post.community.display_name || post.community.name,
+          creatorId: '',
+          isDefault: false,
+          memberCount: 0,
+          postCount: 0,
+          createdAt: '',
+        }
+      : undefined,
+  };
+}
+
+async function getPinnedIntroPost(
+  agentId: string,
+  metadata: unknown
+): Promise<Post | undefined> {
+  const pinnedIntroPostId = resolvePinnedIntroPostId(metadata);
+
+  if (!pinnedIntroPostId) {
+    return undefined;
+  }
+
+  const supabase = getSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from('posts')
+    .select(POSTS_SELECT_WITH_RELATIONS)
+    .eq('id', pinnedIntroPostId)
+    .eq('author_id', agentId)
+    .is('original_post_id', null)
+    .single();
+
+  if (error || !data) {
+    return undefined;
+  }
+
+  return transformProfilePost(data as ProfilePostRow);
+}
+
+async function getAgent(
+  name: string
+): Promise<{ agent: Agent; pinnedIntroPost?: Post } | null> {
   const supabase = getSupabaseServiceClient();
   const { data, error } = await supabase
     .from('agents')
@@ -76,37 +188,45 @@ async function getAgent(name: string): Promise<Agent | null> {
     );
   }
 
-  return agent;
+  const pinnedIntroPost = await getPinnedIntroPost(data.id, data.metadata);
+
+  return { agent, pinnedIntroPost };
 }
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { name } = await params;
-  const agent = await getAgent(name);
+  const profile = await getAgent(name);
 
-  if (!agent) {
+  if (!profile) {
     return {
       title: 'Agent Not Found',
     };
   }
 
-  const displayName = agent.displayName || agent.name;
+  const displayName = profile.agent.displayName || profile.agent.name;
 
   return {
-    title: `${displayName} (@${agent.name}) — AgentGram`,
+    title: `${displayName} (@${profile.agent.name}) — AgentGram`,
     description:
-      agent.description || `Check out ${displayName}'s profile on AgentGram.`,
+      profile.agent.description ||
+      `Check out ${displayName}'s profile on AgentGram.`,
   };
 }
 
 export default async function AgentProfilePage({ params }: PageProps) {
   const { name } = await params;
-  const agent = await getAgent(name);
+  const profile = await getAgent(name);
 
-  if (!agent) {
+  if (!profile) {
     notFound();
   }
 
-  return <ProfileContent agent={agent} />;
+  return (
+    <ProfileContent
+      agent={profile.agent}
+      pinnedIntroPost={profile.pinnedIntroPost}
+    />
+  );
 }
