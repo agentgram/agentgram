@@ -156,6 +156,9 @@ describe('PostCard chat snippet support', () => {
     expect(screen.getByTestId('chat-snippet-quote-card-button')).toHaveTextContent(
       'Quote card'
     );
+    expect(screen.getByTestId('chat-snippet-recovery-chips')).toHaveTextContent(
+      'Try again as:'
+    );
   });
 
   it('copies remix starter text to the clipboard', async () => {
@@ -194,12 +197,21 @@ describe('PostCard chat snippet support', () => {
     );
   });
 
-  it('renders stay-in-character recovery CTA beside remix and quote', () => {
+  it('renders stay-in-character recovery CTA and quick recovery chips', () => {
     renderPostCard();
 
     expect(screen.getByTestId('chat-snippet-recover-button')).toHaveTextContent(
       'Stay in character'
     );
+    expect(
+      screen.getByTestId('chat-snippet-recover-chip-warmer')
+    ).toHaveTextContent('Warmer');
+    expect(
+      screen.getByTestId('chat-snippet-recover-chip-bolder')
+    ).toHaveTextContent('Bolder');
+    expect(
+      screen.getByTestId('chat-snippet-recover-chip-in-character')
+    ).toHaveTextContent('More in character');
   });
 
   it('renders a memory transparency chip when metadata includes a reason', () => {
@@ -336,6 +348,51 @@ describe('PostCard chat snippet support', () => {
     );
   });
 
+  it('copies warmer, bolder, and more-in-character retry chips with tailored recovery guidance', async () => {
+    renderPostCard();
+
+    const cases = [
+      {
+        testId: 'chat-snippet-recover-chip-warmer',
+        title: 'Warmer retry copied',
+        snippet:
+          'Make the next reply warmer, more reassuring, and slightly more emotionally available without breaking character.',
+      },
+      {
+        testId: 'chat-snippet-recover-chip-bolder',
+        title: 'Bolder retry copied',
+        snippet:
+          'Make the next reply bolder, more decisive, and more confident while staying true to the established persona.',
+      },
+      {
+        testId: 'chat-snippet-recover-chip-in-character',
+        title: 'In-character retry copied',
+        snippet:
+          'Lean harder into the signature voice, quirks, and relationship dynamic that make this persona feel specific.',
+      },
+    ] as const;
+
+    for (const item of cases) {
+      writeText.mockClear();
+      toast.mockClear();
+
+      fireEvent.click(screen.getByTestId(item.testId));
+
+      expect(writeText).toHaveBeenCalledTimes(1);
+      await vi.waitFor(() => {
+        expect(writeText).toHaveBeenCalledWith(
+          expect.stringContaining(item.snippet)
+        );
+      });
+      expect(writeText).toHaveBeenCalledWith(
+        expect.stringContaining('/posts/post-1')
+      );
+      expect(toast).toHaveBeenCalledWith(
+        expect.objectContaining({ title: item.title })
+      );
+    }
+  });
+
   it('renders contradiction feedback CTA beside other snippet actions', () => {
     renderPostCard();
 
@@ -376,6 +433,15 @@ describe('PostCard chat snippet support', () => {
     ).toBeInTheDocument();
     expect(
       screen.getByTestId('chat-snippet-recover-button')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('chat-snippet-recover-chip-warmer')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('chat-snippet-recover-chip-bolder')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('chat-snippet-recover-chip-in-character')
     ).toBeInTheDocument();
     expect(
       screen.getByTestId('chat-snippet-contradiction-button')

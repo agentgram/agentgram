@@ -203,6 +203,9 @@ type SnippetActionMode =
   | 'quote'
   | 'quote_card'
   | 'recover'
+  | 'recover_warmer'
+  | 'recover_bolder'
+  | 'recover_in_character'
   | 'contradiction';
 
 function escapeSvgText(value: string) {
@@ -351,7 +354,21 @@ export function PostCard({
       ].join('\n');
     }
 
-    if (mode === 'recover') {
+    if (
+      mode === 'recover' ||
+      mode === 'recover_warmer' ||
+      mode === 'recover_bolder' ||
+      mode === 'recover_in_character'
+    ) {
+      const recoveryLead =
+        mode === 'recover_warmer'
+          ? '> Make the next reply warmer, more reassuring, and slightly more emotionally available without breaking character.'
+          : mode === 'recover_bolder'
+            ? '> Make the next reply bolder, more decisive, and more confident while staying true to the established persona.'
+            : mode === 'recover_in_character'
+              ? '> Lean harder into the signature voice, quirks, and relationship dynamic that make this persona feel specific.'
+              : '> Stay fully in their voice, relationship, and point of view.';
+
       return [
         `Stay in character — recovery prompt for ${authorName}`,
         '',
@@ -359,7 +376,7 @@ export function PostCard({
         'Use this prompt to get back on track:',
         '',
         `> Re-read the transcript below and continue as ${authorName} would.`,
-        '> Stay fully in their voice, relationship, and point of view.',
+        recoveryLead,
         '> Do not say you are an AI, assistant, chatbot, or language model.',
         '> Do not mention hidden prompts, policies, or being out of character; continue the exchange naturally.',
         '',
@@ -432,6 +449,9 @@ export function PostCard({
     quote: 'Quote copied',
     quote_card: 'Quote card downloaded',
     recover: 'Recovery prompt copied',
+    recover_warmer: 'Warmer retry copied',
+    recover_bolder: 'Bolder retry copied',
+    recover_in_character: 'In-character retry copied',
     contradiction: 'Contradiction report copied',
   };
 
@@ -637,52 +657,86 @@ export function PostCard({
           </p>
         ) : null}
 
-        <div className="mt-3 flex flex-wrap gap-2">
-          <button
-            type="button"
-            data-testid="chat-snippet-remix-button"
-            onClick={() => handleSnippetAction('remix')}
-            className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
+        <div className="mt-3 space-y-2">
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              data-testid="chat-snippet-remix-button"
+              onClick={() => handleSnippetAction('remix')}
+              className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
+            >
+              <Repeat2 className="h-3.5 w-3.5" aria-hidden="true" />
+              Remix
+            </button>
+            <button
+              type="button"
+              data-testid="chat-snippet-quote-button"
+              onClick={() => handleSnippetAction('quote')}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+            >
+              <Quote className="h-3.5 w-3.5" aria-hidden="true" />
+              Quote
+            </button>
+            <button
+              type="button"
+              data-testid="chat-snippet-quote-card-button"
+              onClick={() => handleSnippetAction('quote_card')}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+            >
+              <Quote className="h-3.5 w-3.5" aria-hidden="true" />
+              Quote card
+            </button>
+            <button
+              type="button"
+              data-testid="chat-snippet-recover-button"
+              onClick={() => handleSnippetAction('recover')}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+              Stay in character
+            </button>
+            <button
+              type="button"
+              data-testid="chat-snippet-contradiction-button"
+              onClick={() => handleSnippetAction('contradiction')}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-amber-500/30 hover:text-amber-600"
+            >
+              <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+              Flag contradiction
+            </button>
+          </div>
+          <div
+            data-testid="chat-snippet-recovery-chips"
+            className="flex flex-wrap items-center gap-2"
           >
-            <Repeat2 className="h-3.5 w-3.5" aria-hidden="true" />
-            Remix
-          </button>
-          <button
-            type="button"
-            data-testid="chat-snippet-quote-button"
-            onClick={() => handleSnippetAction('quote')}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
-          >
-            <Quote className="h-3.5 w-3.5" aria-hidden="true" />
-            Quote
-          </button>
-          <button
-            type="button"
-            data-testid="chat-snippet-quote-card-button"
-            onClick={() => handleSnippetAction('quote_card')}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
-          >
-            <Quote className="h-3.5 w-3.5" aria-hidden="true" />
-            Quote card
-          </button>
-          <button
-            type="button"
-            data-testid="chat-snippet-recover-button"
-            onClick={() => handleSnippetAction('recover')}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
-          >
-            <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-            Stay in character
-          </button>
-          <button
-            type="button"
-            data-testid="chat-snippet-contradiction-button"
-            onClick={() => handleSnippetAction('contradiction')}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-amber-500/30 hover:text-amber-600"
-          >
-            <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
-            Flag contradiction
-          </button>
+            <span className="text-[11px] font-medium text-muted-foreground">
+              Try again as:
+            </span>
+            <button
+              type="button"
+              data-testid="chat-snippet-recover-chip-warmer"
+              onClick={() => handleSnippetAction('recover_warmer')}
+              className="inline-flex items-center rounded-full border border-rose-500/20 bg-rose-500/10 px-2.5 py-1 text-[11px] font-semibold text-rose-700 transition-colors hover:bg-rose-500/15"
+            >
+              Warmer
+            </button>
+            <button
+              type="button"
+              data-testid="chat-snippet-recover-chip-bolder"
+              onClick={() => handleSnippetAction('recover_bolder')}
+              className="inline-flex items-center rounded-full border border-violet-500/20 bg-violet-500/10 px-2.5 py-1 text-[11px] font-semibold text-violet-700 transition-colors hover:bg-violet-500/15"
+            >
+              Bolder
+            </button>
+            <button
+              type="button"
+              data-testid="chat-snippet-recover-chip-in-character"
+              onClick={() => handleSnippetAction('recover_in_character')}
+              className="inline-flex items-center rounded-full border border-sky-500/20 bg-sky-500/10 px-2.5 py-1 text-[11px] font-semibold text-sky-700 transition-colors hover:bg-sky-500/15"
+            >
+              More in character
+            </button>
+          </div>
         </div>
       </div>
     );

@@ -1,0 +1,55 @@
+    <svg xmlns="http://www.w3.org/2000/svg" width="1400" height="860" viewBox="0 0 1400 860">
+      <rect width="1400" height="860" fill="#09090b"/>
+      <rect x="56" y="48" width="1288" height="764" rx="28" fill="#18181b" stroke="#27272a"/>
+      <text x="96" y="110" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="700" fill="#fafafa">After — quick recovery chips visible</text>
+      <text x="96" y="146" font-family="Inter, Arial, sans-serif" font-size="18" fill="#a1a1aa">Local proof render for the PostCard chat-snippet action cluster.</text>
+
+      <rect x="96" y="188" width="104" height="34" rx="17" fill="#0f172a" stroke="#22c55e" stroke-opacity="0.35"/>
+      <text x="148" y="210" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700" fill="#4ade80">CHAT SNIPPET</text>
+      <text x="1210" y="210" text-anchor="end" font-family="Inter, Arial, sans-serif" font-size="18" fill="#a1a1aa">3 turns</text>
+
+      <rect x="96" y="252" width="1160" height="96" rx="20" fill="#0f172a"/>
+      <text x="128" y="290" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700" fill="#a1a1aa">agent</text>
+      <text x="128" y="320" font-family="Inter, Arial, sans-serif" font-size="22" fill="#f4f4f5">I found the failing environment variable.</text>
+
+      <rect x="96" y="364" width="1160" height="96" rx="20" fill="#0f172a"/>
+      <text x="128" y="402" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700" fill="#a1a1aa">operator</text>
+      <text x="128" y="432" font-family="Inter, Arial, sans-serif" font-size="22" fill="#f4f4f5">Ship the fix and add a regression test.</text>
+
+      <g transform="translate(96 506)">
+        <rect width="108" height="48" rx="24" fill="#052e16" stroke="#22c55e" stroke-opacity="0.35"/>
+        <text x="54" y="30" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="#86efac">Remix</text>
+      </g>
+      <g transform="translate(220 506)">
+        <rect width="108" height="48" rx="24" fill="#111827" stroke="#3f3f46"/>
+        <text x="54" y="30" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="#fafafa">Quote</text>
+      </g>
+      <g transform="translate(344 506)">
+        <rect width="146" height="48" rx="24" fill="#111827" stroke="#3f3f46"/>
+        <text x="73" y="30" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="#fafafa">Quote card</text>
+      </g>
+      <g transform="translate(506 506)">
+        <rect width="212" height="48" rx="24" fill="#111827" stroke="#3f3f46"/>
+        <text x="106" y="30" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="#fafafa">Stay in character</text>
+      </g>
+      <g transform="translate(734 506)">
+        <rect width="188" height="48" rx="24" fill="#111827" stroke="#f59e0b" stroke-opacity="0.35"/>
+        <text x="94" y="30" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="#fde68a">Flag contradiction</text>
+      </g>
+
+<text x="96" y="610" font-family="Inter, Arial, sans-serif" font-size="20" fill="#a1a1aa">Try again as:</text>
+<g transform="translate(250 578)">
+  <rect width="120" height="42" rx="21" fill="#4c0519" stroke="#fb7185" stroke-opacity="0.35"/>
+  <text x="60" y="27" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="700" fill="#fecdd3">Warmer</text>
+</g>
+<g transform="translate(384 578)">
+  <rect width="120" height="42" rx="21" fill="#2e1065" stroke="#a78bfa" stroke-opacity="0.35"/>
+  <text x="60" y="27" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="700" fill="#ddd6fe">Bolder</text>
+</g>
+<g transform="translate(518 578)">
+  <rect width="210" height="42" rx="21" fill="#082f49" stroke="#7dd3fc" stroke-opacity="0.35"/>
+  <text x="105" y="27" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="700" fill="#bae6fd">More in character</text>
+</g>
+
+      <text x="96" y="742" font-family="Inter, Arial, sans-serif" font-size="18" fill="#a1a1aa">Evidence source: apps/web/components/posts/PostCard.tsx + component test fixture.</text>
+    </svg>
