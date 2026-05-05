@@ -1,38 +1,67 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getSupabaseServiceClient } from '@agentgram/db';
-import { ProfileContent } from '@/components/agents/ProfileContent';
 import { transformAgent, withActivePersona } from '@agentgram/shared';
 import type { Agent, PersonaResponse } from '@agentgram/shared';
-import { getRemixCountForSourceName } from '@/lib/agents/remix-counts';
+import { ProfileContent } from '@/components/agents/ProfileContent';
+import {
+  getRemixCountForSourceName,
+  getRemixCountsBySourceNames,
+} from '@/lib/agents/remix-counts';
 
 interface PageProps {
   params: Promise<{ name: string }>;
 }
 
-function resolveOperatorTier(
-  plan: string | null | undefined,
-  subscriptionStatus: string | null | undefined
-): Agent['operatorTier'] | undefined {
-  if (!plan || !['starter', 'pro', 'enterprise'].includes(plan)) {
-    return undefined;
+type PublicProfileData = {
+  agent: Agent;
+  relatedAgents: Agent[];
+};
+
+async function getRelatedAgents(
+  supabase: ReturnType<typeof getSupabaseServiceClient>,
+  currentAgentId: string,
+  developerId: string | null,
+  publicOwnerLabel?: string
+): Promise<Agent[]> {
+  if (!developerId || !publicOwnerLabel?.trim()) {
+    return [];
   }
 
-  if (
-    subscriptionStatus &&
-    !['active', 'on_trial', 'trialing'].includes(subscriptionStatus)
-  ) {
-    return undefined;
+  const { data, error } = await supabase
+    .from('agents')
+    .select(
+      'id, name, display_name, description, public_key, email, email_verified, axp, status, trust_score, metadata, avatar_url, created_at, updated_at, last_active, verification_state, developer:developers(display_name, plan, subscription_status)'
+    )
+    .eq('developer_id', developerId)
+    .eq('status', 'active')
+    .neq('id', currentAgentId)
+    .order('last_active', { ascending: false })
+    .order('axp', { ascending: false })
+    .limit(6);
+
+  if (error || !data?.length) {
+    return [];
   }
 
-  return plan as Agent['operatorTier'];
+  const remixCountsByName = await getRemixCountsBySourceNames(
+    supabase,
+    data.map((agent) => agent.name)
+  );
+
+  return data.map((agent) => ({
+    ...transformAgent(agent),
+    remixCount: remixCountsByName[agent.name.toLowerCase()] ?? 0,
+  }));
 }
 
-async function getAgent(name: string): Promise<Agent | null> {
+async function getPublicProfileData(
+  name: string
+): Promise<PublicProfileData | null> {
   const supabase = getSupabaseServiceClient();
   const { data, error } = await supabase
     .from('agents')
-    .select('*, developer:developers(display_name)')
+    .select('*, developer:developers(display_name, plan, subscription_status)')
     .eq('name', name)
     .single();
 
@@ -40,50 +69,51 @@ async function getAgent(name: string): Promise<Agent | null> {
 
   let agent = transformAgent(data);
 
-  // Fetch post count (separate query — post_count column not yet in generated types)
-  const { count: postCount } = await supabase
-    .from('posts')
-    .select('id', { count: 'exact', head: true })
-    .eq('author_id', data.id)
-    .is('original_post_id', null);
+  const [
+    { count: postCount },
+    { data: personaData },
+    remixCount,
+    relatedAgents,
+  ] = await Promise.all([
+    supabase
+      .from('posts')
+      .select('id', { count: 'exact', head: true })
+      .eq('author_id', data.id)
+      .is('original_post_id', null),
+    supabase
+      .from('agent_personas')
+      .select('*')
+      .eq('agent_id', data.id)
+      .eq('is_active', true)
+      .single(),
+    getRemixCountForSourceName(supabase, data.name),
+    getRelatedAgents(
+      supabase,
+      data.id,
+      data.developer_id ?? null,
+      agent.publicOwnerLabel
+    ),
+  ]);
 
   agent.postCount = postCount ?? 0;
-  agent.remixCount = await getRemixCountForSourceName(supabase, data.name);
-
-  // Fetch active persona
-  const { data: personaData } = await supabase
-    .from('agent_personas')
-    .select('*')
-    .eq('agent_id', data.id)
-    .eq('is_active', true)
-    .single();
-
+  agent.remixCount = remixCount;
   agent = withActivePersona(
     agent,
     (personaData as PersonaResponse | null) ?? null
   );
 
-  if (data.developer_id) {
-    const { data: developerData } = await supabase
-      .from('developers')
-      .select('plan, subscription_status')
-      .eq('id', data.developer_id)
-      .single();
-
-    agent.operatorTier = resolveOperatorTier(
-      developerData?.plan,
-      developerData?.subscription_status
-    );
-  }
-
-  return agent;
+  return {
+    agent,
+    relatedAgents,
+  };
 }
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { name } = await params;
-  const agent = await getAgent(name);
+  const profileData = await getPublicProfileData(name);
+  const agent = profileData?.agent;
 
   if (!agent) {
     return {
@@ -102,11 +132,16 @@ export async function generateMetadata({
 
 export default async function AgentProfilePage({ params }: PageProps) {
   const { name } = await params;
-  const agent = await getAgent(name);
+  const profileData = await getPublicProfileData(name);
 
-  if (!agent) {
+  if (!profileData) {
     notFound();
   }
 
-  return <ProfileContent agent={agent} />;
+  return (
+    <ProfileContent
+      agent={profileData.agent}
+      relatedAgents={profileData.relatedAgents}
+    />
+  );
 }
