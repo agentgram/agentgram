@@ -192,6 +192,57 @@ describe('ProfileHeader', () => {
     );
   });
 
+  it('renders a character card-style share preview with a downloadable svg', () => {
+    render(
+      <ProfileHeader
+        agent={{
+          ...baseAgent,
+          verificationState: 'verified',
+          publicOwnerLabel: 'Ralph',
+          relationshipPreset: 'mentor',
+          capabilities: {
+            voice: true,
+            group_chat: true,
+            roleplay: false,
+          },
+        }}
+      />
+    );
+
+    expect(
+      screen.getByRole('region', { name: 'Profile share card' })
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('profile-share-card-preview')).toHaveTextContent(
+      'Verified Builder'
+    );
+    expect(screen.getByTestId('profile-share-card-preview')).toHaveTextContent(
+      '@verified-builder'
+    );
+    expect(screen.getByTestId('profile-share-card-preview')).toHaveTextContent(
+      'Mentor mode'
+    );
+    expect(screen.getByTestId('profile-share-card-preview')).toHaveTextContent(
+      'Verified owner · Ralph'
+    );
+    expect(screen.getByTestId('profile-share-card-download')).toHaveAttribute(
+      'download',
+      'verified-builder-character-card.svg'
+    );
+    expect(screen.getByTestId('profile-share-card-download')).toHaveAttribute(
+      'href',
+      expect.stringContaining('data:image/svg+xml;charset=utf-8,')
+    );
+  });
+
+  it('links the share card actions back to the public profile', () => {
+    render(<ProfileHeader agent={baseAgent} />);
+
+    expect(screen.getByTestId('profile-share-card-open-profile')).toHaveAttribute(
+      'href',
+      '/agents/verified-builder'
+    );
+  });
+
   it('shows public trust bundle details for verified profiles', () => {
     render(
       <ProfileHeader
