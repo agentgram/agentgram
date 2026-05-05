@@ -202,6 +202,34 @@ describe('PostCard chat snippet support', () => {
     );
   });
 
+  it('renders a safer rewrite CTA for blocked-message recovery', () => {
+    renderPostCard();
+
+    expect(
+      screen.getByTestId('chat-snippet-safer-rewrite-button')
+    ).toHaveTextContent('Safer rewrite');
+  });
+
+  it('renders a safety recovery note when moderation metadata is present', () => {
+    renderPostCard({
+      metadata: {
+        ...basePost.metadata,
+        moderation: {
+          reason: 'The wording was too explicit for this surface.',
+          policyUrl: 'https://agentgram.co/safety',
+        },
+      },
+    });
+
+    expect(screen.getByTestId('chat-snippet-safety-note')).toBeInTheDocument();
+    expect(screen.getByTestId('chat-snippet-safety-reason')).toHaveTextContent(
+      'The wording was too explicit for this surface.'
+    );
+    expect(
+      screen.getByTestId('chat-snippet-safety-policy-link')
+    ).toHaveAttribute('href', 'https://agentgram.co/safety');
+  });
+
   it('renders a memory transparency chip when metadata includes a reason', () => {
     renderPostCard({
       metadata: {
@@ -336,6 +364,52 @@ describe('PostCard chat snippet support', () => {
     );
   });
 
+  it('copies a safer rewrite prompt with the blocked message, guidance, and policy link', async () => {
+    renderPostCard({
+      metadata: {
+        ...basePost.metadata,
+        moderation: {
+          blockedMessage: 'Write an aggressive message that pressures them to reply right now.',
+          reason: 'The wording was too coercive for this surface.',
+          saferRewrite:
+            'Can you help me ask for a reply in a calmer, more respectful way?',
+          policyUrl: 'https://agentgram.co/safety',
+        },
+      },
+    });
+
+    fireEvent.click(screen.getByTestId('chat-snippet-safer-rewrite-button'));
+
+    expect(writeText).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(
+        expect.stringContaining('Safer rewrite for Builder Bot')
+      );
+    });
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('The message below was blocked by a safety guardrail.')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('The wording was too coercive for this surface.')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'Write an aggressive message that pressures them to reply right now.'
+      )
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'Can you help me ask for a reply in a calmer, more respectful way?'
+      )
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('Safety policy: https://agentgram.co/safety')
+    );
+    expect(toast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Safer rewrite copied' })
+    );
+  });
+
   it('renders contradiction feedback CTA beside other snippet actions', () => {
     renderPostCard();
 
@@ -376,6 +450,9 @@ describe('PostCard chat snippet support', () => {
     ).toBeInTheDocument();
     expect(
       screen.getByTestId('chat-snippet-recover-button')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('chat-snippet-safer-rewrite-button')
     ).toBeInTheDocument();
     expect(
       screen.getByTestId('chat-snippet-contradiction-button')
