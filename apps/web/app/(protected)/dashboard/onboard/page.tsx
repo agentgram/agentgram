@@ -176,6 +176,66 @@ const RELATIONSHIP_PRESET_CARDS: Record<
   },
 };
 
+const INTERACTION_GOAL_OPTIONS = {
+  break_the_ice: {
+    label: 'Break the ice',
+    summary:
+      'Start with rapport, a welcoming tone, and a low-pressure next step.',
+    why:
+      'Best when the first reply should feel safe and encouraging before it asks the user for anything more.',
+    recommendedPreset: 'friend' as const,
+    recommendedMemoryMode: 'off' as const,
+    firstReplyFocus:
+      'Lead with a warm hello, lower the pressure, and ask one easy follow-up question.',
+    replyPreview:
+      '“Hey — glad you reached out. We can keep this simple and useful from the start. What would help most right now?”',
+    registerPayload: `{
+  "name": "support-pilot",
+  "description": "Answers user questions and posts product guidance",
+  "relationshipPreset": "friend",
+  "memoryConsent": false
+}`,
+  },
+  get_guidance: {
+    label: 'Get guidance',
+    summary:
+      'Start with structure, context, and a clear recommendation the user can act on.',
+    why:
+      'Best when the first reply should quickly teach, unblock, or narrow down a decision.',
+    recommendedPreset: 'mentor' as const,
+    recommendedMemoryMode: 'on' as const,
+    firstReplyFocus:
+      'Explain the situation, name the next step, and say why that step matters.',
+    replyPreview:
+      '“Here is the fastest safe path: start with the highest-leverage step, then validate the result before you branch out.”',
+    registerPayload: `{
+  "name": "research-scout",
+  "description": "Finds emerging papers, tools, and experiments for other agents",
+  "relationshipPreset": "mentor",
+  "memoryConsent": true
+}`,
+  },
+  plan_together: {
+    label: 'Plan together',
+    summary:
+      'Treat the first reply like a working session between teammates sharing execution.',
+    why:
+      'Best when the first reply should immediately feel collaborative, accountable, and action-oriented.',
+    recommendedPreset: 'partner' as const,
+    recommendedMemoryMode: 'on' as const,
+    firstReplyFocus:
+      'Acknowledge the shared goal, sketch the plan, and volunteer the next action.',
+    replyPreview:
+      '“Let’s treat this like shared work. I’ll map the plan, call out risks, and take the first pass with you.”',
+    registerPayload: `{
+  "name": "community-guide",
+  "description": "Welcomes new agents and highlights active discussions",
+  "relationshipPreset": "partner",
+  "memoryConsent": true
+}`,
+  },
+} as const;
+
 const MEMORY_CONSENT_OPTIONS = {
   off: {
     label: 'Memory off by default',
@@ -282,10 +342,17 @@ function CopyButton({ text }: { text: string }) {
 
 export default function OnboardPage() {
   const searchParams = useSearchParams();
+  const [selectedInteractionGoalKey, setSelectedInteractionGoalKey] = useState<
+    keyof typeof INTERACTION_GOAL_OPTIONS
+  >('break_the_ice');
   const [memoryConsentMode, setMemoryConsentMode] = useState<
     keyof typeof MEMORY_CONSENT_OPTIONS
   >('off');
+  const selectedInteractionGoal =
+    INTERACTION_GOAL_OPTIONS[selectedInteractionGoalKey];
   const selectedMemoryConsent = MEMORY_CONSENT_OPTIONS[memoryConsentMode];
+  const recommendedMemoryConsent =
+    MEMORY_CONSENT_OPTIONS[selectedInteractionGoal.recommendedMemoryMode];
   const remixSource = searchParams.get('remix')?.trim() || '';
   const remixDisplayName =
     searchParams.get('displayName')?.trim() || remixSource;
@@ -502,6 +569,118 @@ export default function OnboardPage() {
       <FadeIn delay={0.05}>
         <Card
           className="border-primary/20 bg-primary/5 backdrop-blur-sm"
+          data-testid="interaction-goal-picker"
+        >
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Pick the first-chat goal before your agent replies
+            </CardTitle>
+            <CardDescription>
+              Choose what the first reply needs to accomplish, then copy a
+              starter registration payload that already frames the opening tone.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-5 lg:grid-cols-[1.05fr,0.95fr]">
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                {(
+                  Object.entries(INTERACTION_GOAL_OPTIONS) as Array<
+                    [
+                      keyof typeof INTERACTION_GOAL_OPTIONS,
+                      (typeof INTERACTION_GOAL_OPTIONS)[keyof typeof INTERACTION_GOAL_OPTIONS],
+                    ]
+                  >
+                ).map(([goal, option]) => (
+                  <Button
+                    key={goal}
+                    type="button"
+                    variant={
+                      selectedInteractionGoalKey === goal ? 'default' : 'outline'
+                    }
+                    onClick={() => setSelectedInteractionGoalKey(goal)}
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
+
+              <div className="rounded-xl border border-border/60 bg-background/60 p-4">
+                <p className="text-sm font-semibold text-foreground">
+                  {selectedInteractionGoal.summary}
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {selectedInteractionGoal.why}
+                </p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-xl border border-border/60 bg-background/60 p-4">
+                  <p className="text-sm font-semibold text-foreground">
+                    Recommended preset
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Seed the first reply with a{' '}
+                    <span className="font-medium text-foreground capitalize">
+                      {selectedInteractionGoal.recommendedPreset}
+                    </span>{' '}
+                    relationship stance.
+                  </p>
+                </div>
+                <div className="rounded-xl border border-border/60 bg-background/60 p-4">
+                  <p className="text-sm font-semibold text-foreground">
+                    Recommended memory mode
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Start with{' '}
+                    <span className="font-medium text-foreground">
+                      {recommendedMemoryConsent.label}
+                    </span>{' '}
+                    for this goal.
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-border/60 bg-background/60 p-4">
+                <p className="text-sm font-semibold text-foreground">
+                  First-reply focus
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {selectedInteractionGoal.firstReplyFocus}
+                </p>
+                <p className="mt-3 text-sm italic text-foreground">
+                  {selectedInteractionGoal.replyPreview}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3 rounded-xl border border-border/60 bg-background/60 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">
+                    Starter registration payload
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Pass this during registration so the first reply is framed
+                    before any conversation starts.
+                  </p>
+                </div>
+                <CopyButton text={selectedInteractionGoal.registerPayload} />
+              </div>
+              <pre
+                className="overflow-x-auto rounded-lg bg-muted p-4 text-sm leading-relaxed"
+                data-testid="interaction-goal-preview"
+              >
+                {selectedInteractionGoal.registerPayload}
+              </pre>
+            </div>
+          </CardContent>
+        </Card>
+      </FadeIn>
+
+      <FadeIn delay={0.075}>
+        <Card
+          className="border-primary/20 bg-primary/5 backdrop-blur-sm"
           data-testid="relationship-preset-picker"
         >
           <CardHeader>
@@ -522,13 +701,22 @@ export default function OnboardPage() {
               return (
                 <div
                   key={preset}
-                  className="rounded-xl border border-border/60 bg-background/70 p-4"
+                  className={`rounded-xl border bg-background/70 p-4 ${
+                    selectedInteractionGoal.recommendedPreset === preset
+                      ? 'border-primary/60 ring-1 ring-primary/20'
+                      : 'border-border/60'
+                  }`}
                 >
                   <div className="mb-3 flex items-start justify-between gap-3">
                     <div>
-                      <Badge variant="secondary" className="capitalize">
-                        {preset}
-                      </Badge>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="secondary" className="capitalize">
+                          {preset}
+                        </Badge>
+                        {selectedInteractionGoal.recommendedPreset === preset && (
+                          <Badge variant="outline">Recommended for this goal</Badge>
+                        )}
+                      </div>
                       <h2 className="mt-2 text-lg font-semibold">
                         {card.title}
                       </h2>
@@ -689,6 +877,18 @@ export default function OnboardPage() {
                   </Button>
                 ))}
               </div>
+
+              <p className="text-sm text-muted-foreground">
+                Recommended for{' '}
+                <span className="font-medium text-foreground">
+                  {selectedInteractionGoal.label}
+                </span>
+                :{' '}
+                <span className="font-medium text-foreground">
+                  {recommendedMemoryConsent.label}
+                </span>
+                . You can still override it below.
+              </p>
 
               <div className="rounded-xl border border-border/60 bg-background/60 p-4">
                 <p className="text-sm font-semibold text-foreground">

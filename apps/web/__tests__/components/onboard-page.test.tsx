@@ -35,8 +35,18 @@ describe('OnboardPage', () => {
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
   });
 
-  it('shows relationship presets, age boundary, verification, and memory consent guidance before the publish-focused quickstart', () => {
+  it('shows first-chat goal guidance, relationship presets, age boundary, verification, and memory consent guidance before the publish-focused quickstart', () => {
     render(<OnboardPage />);
+
+    const interactionGoal = screen.getByTestId('interaction-goal-picker');
+    expect(
+      within(interactionGoal).getByText(
+        'Pick the first-chat goal before your agent replies'
+      )
+    ).toBeInTheDocument();
+    expect(interactionGoal).toHaveTextContent('Break the ice');
+    expect(interactionGoal).toHaveTextContent('"relationshipPreset": "friend"');
+    expect(interactionGoal).toHaveTextContent('"memoryConsent": false');
 
     const presetPicker = screen.getByTestId('relationship-preset-picker');
     expect(
@@ -47,6 +57,9 @@ describe('OnboardPage', () => {
     expect(presetPicker).toHaveTextContent('"relationshipPreset": "friend"');
     expect(presetPicker).toHaveTextContent('"relationshipPreset": "mentor"');
     expect(presetPicker).toHaveTextContent('"relationshipPreset": "partner"');
+    expect(
+      within(presetPicker).getByText('Recommended for this goal')
+    ).toBeInTheDocument();
 
     const ageBoundary = screen.getByTestId('age-boundary-disclosure');
     expect(
@@ -80,8 +93,15 @@ describe('OnboardPage', () => {
     ).toBeInTheDocument();
     expect(memoryConsent).toHaveTextContent('"memoryConsent": false');
     expect(memoryConsent).toHaveTextContent('Memory off by default');
+    expect(memoryConsent).toHaveTextContent(
+      'Recommended for Break the ice: Memory off by default.'
+    );
 
     const quickstartHeading = screen.getByText('Two-step quick start');
+    expect(
+      interactionGoal.compareDocumentPosition(presetPicker) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
     expect(
       presetPicker.compareDocumentPosition(ageBoundary) &
         Node.DOCUMENT_POSITION_FOLLOWING
@@ -102,6 +122,31 @@ describe('OnboardPage', () => {
     expect(
       screen.getByText(/explicit memory-consent choice/i)
     ).toBeInTheDocument();
+  });
+
+  it('updates the first-chat goal preview and recommendations when a different goal is selected', () => {
+    render(<OnboardPage />);
+
+    const interactionGoal = screen.getByTestId('interaction-goal-picker');
+    const memoryConsent = screen.getByTestId('memory-consent-explainer');
+
+    fireEvent.click(
+      within(interactionGoal).getByRole('button', {
+        name: 'Plan together',
+      })
+    );
+
+    expect(interactionGoal).toHaveTextContent(
+      'Treat the first reply like a working session between teammates sharing execution.'
+    );
+    expect(interactionGoal).toHaveTextContent('"relationshipPreset": "partner"');
+    expect(interactionGoal).toHaveTextContent('"memoryConsent": true');
+    expect(interactionGoal).toHaveTextContent(
+      'Let’s treat this like shared work. I’ll map the plan, call out risks, and take the first pass with you.'
+    );
+    expect(memoryConsent).toHaveTextContent(
+      'Recommended for Plan together: Opt in before the first chat.'
+    );
   });
 
   it('toggles the memory consent payload before registration', () => {

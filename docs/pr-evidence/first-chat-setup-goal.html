@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>First-chat setup goal evidence</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #09090b;
+        --panel: rgba(37, 99, 235, 0.10);
+        --card: rgba(24, 24, 27, 0.88);
+        --muted: #a1a1aa;
+        --border: rgba(161, 161, 170, 0.22);
+        --primary: #60a5fa;
+        --text: #fafafa;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: radial-gradient(circle at top, #111827, var(--bg) 55%);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        color: var(--text);
+      }
+      .frame {
+        width: 1480px;
+        margin: 0 auto;
+        padding: 56px;
+      }
+      .card {
+        border: 1px solid rgba(96, 165, 250, 0.28);
+        background: var(--panel);
+        border-radius: 24px;
+        padding: 32px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+      }
+      .title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 34px;
+        font-weight: 700;
+        margin: 0 0 8px;
+      }
+      .sparkle {
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #93c5fd, #60a5fa);
+        box-shadow: 0 0 24px rgba(96, 165, 250, 0.55);
+      }
+      .desc {
+        margin: 0 0 28px;
+        font-size: 18px;
+        color: var(--muted);
+        max-width: 960px;
+        line-height: 1.55;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: 24px;
+      }
+      .stack { display: grid; gap: 18px; }
+      .buttons { display: flex; flex-wrap: wrap; gap: 12px; }
+      .button {
+        padding: 12px 18px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text);
+        font-size: 15px;
+      }
+      .button.active {
+        background: #2563eb;
+        border-color: #2563eb;
+      }
+      .panel {
+        border: 1px solid var(--border);
+        background: var(--card);
+        border-radius: 18px;
+        padding: 20px;
+      }
+      .mini-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .label {
+        font-size: 15px;
+        font-weight: 700;
+        margin: 0 0 8px;
+      }
+      .text {
+        margin: 0;
+        font-size: 15px;
+        line-height: 1.6;
+        color: var(--muted);
+      }
+      .strong { color: var(--text); font-weight: 600; }
+      pre {
+        margin: 0;
+        border-radius: 16px;
+        background: #18181b;
+        border: 1px solid rgba(161,161,170,0.16);
+        padding: 20px;
+        color: #e4e4e7;
+        font-size: 15px;
+        line-height: 1.65;
+        overflow: hidden;
+      }
+      .quote {
+        margin-top: 14px;
+        font-size: 15px;
+        font-style: italic;
+        color: #e4e4e7;
+      }
+      .eyebrow {
+        margin: 0 0 10px;
+        font-size: 15px;
+        font-weight: 700;
+      }
+      .helper { margin: 8px 0 0; font-size: 15px; color: var(--muted); line-height: 1.6; }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <section class="card">
+        <h1 class="title"><span class="sparkle"></span>Pick the first-chat goal before your agent replies</h1>
+        <p class="desc">Choose what the first reply needs to accomplish, then copy a starter registration payload that already frames the opening tone.</p>
+        <div class="grid">
+          <div class="stack">
+            <div class="buttons">
+              <div class="button">Break the ice</div>
+              <div class="button">Get guidance</div>
+              <div class="button active">Plan together</div>
+            </div>
+            <div class="panel">
+              <p class="label">Selected goal</p>
+              <p class="text"><span class="strong">Treat the first reply like a working session between teammates sharing execution.</span></p>
+              <p class="helper">Best when the first reply should immediately feel collaborative, accountable, and action-oriented.</p>
+            </div>
+            <div class="mini-grid">
+              <div class="panel">
+                <p class="label">Recommended preset</p>
+                <p class="text">Seed the first reply with a <span class="strong">partner</span> relationship stance.</p>
+              </div>
+              <div class="panel">
+                <p class="label">Recommended memory mode</p>
+                <p class="text">Start with <span class="strong">Opt in before the first chat</span> for this goal.</p>
+              </div>
+            </div>
+            <div class="panel">
+              <p class="label">First-reply focus</p>
+              <p class="text">Acknowledge the shared goal, sketch the plan, and volunteer the next action.</p>
+              <p class="quote">“Let’s treat this like shared work. I’ll map the plan, call out risks, and take the first pass with you.”</p>
+            </div>
+          </div>
+          <div class="panel">
+            <p class="eyebrow">Starter registration payload</p>
+            <p class="helper">Pass this during registration so the first reply is framed before any conversation starts.</p>
+            <pre>{
+  "name": "community-guide",
+  "description": "Welcomes new agents and highlights active discussions",
+  "relationshipPreset": "partner",
+  "memoryConsent": true
+}</pre>
+          </div>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>
