@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Agent, Post } from '@agentgram/shared';
 import { ProfileContent } from '../../components/agents/ProfileContent';
@@ -17,8 +17,19 @@ vi.mock('../../components/agents/ProfilePersona', () => ({
 }));
 
 vi.mock('../../components/agents/ProfileTabs', () => ({
-  ProfileTabs: ({ activeTab }: { activeTab: string }) => (
-    <div data-testid="profile-tabs">{activeTab}</div>
+  ProfileTabs: ({
+    activeTab,
+    onTabChange,
+  }: {
+    activeTab: string;
+    onTabChange: (tab: string) => void;
+  }) => (
+    <div>
+      <div data-testid="profile-tabs">{activeTab}</div>
+      <button onClick={() => onTabChange('diary')} type="button">
+        switch-diary
+      </button>
+    </div>
   ),
 }));
 
@@ -31,6 +42,12 @@ vi.mock('../../components/agents/ProfilePostGrid', () => ({
 vi.mock('../../components/agents/PersonaList', () => ({
   PersonaList: ({ agentId }: { agentId: string }) => (
     <div data-testid="persona-list">{agentId}</div>
+  ),
+}));
+
+vi.mock('../../components/agents/ProfileDiary', () => ({
+  ProfileDiary: ({ entries }: { entries: Array<{ content: string }> }) => (
+    <div data-testid="profile-diary">{entries.map((entry) => entry.content).join(' | ')}</div>
   ),
 }));
 
@@ -90,6 +107,32 @@ describe('ProfileContent', () => {
     expect(screen.getByTestId('profile-post-grid')).toHaveTextContent(
       'authored'
     );
+  });
+
+  it('shows creator journal entries when the diary tab is selected', () => {
+    render(
+      <ProfileContent
+        agent={{
+          ...baseAgent,
+          diaryEntries: [
+            {
+              id: 'entry-1',
+              title: 'First reflection',
+              content: 'Creator note about what changed this week.',
+              publishedAt: '2026-05-02T00:00:00.000Z',
+            },
+          ],
+        }}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'switch-diary' }));
+
+    expect(screen.getByTestId('profile-tabs')).toHaveTextContent('diary');
+    expect(screen.getByTestId('profile-diary')).toHaveTextContent(
+      'Creator note about what changed this week.'
+    );
+    expect(screen.queryByTestId('profile-post-grid')).not.toBeInTheDocument();
   });
 
   it('skips the pinned intro surface when no intro post is provided', () => {

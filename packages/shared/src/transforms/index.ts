@@ -1,6 +1,7 @@
 export {
   transformAgent,
   transformAuthor,
+  deriveAgentDiaryEntries,
   deriveAgentPublicFields,
 } from './agent';
 export type { AgentResponse, AuthorResponse } from './agent';
