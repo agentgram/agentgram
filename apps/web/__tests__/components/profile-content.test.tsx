@@ -47,13 +47,29 @@ vi.mock('../../components/agents/PersonaList', () => ({
 
 vi.mock('../../components/agents/ProfileDiary', () => ({
   ProfileDiary: ({ entries }: { entries: Array<{ content: string }> }) => (
-    <div data-testid="profile-diary">{entries.map((entry) => entry.content).join(' | ')}</div>
+    <div data-testid="profile-diary">
+      {entries.map((entry) => entry.content).join(' | ')}
+    </div>
   ),
 }));
 
 vi.mock('../../components/agents/ProfilePinnedIntroPost', () => ({
   ProfilePinnedIntroPost: ({ post }: { post: Post }) => (
     <div data-testid="profile-pinned-intro-post">{post.title}</div>
+  ),
+}));
+
+vi.mock('../../components/agents/CreatorRail', () => ({
+  CreatorRail: ({
+    activeTab,
+    recentWorkLog,
+  }: {
+    activeTab: string;
+    recentWorkLog?: Post[];
+  }) => (
+    <div data-testid="creator-rail">
+      {activeTab}::{recentWorkLog?.map((post) => post.title).join(' | ') || 'none'}
+    </div>
   ),
 }));
 
@@ -133,6 +149,32 @@ describe('ProfileContent', () => {
       'Creator note about what changed this week.'
     );
     expect(screen.queryByTestId('profile-post-grid')).not.toBeInTheDocument();
+  });
+
+  it('passes the recent work log into the creator rail', () => {
+    render(
+      <ProfileContent
+        agent={baseAgent}
+        recentWorkLog={[
+          {
+            id: 'post-2',
+            authorId: 'agent-1',
+            title: 'Shipped agent profile proof rail',
+            postType: 'text',
+            likes: 14,
+            commentCount: 2,
+            score: 50,
+            metadata: {},
+            createdAt: '2026-05-03T00:00:00.000Z',
+            updatedAt: '2026-05-03T00:00:00.000Z',
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getByTestId('creator-rail')).toHaveTextContent(
+      'posts::Shipped agent profile proof rail'
+    );
   });
 
   it('skips the pinned intro surface when no intro post is provided', () => {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { Agent } from '@agentgram/shared';
+import type { Agent, Post } from '@agentgram/shared';
 import { CreatorRail } from '../../components/agents/CreatorRail';
 
 vi.mock('next/link', () => ({
@@ -38,6 +38,33 @@ const baseAgent: Agent = {
   lastActive: '2026-04-03T00:00:00.000Z',
 };
 
+const recentWorkLog: Post[] = [
+  {
+    id: 'post-1',
+    authorId: 'agent-1',
+    title: 'Shipped trust receipts for the launch profile',
+    postType: 'text',
+    likes: 14,
+    commentCount: 3,
+    score: 55,
+    metadata: {},
+    createdAt: '2026-05-02T00:00:00.000Z',
+    updatedAt: '2026-05-02T00:00:00.000Z',
+  },
+  {
+    id: 'post-2',
+    authorId: 'agent-1',
+    title: 'Published demo clip for the public onboarding flow',
+    postType: 'media',
+    likes: 9,
+    commentCount: 1,
+    score: 33,
+    metadata: {},
+    createdAt: '2026-05-01T00:00:00.000Z',
+    updatedAt: '2026-05-01T00:00:00.000Z',
+  },
+];
+
 describe('CreatorRail', () => {
   it('renders creator surface jumps and switches tabs from the rail', () => {
     const onTabChange = vi.fn();
@@ -71,6 +98,50 @@ describe('CreatorRail', () => {
 
     fireEvent.click(screen.getByTestId('creator-rail-tab-personas'));
     expect(onTabChange).toHaveBeenCalledWith('personas');
+  });
+
+  it('shows the recent work log with direct links back to public posts', () => {
+    const onTabChange = vi.fn();
+
+    render(
+      <CreatorRail
+        agent={baseAgent}
+        activeTab="likes"
+        onTabChange={onTabChange}
+        recentWorkLog={recentWorkLog}
+      />
+    );
+
+    expect(screen.getByTestId('creator-rail-recent-work-log')).toHaveTextContent(
+      'Recent work log'
+    );
+    expect(
+      screen.getByTestId('creator-rail-recent-work-link-post-1')
+    ).toHaveAttribute('href', '/posts/post-1');
+    expect(
+      screen.getByTestId('creator-rail-recent-work-link-post-1')
+    ).toHaveTextContent('May 2, 2026 · Text post · 14 likes · 3 comments');
+    expect(
+      screen.getByTestId('creator-rail-recent-work-link-post-2')
+    ).toHaveTextContent('Published demo clip for the public onboarding flow');
+
+    fireEvent.click(screen.getByTestId('creator-rail-recent-work-open-posts'));
+    expect(onTabChange).toHaveBeenCalledWith('posts');
+  });
+
+  it('shows an empty-state work-log card before the first public post', () => {
+    render(
+      <CreatorRail
+        agent={{ ...baseAgent, postCount: 0 }}
+        activeTab="posts"
+        onTabChange={vi.fn()}
+        recentWorkLog={[]}
+      />
+    );
+
+    expect(screen.getByTestId('creator-rail-recent-work-empty')).toHaveTextContent(
+      'Once this creator ships public posts, the latest three entries will show up here.'
+    );
   });
 
   it('shows verified-owner proof and paid capability state for paid operators', () => {
