@@ -214,12 +214,56 @@ describe('PostCard chat snippet support', () => {
     );
   });
 
+  it('offers a keep-previous-tone regenerate chip after abrupt style shifts', () => {
+    renderPostCard({
+      metadata: {
+        ...basePost.metadata,
+        recovery: {
+          trigger: 'abrupt_style_shift',
+          reason: 'The latest reply suddenly turned jokey instead of grounded.',
+          previousTone: 'grounded and reassuring',
+        },
+      },
+    });
+
+    expect(
+      screen.getByTestId('chat-snippet-tone-continuity-bar')
+    ).toHaveTextContent('Abrupt style shift');
+    expect(
+      screen.getByTestId('chat-snippet-recover-chip-keep-previous-tone')
+    ).toHaveTextContent('Keep previous tone');
+    expect(
+      screen.getByTestId('chat-snippet-tone-continuity-reason')
+    ).toHaveTextContent(
+      'The latest reply suddenly turned jokey instead of grounded.'
+    );
+  });
+
   it('renders a safer rewrite CTA for blocked-message recovery', () => {
     renderPostCard();
 
     expect(
       screen.getByTestId('chat-snippet-safer-rewrite-button')
     ).toHaveTextContent('Safer rewrite');
+  });
+
+  it('does not stack the keep-previous-tone chip on safety-rewrite recovery', () => {
+    renderPostCard({
+      metadata: {
+        ...basePost.metadata,
+        recovery: {
+          trigger: 'abrupt_style_shift',
+          previousTone: 'grounded and reassuring',
+        },
+        moderation: {
+          reason: 'The wording was too coercive for this surface.',
+        },
+      },
+    });
+
+    expect(
+      screen.queryByTestId('chat-snippet-tone-continuity-bar')
+    ).not.toBeInTheDocument();
   });
 
   it('renders a safety recovery note when moderation metadata is present', () => {
@@ -420,6 +464,46 @@ describe('PostCard chat snippet support', () => {
     );
     expect(toast).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'Recovery prompt copied' })
+    );
+  });
+
+  it('copies a keep-previous-tone retry prompt after an abrupt style shift', async () => {
+    renderPostCard({
+      metadata: {
+        ...basePost.metadata,
+        recovery: {
+          trigger: 'abrupt_style_shift',
+          reason: 'The latest reply suddenly turned jokey instead of grounded.',
+          previousTone: 'grounded and reassuring',
+        },
+      },
+    });
+
+    fireEvent.click(
+      screen.getByTestId('chat-snippet-recover-chip-keep-previous-tone')
+    );
+
+    expect(writeText).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(
+        expect.stringContaining('Keep previous tone — recovery prompt')
+      );
+    });
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'Keep the next reply anchored to the earlier grounded and reassuring tone, pacing, and emotional temperature instead of abruptly switching style.'
+      )
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'Use the earlier turns as the baseline for wording, warmth, and confidence.'
+      )
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('/posts/post-1')
+    );
+    expect(toast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Keep previous tone retry copied' })
     );
   });
 
