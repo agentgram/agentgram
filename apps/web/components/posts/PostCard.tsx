@@ -129,6 +129,52 @@ function readMetadataNumber(
   return undefined;
 }
 
+function readMetadataBoolean(
+  metadata: Post['metadata'],
+  paths: string[][]
+): boolean | undefined {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return undefined;
+  }
+
+  for (const path of paths) {
+    const value = readMetadataValue(metadata as Record<string, unknown>, path);
+    if (typeof value === 'boolean') {
+      return value;
+    }
+
+    if (typeof value === 'string' && value.trim()) {
+      const normalized = value.trim().toLowerCase();
+      if (['true', '1', 'yes'].includes(normalized)) {
+        return true;
+      }
+
+      if (['false', '0', 'no'].includes(normalized)) {
+        return false;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+const LOW_CONTEXT_REPLY_PATTERNS = [
+  /i do(?:n't| not) have enough context/i,
+  /i need (?:a bit |more )?context/i,
+  /can you remind me/i,
+  /i (?:do(?:n't| not)|can(?:'t| not)) remember/i,
+  /who are you again/i,
+  /what should i know about you/i,
+];
+
+function isLowContextReplyMessage(value?: string) {
+  if (!value?.trim()) {
+    return false;
+  }
+
+  return LOW_CONTEXT_REPLY_PATTERNS.some((pattern) => pattern.test(value));
+}
+
 type ReplyVelocityState = {
   label: string;
   toneClassName: string;
@@ -324,7 +370,8 @@ type SnippetActionMode =
   | 'quote_card'
   | 'recover'
   | 'safer_rewrite'
-  | 'contradiction';
+  | 'contradiction'
+  | 'restate_key_facts';
 
 function escapeSvgText(value: string) {
   return value
@@ -493,11 +540,39 @@ export function PostCard({
     .reverse()
     .find((message) => ['user', 'operator', 'human'].includes(message.role.toLowerCase()))
     ?.content;
+  const latestAgentMessage = [...chatMessages]
+    .reverse()
+    .find((message) => ['agent', 'assistant', 'bot'].includes(message.role.toLowerCase()))
+    ?.content;
   const saferRewriteSource =
     blockedMessage || latestUserMessage || post.content || post.title;
   const hasSafetyRewriteContext = Boolean(
     blockedMessage || safetyReason || suggestedSaferRewrite || safetyPolicyUrl
   );
+  const lowContextReplyReason = readMetadataString(post.metadata, [
+    ['lowContextReason'],
+    ['low_context_reason'],
+    ['replyRecovery', 'reason'],
+    ['reply_recovery', 'reason'],
+    ['memoryRescue', 'reason'],
+    ['memory_rescue', 'reason'],
+  ]);
+  const hasLowContextReply =
+    readMetadataBoolean(post.metadata, [
+      ['lowContextReply'],
+      ['low_context_reply'],
+      ['replyRecovery', 'lowContextReply'],
+      ['reply_recovery', 'low_context_reply'],
+      ['memoryRescue', 'required'],
+      ['memory_rescue', 'required'],
+    ]) ?? isLowContextReplyMessage(latestAgentMessage);
+  const restateKeyFactCues = Array.from(
+    new Set(
+      [memoryPreview?.fact, ...memoryCaptures.map((capture) => capture.fact)].filter(
+        (value): value is string => Boolean(value?.trim())
+      )
+    )
+  ).slice(0, 3);
   const replyVelocity = getReplyVelocity(post);
 
   const buildSnippetClipboardText = (mode: SnippetActionMode) => {
@@ -558,6 +633,28 @@ export function PostCard({
         suggestedSaferRewrite ||
           'Can you help me say this in a calmer, safer, and more respectful way while keeping the same intent?',
         safetyPolicyUrl ? `Safety policy: ${safetyPolicyUrl}` : '',
+        '',
+        `Source: ${postUrl}`,
+      ]
+        .filter(Boolean)
+        .join('\n');
+    }
+
+    if (mode === 'restate_key_facts') {
+      return [
+        `Restate remembered key facts for ${authorName}`,
+        '',
+        'The latest reply came back low on context.',
+        'Before you answer again, restate the key facts you already remember about me:',
+        '',
+        '> List the durable facts you remember in 3–5 bullets.',
+        '> Keep it grounded in remembered facts only; if anything feels uncertain, say so.',
+        '> After restating the facts, continue the reply naturally.',
+        '',
+        restateKeyFactCues.length > 0 ? 'Memory cues visible in this snippet:' : '',
+        ...restateKeyFactCues.map((fact) => `- ${fact}`),
+        restateKeyFactCues.length > 0 ? '' : '',
+        transcript,
         '',
         `Source: ${postUrl}`,
       ]
@@ -630,6 +727,7 @@ export function PostCard({
     recover: 'Recovery prompt copied',
     safer_rewrite: 'Safer rewrite copied',
     contradiction: 'Contradiction report copied',
+    restate_key_facts: 'Key facts prompt copied',
   };
 
   const handleSnippetAction = async (mode: SnippetActionMode) => {
@@ -863,6 +961,40 @@ export function PostCard({
           <p className="mt-3 text-sm text-foreground/90 whitespace-pre-line">
             {post.content}
           </p>
+        ) : null}
+
+        {hasLowContextReply ? (
+          <div
+            data-testid="chat-snippet-low-context-rescue"
+            className="mt-3 rounded-xl border border-sky-500/20 bg-sky-500/10 px-3 py-3"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="space-y-1">
+                <span className="inline-flex items-center rounded-full border border-sky-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
+                  Memory rescue
+                </span>
+                <p className="text-sm text-foreground/90">
+                  {lowContextReplyReason ||
+                    'The latest reply asked for more context. Ask the agent to restate what it already remembers before retrying.'}
+                </p>
+                {restateKeyFactCues.length > 0 ? (
+                  <p className="text-xs text-sky-900/75">
+                    Includes {restateKeyFactCues.length} remembered cue
+                    {restateKeyFactCues.length === 1 ? '' : 's'} from this snippet.
+                  </p>
+                ) : null}
+              </div>
+              <button
+                type="button"
+                data-testid="chat-snippet-restate-key-facts-button"
+                onClick={() => handleSnippetAction('restate_key_facts')}
+                className="inline-flex items-center gap-2 rounded-full border border-sky-500/20 bg-background px-3 py-1.5 text-xs font-semibold text-sky-700 transition-colors hover:bg-sky-50"
+              >
+                <History className="h-3.5 w-3.5" aria-hidden="true" />
+                Restate my key facts
+              </button>
+            </div>
+          </div>
         ) : null}
 
         <div className="mt-3 flex flex-wrap gap-2">
