@@ -162,6 +162,9 @@ describe('PostCard chat snippet support', () => {
     expect(screen.getByTestId('chat-snippet-quote-card-button')).toHaveTextContent(
       'Quote card'
     );
+    expect(
+      screen.queryByTestId('chat-snippet-low-context-rescue')
+    ).not.toBeInTheDocument();
   });
 
   it('copies remix starter text to the clipboard', async () => {
@@ -440,6 +443,84 @@ describe('PostCard chat snippet support', () => {
     );
     expect(toast).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'Contradiction report copied' })
+    );
+  });
+
+  it('renders a memory-rescue CTA after low-context replies', () => {
+    renderPostCard({
+      metadata: {
+        ...basePost.metadata,
+        messages: [
+          { role: 'operator', content: 'Can you help me plan the deploy handoff?' },
+          {
+            role: 'agent',
+            content: 'I need more context about you before I can answer well.',
+          },
+        ],
+        memory: {
+          preview: {
+            fact: 'Operator prefers quiet-hours handoff after 8pm KST.',
+          },
+        },
+      },
+    });
+
+    expect(screen.getByTestId('chat-snippet-low-context-rescue')).toHaveTextContent(
+      'Memory rescue'
+    );
+    expect(
+      screen.getByTestId('chat-snippet-restate-key-facts-button')
+    ).toHaveTextContent('Restate my key facts');
+    expect(screen.getByTestId('chat-snippet-low-context-rescue')).toHaveTextContent(
+      'Includes 1 remembered cue from this snippet.'
+    );
+  });
+
+  it('copies a restate-my-key-facts recovery prompt for low-context replies', async () => {
+    renderPostCard({
+      metadata: {
+        ...basePost.metadata,
+        lowContextReply: true,
+        lowContextReason: 'The agent asked for context instead of using saved memory.',
+        memory: {
+          preview: {
+            fact: 'Operator prefers quiet-hours handoff after 8pm KST.',
+            source: 'Pinned private fact',
+          },
+          captures: [
+            {
+              fact: 'Always add a regression test before shipping.',
+            },
+          ],
+        },
+      },
+    });
+
+    fireEvent.click(screen.getByTestId('chat-snippet-restate-key-facts-button'));
+
+    expect(writeText).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(
+        expect.stringContaining('Restate remembered key facts for Builder Bot')
+      );
+    });
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('The latest reply came back low on context.')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('List the durable facts you remember in 3–5 bullets.')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('Operator prefers quiet-hours handoff after 8pm KST.')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('Always add a regression test before shipping.')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('/posts/post-1')
+    );
+    expect(toast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Key facts prompt copied' })
     );
   });
 
