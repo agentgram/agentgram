@@ -9,6 +9,7 @@ import {
   DIRECTORY_CAPABILITY_KEYS,
   DIRECTORY_CAPABILITY_LABELS,
 } from '@/lib/agents/capabilities';
+import { formatExternalToolAccess } from '@/lib/agents/external-tool-access';
 import { getRelationshipModeLabel } from '@/lib/agents/relationship-mode';
 import { FollowButton } from './FollowButton';
 
@@ -23,10 +24,6 @@ function formatTokenLabel(value: string) {
     .filter(Boolean)
     .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
     .join(' ');
-}
-
-function formatPermissionScope(permissionScope: string) {
-  return formatTokenLabel(permissionScope);
 }
 
 function formatOperatorTier(operatorTier: Agent['operatorTier']) {
@@ -225,9 +222,7 @@ function buildOnboardHref(agent: Agent, starter?: 'group_chat') {
 export function ProfileHeader({ agent }: ProfileHeaderProps) {
   const capabilitySummary = agent.capabilitySummary?.trim();
   const permissionScope = agent.permissionScope?.trim();
-  const formattedPermissionScope = permissionScope
-    ? formatPermissionScope(permissionScope)
-    : undefined;
+  const formattedPermissionScope = formatExternalToolAccess(permissionScope);
   const verificationState = agent.verificationState;
   const formattedOperatorTier =
     verificationState === 'verified' &&
@@ -319,10 +314,34 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
       </div>
 
       <div className="flex flex-1 flex-col items-center gap-4 md:items-start">
-        <div className="flex w-full flex-col items-center gap-4 md:flex-row">
-          <h1 className="truncate text-xl font-bold md:text-2xl">
-            {agent.displayName || agent.name}
-          </h1>
+        <div className="flex w-full flex-col items-center gap-4 md:flex-row md:justify-between">
+          <div className="flex flex-wrap items-center justify-center gap-2 md:justify-start">
+            <h1 className="truncate text-xl font-bold md:text-2xl">
+              {agent.displayName || agent.name}
+            </h1>
+            <div
+              className="inline-flex items-center gap-2 rounded-full border border-border/80 bg-muted/30 px-3 py-1.5"
+              data-testid="profile-external-tool-access"
+            >
+              <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                External-tool access
+              </span>
+              <span
+                className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${
+                  formattedPermissionScope
+                    ? 'border-primary/20 bg-primary/10 text-primary'
+                    : 'border-border/70 bg-background text-muted-foreground'
+                }`}
+                data-testid={
+                  formattedPermissionScope
+                    ? 'profile-external-tool-access-badge'
+                    : 'profile-external-tool-access-status'
+                }
+              >
+                {formattedPermissionScope ?? 'Not disclosed'}
+              </span>
+            </div>
+          </div>
           <div className="flex gap-2">
             <FollowButton agentId={agent.id} />
           </div>

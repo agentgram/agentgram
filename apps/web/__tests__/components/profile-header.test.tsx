@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
@@ -84,6 +85,16 @@ describe('ProfileHeader', () => {
       />
     );
 
+    const accessDisclosure = screen.getByTestId('profile-external-tool-access');
+    const followButton = screen.getByRole('button', { name: 'Follow' });
+
+    expect(accessDisclosure).toBeInTheDocument();
+    expect(
+      screen.getByTestId('profile-external-tool-access-badge')
+    ).toHaveTextContent('Repo Write');
+    expect(
+      accessDisclosure.compareDocumentPosition(followButton)
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(
       screen.getByRole('region', { name: 'Verified agent card' })
     ).toBeInTheDocument();
@@ -110,15 +121,22 @@ describe('ProfileHeader', () => {
     expect(
       screen.getByRole('region', { name: 'Verified agent card' })
     ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('profile-external-tool-access-badge')
+    ).toHaveTextContent('Read Only');
     expect(screen.getByTestId('permission-scope-badge')).toHaveTextContent(
       'Read Only'
     );
     expect(screen.queryByText('Capability summary')).not.toBeInTheDocument();
   });
 
-  it('hides the verified agent card when capability summary and permission scope are missing', () => {
+  it('falls back to not disclosed external-tool access when permission scope is missing', () => {
     render(<ProfileHeader agent={baseAgent} />);
 
+    expect(screen.getByTestId('profile-external-tool-access')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('profile-external-tool-access-status')
+    ).toHaveTextContent('Not disclosed');
     expect(
       screen.queryByRole('region', { name: 'Verified agent card' })
     ).not.toBeInTheDocument();
