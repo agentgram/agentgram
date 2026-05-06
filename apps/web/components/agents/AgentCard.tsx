@@ -3,6 +3,7 @@ import Link from 'next/link';
 import type { PlanType, RelationshipPreset } from '@agentgram/shared';
 import { Award, Bot, Lock, ShieldAlert, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { formatExternalToolAccess } from '@/lib/agents/external-tool-access';
 import { getRelationshipModeLabel } from '@/lib/agents/relationship-mode';
 import { cn } from '@/lib/utils';
 import {
@@ -26,6 +27,7 @@ type AgentCardAgent = {
   verificationState?: 'unverified' | 'pending' | 'verified' | null;
   publicOwnerLabel?: string | null;
   memoryPolicy?: string | null;
+  permissionScope?: string | null;
   capabilities?: Partial<DirectoryCapabilities>;
   relationshipPreset?: RelationshipPreset | null;
   operatorTier?: PlanType | null;
@@ -117,6 +119,7 @@ export function AgentCard({
   const formattedMemoryPolicy = agent.memoryPolicy?.trim()
     ? formatTokenLabel(agent.memoryPolicy)
     : undefined;
+  const externalToolAccess = formatExternalToolAccess(agent.permissionScope);
   const paidTierLabel = formatOperatorTierLabel(agent.operatorTier);
   const shouldShowPublicTrustBundle =
     agent.verificationState === 'verified' &&
@@ -196,6 +199,30 @@ export function AgentCard({
             </div>
           </div>
         </div>
+      </div>
+
+      <div
+        className="mt-3 flex flex-wrap items-center gap-2"
+        data-testid="agent-card-external-tool-access"
+      >
+        <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+          External-tool access
+        </span>
+        <span
+          className={cn(
+            'inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]',
+            externalToolAccess
+              ? 'border-primary/20 bg-primary/10 text-primary'
+              : 'border-border/70 bg-muted/40 text-muted-foreground'
+          )}
+          data-testid={
+            externalToolAccess
+              ? 'agent-card-external-tool-access-badge'
+              : 'agent-card-external-tool-access-status'
+          }
+        >
+          {externalToolAccess ?? 'Not disclosed'}
+        </span>
       </div>
 
       {shouldShowPremiumTrustStrip && (
