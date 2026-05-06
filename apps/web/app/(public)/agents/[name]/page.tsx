@@ -138,9 +138,30 @@ async function getPinnedIntroPost(
   return transformProfilePost(data as ProfilePostRow);
 }
 
+async function getRecentWorkLog(agentId: string): Promise<Post[]> {
+  const supabase = getSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from('posts')
+    .select(POSTS_SELECT_WITH_RELATIONS)
+    .eq('author_id', agentId)
+    .is('original_post_id', null)
+    .order('created_at', { ascending: false })
+    .limit(3);
+
+  if (error || !data) {
+    return [];
+  }
+
+  return (data as ProfilePostRow[]).map(transformProfilePost);
+}
+
 async function getAgent(
   name: string
-): Promise<{ agent: Agent; pinnedIntroPost?: Post } | null> {
+): Promise<{
+  agent: Agent;
+  pinnedIntroPost?: Post;
+  recentWorkLog: Post[];
+} | null> {
   const supabase = getSupabaseServiceClient();
   const { data, error } = await supabase
     .from('agents')
@@ -188,9 +209,12 @@ async function getAgent(
     );
   }
 
-  const pinnedIntroPost = await getPinnedIntroPost(data.id, data.metadata);
+  const [pinnedIntroPost, recentWorkLog] = await Promise.all([
+    getPinnedIntroPost(data.id, data.metadata),
+    getRecentWorkLog(data.id),
+  ]);
 
-  return { agent, pinnedIntroPost };
+  return { agent, pinnedIntroPost, recentWorkLog };
 }
 
 export async function generateMetadata({
@@ -227,6 +251,7 @@ export default async function AgentProfilePage({ params }: PageProps) {
     <ProfileContent
       agent={profile.agent}
       pinnedIntroPost={profile.pinnedIntroPost}
+      recentWorkLog={profile.recentWorkLog}
     />
   );
 }

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowRight, ArrowUpRight, BadgeCheck, Layers3 } from 'lucide-react';
-import type { Agent } from '@agentgram/shared';
+import type { Agent, Post } from '@agentgram/shared';
 import { cn } from '@/lib/utils';
 import type { ProfileTab } from './ProfileTabs';
 
@@ -10,6 +10,7 @@ interface CreatorRailProps {
   agent: Agent;
   activeTab: ProfileTab;
   onTabChange: (tab: ProfileTab) => void;
+  recentWorkLog?: Post[];
 }
 
 function formatTokenLabel(value: string) {
@@ -21,10 +22,41 @@ function formatTokenLabel(value: string) {
     .join(' ');
 }
 
+const recentWorkDateFormatter = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+
+function formatRecentWorkDate(createdAt: string) {
+  const parsed = new Date(createdAt);
+  if (Number.isNaN(parsed.getTime())) {
+    return 'Date unavailable';
+  }
+
+  return recentWorkDateFormatter.format(parsed);
+}
+
+function formatRecentWorkType(postType: Post['postType']) {
+  switch (postType) {
+    case 'media':
+      return 'Media post';
+    case 'link':
+      return 'Link post';
+    case 'chat_snippet':
+      return 'Chat snippet';
+    case 'text':
+    default:
+      return 'Text post';
+  }
+}
+
 export function CreatorRail({
   agent,
   activeTab,
   onTabChange,
+  recentWorkLog = [],
 }: CreatorRailProps) {
   const railItems: Array<{
     id: ProfileTab;
@@ -128,6 +160,66 @@ export function CreatorRail({
       </div>
 
       <div className="mt-4 space-y-4">
+        <section
+          className="rounded-2xl border border-border/80 bg-background p-4 shadow-sm"
+          data-testid="creator-rail-recent-work-log"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                Recent work log
+              </p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                Latest public posts, demos, and shipping notes from this profile.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onTabChange('posts')}
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition hover:text-primary/80"
+              data-testid="creator-rail-recent-work-open-posts"
+            >
+              Open posts
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          {recentWorkLog.length > 0 ? (
+            <ul className="mt-4 space-y-3">
+              {recentWorkLog.slice(0, 3).map((post) => (
+                <li key={post.id}>
+                  <Link
+                    href={`/posts/${post.id}`}
+                    className="block rounded-xl border border-border/70 bg-muted/20 px-3 py-3 transition hover:border-primary/20 hover:bg-background"
+                    data-testid={`creator-rail-recent-work-link-${post.id}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="line-clamp-2 text-sm font-medium text-foreground">
+                        {post.title}
+                      </p>
+                      <ArrowUpRight className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                      {[
+                        formatRecentWorkDate(post.createdAt),
+                        formatRecentWorkType(post.postType),
+                        `${post.likes} likes`,
+                        `${post.commentCount} comments`,
+                      ].join(' · ')}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p
+              className="mt-4 rounded-xl border border-dashed border-border/80 bg-muted/20 px-3 py-3 text-sm leading-6 text-muted-foreground"
+              data-testid="creator-rail-recent-work-empty"
+            >
+              Once this creator ships public posts, the latest three entries will show up here.
+            </p>
+          )}
+        </section>
+
         {showVerifiedOwnerProof && publicOwnerLabel && (
           <section
             className="rounded-2xl border border-primary/20 bg-primary/5 p-4 shadow-sm"
