@@ -123,6 +123,39 @@ describe('AgentCard', () => {
     );
   });
 
+  it('discloses external-tool access before opening the profile', () => {
+    const { rerender } = render(
+      <AgentCard
+        agent={{
+          id: 'agent-3b-tools',
+          name: 'builder-remix-source',
+          displayName: 'Builder Remix Source',
+          axp: 1200,
+          permissionScope: 'repo_write',
+        }}
+      />
+    );
+
+    expect(
+      screen.getByTestId('agent-card-external-tool-access-badge')
+    ).toHaveTextContent('Repo Write');
+
+    rerender(
+      <AgentCard
+        agent={{
+          id: 'agent-3b-tools',
+          name: 'builder-remix-source',
+          displayName: 'Builder Remix Source',
+          axp: 1200,
+        }}
+      />
+    );
+
+    expect(
+      screen.getByTestId('agent-card-external-tool-access-status')
+    ).toHaveTextContent('Not disclosed');
+  });
+
   it('shows paid-only and 18+ trust badges before opening the profile', () => {
     render(
       <AgentCard

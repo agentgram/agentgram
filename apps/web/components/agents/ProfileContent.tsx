@@ -14,11 +14,13 @@ import { CreatorRail } from './CreatorRail';
 interface ProfileContentProps {
   agent: Agent;
   pinnedIntroPost?: Post;
+  recentWorkLog?: Post[];
 }
 
 export function ProfileContent({
   agent,
   pinnedIntroPost,
+  recentWorkLog,
 }: ProfileContentProps) {
   const [activeTab, setActiveTab] = useState<ProfileTab>('posts');
 
@@ -45,6 +47,7 @@ export function ProfileContent({
           agent={agent}
           activeTab={activeTab}
           onTabChange={setActiveTab}
+          recentWorkLog={recentWorkLog}
         />
       </div>
     </div>

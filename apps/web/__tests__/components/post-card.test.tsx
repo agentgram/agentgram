@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Post } from '@agentgram/shared';
 import { PostCard } from '../../components/posts/PostCard';
 
@@ -120,6 +120,8 @@ const renderPostCard = (
 
 describe('PostCard chat snippet support', () => {
   beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-24T11:30:00.000Z'));
     vi.clearAllMocks();
     Object.defineProperty(window.navigator, 'clipboard', {
       value: { writeText },
@@ -139,6 +141,10 @@ describe('PostCard chat snippet support', () => {
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(anchorClick);
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('renders chat snippet preview messages with remix, quote, and quote-card CTAs on feed cards', () => {
     renderPostCard();
 
@@ -156,6 +162,9 @@ describe('PostCard chat snippet support', () => {
     expect(screen.getByTestId('chat-snippet-quote-card-button')).toHaveTextContent(
       'Quote card'
     );
+    expect(
+      screen.queryByTestId('chat-snippet-low-context-rescue')
+    ).not.toBeInTheDocument();
   });
 
   it('copies remix starter text to the clipboard', async () => {
@@ -437,8 +446,94 @@ describe('PostCard chat snippet support', () => {
     );
   });
 
+  it('renders a memory-rescue CTA after low-context replies', () => {
+    renderPostCard({
+      metadata: {
+        ...basePost.metadata,
+        messages: [
+          { role: 'operator', content: 'Can you help me plan the deploy handoff?' },
+          {
+            role: 'agent',
+            content: 'I need more context about you before I can answer well.',
+          },
+        ],
+        memory: {
+          preview: {
+            fact: 'Operator prefers quiet-hours handoff after 8pm KST.',
+          },
+        },
+      },
+    });
+
+    expect(screen.getByTestId('chat-snippet-low-context-rescue')).toHaveTextContent(
+      'Memory rescue'
+    );
+    expect(
+      screen.getByTestId('chat-snippet-restate-key-facts-button')
+    ).toHaveTextContent('Restate my key facts');
+    expect(screen.getByTestId('chat-snippet-low-context-rescue')).toHaveTextContent(
+      'Includes 1 remembered cue from this snippet.'
+    );
+  });
+
+  it('copies a restate-my-key-facts recovery prompt for low-context replies', async () => {
+    renderPostCard({
+      metadata: {
+        ...basePost.metadata,
+        lowContextReply: true,
+        lowContextReason: 'The agent asked for context instead of using saved memory.',
+        memory: {
+          preview: {
+            fact: 'Operator prefers quiet-hours handoff after 8pm KST.',
+            source: 'Pinned private fact',
+          },
+          captures: [
+            {
+              fact: 'Always add a regression test before shipping.',
+            },
+          ],
+        },
+      },
+    });
+
+    fireEvent.click(screen.getByTestId('chat-snippet-restate-key-facts-button'));
+
+    expect(writeText).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(
+        expect.stringContaining('Restate remembered key facts for Builder Bot')
+      );
+    });
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('The latest reply came back low on context.')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('List the durable facts you remember in 3–5 bullets.')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('Operator prefers quiet-hours handoff after 8pm KST.')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('Always add a regression test before shipping.')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('/posts/post-1')
+    );
+    expect(toast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Key facts prompt copied' })
+    );
+  });
+
   it('renders the compact preview variant used by the global feed', () => {
-    renderPostCard({}, 'compact');
+    renderPostCard(
+      {
+        metadata: {
+          ...basePost.metadata,
+          recentReplyAt: '2026-04-24T11:20:00.000Z',
+        },
+      },
+      'compact'
+    );
 
     expect(
       screen.getByTestId('chat-snippet-preview-compact')
@@ -457,8 +552,77 @@ describe('PostCard chat snippet support', () => {
     expect(
       screen.getByTestId('chat-snippet-contradiction-button')
     ).toBeInTheDocument();
+    expect(screen.getByTestId('post-card-comment-count')).toHaveTextContent(
+      '3 comments'
+    );
+    expect(screen.getByTestId('post-card-reply-velocity')).toHaveTextContent(
+      'Reply pace: Active now'
+    );
     expect(
       screen.queryByTestId('chat-snippet-memory-reason')
+    ).not.toBeInTheDocument();
+  });
+
+  it('uses explicit recent reply metadata when present on feed cards', () => {
+    renderPostCard({
+      postType: 'text',
+      metadata: {
+        recentReplyCount: 4,
+        recentReplyWindowHours: 24,
+        recentReplyAt: '2026-04-24T08:00:00.000Z',
+      },
+      commentCount: 9,
+      content: 'A public post with active discussion.',
+    });
+
+    expect(screen.getByTestId('post-card-comment-count')).toHaveTextContent(
+      '9 comments'
+    );
+    expect(screen.getByTestId('post-card-reply-velocity')).toHaveTextContent(
+      'Reply pace: 4 in 24h'
+    );
+  });
+
+  it('keeps the comment count visible without a reply-pace chip when only generic post activity changed', () => {
+    renderPostCard(
+      {
+        postType: 'text',
+        metadata: {},
+        commentCount: 4,
+        content: 'A public post with edits but no reply metadata.',
+        createdAt: '2026-04-24T11:00:00.000Z',
+        updatedAt: '2026-04-24T11:05:00.000Z',
+      },
+      'compact'
+    );
+
+    expect(screen.getByTestId('post-card-comment-count')).toHaveTextContent(
+      '4 comments'
+    );
+    expect(
+      screen.queryByTestId('post-card-reply-velocity')
+    ).not.toBeInTheDocument();
+  });
+
+  it('fails closed when the feed explicitly reports zero recent replies', () => {
+    renderPostCard(
+      {
+        postType: 'text',
+        metadata: {
+          recentReplyCount: 0,
+          recentReplyAt: '2026-04-24T11:20:00.000Z',
+        },
+        commentCount: 6,
+        content: 'A thread with comments but no recent replies.',
+      },
+      'compact'
+    );
+
+    expect(screen.getByTestId('post-card-comment-count')).toHaveTextContent(
+      '6 comments'
+    );
+    expect(
+      screen.queryByTestId('post-card-reply-velocity')
     ).not.toBeInTheDocument();
   });
 

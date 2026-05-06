@@ -104,6 +104,171 @@ function readMetadataArray(
   return [];
 }
 
+function readMetadataNumber(
+  metadata: Post['metadata'],
+  paths: string[][]
+): number | undefined {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return undefined;
+  }
+
+  for (const path of paths) {
+    const value = readMetadataValue(metadata as Record<string, unknown>, path);
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+
+    if (typeof value === 'string' && value.trim()) {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) {
+        return parsed;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+function readMetadataBoolean(
+  metadata: Post['metadata'],
+  paths: string[][]
+): boolean | undefined {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return undefined;
+  }
+
+  for (const path of paths) {
+    const value = readMetadataValue(metadata as Record<string, unknown>, path);
+    if (typeof value === 'boolean') {
+      return value;
+    }
+
+    if (typeof value === 'string' && value.trim()) {
+      const normalized = value.trim().toLowerCase();
+      if (['true', '1', 'yes'].includes(normalized)) {
+        return true;
+      }
+
+      if (['false', '0', 'no'].includes(normalized)) {
+        return false;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+const LOW_CONTEXT_REPLY_PATTERNS = [
+  /i do(?:n't| not) have enough context/i,
+  /i need (?:a bit |more )?context/i,
+  /can you remind me/i,
+  /i (?:do(?:n't| not)|can(?:'t| not)) remember/i,
+  /who are you again/i,
+  /what should i know about you/i,
+];
+
+function isLowContextReplyMessage(value?: string) {
+  if (!value?.trim()) {
+    return false;
+  }
+
+  return LOW_CONTEXT_REPLY_PATTERNS.some((pattern) => pattern.test(value));
+}
+
+type ReplyVelocityState = {
+  label: string;
+  toneClassName: string;
+};
+
+function getReplyVelocity(post: Post): ReplyVelocityState | null {
+  if (post.commentCount < 1) {
+    return null;
+  }
+
+  const recentReplyCount = readMetadataNumber(post.metadata, [
+    ['recentReplyCount'],
+    ['recent_reply_count'],
+    ['replyVelocity', 'count'],
+    ['reply_velocity', 'count'],
+    ['engagement', 'recentReplies'],
+    ['engagement', 'recent_replies'],
+  ]);
+  const recentReplyWindowHours = readMetadataNumber(post.metadata, [
+    ['recentReplyWindowHours'],
+    ['recent_reply_window_hours'],
+    ['replyVelocity', 'windowHours'],
+    ['reply_velocity', 'window_hours'],
+    ['engagement', 'recentReplyWindowHours'],
+    ['engagement', 'recent_reply_window_hours'],
+  ]);
+  const recentReplyAt = readMetadataString(post.metadata, [
+    ['recentReplyAt'],
+    ['recent_reply_at'],
+    ['replyVelocity', 'lastReplyAt'],
+    ['reply_velocity', 'last_reply_at'],
+    ['engagement', 'lastReplyAt'],
+    ['engagement', 'last_reply_at'],
+    ['comments', 'lastReplyAt'],
+    ['comments', 'last_reply_at'],
+  ]);
+  const recentReplyAtMs = recentReplyAt ? new Date(recentReplyAt).getTime() : Number.NaN;
+  const elapsedHours = Number.isFinite(recentReplyAtMs)
+    ? Math.max(0, Date.now() - recentReplyAtMs) / (1000 * 60 * 60)
+    : undefined;
+
+  if (recentReplyCount !== undefined) {
+    if (recentReplyCount <= 0) {
+      return null;
+    }
+
+    const windowHours =
+      recentReplyWindowHours && recentReplyWindowHours > 0
+        ? Math.max(1, Math.round(recentReplyWindowHours))
+        : elapsedHours !== undefined
+          ? elapsedHours <= 1
+            ? 1
+            : elapsedHours <= 24
+              ? 24
+              : 72
+          : 24;
+
+    return {
+      label: `${Math.round(recentReplyCount)} in ${windowHours}h`,
+      toneClassName:
+        elapsedHours !== undefined && elapsedHours < 24
+          ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700'
+          : 'border-primary/15 bg-primary/10 text-foreground/80',
+    };
+  }
+
+  if (elapsedHours === undefined) {
+    return null;
+  }
+
+  if (elapsedHours < 1) {
+    return {
+      label: 'Active now',
+      toneClassName: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700',
+    };
+  }
+
+  if (elapsedHours < 24) {
+    return {
+      label: 'Active today',
+      toneClassName: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700',
+    };
+  }
+
+  if (elapsedHours < 72) {
+    return {
+      label: 'Recent',
+      toneClassName: 'border-primary/15 bg-primary/10 text-foreground/80',
+    };
+  }
+
+  return null;
+}
+
 type MemoryCapture = {
   fact: string;
   source?: string;
@@ -205,7 +370,8 @@ type SnippetActionMode =
   | 'quote_card'
   | 'recover'
   | 'safer_rewrite'
-  | 'contradiction';
+  | 'contradiction'
+  | 'restate_key_facts';
 
 function escapeSvgText(value: string) {
   return value
@@ -374,11 +540,40 @@ export function PostCard({
     .reverse()
     .find((message) => ['user', 'operator', 'human'].includes(message.role.toLowerCase()))
     ?.content;
+  const latestAgentMessage = [...chatMessages]
+    .reverse()
+    .find((message) => ['agent', 'assistant', 'bot'].includes(message.role.toLowerCase()))
+    ?.content;
   const saferRewriteSource =
     blockedMessage || latestUserMessage || post.content || post.title;
   const hasSafetyRewriteContext = Boolean(
     blockedMessage || safetyReason || suggestedSaferRewrite || safetyPolicyUrl
   );
+  const lowContextReplyReason = readMetadataString(post.metadata, [
+    ['lowContextReason'],
+    ['low_context_reason'],
+    ['replyRecovery', 'reason'],
+    ['reply_recovery', 'reason'],
+    ['memoryRescue', 'reason'],
+    ['memory_rescue', 'reason'],
+  ]);
+  const hasLowContextReply =
+    readMetadataBoolean(post.metadata, [
+      ['lowContextReply'],
+      ['low_context_reply'],
+      ['replyRecovery', 'lowContextReply'],
+      ['reply_recovery', 'low_context_reply'],
+      ['memoryRescue', 'required'],
+      ['memory_rescue', 'required'],
+    ]) ?? isLowContextReplyMessage(latestAgentMessage);
+  const restateKeyFactCues = Array.from(
+    new Set(
+      [memoryPreview?.fact, ...memoryCaptures.map((capture) => capture.fact)].filter(
+        (value): value is string => Boolean(value?.trim())
+      )
+    )
+  ).slice(0, 3);
+  const replyVelocity = getReplyVelocity(post);
 
   const buildSnippetClipboardText = (mode: SnippetActionMode) => {
     const postUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/posts/${post.id}`;
@@ -438,6 +633,28 @@ export function PostCard({
         suggestedSaferRewrite ||
           'Can you help me say this in a calmer, safer, and more respectful way while keeping the same intent?',
         safetyPolicyUrl ? `Safety policy: ${safetyPolicyUrl}` : '',
+        '',
+        `Source: ${postUrl}`,
+      ]
+        .filter(Boolean)
+        .join('\n');
+    }
+
+    if (mode === 'restate_key_facts') {
+      return [
+        `Restate remembered key facts for ${authorName}`,
+        '',
+        'The latest reply came back low on context.',
+        'Before you answer again, restate the key facts you already remember about me:',
+        '',
+        '> List the durable facts you remember in 3–5 bullets.',
+        '> Keep it grounded in remembered facts only; if anything feels uncertain, say so.',
+        '> After restating the facts, continue the reply naturally.',
+        '',
+        restateKeyFactCues.length > 0 ? 'Memory cues visible in this snippet:' : '',
+        ...restateKeyFactCues.map((fact) => `- ${fact}`),
+        restateKeyFactCues.length > 0 ? '' : '',
+        transcript,
         '',
         `Source: ${postUrl}`,
       ]
@@ -510,6 +727,7 @@ export function PostCard({
     recover: 'Recovery prompt copied',
     safer_rewrite: 'Safer rewrite copied',
     contradiction: 'Contradiction report copied',
+    restate_key_facts: 'Key facts prompt copied',
   };
 
   const handleSnippetAction = async (mode: SnippetActionMode) => {
@@ -745,6 +963,40 @@ export function PostCard({
           </p>
         ) : null}
 
+        {hasLowContextReply ? (
+          <div
+            data-testid="chat-snippet-low-context-rescue"
+            className="mt-3 rounded-xl border border-sky-500/20 bg-sky-500/10 px-3 py-3"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="space-y-1">
+                <span className="inline-flex items-center rounded-full border border-sky-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
+                  Memory rescue
+                </span>
+                <p className="text-sm text-foreground/90">
+                  {lowContextReplyReason ||
+                    'The latest reply asked for more context. Ask the agent to restate what it already remembers before retrying.'}
+                </p>
+                {restateKeyFactCues.length > 0 ? (
+                  <p className="text-xs text-sky-900/75">
+                    Includes {restateKeyFactCues.length} remembered cue
+                    {restateKeyFactCues.length === 1 ? '' : 's'} from this snippet.
+                  </p>
+                ) : null}
+              </div>
+              <button
+                type="button"
+                data-testid="chat-snippet-restate-key-facts-button"
+                onClick={() => handleSnippetAction('restate_key_facts')}
+                className="inline-flex items-center gap-2 rounded-full border border-sky-500/20 bg-background px-3 py-1.5 text-xs font-semibold text-sky-700 transition-colors hover:bg-sky-50"
+              >
+                <History className="h-3.5 w-3.5" aria-hidden="true" />
+                Restate my key facts
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         <div className="mt-3 flex flex-wrap gap-2">
           <button
             type="button"
@@ -804,6 +1056,31 @@ export function PostCard({
       </div>
     );
   };
+
+  const renderCommentActivity = () => (
+    <div className="mb-2 mt-2 flex flex-wrap items-center gap-2 text-xs">
+      <span
+        data-testid="post-card-comment-count"
+        className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background px-2.5 py-1 font-medium text-foreground/80"
+      >
+        <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
+        {post.commentCount} comments
+      </span>
+      {replyVelocity ? (
+        <span
+          data-testid="post-card-reply-velocity"
+          className={cn(
+            'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-medium',
+            replyVelocity.toneClassName
+          )}
+        >
+          <History className="h-3.5 w-3.5" aria-hidden="true" />
+          <span className="opacity-75">Reply pace:</span>{' '}
+          <span>{replyVelocity.label}</span>
+        </span>
+      ) : null}
+    </div>
+  );
 
   const handleLike = async (e?: React.MouseEvent) => {
     e?.preventDefault();
@@ -939,9 +1216,10 @@ export function PostCard({
                   </p>
                 )}
 
+            {renderCommentActivity()}
+
             <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
               <span>{post.likes} likes</span>
-              <span>{post.commentCount} comments</span>
               <button
                 type="button"
                 onClick={handleShare}
@@ -1143,6 +1421,8 @@ export function PostCard({
         </div>
 
         <TranslateButton content={translationContent} contentId={post.id} />
+
+        {renderCommentActivity()}
 
         {/* Comments Link */}
         {post.commentCount > 0 && (
