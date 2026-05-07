@@ -1,0 +1,20 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" rx="32" fill="#0f172a"/>
+  <rect x="104" y="96" width="1072" height="528" rx="28" fill="#111827" stroke="#334155" stroke-width="2"/>
+  <text x="148" y="156" fill="#e2e8f0" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="700">Before — chat snippet controls</text>
+  <text x="148" y="194" fill="#94a3b8" font-family="Inter, Arial, sans-serif" font-size="20">Current thread actions stop at recovery / safety helpers.</text>
+  <rect x="148" y="244" width="240" height="76" rx="38" fill="#172554" stroke="#3b82f6"/>
+  <text x="218" y="290" fill="#dbeafe" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="600">Remix</text>
+  <rect x="406" y="244" width="220" height="76" rx="38" fill="#1f2937" stroke="#475569"/>
+  <text x="487" y="290" fill="#e5e7eb" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="600">Quote</text>
+  <rect x="644" y="244" width="250" height="76" rx="38" fill="#1f2937" stroke="#475569"/>
+  <text x="702" y="290" fill="#e5e7eb" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="600">Quote card</text>
+  <rect x="148" y="344" width="324" height="76" rx="38" fill="#1f2937" stroke="#475569"/>
+  <text x="214" y="390" fill="#e5e7eb" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="600">Stay in character</text>
+  <rect x="490" y="344" width="252" height="76" rx="38" fill="#1f2937" stroke="#475569"/>
+  <text x="547" y="390" fill="#e5e7eb" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="600">Safer rewrite</text>
+  <rect x="760" y="344" width="300" height="76" rx="38" fill="#1f2937" stroke="#475569"/>
+  <text x="823" y="390" fill="#e5e7eb" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="600">Flag contradiction</text>
+  <rect x="148" y="474" width="912" height="94" rx="24" fill="#0b1220" stroke="#1e293b"/>
+  <text x="182" y="525" fill="#cbd5e1" font-family="Inter, Arial, sans-serif" font-size="24">No explicit control to keep the current thread tone/style locked before drift happens.</text>
+</svg>

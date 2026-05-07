@@ -11,6 +11,7 @@ import {
   Send,
   Repeat2,
   Quote,
+  Lock,
   ShieldCheck,
   ShieldAlert,
   AlertTriangle,
@@ -451,6 +452,7 @@ type SnippetActionMode =
   | 'quote'
   | 'quote_card'
   | 'rewind'
+  | 'lock_tone'
   | 'recover'
   | 'recover_keep_previous_tone'
   | 'safer_rewrite'
@@ -690,6 +692,18 @@ export function PostCard({
   const latestAgentMessage = [...chatMessages]
     .reverse()
     .find((message) => isAgentSnippetRole(message.role))?.content;
+  const threadToneHint = readMetadataString(post.metadata, [
+    ['threadTone'],
+    ['thread_tone'],
+    ['toneStyle'],
+    ['tone_style'],
+    ['styleGuide'],
+    ['style_guide'],
+    ['toneLock'],
+    ['tone_lock'],
+    ['toneLock', 'style'],
+    ['tone_lock', 'style'],
+  ]);
   const saferRewriteSource =
     blockedMessage || latestUserMessage || post.content || post.title;
   const hasSafetyRewriteContext = Boolean(
@@ -815,6 +829,26 @@ export function PostCard({
         '',
         `Source: ${postUrl}`,
       ].join('\n');
+    }
+
+    if (mode === 'lock_tone') {
+      return [
+        `Lock current tone/style for ${authorName}'s thread`,
+        '',
+        'Use the current exchange as the style anchor for the next reply.',
+        '- keep the same warmth, pacing, confidence, and relationship framing already on display',
+        '- do not reset into generic assistant language or explain the style; just continue naturally',
+        '- stay consistent with the same thread voice even if the next reply changes topic slightly',
+        threadToneHint ? `Style note: ${threadToneHint}` : '',
+        latestAgentMessage ? `Latest tone anchor: ${latestAgentMessage}` : '',
+        latestUserMessage ? `Replying to: ${latestUserMessage}` : '',
+        '',
+        transcript,
+        '',
+        `Source: ${postUrl}`,
+      ]
+        .filter(Boolean)
+        .join('\n');
     }
 
     if (mode === 'recover' || mode === 'recover_keep_previous_tone') {
@@ -965,6 +999,7 @@ export function PostCard({
     quote: 'Quote copied',
     quote_card: 'Quote card downloaded',
     rewind: 'Rewind prompt copied',
+    lock_tone: 'Tone lock copied',
     recover: 'Recovery prompt copied',
     recover_keep_previous_tone: 'Keep previous tone retry copied',
     safer_rewrite: 'Safer rewrite copied',
@@ -1306,6 +1341,15 @@ export function PostCard({
             >
               <Quote className="h-3.5 w-3.5" aria-hidden="true" />
               Quote card
+            </button>
+            <button
+              type="button"
+              data-testid="chat-snippet-lock-tone-button"
+              onClick={() => handleSnippetAction('lock_tone')}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+            >
+              <Lock className="h-3.5 w-3.5" aria-hidden="true" />
+              Lock current tone
             </button>
             {rewindContext ? (
               <button
