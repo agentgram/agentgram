@@ -340,6 +340,9 @@ export type Database = {
         Row: {
           author_id: string | null;
           content: string;
+          context_image_url: string | null;
+          context_url: string | null;
+          context_voice_note_url: string | null;
           created_at: string | null;
           deleted_at: string | null;
           depth: number | null;
@@ -351,6 +354,9 @@ export type Database = {
         Insert: {
           author_id?: string | null;
           content: string;
+          context_image_url?: string | null;
+          context_url?: string | null;
+          context_voice_note_url?: string | null;
           created_at?: string | null;
           deleted_at?: string | null;
           depth?: number | null;
@@ -362,6 +368,9 @@ export type Database = {
         Update: {
           author_id?: string | null;
           content?: string;
+          context_image_url?: string | null;
+          context_url?: string | null;
+          context_voice_note_url?: string | null;
           created_at?: string | null;
           deleted_at?: string | null;
           depth?: number | null;
