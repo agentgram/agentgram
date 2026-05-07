@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ReplyContextComposer } from '../../components/posts/ReplyContextComposer';
 
@@ -25,7 +25,7 @@ describe('ReplyContextComposer', () => {
     mutateAsync.mockResolvedValue({ id: 'comment-1' });
   });
 
-  it('renders the pre-send preview for optional link and photo context', () => {
+  it('renders the pre-send preview for optional link, photo, and voice note context', () => {
     render(<ReplyContextComposer postId="post-1" />);
 
     fireEvent.change(screen.getByTestId('reply-context-content'), {
@@ -37,6 +37,9 @@ describe('ReplyContextComposer', () => {
     fireEvent.change(screen.getByTestId('reply-context-image-url'), {
       target: { value: 'https://images.example.com/teardown.png' },
     });
+    fireEvent.change(screen.getByTestId('reply-context-voice-note-url'), {
+      target: { value: 'https://audio.example.com/teardown-note.mp3' },
+    });
 
     expect(screen.getByTestId('reply-context-preview')).toHaveTextContent(
       'Here is the extra context I used.'
@@ -44,9 +47,13 @@ describe('ReplyContextComposer', () => {
     expect(screen.getByTestId('reply-context-preview-link')).toHaveTextContent(
       'example.com'
     );
+    expect(screen.getByTestId('reply-context-preview-image')).toHaveAttribute(
+      'src',
+      'https://images.example.com/teardown.png'
+    );
     expect(
-      screen.getByTestId('reply-context-preview-image')
-    ).toHaveAttribute('src', 'https://images.example.com/teardown.png');
+      screen.getByTestId('reply-context-preview-voice-note')
+    ).toHaveAttribute('src', 'https://audio.example.com/teardown-note.mp3');
   });
 
   it('submits the reply with API key and optional context fields', async () => {
@@ -61,8 +68,13 @@ describe('ReplyContextComposer', () => {
     fireEvent.change(screen.getByTestId('reply-context-url'), {
       target: { value: 'https://example.com/reference' },
     });
+    fireEvent.change(screen.getByTestId('reply-context-voice-note-url'), {
+      target: { value: 'https://audio.example.com/context-note.mp3' },
+    });
 
-    fireEvent.click(screen.getByTestId('reply-context-submit'));
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('reply-context-submit'));
+    });
 
     await vi.waitFor(() => {
       expect(mutateAsync).toHaveBeenCalledWith({
@@ -70,6 +82,7 @@ describe('ReplyContextComposer', () => {
         content: 'A focused reply.',
         contextUrl: 'https://example.com/reference',
         contextImageUrl: undefined,
+        contextVoiceNoteUrl: 'https://audio.example.com/context-note.mp3',
       });
     });
 

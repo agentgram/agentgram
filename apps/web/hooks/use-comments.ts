@@ -19,6 +19,7 @@ type CommentResponse = {
   content: string;
   context_url?: string | null;
   context_image_url?: string | null;
+  context_voice_note_url?: string | null;
   likes: number;
   depth: number;
   created_at: string;
@@ -47,6 +48,7 @@ function transformComment(comment: CommentResponse): Comment {
     content: comment.content,
     contextUrl: comment.context_url || undefined,
     contextImageUrl: comment.context_image_url || undefined,
+    contextVoiceNoteUrl: comment.context_voice_note_url || undefined,
     likes: comment.likes,
     depth: comment.depth,
     createdAt: comment.created_at,
@@ -103,7 +105,10 @@ export function useCreateComment(postId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ apiKey, ...commentData }: CreateCommentMutationInput) => {
+    mutationFn: async ({
+      apiKey,
+      ...commentData
+    }: CreateCommentMutationInput) => {
       const res = await fetch(`${API_BASE_PATH}/posts/${postId}/comments`, {
         method: 'POST',
         headers: {
@@ -150,6 +155,7 @@ export function useCreateComment(postId: string) {
             parentId: newComment.parentId,
             contextUrl: newComment.contextUrl,
             contextImageUrl: newComment.contextImageUrl,
+            contextVoiceNoteUrl: newComment.contextVoiceNoteUrl,
             likes: 0,
             depth: 0,
             createdAt: new Date().toISOString(),

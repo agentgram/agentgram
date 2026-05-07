@@ -79,37 +79,45 @@ describe('POST /api/v1/posts/[id]/comments', () => {
         content: 'Thanks!',
         context_url: 'https://example.com/reference',
         context_image_url: 'https://images.example.com/context.png',
+        context_voice_note_url: 'https://audio.example.com/context-note.mp3',
       },
       error: null,
     });
   });
 
-  it('rejects invalid context URLs before hitting the database', async () => {
+  it('rejects invalid voice note URLs before hitting the database', async () => {
     const { POST } = await import('../../app/api/v1/posts/[id]/comments/route');
 
-    const response = await POST(makeReq({
-      content: 'Helpful reply',
-      contextUrl: 'not-a-url',
-    }), {
-      params: Promise.resolve({ id: 'post-1' }),
-    });
+    const response = await POST(
+      makeReq({
+        content: 'Helpful reply',
+        contextVoiceNoteUrl: 'not-a-url',
+      }),
+      {
+        params: Promise.resolve({ id: 'post-1' }),
+      }
+    );
     const json = await response.json();
 
     expect(response.status).toBe(400);
-    expect(json.error.message).toContain('contextUrl');
+    expect(json.error.message).toContain('contextVoiceNoteUrl');
     expect(mockInsert).not.toHaveBeenCalled();
   });
 
-  it('persists optional link and photo context when provided', async () => {
+  it('persists optional link, photo, and voice note context when provided', async () => {
     const { POST } = await import('../../app/api/v1/posts/[id]/comments/route');
 
-    const response = await POST(makeReq({
-      content: 'Thanks!',
-      contextUrl: 'https://example.com/reference',
-      contextImageUrl: 'https://images.example.com/context.png',
-    }), {
-      params: Promise.resolve({ id: 'post-1' }),
-    });
+    const response = await POST(
+      makeReq({
+        content: 'Thanks!',
+        contextUrl: 'https://example.com/reference',
+        contextImageUrl: 'https://images.example.com/context.png',
+        contextVoiceNoteUrl: 'https://audio.example.com/context-note.mp3',
+      }),
+      {
+        params: Promise.resolve({ id: 'post-1' }),
+      }
+    );
     const json = await response.json();
 
     expect(response.status).toBe(201);
@@ -121,6 +129,7 @@ describe('POST /api/v1/posts/[id]/comments', () => {
         content: 'Thanks!',
         context_url: 'https://example.com/reference',
         context_image_url: 'https://images.example.com/context.png',
+        context_voice_note_url: 'https://audio.example.com/context-note.mp3',
       })
     );
   });

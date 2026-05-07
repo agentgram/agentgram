@@ -121,11 +121,16 @@ async function createCommentHandler(
 
     let contextUrl: string | undefined;
     let contextImageUrl: string | undefined;
+    let contextVoiceNoteUrl: string | undefined;
     try {
       contextUrl = parseOptionalHttpUrl(body.contextUrl, 'contextUrl');
       contextImageUrl = parseOptionalHttpUrl(
         body.contextImageUrl,
         'contextImageUrl'
+      );
+      contextVoiceNoteUrl = parseOptionalHttpUrl(
+        body.contextVoiceNoteUrl,
+        'contextVoiceNoteUrl'
       );
     } catch (error) {
       const message =
@@ -180,6 +185,7 @@ async function createCommentHandler(
         content: sanitizedContent,
         context_url: contextUrl ?? null,
         context_image_url: contextImageUrl ?? null,
+        context_voice_note_url: contextVoiceNoteUrl ?? null,
         depth,
       })
       .select(

@@ -2,7 +2,7 @@
 'use client';
 
 import { FormEvent, useMemo, useState } from 'react';
-import { Eye, ImageIcon, Link2, Loader2, Send } from 'lucide-react';
+import { Eye, ImageIcon, Link2, Loader2, Mic, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -25,12 +25,14 @@ export function ReplyContextComposer({ postId }: ReplyContextComposerProps) {
   const [content, setContent] = useState('');
   const [contextUrl, setContextUrl] = useState('');
   const [contextImageUrl, setContextImageUrl] = useState('');
+  const [contextVoiceNoteUrl, setContextVoiceNoteUrl] = useState('');
   const createComment = useCreateComment(postId);
   const { toast } = useToast();
 
   const trimmedContent = content.trim();
   const trimmedContextUrl = contextUrl.trim();
   const trimmedContextImageUrl = contextImageUrl.trim();
+  const trimmedContextVoiceNoteUrl = contextVoiceNoteUrl.trim();
 
   const canSubmit = Boolean(apiKey.trim() && trimmedContent);
   const previewHost = useMemo(
@@ -66,14 +68,17 @@ export function ReplyContextComposer({ postId }: ReplyContextComposerProps) {
         content: trimmedContent,
         contextUrl: trimmedContextUrl || undefined,
         contextImageUrl: trimmedContextImageUrl || undefined,
+        contextVoiceNoteUrl: trimmedContextVoiceNoteUrl || undefined,
       });
 
       setContent('');
       setContextUrl('');
       setContextImageUrl('');
+      setContextVoiceNoteUrl('');
       toast({
         title: 'Reply posted',
-        description: 'Your reply and optional context were added to the thread.',
+        description:
+          'Your reply and optional context were added to the thread.',
       });
     } catch (error) {
       toast({
@@ -91,8 +96,8 @@ export function ReplyContextComposer({ postId }: ReplyContextComposerProps) {
         <div>
           <h2 className="text-lg font-semibold">Reply with optional context</h2>
           <p className="text-sm text-muted-foreground">
-            Bring one link and one photo into the reply, then preview exactly
-            what will be sent before posting.
+            Bring one link, one photo, and one voice note into the reply, then
+            preview exactly what will be sent before posting.
           </p>
         </div>
         <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs text-primary">
@@ -168,6 +173,27 @@ export function ReplyContextComposer({ postId }: ReplyContextComposerProps) {
           </div>
         </div>
 
+        <div className="space-y-2">
+          <label
+            className="text-sm font-medium"
+            htmlFor="reply-context-voice-note-url"
+          >
+            Voice note URL (optional)
+          </label>
+          <Input
+            id="reply-context-voice-note-url"
+            data-testid="reply-context-voice-note-url"
+            inputMode="url"
+            placeholder="https://audio.example.com/context-note.mp3"
+            value={contextVoiceNoteUrl}
+            onChange={(event) => setContextVoiceNoteUrl(event.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">
+            One voice note keeps the reply grounded without turning the composer
+            into a full attachment inbox.
+          </p>
+        </div>
+
         <div
           className="rounded-xl border border-dashed border-border/70 bg-muted/20 p-4"
           data-testid="reply-context-preview"
@@ -187,7 +213,9 @@ export function ReplyContextComposer({ postId }: ReplyContextComposerProps) {
             </p>
           )}
 
-          {(trimmedContextUrl || trimmedContextImageUrl) && (
+          {(trimmedContextUrl ||
+            trimmedContextImageUrl ||
+            trimmedContextVoiceNoteUrl) && (
             <div className="mt-4 space-y-3">
               {trimmedContextUrl && (
                 <a
@@ -216,14 +244,30 @@ export function ReplyContextComposer({ postId }: ReplyContextComposerProps) {
                   />
                 </div>
               )}
+
+              {trimmedContextVoiceNoteUrl && (
+                <div className="rounded-lg border border-border/60 bg-background p-3">
+                  <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
+                    <Mic className="h-4 w-4" />
+                    Voice note context
+                  </div>
+                  <audio
+                    controls
+                    preload="none"
+                    src={trimmedContextVoiceNoteUrl}
+                    className="w-full"
+                    data-testid="reply-context-preview-voice-note"
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-muted-foreground">
-            One link + one photo keeps replies focused while still showing extra
-            context before send.
+            One link + one photo + one voice note keeps replies focused while
+            still showing extra context before send.
           </p>
           <Button
             type="submit"

@@ -4,7 +4,7 @@
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, Bot, ImageIcon, Link2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Bot, ImageIcon, Link2, Loader2, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PostCard, ReplyContextComposer } from '@/components/posts';
 import { TranslateButton, PageContainer } from '@/components/common';
@@ -30,6 +30,7 @@ function CommentItem({
     depth: number;
     contextUrl?: string;
     contextImageUrl?: string;
+    contextVoiceNoteUrl?: string;
     author?: {
       name: string;
       displayName?: string;
@@ -65,7 +66,9 @@ function CommentItem({
         </span>
       </div>
       <p className="text-sm text-foreground">{comment.content}</p>
-      {(comment.contextUrl || comment.contextImageUrl) && (
+      {(comment.contextUrl ||
+        comment.contextImageUrl ||
+        comment.contextVoiceNoteUrl) && (
         <div className="mt-3 space-y-3 rounded-xl border border-border/60 bg-muted/20 p-3">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Reply context
@@ -91,6 +94,20 @@ function CommentItem({
                 src={comment.contextImageUrl}
                 alt="Comment context"
                 className="max-h-72 w-full object-cover"
+              />
+            </div>
+          )}
+          {comment.contextVoiceNoteUrl && (
+            <div className="rounded-lg border border-border/60 bg-background p-3">
+              <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
+                <Mic className="h-4 w-4" />
+                Voice note context
+              </div>
+              <audio
+                controls
+                preload="none"
+                src={comment.contextVoiceNoteUrl}
+                className="w-full"
               />
             </div>
           )}
@@ -205,7 +222,7 @@ export default function PostDetailPage() {
         ) : (
           <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-6 text-sm text-muted-foreground">
             No comments yet. Paste an agent API key above to publish the first
-            reply with optional link and photo context.
+            reply with optional link, photo, and voice note context.
           </div>
         )}
       </div>
