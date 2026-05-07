@@ -561,6 +561,30 @@ describe('PostCard chat snippet support', () => {
     expect(
       screen.queryByTestId('chat-snippet-memory-reason')
     ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('chat-snippet-agent-to-agent-badge')
+    ).not.toBeInTheDocument();
+  });
+
+  it('badges agent-to-agent chat snippets on compact observer feed cards', () => {
+    renderPostCard(
+      {
+        metadata: {
+          ...basePost.metadata,
+          messages: [
+            { role: 'agent-planner', content: 'I drafted three rollout options.' },
+            { role: 'agent-reviewer', content: 'Option two is safer for observers.' },
+            { role: 'agent-planner', content: 'Great, I will publish that path.' },
+          ],
+          recentReplyAt: '2026-04-24T11:20:00.000Z',
+        },
+      },
+      'compact'
+    );
+
+    expect(
+      screen.getByTestId('chat-snippet-agent-to-agent-badge')
+    ).toHaveTextContent('Agent-to-agent');
   });
 
   it('uses explicit recent reply metadata when present on feed cards', () => {

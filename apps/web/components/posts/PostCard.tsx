@@ -167,6 +167,88 @@ const LOW_CONTEXT_REPLY_PATTERNS = [
   /what should i know about you/i,
 ];
 
+const HUMAN_CHAT_ROLES = ['user', 'human', 'operator', 'developer'];
+const AGENT_CHAT_ROLE_KEYWORDS = ['agent', 'assistant', 'bot'];
+
+function normalizeChatRole(role?: string) {
+  return role?.trim().toLowerCase() ?? '';
+}
+
+function matchesRoleKeyword(role: string, keyword: string) {
+  return (
+    role === keyword ||
+    role.startsWith(`${keyword}-`) ||
+    role.endsWith(`-${keyword}`) ||
+    role.includes(`-${keyword}-`) ||
+    role.startsWith(`${keyword}_`) ||
+    role.endsWith(`_${keyword}`) ||
+    role.includes(`_${keyword}_`) ||
+    role.startsWith(`${keyword}:`) ||
+    role.endsWith(`:${keyword}`) ||
+    role.includes(`:${keyword}:`)
+  );
+}
+
+function isHumanChatRole(role?: string) {
+  const normalizedRole = normalizeChatRole(role);
+
+  if (!normalizedRole) {
+    return false;
+  }
+
+  return HUMAN_CHAT_ROLES.some((keyword) =>
+    matchesRoleKeyword(normalizedRole, keyword)
+  );
+}
+
+function isAgentChatRole(role?: string) {
+  const normalizedRole = normalizeChatRole(role);
+
+  if (!normalizedRole || isHumanChatRole(normalizedRole)) {
+    return false;
+  }
+
+  return AGENT_CHAT_ROLE_KEYWORDS.some((keyword) =>
+    matchesRoleKeyword(normalizedRole, keyword)
+  );
+}
+
+function isAgentToAgentChatSnippet(
+  post: Post,
+  chatMessages: ChatSnippetMessage[]
+) {
+  const explicitMetadataState = readMetadataBoolean(post.metadata, [
+    ['agentToAgent'],
+    ['agent_to_agent'],
+    ['conversation', 'agentToAgent'],
+    ['conversation', 'agent_to_agent'],
+    ['chatSnippet', 'agentToAgent'],
+    ['chat_snippet', 'agent_to_agent'],
+  ]);
+
+  if (explicitMetadataState !== undefined) {
+    return explicitMetadataState;
+  }
+
+  if (post.postType !== 'chat_snippet' || chatMessages.length < 2) {
+    return false;
+  }
+
+  const roles = chatMessages
+    .map((message) => normalizeChatRole(message.role))
+    .filter(Boolean);
+
+  if (roles.length < 2 || roles.some((role) => isHumanChatRole(role))) {
+    return false;
+  }
+
+  if (!roles.every((role) => isAgentChatRole(role))) {
+    return false;
+  }
+
+  return new Set(roles).size >= 2;
+}
+
 function isLowContextReplyMessage(value?: string) {
   if (!value?.trim()) {
     return false;
@@ -424,6 +506,10 @@ export function PostCard({
     Boolean(message?.content?.trim())
   );
   const isChatSnippet = post.postType === 'chat_snippet';
+  const isAgentToAgentConversation = isAgentToAgentChatSnippet(
+    post,
+    chatMessages
+  );
   const chatSnippetPreview = chatMessages.slice(0, 3);
   const chatSnippetSummary = chatMessages
     .map((message) => `${message.role}: ${message.content}`)
@@ -794,9 +880,19 @@ export function PostCard({
         )}
       >
         <div className="flex items-center justify-between gap-2">
-          <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-            Chat snippet
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+              Chat snippet
+            </span>
+            {compact && isAgentToAgentConversation ? (
+              <span
+                data-testid="chat-snippet-agent-to-agent-badge"
+                className="inline-flex items-center rounded-full border border-sky-500/20 bg-sky-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700"
+              >
+                Agent-to-agent
+              </span>
+            ) : null}
+          </div>
           <span className="text-[11px] text-muted-foreground">
             {chatMessages.length > 0
               ? `${chatMessages.length} turns`
