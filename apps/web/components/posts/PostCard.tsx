@@ -450,6 +450,7 @@ type SnippetActionMode =
   | 'remix'
   | 'quote'
   | 'quote_card'
+  | 'rewind'
   | 'recover'
   | 'safer_rewrite'
   | 'contradiction'
@@ -483,6 +484,46 @@ function wrapQuoteCardText(value: string, maxChars = 34) {
   if (current) lines.push(current);
 
   return lines.slice(0, 7);
+}
+
+function normalizeSnippetRole(role: string | undefined) {
+  return role?.trim().toLowerCase() || '';
+}
+
+function isHumanSnippetRole(role: string | undefined) {
+  return ['user', 'operator', 'human'].includes(normalizeSnippetRole(role));
+}
+
+function isAgentSnippetRole(role: string | undefined) {
+  return ['agent', 'assistant', 'bot'].includes(normalizeSnippetRole(role));
+}
+
+function getChatRewindContext(messages: ChatSnippetMessage[]) {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+
+    if (!isAgentSnippetRole(message.role)) {
+      continue;
+    }
+
+    for (let userIndex = index - 1; userIndex >= 0; userIndex -= 1) {
+      const candidate = messages[userIndex];
+
+      if (!isHumanSnippetRole(candidate.role)) {
+        continue;
+      }
+
+      return {
+        previousUserMessage: candidate.content.trim(),
+        discardedAgentReply: message.content.trim(),
+        contextMessages: messages.slice(0, index).filter((entry) =>
+          Boolean(entry.content?.trim())
+        ),
+      };
+    }
+  }
+
+  return null;
 }
 
 export function PostCard({
@@ -622,14 +663,13 @@ export function PostCard({
     ['safety', 'policyUrl'],
     ['safety', 'policy_url'],
   ]);
+  const rewindContext = getChatRewindContext(chatMessages);
   const latestUserMessage = [...chatMessages]
     .reverse()
-    .find((message) => ['user', 'operator', 'human'].includes(message.role.toLowerCase()))
-    ?.content;
+    .find((message) => isHumanSnippetRole(message.role))?.content;
   const latestAgentMessage = [...chatMessages]
     .reverse()
-    .find((message) => ['agent', 'assistant', 'bot'].includes(message.role.toLowerCase()))
-    ?.content;
+    .find((message) => isAgentSnippetRole(message.role))?.content;
   const saferRewriteSource =
     blockedMessage || latestUserMessage || post.content || post.title;
   const hasSafetyRewriteContext = Boolean(
@@ -668,6 +708,33 @@ export function PostCard({
 
     if (mode === 'quote_card') {
       return transcript;
+    }
+
+    if (mode === 'rewind') {
+      return [
+        `Rewind the last reply for ${authorName}`,
+        '',
+        'The final AI turn missed the mark. Discard that reply and regenerate from the previous user message below.',
+        '',
+        '> Keep the same relationship, context, and remembered facts that already existed before the discarded answer.',
+        '> Start from the final human/operator turn and write one fresh replacement reply.',
+        '> Do not repeat or lightly paraphrase the discarded answer; replace it with a meaningfully different try.',
+        '',
+        rewindContext?.contextMessages.length ? 'Conversation before the retry:' : '',
+        ...(rewindContext?.contextMessages ?? []).map(
+          (message) => `${message.role}: ${message.content}`
+        ),
+        rewindContext?.contextMessages.length ? '' : '',
+        'Retry from this user message:',
+        rewindContext?.previousUserMessage || latestUserMessage || 'No previous user turn found.',
+        '',
+        'Discarded AI reply:',
+        rewindContext?.discardedAgentReply || latestAgentMessage || 'No previous AI reply found.',
+        '',
+        `Source: ${postUrl}`,
+      ]
+        .filter(Boolean)
+        .join('\n');
     }
 
     if (mode === 'contradiction') {
@@ -810,6 +877,7 @@ export function PostCard({
     remix: 'Remix copied',
     quote: 'Quote copied',
     quote_card: 'Quote card downloaded',
+    rewind: 'Rewind prompt copied',
     recover: 'Recovery prompt copied',
     safer_rewrite: 'Safer rewrite copied',
     contradiction: 'Contradiction report copied',
@@ -1121,6 +1189,17 @@ export function PostCard({
             <Quote className="h-3.5 w-3.5" aria-hidden="true" />
             Quote card
           </button>
+          {rewindContext ? (
+            <button
+              type="button"
+              data-testid="chat-snippet-rewind-button"
+              onClick={() => handleSnippetAction('rewind')}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+            >
+              <History className="h-3.5 w-3.5" aria-hidden="true" />
+              Rewind reply
+            </button>
+          ) : null}
           <button
             type="button"
             data-testid="chat-snippet-recover-button"

@@ -203,9 +203,12 @@ describe('PostCard chat snippet support', () => {
     );
   });
 
-  it('renders stay-in-character recovery CTA beside remix and quote', () => {
+  it('renders a rewind CTA beside the other snippet recovery controls', () => {
     renderPostCard();
 
+    expect(screen.getByTestId('chat-snippet-rewind-button')).toHaveTextContent(
+      'Rewind reply'
+    );
     expect(screen.getByTestId('chat-snippet-recover-button')).toHaveTextContent(
       'Stay in character'
     );
@@ -339,6 +342,53 @@ describe('PostCard chat snippet support', () => {
       screen.getByText('Asked the agent to remember the handoff window.')
     ).toBeInTheDocument();
     expect(screen.getByText('Captured from this snippet')).toBeInTheDocument();
+  });
+
+  it('copies a rewind prompt that retries from the previous user turn', async () => {
+    renderPostCard();
+
+    fireEvent.click(screen.getByTestId('chat-snippet-rewind-button'));
+
+    expect(writeText).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(
+        expect.stringContaining('Rewind the last reply for Builder Bot')
+      );
+    });
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('The final AI turn missed the mark.')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('Retry from this user message:')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('operator: Ship the fix and add a regression test.')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('Discarded AI reply:')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('Done — PR is ready for review.')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('/posts/post-1')
+    );
+    expect(toast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Rewind prompt copied' })
+    );
+  });
+
+  it('hides the rewind CTA when the snippet has no prior human turn to retry from', () => {
+    renderPostCard({
+      metadata: {
+        ...basePost.metadata,
+        messages: [{ role: 'agent', content: 'I can only continue from here.' }],
+      },
+    });
+
+    expect(
+      screen.queryByTestId('chat-snippet-rewind-button')
+    ).not.toBeInTheDocument();
   });
 
   it('copies recovery prompt with persona-stability guardrails', async () => {
@@ -542,6 +592,9 @@ describe('PostCard chat snippet support', () => {
     expect(screen.getByTestId('chat-snippet-quote-button')).toBeInTheDocument();
     expect(
       screen.getByTestId('chat-snippet-quote-card-button')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('chat-snippet-rewind-button')
     ).toBeInTheDocument();
     expect(
       screen.getByTestId('chat-snippet-recover-button')
