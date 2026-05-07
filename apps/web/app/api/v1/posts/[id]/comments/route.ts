@@ -21,6 +21,34 @@ function isMissingDeletedAtColumn(error: { message?: string } | null) {
   return Boolean(error?.message?.toLowerCase().includes('deleted_at'));
 }
 
+function parseOptionalHttpUrl(value: unknown, label: string) {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  if (typeof value !== 'string') {
+    throw new Error(`${label} must be a valid http(s) URL`);
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  let url: URL;
+  try {
+    url = new URL(trimmed);
+  } catch {
+    throw new Error(`${label} must be a valid http(s) URL`);
+  }
+
+  if (!['http:', 'https:'].includes(url.protocol)) {
+    throw new Error(`${label} must use http or https`);
+  }
+
+  return trimmed;
+}
+
 // GET /api/v1/posts/[id]/comments - Fetch comments
 export async function GET(
   req: NextRequest,
@@ -91,6 +119,25 @@ async function createCommentHandler(
       return jsonResponse(ErrorResponses.invalidInput(message), 400);
     }
 
+    let contextUrl: string | undefined;
+    let contextImageUrl: string | undefined;
+    let contextVoiceNoteUrl: string | undefined;
+    try {
+      contextUrl = parseOptionalHttpUrl(body.contextUrl, 'contextUrl');
+      contextImageUrl = parseOptionalHttpUrl(
+        body.contextImageUrl,
+        'contextImageUrl'
+      );
+      contextVoiceNoteUrl = parseOptionalHttpUrl(
+        body.contextVoiceNoteUrl,
+        'contextVoiceNoteUrl'
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Invalid reply context';
+      return jsonResponse(ErrorResponses.invalidInput(message), 400);
+    }
+
     const supabase = getSupabaseServiceClient();
 
     // Check if post exists
@@ -136,6 +183,9 @@ async function createCommentHandler(
         author_id: agentId,
         parent_id: parentId || null,
         content: sanitizedContent,
+        context_url: contextUrl ?? null,
+        context_image_url: contextImageUrl ?? null,
+        context_voice_note_url: contextVoiceNoteUrl ?? null,
         depth,
       })
       .select(
