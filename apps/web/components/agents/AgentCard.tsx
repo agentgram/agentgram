@@ -1,13 +1,26 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { PlanType, RelationshipPreset } from '@agentgram/shared';
-import { Award, Bot, Lock, ShieldAlert, Sparkles } from 'lucide-react';
+import {
+  Award,
+  Bot,
+  Globe,
+  Image as ImageIcon,
+  Lock,
+  Mic,
+  ShieldAlert,
+  Sparkles,
+  Video,
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { getRelationshipModeLabel } from '@/lib/agents/relationship-mode';
 import { cn } from '@/lib/utils';
 import {
+  AGENT_MODALITY_KEYS,
+  AGENT_MODALITY_LABELS,
   DIRECTORY_CAPABILITY_KEYS,
   DIRECTORY_CAPABILITY_LABELS,
+  type AgentModalityKey,
   type DirectoryCapabilities,
 } from '@/lib/agents/capabilities';
 
@@ -95,6 +108,13 @@ function getActivityFreshness(lastActive?: string | null) {
   };
 }
 
+const MODALITY_BADGE_ICONS: Record<AgentModalityKey, typeof Mic> = {
+  voice: Mic,
+  video: Video,
+  image: ImageIcon,
+  web: Globe,
+};
+
 interface AgentCardProps {
   agent: AgentCardAgent;
   showNewBadge?: boolean;
@@ -123,6 +143,12 @@ export function AgentCard({
     Boolean(publicOwnerLabel || formattedMemoryPolicy || activityFreshness);
   const shouldShowPremiumTrustStrip = Boolean(
     paidTierLabel || agent.matureContent
+  );
+  const enabledReplyModalities = AGENT_MODALITY_KEYS.filter(
+    (key) => agent.capabilities?.[key] === true
+  );
+  const enabledDiscoveryCapabilities = DIRECTORY_CAPABILITY_KEYS.filter(
+    (key) => key !== 'voice' && agent.capabilities?.[key] === true
   );
 
   const isNew =
@@ -226,6 +252,32 @@ export function AgentCard({
         </div>
       )}
 
+      {enabledReplyModalities.length > 0 && (
+        <div
+          className="mt-3 flex flex-wrap items-center gap-2"
+          data-testid="agent-card-modality-badges"
+        >
+          <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            Replies with
+          </span>
+          {enabledReplyModalities.map((key) => {
+            const Icon = MODALITY_BADGE_ICONS[key];
+
+            return (
+              <Badge
+                key={key}
+                variant="secondary"
+                className="gap-1.5 border border-primary/15 bg-primary/5 text-[10px] font-semibold uppercase tracking-wide text-foreground/85"
+                data-testid={`agent-card-modality-badge-${key}`}
+              >
+                <Icon className="h-3 w-3 text-primary" />
+                {AGENT_MODALITY_LABELS[key]}
+              </Badge>
+            );
+          })}
+        </div>
+      )}
+
       <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
           <Award className="h-3.5 w-3.5" />
@@ -293,11 +345,9 @@ export function AgentCard({
         </div>
       )}
 
-      {agent.capabilities && (
+      {enabledDiscoveryCapabilities.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">
-          {DIRECTORY_CAPABILITY_KEYS.filter(
-            (key) => agent.capabilities?.[key]
-          ).map((key) => (
+          {enabledDiscoveryCapabilities.map((key) => (
             <Badge
               key={key}
               variant="outline"

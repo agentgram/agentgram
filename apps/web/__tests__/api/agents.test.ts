@@ -61,9 +61,7 @@ describe('GET /api/v1/agents', () => {
     mockContains.mockReturnThis();
     mockIn.mockReturnValue({ is: mockIs });
     mockIs.mockResolvedValue({
-      data: [
-        { author_id: 'agent-1', comment_count: 2 },
-      ],
+      data: [{ author_id: 'agent-1', comment_count: 2 }],
       error: null,
     });
     mockRange.mockResolvedValue({
@@ -117,6 +115,9 @@ describe('GET /api/v1/agents', () => {
               voice: 'true',
               group_chat: true,
               roleplay: 1,
+              video: true,
+              image_reply: true,
+              web_aware: true,
             },
           },
           created_at: '2026-01-01T00:00:00Z',
@@ -144,9 +145,7 @@ describe('GET /api/v1/agents', () => {
   });
 
   it('should return paginated agents', async () => {
-    const { GET } = await import(
-      '../../app/api/v1/agents/route'
-    );
+    const { GET } = await import('../../app/api/v1/agents/route');
 
     const request = new Request('http://localhost/api/v1/agents');
     const response = await GET(request as unknown as Parameters<typeof GET>[0]);
@@ -165,6 +164,9 @@ describe('GET /api/v1/agents', () => {
         voice: false,
         group_chat: true,
         roleplay: false,
+        video: true,
+        image: true,
+        web: true,
       },
       memoryPolicy: 'ephemeral_only',
       workProofUrl: 'https://example.com/proof',
@@ -320,9 +322,7 @@ describe('GET /api/v1/agents', () => {
   });
 
   it('should escape SQL wildcards in search parameter', async () => {
-    const { GET } = await import(
-      '../../app/api/v1/agents/route'
-    );
+    const { GET } = await import('../../app/api/v1/agents/route');
 
     const request = new Request(
       'http://localhost/api/v1/agents?search=test%25injection'
@@ -338,9 +338,7 @@ describe('GET /api/v1/agents', () => {
   });
 
   it('should filter by enabled capability params', async () => {
-    const { GET } = await import(
-      '../../app/api/v1/agents/route'
-    );
+    const { GET } = await import('../../app/api/v1/agents/route');
 
     const request = new Request(
       'http://localhost/api/v1/agents?voice=true&group_chat=1'
@@ -357,9 +355,7 @@ describe('GET /api/v1/agents', () => {
   });
 
   it('should clamp page parameter to valid range', async () => {
-    const { GET } = await import(
-      '../../app/api/v1/agents/route'
-    );
+    const { GET } = await import('../../app/api/v1/agents/route');
 
     const request = new Request(
       'http://localhost/api/v1/agents?page=999999999'
@@ -373,13 +369,9 @@ describe('GET /api/v1/agents', () => {
   });
 
   it('should clamp limit parameter to MAX_LIMIT', async () => {
-    const { GET } = await import(
-      '../../app/api/v1/agents/route'
-    );
+    const { GET } = await import('../../app/api/v1/agents/route');
 
-    const request = new Request(
-      'http://localhost/api/v1/agents?limit=999'
-    );
+    const request = new Request('http://localhost/api/v1/agents?limit=999');
     const response = await GET(request as unknown as Parameters<typeof GET>[0]);
     const json = await response.json();
 
@@ -389,9 +381,7 @@ describe('GET /api/v1/agents', () => {
   });
 
   it('should apply capability filters from metadata.capabilities', async () => {
-    const { GET } = await import(
-      '../../app/api/v1/agents/route'
-    );
+    const { GET } = await import('../../app/api/v1/agents/route');
 
     const request = new Request(
       'http://localhost/api/v1/agents?voice=true&group_chat=1'
@@ -450,7 +440,7 @@ describe('GET /api/v1/agents', () => {
     expect(json.success).toBe(false);
   });
 
-  it('should support discussed sort using total comments received on each agent\'s posts', async () => {
+  it("should support discussed sort using total comments received on each agent's posts", async () => {
     mockRange
       .mockResolvedValueOnce({
         data: [
@@ -529,9 +519,7 @@ describe('GET /api/v1/agents', () => {
       error: null,
     });
     mockRemixIlike.mockResolvedValueOnce({
-      data: [
-        { description: 'Inspired by @chatty-agent: first remix' },
-      ],
+      data: [{ description: 'Inspired by @chatty-agent: first remix' }],
       error: null,
     });
 

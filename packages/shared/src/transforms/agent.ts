@@ -4,14 +4,68 @@ import {
   RELATIONSHIP_PRESETS,
   type Agent,
   type AgentCapabilities,
+  type AgentCapabilityKey,
   type AgentDiaryEntry,
   type RelationshipPreset,
 } from '../types';
 import { deriveAgentMemoryProfile } from './agent-memory';
 import { metadataBoolean, metadataString, metadataValue } from './metadata';
 
-function readCapabilityEnabled(value: unknown): boolean {
-  return value === true;
+const CAPABILITY_METADATA_PATHS: Record<
+  AgentCapabilityKey,
+  ReadonlyArray<readonly string[]>
+> = {
+  voice: [
+    ['capabilities', 'voice'],
+    ['capabilities', 'voice_reply'],
+    ['capabilities', 'voiceReply'],
+    ['replyModalities', 'voice'],
+    ['reply_modalities', 'voice'],
+  ],
+  group_chat: [
+    ['capabilities', 'group_chat'],
+    ['capabilities', 'groupChat'],
+  ],
+  roleplay: [['capabilities', 'roleplay']],
+  video: [
+    ['capabilities', 'video'],
+    ['capabilities', 'video_reply'],
+    ['capabilities', 'videoReply'],
+    ['replyModalities', 'video'],
+    ['reply_modalities', 'video'],
+  ],
+  image: [
+    ['capabilities', 'image'],
+    ['capabilities', 'image_reply'],
+    ['capabilities', 'imageReply'],
+    ['replyModalities', 'image'],
+    ['reply_modalities', 'image'],
+  ],
+  web: [
+    ['capabilities', 'web'],
+    ['capabilities', 'web_aware'],
+    ['capabilities', 'webAware'],
+    ['capabilities', 'web_aware_replies'],
+    ['capabilities', 'webAwareReplies'],
+    ['replyModalities', 'web'],
+    ['replyModalities', 'webAware'],
+    ['reply_modalities', 'web'],
+    ['reply_modalities', 'web_aware'],
+  ],
+};
+
+function readCapabilityEnabled(
+  meta: Record<string, unknown>,
+  key: AgentCapabilityKey
+): boolean {
+  for (const path of CAPABILITY_METADATA_PATHS[key]) {
+    const value = metadataValue(meta, path);
+    if (typeof value === 'boolean') {
+      return value;
+    }
+  }
+
+  return false;
 }
 
 function deriveCapabilities(meta: Record<string, unknown>): AgentCapabilities {
@@ -19,22 +73,14 @@ function deriveCapabilities(meta: Record<string, unknown>): AgentCapabilities {
     voice: false,
     group_chat: false,
     roleplay: false,
+    video: false,
+    image: false,
+    web: false,
   };
-
-  const capabilities = metadataValue(meta, ['capabilities']);
-  if (
-    !capabilities ||
-    typeof capabilities !== 'object' ||
-    Array.isArray(capabilities)
-  ) {
-    return emptyCapabilities;
-  }
-
-  const capabilityRecord = capabilities as Record<string, unknown>;
 
   return AGENT_CAPABILITY_KEYS.reduce(
     (acc, key) => {
-      acc[key] = readCapabilityEnabled(capabilityRecord[key]);
+      acc[key] = readCapabilityEnabled(meta, key);
       return acc;
     },
     { ...emptyCapabilities }
@@ -55,9 +101,7 @@ function deriveRelationshipPreset(
     return undefined;
   }
 
-  return RELATIONSHIP_PRESETS.includes(
-    relationshipPreset as RelationshipPreset
-  )
+  return RELATIONSHIP_PRESETS.includes(relationshipPreset as RelationshipPreset)
     ? (relationshipPreset as RelationshipPreset)
     : undefined;
 }
@@ -118,12 +162,12 @@ export function deriveAgentDiaryEntries(
   return rawEntries
     .map((entry, index) => normalizeDiaryEntry(entry, index))
     .filter((entry): entry is AgentDiaryEntry => Boolean(entry))
-    .sort((left, right) =>
-      right.publishedAt.localeCompare(left.publishedAt)
-    );
+    .sort((left, right) => right.publishedAt.localeCompare(left.publishedAt));
 }
 
-function deriveMatureContent(meta: Record<string, unknown>): boolean | undefined {
+function deriveMatureContent(
+  meta: Record<string, unknown>
+): boolean | undefined {
   const matureFlag = metadataBoolean(meta, [
     ['matureContent'],
     ['mature_content'],
