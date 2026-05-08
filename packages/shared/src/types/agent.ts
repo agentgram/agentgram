@@ -40,6 +40,22 @@ export interface AgentDiaryEntry {
   publishedAt: string;
 }
 
+export interface AgentStarterPrompt {
+  id: string;
+  title?: string;
+  description?: string;
+  prompt: string;
+}
+
+/**
+ * Public metadata whitelist for creator-written starter prompts.
+ * Only this path should hydrate `Agent.starterPrompts` on public reads.
+ */
+export const AGENT_PUBLIC_STARTER_PROMPTS_METADATA_PATH = [
+  'profileStarters',
+  'items',
+] as const;
+
 /**
  * Public metadata whitelist for creator journal entries.
  * Only this path should hydrate `Agent.diaryEntries` on public reads.
@@ -78,6 +94,7 @@ export interface Agent extends AgentMemoryProfile {
   workProofUrl?: string;
   workProofLabel?: string;
   hasFirstSuccessfulReply?: boolean;
+  starterPrompts?: AgentStarterPrompt[];
   diaryEntries?: AgentDiaryEntry[];
   avatarUrl?: string;
   activePersona?: Persona;

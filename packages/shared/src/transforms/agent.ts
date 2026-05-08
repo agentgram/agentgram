@@ -1,11 +1,13 @@
 import {
   AGENT_CAPABILITY_KEYS,
   AGENT_PUBLIC_DIARY_METADATA_PATH,
+  AGENT_PUBLIC_STARTER_PROMPTS_METADATA_PATH,
   RELATIONSHIP_PRESETS,
   type Agent,
   type AgentCapabilities,
   type AgentCapabilityKey,
   type AgentDiaryEntry,
+  type AgentStarterPrompt,
   type RelationshipPreset,
 } from '../types';
 import { deriveAgentMemoryProfile } from './agent-memory';
@@ -165,6 +167,68 @@ export function deriveAgentDiaryEntries(
     .sort((left, right) => right.publishedAt.localeCompare(left.publishedAt));
 }
 
+function normalizeStarterPrompt(
+  value: unknown,
+  index: number
+): AgentStarterPrompt | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  const prompt =
+    typeof value.prompt === 'string'
+      ? value.prompt.trim()
+      : typeof value.message === 'string'
+        ? value.message.trim()
+        : typeof value.text === 'string'
+          ? value.text.trim()
+          : '';
+
+  if (!prompt) {
+    return undefined;
+  }
+
+  const title =
+    typeof value.title === 'string' && value.title.trim()
+      ? value.title.trim()
+      : typeof value.name === 'string' && value.name.trim()
+        ? value.name.trim()
+        : undefined;
+
+  const description =
+    typeof value.description === 'string' && value.description.trim()
+      ? value.description.trim()
+      : typeof value.context === 'string' && value.context.trim()
+        ? value.context.trim()
+        : typeof value.whenToUse === 'string' && value.whenToUse.trim()
+          ? value.whenToUse.trim()
+          : undefined;
+
+  return {
+    id:
+      typeof value.id === 'string' && value.id.trim()
+        ? value.id.trim()
+        : `starter-prompt-${index + 1}`,
+    title,
+    description,
+    prompt,
+  };
+}
+
+export function deriveAgentStarterPrompts(
+  meta: Record<string, unknown>
+): AgentStarterPrompt[] {
+  const rawItems = metadataValue(meta, AGENT_PUBLIC_STARTER_PROMPTS_METADATA_PATH);
+  if (!Array.isArray(rawItems)) {
+    return [];
+  }
+
+  return rawItems
+    .map((item, index) => normalizeStarterPrompt(item, index))
+    .filter((item): item is AgentStarterPrompt => Boolean(item))
+    .slice(0, 4);
+}
+
 function deriveMatureContent(
   meta: Record<string, unknown>
 ): boolean | undefined {
@@ -213,6 +277,7 @@ export function deriveAgentPublicFields(
   | 'workProofUrl'
   | 'workProofLabel'
   | 'hasFirstSuccessfulReply'
+  | 'starterPrompts'
   | 'diaryEntries'
   | 'matureContent'
 > {
@@ -245,6 +310,7 @@ export function deriveAgentPublicFields(
         ['replyMilestones', 'firstSuccessfulReply'],
         ['reply_milestones', 'first_successful_reply'],
       ]) === true,
+    starterPrompts: deriveAgentStarterPrompts(meta),
     diaryEntries: deriveAgentDiaryEntries(meta),
     matureContent: deriveMatureContent(meta),
   };
