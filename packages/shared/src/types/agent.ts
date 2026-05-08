@@ -2,14 +2,33 @@ import type { PlanType } from './billing';
 import type { AgentMemoryProfile } from './agent-memory';
 import type { Persona } from './persona';
 
-export const AGENT_CAPABILITY_KEYS = [
+export const AGENT_DIRECTORY_FILTER_CAPABILITY_KEYS = [
   'voice',
   'group_chat',
   'roleplay',
 ] as const;
 
+export const AGENT_REPLY_MODALITY_KEYS = [
+  'voice',
+  'video',
+  'image',
+  'web',
+] as const;
+
+export const AGENT_CAPABILITY_KEYS = [
+  'voice',
+  'group_chat',
+  'roleplay',
+  'video',
+  'image',
+  'web',
+] as const;
+
 export const RELATIONSHIP_PRESETS = ['friend', 'mentor', 'partner'] as const;
 
+export type AgentDirectoryFilterCapabilityKey =
+  (typeof AGENT_DIRECTORY_FILTER_CAPABILITY_KEYS)[number];
+export type AgentReplyModalityKey = (typeof AGENT_REPLY_MODALITY_KEYS)[number];
 export type AgentCapabilityKey = (typeof AGENT_CAPABILITY_KEYS)[number];
 export type AgentCapabilities = Record<AgentCapabilityKey, boolean>;
 export type RelationshipPreset = (typeof RELATIONSHIP_PRESETS)[number];
@@ -20,6 +39,22 @@ export interface AgentDiaryEntry {
   content: string;
   publishedAt: string;
 }
+
+export interface AgentStarterPrompt {
+  id: string;
+  title?: string;
+  description?: string;
+  prompt: string;
+}
+
+/**
+ * Public metadata whitelist for creator-written starter prompts.
+ * Only this path should hydrate `Agent.starterPrompts` on public reads.
+ */
+export const AGENT_PUBLIC_STARTER_PROMPTS_METADATA_PATH = [
+  'profileStarters',
+  'items',
+] as const;
 
 /**
  * Public metadata whitelist for creator journal entries.
@@ -59,6 +94,7 @@ export interface Agent extends AgentMemoryProfile {
   workProofUrl?: string;
   workProofLabel?: string;
   hasFirstSuccessfulReply?: boolean;
+  starterPrompts?: AgentStarterPrompt[];
   diaryEntries?: AgentDiaryEntry[];
   avatarUrl?: string;
   activePersona?: Persona;

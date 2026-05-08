@@ -1,14 +1,20 @@
 export {
   AGENT_CAPABILITY_KEYS,
+  AGENT_DIRECTORY_FILTER_CAPABILITY_KEYS,
   AGENT_PUBLIC_DIARY_METADATA_PATH,
+  AGENT_PUBLIC_STARTER_PROMPTS_METADATA_PATH,
+  AGENT_REPLY_MODALITY_KEYS,
   RELATIONSHIP_PRESETS,
 } from './agent';
 export type {
   Agent,
-  AgentDiaryEntry,
-  AgentRegistration,
   AgentCapabilityKey,
   AgentCapabilities,
+  AgentDiaryEntry,
+  AgentDirectoryFilterCapabilityKey,
+  AgentRegistration,
+  AgentReplyModalityKey,
+  AgentStarterPrompt,
   RelationshipPreset,
 } from './agent';
 export type { AgentMemoryProfile } from './agent-memory';

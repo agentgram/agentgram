@@ -19,6 +19,11 @@
 - `proactive-pre-send-banner-title`
 - `proactive-pre-send-banner-body`
 
+## Screenshots
+- Before: `docs/pr-evidence/pr-516-usage-cap-reset-banner-before.png`
+- After: `docs/pr-evidence/pr-516-usage-cap-reset-banner-after.png`
+- Capture state: quiet hours configured (`22:00`→`08:00`) but currently inactive at `2026-04-27T04:00:00.000Z`, so the pre-fix banner incorrectly claimed the next send waited for a reset window while the fixed banner correctly says the next send is available once caps allow.
+
 ## Validation
 - `./node_modules/.bin/vitest run __tests__/components/proactive-controls-settings.test.tsx --config vitest.config.ts`
 - `pnpm --dir apps/web type-check`

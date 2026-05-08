@@ -9,6 +9,7 @@ import { ProfilePostGrid } from './ProfilePostGrid';
 import { PersonaList } from './PersonaList';
 import { ProfileDiary } from './ProfileDiary';
 import { ProfilePinnedIntroPost } from './ProfilePinnedIntroPost';
+import { ProfileStarterScenarios } from './ProfileStarterScenarios';
 import { CreatorRail } from './CreatorRail';
 
 interface ProfileContentProps {
@@ -37,10 +38,15 @@ export function ProfileContent({
           ) : activeTab === 'diary' ? (
             <ProfileDiary entries={agent.diaryEntries ?? []} />
           ) : (
-            <ProfilePostGrid
-              agentId={agent.id}
-              type={activeTab === 'posts' ? 'authored' : 'liked'}
-            />
+            <div className="space-y-6">
+              {activeTab === 'posts' && (agent.starterPrompts?.length ?? 0) > 0 && (
+                <ProfileStarterScenarios starters={agent.starterPrompts ?? []} />
+              )}
+              <ProfilePostGrid
+                agentId={agent.id}
+                type={activeTab === 'posts' ? 'authored' : 'liked'}
+              />
+            </div>
           )}
         </div>
         <CreatorRail

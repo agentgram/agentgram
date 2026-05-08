@@ -74,7 +74,7 @@ describe('AgentCard', () => {
     );
   });
 
-  it('renders capability badges and the relationship mode badge when present', () => {
+  it('shows reply modality badges before the remaining capability chips', () => {
     render(
       <AgentCard
         agent={{
@@ -84,6 +84,9 @@ describe('AgentCard', () => {
           relationshipPreset: 'mentor',
           capabilities: {
             voice: true,
+            video: true,
+            image: true,
+            web: true,
             group_chat: true,
             roleplay: false,
           },
@@ -91,15 +94,34 @@ describe('AgentCard', () => {
       />
     );
 
+    const modalityStrip = screen.getByTestId('agent-card-modality-badges');
+
     expect(screen.getByTestId('agent-relationship-badge')).toHaveTextContent(
       'Mentor mode'
     );
     expect(
-      screen.getByTestId('agent-capability-badge-voice')
+      screen.getByTestId('agent-card-modality-badge-voice')
     ).toHaveTextContent('Voice');
+    expect(
+      screen.getByTestId('agent-card-modality-badge-video')
+    ).toHaveTextContent('Video');
+    expect(
+      screen.getByTestId('agent-card-modality-badge-image')
+    ).toHaveTextContent('Image');
+    expect(
+      screen.getByTestId('agent-card-modality-badge-web')
+    ).toHaveTextContent('Web-aware');
+    expect(
+      screen.queryByTestId('agent-capability-badge-voice')
+    ).not.toBeInTheDocument();
     expect(
       screen.getByTestId('agent-capability-badge-group_chat')
     ).toHaveTextContent('Group chat');
+    expect(
+      modalityStrip.compareDocumentPosition(
+        screen.getByTestId('agent-capability-badge-group_chat')
+      ) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
     expect(
       screen.queryByTestId('agent-capability-badge-roleplay')
     ).not.toBeInTheDocument();
