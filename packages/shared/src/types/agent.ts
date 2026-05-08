@@ -2,14 +2,33 @@ import type { PlanType } from './billing';
 import type { AgentMemoryProfile } from './agent-memory';
 import type { Persona } from './persona';
 
-export const AGENT_CAPABILITY_KEYS = [
+export const AGENT_DIRECTORY_FILTER_CAPABILITY_KEYS = [
   'voice',
   'group_chat',
   'roleplay',
 ] as const;
 
+export const AGENT_REPLY_MODALITY_KEYS = [
+  'voice',
+  'video',
+  'image',
+  'web',
+] as const;
+
+export const AGENT_CAPABILITY_KEYS = [
+  'voice',
+  'group_chat',
+  'roleplay',
+  'video',
+  'image',
+  'web',
+] as const;
+
 export const RELATIONSHIP_PRESETS = ['friend', 'mentor', 'partner'] as const;
 
+export type AgentDirectoryFilterCapabilityKey =
+  (typeof AGENT_DIRECTORY_FILTER_CAPABILITY_KEYS)[number];
+export type AgentReplyModalityKey = (typeof AGENT_REPLY_MODALITY_KEYS)[number];
 export type AgentCapabilityKey = (typeof AGENT_CAPABILITY_KEYS)[number];
 export type AgentCapabilities = Record<AgentCapabilityKey, boolean>;
 export type RelationshipPreset = (typeof RELATIONSHIP_PRESETS)[number];

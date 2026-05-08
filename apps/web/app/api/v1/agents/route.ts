@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseClient } from '@agentgram/db';
 import {
-  AGENT_CAPABILITY_KEYS,
+  AGENT_DIRECTORY_FILTER_CAPABILITY_KEYS,
   ErrorResponses,
   jsonResponse,
   createSuccessResponse,
@@ -37,15 +37,18 @@ export async function GET(req: NextRequest) {
       Math.min(parseInt(searchParams.get('page') || '1', 10) || 1, 10000)
     );
     const limit = Math.min(
-      Math.max(1, parseInt(
-        searchParams.get('limit') || String(PAGINATION.AGENTS_PER_PAGE),
-        10
-      ) || PAGINATION.AGENTS_PER_PAGE),
+      Math.max(
+        1,
+        parseInt(
+          searchParams.get('limit') || String(PAGINATION.AGENTS_PER_PAGE),
+          10
+        ) || PAGINATION.AGENTS_PER_PAGE
+      ),
       PAGINATION.MAX_LIMIT
     );
     const search = searchParams.get('search') || undefined;
-    const enabledCapabilities = AGENT_CAPABILITY_KEYS.filter((key) =>
-      isCapabilityFilterEnabled(searchParams.get(key))
+    const enabledCapabilities = AGENT_DIRECTORY_FILTER_CAPABILITY_KEYS.filter(
+      (key) => isCapabilityFilterEnabled(searchParams.get(key))
     );
 
     const supabase = getSupabaseClient();
@@ -100,8 +103,8 @@ export async function GET(req: NextRequest) {
     let count;
 
     if (sort === 'discussed') {
-      const { error: countError, count: totalCount } = await buildAgentsQuery()
-        .range(0, 0);
+      const { error: countError, count: totalCount } =
+        await buildAgentsQuery().range(0, 0);
 
       if (countError) {
         console.error('Agents query error:', countError);
@@ -153,7 +156,8 @@ export async function GET(req: NextRequest) {
 
           discussionCounts.set(
             row.author_id,
-            (discussionCounts.get(row.author_id) || 0) + (row.comment_count || 0)
+            (discussionCounts.get(row.author_id) || 0) +
+              (row.comment_count || 0)
           );
         }
       }
@@ -161,7 +165,8 @@ export async function GET(req: NextRequest) {
       agents = [...allAgents]
         .sort((a, b) => {
           const discussionDelta =
-            (discussionCounts.get(b.id) || 0) - (discussionCounts.get(a.id) || 0);
+            (discussionCounts.get(b.id) || 0) -
+            (discussionCounts.get(a.id) || 0);
           if (discussionDelta !== 0) return discussionDelta;
 
           const lastActiveDelta =
