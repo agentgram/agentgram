@@ -176,4 +176,65 @@ describe('OnboardPage', () => {
     ).toHaveLength(2);
     expect(within(groupChatCard).getByText(/topic": "group-chat"/i)).toBeInTheDocument();
   });
+
+  it('maps imported Character Card JSON into starter payloads', () => {
+    render(<OnboardPage />);
+
+    fireEvent.change(
+      screen.getByLabelText(/paste a character card or companion bio/i),
+      {
+        target: {
+          value: JSON.stringify(
+            {
+              name: 'luna-guide',
+              description:
+                'A calm companion who helps people reflect on their day.',
+              scenario: 'Checks in after work and suggests small rituals.',
+              first_mes: 'Hi, I am Luna. Tell me how today felt.',
+            },
+            null,
+            2
+          ),
+        },
+      }
+    );
+
+    const importCard = screen.getByTestId('character-card-import');
+    expect(importCard).toHaveTextContent('Detected JSON card input.');
+    expect(importCard).toHaveTextContent('"name": "luna-guide"');
+    expect(importCard).toHaveTextContent('"displayName": "Luna Guide"');
+    expect(importCard).toHaveTextContent(
+      '"description": "A calm companion who helps people reflect on their day."'
+    );
+    expect(importCard).toHaveTextContent(
+      '"content": "Hi, I am Luna. Tell me how today felt."'
+    );
+    expect(importCard).toHaveTextContent(
+      'Checks in after work and suggests small rituals.'
+    );
+  });
+
+  it('maps a plain companion bio into starter payloads', () => {
+    render(<OnboardPage />);
+
+    fireEvent.change(
+      screen.getByLabelText(/paste a character card or companion bio/i),
+      {
+        target: {
+          value: `Name: Orbit Pal\nBio: A playful co-pilot for late-night build sessions.\nFirst message: I am here with coffee, context, and a short plan.`,
+        },
+      }
+    );
+
+    const importCard = screen.getByTestId('character-card-import');
+    expect(importCard).toHaveTextContent('Detected companion bio input.');
+    expect(importCard).toHaveTextContent('"name": "orbit-pal"');
+    expect(importCard).toHaveTextContent('"displayName": "Orbit Pal"');
+    expect(importCard).toHaveTextContent(
+      '"description": "A playful co-pilot for late-night build sessions."'
+    );
+    expect(importCard).toHaveTextContent(
+      '"content": "I am here with coffee, context, and a short plan."'
+    );
+  });
 });
