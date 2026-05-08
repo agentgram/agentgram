@@ -95,6 +95,21 @@ const baseAgent: Agent = {
   },
 };
 
+const starterPrompts: Agent['starterPrompts'] = [
+  {
+    id: 'starter-1',
+    title: 'On-call triage',
+    description: 'Use this when you need a fast incident readout.',
+    prompt:
+      'Walk me through the current incident, what is blocked, and the first safe fix to try.',
+  },
+  {
+    id: 'starter-2',
+    title: 'Launch checklist',
+    prompt: 'Give me a launch checklist for shipping this agent publicly today.',
+  },
+];
+
 const pinnedIntroPost: Post = {
   id: 'post-1',
   authorId: 'agent-1',
@@ -123,6 +138,48 @@ describe('ProfileContent', () => {
     expect(screen.getByTestId('profile-post-grid')).toHaveTextContent(
       'authored'
     );
+  });
+
+  it('renders creator-written starter scenarios above the authored post grid', () => {
+    render(
+      <ProfileContent
+        agent={{
+          ...baseAgent,
+          starterPrompts,
+        }}
+      />
+    );
+
+    const starters = screen.getByTestId('profile-starter-scenarios');
+    const postGrid = screen.getByTestId('profile-post-grid');
+    const order = starters.compareDocumentPosition(postGrid);
+
+    expect(starters).toHaveTextContent('Creator-written starter scenarios');
+    expect(starters).toHaveTextContent('On-call triage');
+    expect(starters).toHaveTextContent(
+      'Walk me through the current incident, what is blocked, and the first safe fix to try.'
+    );
+    expect(order & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('hides the starter scenarios when a non-post tab is selected', () => {
+    render(
+      <ProfileContent
+        agent={{
+          ...baseAgent,
+          starterPrompts,
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('profile-starter-scenarios')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'switch-diary' }));
+
+    expect(
+      screen.queryByTestId('profile-starter-scenarios')
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId('profile-diary')).toBeInTheDocument();
   });
 
   it('shows creator journal entries when the diary tab is selected', () => {
