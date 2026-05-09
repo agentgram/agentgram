@@ -2,49 +2,17 @@
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { API_BASE_PATH, PAGINATION } from '@agentgram/shared';
-import type { PlanType, RelationshipPreset } from '@agentgram/shared';
-import type { DirectoryCapabilities } from '@/lib/agents/capabilities';
+import type {
+  RelationshipGoalFacet,
+  WorldbuildingFacet,
+} from '@agentgram/shared';
+import type {
+  AgentsDirectoryData,
+  AgentsDirectoryResponse,
+  AgentsDirectorySort,
+} from '@/lib/agents/directory-shared';
 
-export type AgentsDirectorySort = 'axp' | 'active' | 'discussed' | 'new';
-export type AgentsDirectoryCapabilityKey = keyof DirectoryCapabilities;
-
-export type AgentsDirectoryAgent = {
-  id: string;
-  name: string;
-  axp: number | null;
-  description: string | null;
-  capabilities: DirectoryCapabilities;
-  relationshipPreset?: RelationshipPreset | null;
-  operatorTier?: PlanType | null;
-  matureContent?: boolean;
-  remixCount?: number | null;
-  displayName?: string | null;
-  avatarUrl?: string | null;
-  createdAt?: string | null;
-  lastActive?: string | null;
-  verificationState?: 'unverified' | 'pending' | 'verified' | null;
-  publicOwnerLabel?: string | null;
-  memoryPolicy?: string | null;
-  display_name?: string | null;
-  avatar_url?: string | null;
-  created_at?: string | null;
-  last_active?: string | null;
-};
-
-type AgentsDirectoryMeta = {
-  page: number;
-  limit: number;
-  total: number;
-};
-
-type AgentsDirectoryResponse = {
-  success: boolean;
-  data: AgentsDirectoryAgent[];
-  meta?: AgentsDirectoryMeta;
-  error?: { code: string; message: string };
-};
-
-type AgentsDirectoryParams = {
+export type AgentsDirectoryParams = {
   sort?: AgentsDirectorySort;
   limit?: number;
   page?: number;
@@ -52,6 +20,9 @@ type AgentsDirectoryParams = {
   voice?: boolean;
   group_chat?: boolean;
   roleplay?: boolean;
+  relationship_goal?: RelationshipGoalFacet;
+  worldbuilding?: WorldbuildingFacet;
+  initialData?: AgentsDirectoryData | null;
 };
 
 export function useAgentsDirectory(params: AgentsDirectoryParams = {}) {
@@ -63,13 +34,26 @@ export function useAgentsDirectory(params: AgentsDirectoryParams = {}) {
     voice = false,
     group_chat = false,
     roleplay = false,
+    relationship_goal,
+    worldbuilding,
+    initialData = null,
   } = params;
 
   return useQuery({
     queryKey: [
       'agents',
       'directory',
-      { sort, limit, page, search, voice, group_chat, roleplay },
+      {
+        sort,
+        limit,
+        page,
+        search,
+        voice,
+        group_chat,
+        roleplay,
+        relationship_goal,
+        worldbuilding,
+      },
     ],
     queryFn: async () => {
       const urlParams = new URLSearchParams({
@@ -95,6 +79,14 @@ export function useAgentsDirectory(params: AgentsDirectoryParams = {}) {
         urlParams.set('roleplay', 'true');
       }
 
+      if (relationship_goal) {
+        urlParams.set('relationship_goal', relationship_goal);
+      }
+
+      if (worldbuilding) {
+        urlParams.set('worldbuilding', worldbuilding);
+      }
+
       const res = await fetch(
         `${API_BASE_PATH}/agents?${urlParams.toString()}`
       );
@@ -111,6 +103,8 @@ export function useAgentsDirectory(params: AgentsDirectoryParams = {}) {
         meta: json.meta || { page, limit, total: 0 },
       };
     },
+    initialData: initialData ?? undefined,
+    staleTime: 30_000,
     placeholderData: keepPreviousData,
   });
 }

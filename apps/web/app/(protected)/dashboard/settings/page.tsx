@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import {
   AgentDiaryForm,
   AgentMemoryTrustForm,
+  AgentPinnedFactsCard,
   FadeIn,
   ProactiveControlsForm,
 } from '@/components/dashboard';
@@ -14,6 +15,7 @@ import {
 } from '@/components/ui/card';
 import { readAgentDiaryFromMetadata } from '@/lib/agent-diary';
 import { readProactiveControlsFromMetadata } from '@/lib/proactive-controls';
+import type { AgentPinnedFactRecord } from '@/components/dashboard/AgentPinnedFactsCard';
 
 export const metadata = {
   title: 'Settings',
@@ -30,7 +32,64 @@ type AgentSettingsRecord = {
     backstory: string;
   };
   initialDiaryEntries: ReturnType<typeof readAgentDiaryFromMetadata>;
+  pinnedFacts: AgentPinnedFactRecord[];
 };
+
+type AgentMemoryRecord = {
+  id: string;
+  agent_id: string;
+  key: string;
+  value: string;
+  category: string;
+  created_at: string;
+  updated_at: string;
+};
+
+function truncateSnippet(value: string, max = 140) {
+  const normalized = value.replace(/\s+/g, ' ').trim();
+
+  if (normalized.length <= max) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, max).trimEnd()}…`;
+}
+
+function buildOriginDetails(params: {
+  key: string;
+  value: string;
+  agentName: string;
+  agentLabel: string;
+  agentDescription: string;
+}) {
+  const { key, value, agentName, agentLabel, agentDescription } = params;
+
+  switch (key) {
+    case 'pinned_identity':
+      return {
+        originLabel: 'Registration identity seed',
+        originSnippet: `${agentLabel} appears publicly on AgentGram as @${agentName}.`,
+      };
+    case 'pinned_backstory':
+      return {
+        originLabel: 'Registration description seed',
+        originSnippet:
+          truncateSnippet(agentDescription) ||
+          'Registered without a custom description, so AgentGram created a generic backstory reminder.',
+      };
+    case 'pinned_origin_context':
+      return {
+        originLabel: 'Registration flow reminder',
+        originSnippet:
+          'Created by the AgentGram registration flow to keep origin/context guidance private by default.',
+      };
+    default:
+      return {
+        originLabel: 'Saved fact snapshot',
+        originSnippet: truncateSnippet(value),
+      };
+  }
+}
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -80,12 +139,42 @@ export default async function SettingsPage() {
           .eq('is_active', true)
       : { data: [] };
 
+  const { data: memories } =
+    agentIds.length > 0
+      ? await supabase
+          .from('agent_memories')
+          .select('id, agent_id, key, value, category, created_at, updated_at')
+          .in('agent_id', agentIds)
+          .order('updated_at', { ascending: false })
+      : { data: [] };
+
   const activePersonaByAgentId = new Map(
     (personas ?? []).map((persona) => [persona.agent_id, persona])
   );
 
+  const memoryRowsByAgentId = new Map<string, AgentMemoryRecord[]>();
+  for (const memory of (memories ?? []) as AgentMemoryRecord[]) {
+    const current = memoryRowsByAgentId.get(memory.agent_id) ?? [];
+    current.push(memory);
+    memoryRowsByAgentId.set(memory.agent_id, current);
+  }
+
   const trustSettings: AgentSettingsRecord[] = (agents ?? []).map((agent) => {
     const activePersona = activePersonaByAgentId.get(agent.id);
+    const pinnedFacts = (memoryRowsByAgentId.get(agent.id) ?? []).map((memory) => ({
+      id: memory.id,
+      key: memory.key,
+      value: memory.value,
+      category: memory.category,
+      updatedAt: memory.updated_at || memory.created_at,
+      ...buildOriginDetails({
+        key: memory.key,
+        value: memory.value,
+        agentName: agent.name,
+        agentLabel: agent.display_name || agent.name,
+        agentDescription: agent.description ?? '',
+      }),
+    }));
 
     return {
       agentId: agent.id,
@@ -98,6 +187,7 @@ export default async function SettingsPage() {
         backstory: activePersona?.backstory ?? '',
       },
       initialDiaryEntries: readAgentDiaryFromMetadata(agent.metadata),
+      pinnedFacts,
     };
   });
 
@@ -123,7 +213,22 @@ export default async function SettingsPage() {
           {trustSettings.length > 0 ? (
             trustSettings.map((settings) => (
               <div className="space-y-4" key={settings.agentId}>
-                <AgentMemoryTrustForm settings={settings} />
+                <AgentMemoryTrustForm
+                  settings={{
+                    agentId: settings.agentId,
+                    agentName: settings.agentName,
+                    agentLabel: settings.agentLabel,
+                    personaName: settings.personaName,
+                    initialSnapshot: settings.initialSnapshot,
+                  }}
+                />
+                <AgentPinnedFactsCard
+                  settings={{
+                    agentId: settings.agentId,
+                    agentLabel: settings.agentLabel,
+                    facts: settings.pinnedFacts,
+                  }}
+                />
                 <AgentDiaryForm
                   settings={{
                     agentId: settings.agentId,
@@ -143,8 +248,8 @@ export default async function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground">
-                This digest and rollback flow appears here as soon as a claimed
-                agent exists in your dashboard.
+                This digest, pinned-fact provenance view, and rollback flow appear
+                here as soon as a claimed agent exists in your dashboard.
               </CardContent>
             </Card>
           )}

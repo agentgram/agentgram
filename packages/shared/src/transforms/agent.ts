@@ -2,13 +2,17 @@ import {
   AGENT_CAPABILITY_KEYS,
   AGENT_PUBLIC_DIARY_METADATA_PATH,
   AGENT_PUBLIC_STARTER_PROMPTS_METADATA_PATH,
+  RELATIONSHIP_GOAL_FACETS,
   RELATIONSHIP_PRESETS,
+  WORLDBUILDING_FACETS,
   type Agent,
   type AgentCapabilities,
   type AgentCapabilityKey,
   type AgentDiaryEntry,
   type AgentStarterPrompt,
+  type RelationshipGoalFacet,
   type RelationshipPreset,
+  type WorldbuildingFacet,
 } from '../types';
 import { deriveAgentMemoryProfile } from './agent-memory';
 import { metadataBoolean, metadataString, metadataValue } from './metadata';
@@ -89,6 +93,74 @@ function deriveCapabilities(meta: Record<string, unknown>): AgentCapabilities {
   );
 }
 
+function normalizeFacetToken(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
+}
+
+const RELATIONSHIP_GOAL_ALIASES: Record<string, RelationshipGoalFacet> = {
+  companionship: 'companionship',
+  companion: 'companionship',
+  friend: 'companionship',
+  friendship: 'companionship',
+  guidance: 'guidance',
+  guide: 'guidance',
+  mentor: 'guidance',
+  mentorship: 'guidance',
+  coach: 'guidance',
+  coaching: 'guidance',
+  romance: 'romance',
+  romantic: 'romance',
+  partner: 'romance',
+  partnership: 'romance',
+};
+
+const WORLDBUILDING_ALIASES: Record<string, WorldbuildingFacet> = {
+  contemporary: 'contemporary',
+  modern: 'contemporary',
+  grounded: 'contemporary',
+  realistic: 'contemporary',
+  real_world: 'contemporary',
+  fantasy: 'fantasy',
+  magical: 'fantasy',
+  magic: 'fantasy',
+  sci_fi: 'sci_fi',
+  scifi: 'sci_fi',
+  sci_fi_world: 'sci_fi',
+  science_fiction: 'sci_fi',
+  futuristic: 'sci_fi',
+};
+
+function normalizeRelationshipGoal(
+  value: string
+): RelationshipGoalFacet | undefined {
+  const normalized = normalizeFacetToken(value);
+  const mapped = RELATIONSHIP_GOAL_ALIASES[normalized];
+
+  if (mapped) {
+    return mapped;
+  }
+
+  return RELATIONSHIP_GOAL_FACETS.includes(normalized as RelationshipGoalFacet)
+    ? (normalized as RelationshipGoalFacet)
+    : undefined;
+}
+
+function normalizeWorldbuilding(value: string): WorldbuildingFacet | undefined {
+  const normalized = normalizeFacetToken(value);
+  const mapped = WORLDBUILDING_ALIASES[normalized];
+
+  if (mapped) {
+    return mapped;
+  }
+
+  return WORLDBUILDING_FACETS.includes(normalized as WorldbuildingFacet)
+    ? (normalized as WorldbuildingFacet)
+    : undefined;
+}
+
 function deriveRelationshipPreset(
   meta: Record<string, unknown>
 ): RelationshipPreset | undefined {
@@ -106,6 +178,60 @@ function deriveRelationshipPreset(
   return RELATIONSHIP_PRESETS.includes(relationshipPreset as RelationshipPreset)
     ? (relationshipPreset as RelationshipPreset)
     : undefined;
+}
+
+function deriveRelationshipGoal(
+  meta: Record<string, unknown>,
+  relationshipPreset: RelationshipPreset | undefined
+): RelationshipGoalFacet | undefined {
+  const relationshipGoal = metadataString(meta, [
+    ['discovery', 'relationshipGoal'],
+    ['discovery', 'relationship_goal'],
+    ['relationshipGoal'],
+    ['relationship_goal'],
+  ]);
+
+  if (relationshipGoal) {
+    const normalizedRelationshipGoal =
+      normalizeRelationshipGoal(relationshipGoal);
+
+    if (normalizedRelationshipGoal) {
+      return normalizedRelationshipGoal;
+    }
+  }
+
+  if (relationshipPreset === 'friend') {
+    return 'companionship';
+  }
+
+  if (relationshipPreset === 'mentor') {
+    return 'guidance';
+  }
+
+  if (relationshipPreset === 'partner') {
+    return 'romance';
+  }
+
+  return undefined;
+}
+
+function deriveWorldbuilding(
+  meta: Record<string, unknown>
+): WorldbuildingFacet | undefined {
+  const worldbuilding = metadataString(meta, [
+    ['discovery', 'worldbuilding'],
+    ['discovery', 'world_building'],
+    ['worldbuilding'],
+    ['world_building'],
+    ['worldType'],
+    ['world_type'],
+  ]);
+
+  if (!worldbuilding) {
+    return undefined;
+  }
+
+  return normalizeWorldbuilding(worldbuilding);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -218,7 +344,10 @@ function normalizeStarterPrompt(
 export function deriveAgentStarterPrompts(
   meta: Record<string, unknown>
 ): AgentStarterPrompt[] {
-  const rawItems = metadataValue(meta, AGENT_PUBLIC_STARTER_PROMPTS_METADATA_PATH);
+  const rawItems = metadataValue(
+    meta,
+    AGENT_PUBLIC_STARTER_PROMPTS_METADATA_PATH
+  );
   if (!Array.isArray(rawItems)) {
     return [];
   }
@@ -274,6 +403,8 @@ export function deriveAgentPublicFields(
   Agent,
   | 'capabilities'
   | 'relationshipPreset'
+  | 'relationshipGoal'
+  | 'worldbuilding'
   | 'workProofUrl'
   | 'workProofLabel'
   | 'hasFirstSuccessfulReply'
@@ -281,6 +412,7 @@ export function deriveAgentPublicFields(
   | 'diaryEntries'
   | 'matureContent'
 > {
+  const relationshipPreset = deriveRelationshipPreset(meta);
   const workProofUrl = metadataString(meta, [
     ['workProofUrl'],
     ['work_proof_url'],
@@ -291,7 +423,9 @@ export function deriveAgentPublicFields(
   ]);
   return {
     capabilities: deriveCapabilities(meta),
-    relationshipPreset: deriveRelationshipPreset(meta),
+    relationshipPreset,
+    relationshipGoal: deriveRelationshipGoal(meta, relationshipPreset),
+    worldbuilding: deriveWorldbuilding(meta),
     workProofUrl,
     workProofLabel:
       metadataString(meta, [

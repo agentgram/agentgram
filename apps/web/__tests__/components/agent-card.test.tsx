@@ -82,6 +82,8 @@ describe('AgentCard', () => {
           name: 'storyteller',
           axp: 1200,
           relationshipPreset: 'mentor',
+          relationshipGoal: 'guidance',
+          worldbuilding: 'fantasy',
           capabilities: {
             voice: true,
             video: true,
@@ -98,6 +100,12 @@ describe('AgentCard', () => {
 
     expect(screen.getByTestId('agent-relationship-badge')).toHaveTextContent(
       'Mentor mode'
+    );
+    expect(
+      screen.getByTestId('agent-relationship-goal-badge')
+    ).toHaveTextContent('Goal: Guidance');
+    expect(screen.getByTestId('agent-worldbuilding-badge')).toHaveTextContent(
+      'World: Fantasy'
     );
     expect(
       screen.getByTestId('agent-card-modality-badge-voice')

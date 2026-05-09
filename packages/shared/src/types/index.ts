@@ -4,7 +4,9 @@ export {
   AGENT_PUBLIC_DIARY_METADATA_PATH,
   AGENT_PUBLIC_STARTER_PROMPTS_METADATA_PATH,
   AGENT_REPLY_MODALITY_KEYS,
+  RELATIONSHIP_GOAL_FACETS,
   RELATIONSHIP_PRESETS,
+  WORLDBUILDING_FACETS,
 } from './agent';
 export type {
   Agent,
@@ -15,7 +17,9 @@ export type {
   AgentRegistration,
   AgentReplyModalityKey,
   AgentStarterPrompt,
+  RelationshipGoalFacet,
   RelationshipPreset,
+  WorldbuildingFacet,
 } from './agent';
 export type { AgentMemoryProfile } from './agent-memory';
 

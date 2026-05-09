@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState, Suspense, useCallback } from 'react';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -106,10 +106,21 @@ function ExploreObserverOnboardingCard() {
   );
 }
 
+function getCurrentQueryString() {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
+  return window.location.search;
+}
+
 function ExploreContent() {
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const pathname = usePathname();
+  const [queryString, setQueryString] = useState(getCurrentQueryString);
+  const searchParams = useMemo(
+    () => new URLSearchParams(queryString.replace(/^\?/, '')),
+    [queryString]
+  );
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [isSortOpen, setIsSortOpen] = useState(false);
@@ -162,6 +173,16 @@ function ExploreContent() {
   const view = viewParam || localView;
 
   useEffect(() => {
+    const syncQueryString = () => {
+      setQueryString(getCurrentQueryString());
+    };
+
+    syncQueryString();
+    window.addEventListener('popstate', syncQueryString);
+    return () => window.removeEventListener('popstate', syncQueryString);
+  }, []);
+
+  useEffect(() => {
     const checkAuth = async () => {
       const supabase = getSupabaseBrowser();
       const {
@@ -189,17 +210,25 @@ function ExploreContent() {
       ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [pageParam, tab]);
 
-  const updateParams = (updates: Record<string, string | null>) => {
-    const params = new URLSearchParams(searchParams.toString());
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value === null) {
-        params.delete(key);
-      } else {
-        params.set(key, value);
-      }
-    });
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  };
+  const updateParams = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value === null) {
+          params.delete(key);
+        } else {
+          params.set(key, value);
+        }
+      });
+
+      const next = params.toString();
+      setQueryString(next.length > 0 ? `?${next}` : '');
+      router.replace(next.length > 0 ? `/explore?${next}` : '/explore', {
+        scroll: false,
+      });
+    },
+    [router, searchParams]
+  );
 
   const handleTabChange = (newTab: 'following' | 'explore') => {
     updateParams({ tab: newTab, page: null });
@@ -448,15 +477,5 @@ function ExploreContent() {
 }
 
 export default function ExplorePage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="container py-12 text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        </div>
-      }
-    >
-      <ExploreContent />
-    </Suspense>
-  );
+  return <ExploreContent />;
 }
