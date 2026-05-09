@@ -12,6 +12,9 @@ const mockAgentMemoryTrustForm = vi.fn(
     <div data-testid="agent-memory-trust-form">{JSON.stringify(settings)}</div>
   )
 );
+const mockAgentLorebookForm = vi.fn(({ settings }: { settings: unknown }) => (
+  <div data-testid="agent-lorebook-form">{JSON.stringify(settings)}</div>
+));
 const mockProactiveControlsForm = vi.fn(
   ({ initialSettings }: { initialSettings: unknown }) => (
     <div data-testid="proactive-controls-form">
@@ -35,6 +38,7 @@ vi.mock('@/lib/supabase/server', () => ({
 vi.mock('@/components/dashboard', () => ({
   FadeIn: mockFadeIn,
   AgentDiaryForm: mockAgentDiaryForm,
+  AgentLorebookForm: mockAgentLorebookForm,
   AgentMemoryTrustForm: mockAgentMemoryTrustForm,
   AgentPinnedFactsCard: mockAgentPinnedFactsCard,
   ProactiveControlsForm: mockProactiveControlsForm,
@@ -95,7 +99,28 @@ function createSettingsPageClient() {
                     name: 'sage-bot',
                     display_name: 'Sage Bot',
                     description: 'Keeps release notes precise.',
-                    metadata: {},
+                    metadata: {
+                      lorebook: {
+                        updatedAt: '2026-05-09T03:00:00.000Z',
+                        people: [
+                          {
+                            id: 'person-1',
+                            name: 'Mina Park',
+                            role: 'Launch producer',
+                            details: 'Keeps launch comms calm and timestamped.',
+                          },
+                        ],
+                        places: [],
+                        rules: [
+                          {
+                            id: 'rule-1',
+                            title: 'Never fake a ship date',
+                            details:
+                              'If timing is uncertain, give the next checkpoint instead.',
+                          },
+                        ],
+                      },
+                    },
                   },
                 ],
               }),
@@ -209,7 +234,9 @@ describe('ProactiveControlsForm', () => {
     expect(
       screen.getByRole('checkbox', { name: /quiet hours/i })
     ).not.toBeChecked();
-    expect(screen.queryByLabelText('Quiet hours start')).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText('Quiet hours start')
+    ).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Quiet hours end')).not.toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /neutral/i })).toBeChecked();
 
@@ -255,7 +282,9 @@ describe('ProactiveControlsForm', () => {
     ).toBeInTheDocument();
     expect(screen.getByLabelText('Daily outreach cap')).toHaveValue(7);
     expect(screen.getByLabelText('Weekly outreach cap')).toHaveValue(21);
-    expect(screen.getByRole('checkbox', { name: /quiet hours/i })).toBeChecked();
+    expect(
+      screen.getByRole('checkbox', { name: /quiet hours/i })
+    ).toBeChecked();
     expect(screen.getByLabelText('Quiet hours start')).toHaveValue('21:30');
     expect(screen.getByLabelText('Quiet hours end')).toHaveValue('07:15');
     expect(screen.getByRole('radio', { name: /warm/i })).toBeChecked();
@@ -291,7 +320,9 @@ describe('ProactiveControlsForm', () => {
     ).toHaveTextContent('Next proactive send waits for the reset window');
     expect(
       screen.getByTestId('proactive-pre-send-banner-body')
-    ).toHaveTextContent('Quiet hours push the next eligible send to Apr 27, 2026, 8:00 AM KST.');
+    ).toHaveTextContent(
+      'Quiet hours push the next eligible send to Apr 27, 2026, 8:00 AM KST.'
+    );
     expect(
       screen.getByTestId('proactive-pre-send-banner-body')
     ).toHaveTextContent('2/day and 8/week caps');
@@ -317,7 +348,9 @@ describe('ProactiveControlsForm', () => {
     ).toHaveTextContent('Proactive send blocked until opt-in');
     expect(
       screen.getByTestId('proactive-pre-send-banner-body')
-    ).toHaveTextContent('Turn on proactive outreach before AgentGram sends the next message.');
+    ).toHaveTextContent(
+      'Turn on proactive outreach before AgentGram sends the next message.'
+    );
     expect(
       screen.getByTestId('proactive-pre-send-banner-body')
     ).toHaveTextContent('3/day and 9/week caps');
@@ -346,7 +379,9 @@ describe('ProactiveControlsForm', () => {
     ).toHaveTextContent('Next proactive send is available once caps allow');
     expect(
       screen.getByTestId('proactive-pre-send-banner-body')
-    ).toHaveTextContent('AgentGram can send again as early as Apr 27, 2026, 1:00 PM KST.');
+    ).toHaveTextContent(
+      'AgentGram can send again as early as Apr 27, 2026, 1:00 PM KST.'
+    );
     expect(
       screen.getByTestId('proactive-pre-send-banner-body')
     ).toHaveTextContent('2/day and 8/week');
@@ -381,7 +416,9 @@ describe('ProactiveControlsForm', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save controls' }));
 
     expect(
-      await screen.findByText('Could not save these settings. Please try again.')
+      await screen.findByText(
+        'Could not save these settings. Please try again.'
+      )
     ).toBeInTheDocument();
   });
 });
@@ -393,13 +430,14 @@ describe('SettingsPage', () => {
   });
 
   it('loads proactive controls from developer metadata for the settings form', async () => {
-    const { default: SettingsPage } = await import(
-      '@/app/(protected)/dashboard/settings/page'
-    );
+    const { default: SettingsPage } =
+      await import('@/app/(protected)/dashboard/settings/page');
 
     render(await SettingsPage());
 
-    expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Settings' })
+    ).toBeInTheDocument();
     expect(mockProactiveControlsForm).toHaveBeenCalledWith(
       {
         initialSettings: {
@@ -451,6 +489,37 @@ describe('SettingsPage', () => {
       },
       undefined
     );
+    expect(mockAgentLorebookForm).toHaveBeenCalledWith(
+      {
+        settings: {
+          agentId: 'agent-1',
+          agentName: 'sage-bot',
+          agentLabel: 'Sage Bot',
+          personaName: 'Release Sage',
+          initialLorebook: {
+            updatedAt: '2026-05-09T03:00:00.000Z',
+            people: [
+              {
+                id: 'person-1',
+                name: 'Mina Park',
+                role: 'Launch producer',
+                details: 'Keeps launch comms calm and timestamped.',
+              },
+            ],
+            places: [],
+            rules: [
+              {
+                id: 'rule-1',
+                title: 'Never fake a ship date',
+                details:
+                  'If timing is uncertain, give the next checkpoint instead.',
+              },
+            ],
+          },
+        },
+      },
+      undefined
+    );
     expect(mockAgentDiaryForm).toHaveBeenCalledWith(
       {
         settings: {
@@ -462,10 +531,9 @@ describe('SettingsPage', () => {
       undefined
     );
     expect(screen.getByTestId('proactive-controls-form')).toBeInTheDocument();
-    expect(
-      screen.getByTestId('agent-memory-trust-form')
-    ).toBeInTheDocument();
+    expect(screen.getByTestId('agent-memory-trust-form')).toBeInTheDocument();
     expect(screen.getByTestId('agent-pinned-facts-card')).toBeInTheDocument();
+    expect(screen.getByTestId('agent-lorebook-form')).toBeInTheDocument();
     expect(screen.getByTestId('agent-diary-form')).toBeInTheDocument();
   });
 
@@ -487,9 +555,8 @@ describe('SettingsPage', () => {
       })),
     });
 
-    const { default: SettingsPage } = await import(
-      '@/app/(protected)/dashboard/settings/page'
-    );
+    const { default: SettingsPage } =
+      await import('@/app/(protected)/dashboard/settings/page');
 
     render(await SettingsPage());
 

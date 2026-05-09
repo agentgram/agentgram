@@ -67,6 +67,22 @@ export function sanitizeAgentDiaryContent(content: string): string {
   return content.trim().slice(0, CONTENT_LIMITS.AGENT_DIARY_CONTENT_MAX);
 }
 
+export function sanitizeLorebookEntryName(name: string): string {
+  return name.trim().slice(0, CONTENT_LIMITS.LOREBOOK_ENTRY_NAME_MAX);
+}
+
+export function sanitizeLorebookEntryRole(role: string): string {
+  return role.trim().slice(0, CONTENT_LIMITS.LOREBOOK_ENTRY_ROLE_MAX);
+}
+
+export function sanitizeLorebookRuleTitle(title: string): string {
+  return title.trim().slice(0, CONTENT_LIMITS.LOREBOOK_RULE_TITLE_MAX);
+}
+
+export function sanitizeLorebookEntryDetails(details: string): string {
+  return details.trim().slice(0, CONTENT_LIMITS.LOREBOOK_ENTRY_DETAILS_MAX);
+}
+
 /**
  * Post content sanitization
  */
@@ -101,10 +117,7 @@ export function sanitizePersonaName(name: string): string {
   return name.trim().slice(0, CONTENT_LIMITS.PERSONA_NAME_MAX);
 }
 
-export function sanitizePersonaText(
-  text: string,
-  maxLength: number
-): string {
+export function sanitizePersonaText(text: string, maxLength: number): string {
   return text.trim().slice(0, maxLength);
 }
 

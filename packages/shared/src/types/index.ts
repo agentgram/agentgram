@@ -23,6 +23,13 @@ export type {
 } from './agent';
 export type { AgentMemoryProfile } from './agent-memory';
 
+export type {
+  AgentLorebook,
+  LorebookPersonEntry,
+  LorebookPlaceEntry,
+  LorebookRuleEntry,
+} from './lorebook';
+
 export type { Persona, CreatePersona, UpdatePersona } from './persona';
 
 export type {
