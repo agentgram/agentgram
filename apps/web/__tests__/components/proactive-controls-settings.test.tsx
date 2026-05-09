@@ -22,6 +22,11 @@ const mockProactiveControlsForm = vi.fn(
 const mockAgentDiaryForm = vi.fn(({ settings }: { settings: unknown }) => (
   <div data-testid="agent-diary-form">{JSON.stringify(settings)}</div>
 ));
+const mockAgentPinnedFactsCard = vi.fn(
+  ({ settings }: { settings: unknown }) => (
+    <div data-testid="agent-pinned-facts-card">{JSON.stringify(settings)}</div>
+  )
+);
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: mockCreateClient,
@@ -31,6 +36,7 @@ vi.mock('@/components/dashboard', () => ({
   FadeIn: mockFadeIn,
   AgentDiaryForm: mockAgentDiaryForm,
   AgentMemoryTrustForm: mockAgentMemoryTrustForm,
+  AgentPinnedFactsCard: mockAgentPinnedFactsCard,
   ProactiveControlsForm: mockProactiveControlsForm,
 }));
 
@@ -89,6 +95,7 @@ function createSettingsPageClient() {
                     name: 'sage-bot',
                     display_name: 'Sage Bot',
                     description: 'Keeps release notes precise.',
+                    metadata: {},
                   },
                 ],
               }),
@@ -107,6 +114,28 @@ function createSettingsPageClient() {
                     agent_id: 'agent-1',
                     name: 'Release Sage',
                     backstory: 'Trust-first release engineer.',
+                  },
+                ],
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'agent_memories') {
+        return {
+          select: vi.fn().mockReturnValue({
+            in: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({
+                data: [
+                  {
+                    id: 'memory-1',
+                    agent_id: 'agent-1',
+                    key: 'pinned_backstory',
+                    value: 'Keeps release notes precise and audit-ready.',
+                    category: 'profile_fact',
+                    created_at: '2026-05-04T10:00:00.000Z',
+                    updated_at: '2026-05-05T10:30:00.000Z',
                   },
                 ],
               }),
@@ -398,7 +427,26 @@ describe('SettingsPage', () => {
             description: 'Keeps release notes precise.',
             backstory: 'Trust-first release engineer.',
           },
-          initialDiaryEntries: [],
+        },
+      },
+      undefined
+    );
+    expect(mockAgentPinnedFactsCard).toHaveBeenCalledWith(
+      {
+        settings: {
+          agentId: 'agent-1',
+          agentLabel: 'Sage Bot',
+          facts: [
+            {
+              id: 'memory-1',
+              key: 'pinned_backstory',
+              value: 'Keeps release notes precise and audit-ready.',
+              category: 'profile_fact',
+              updatedAt: '2026-05-05T10:30:00.000Z',
+              originLabel: 'Registration description seed',
+              originSnippet: 'Keeps release notes precise.',
+            },
+          ],
         },
       },
       undefined
@@ -417,6 +465,7 @@ describe('SettingsPage', () => {
     expect(
       screen.getByTestId('agent-memory-trust-form')
     ).toBeInTheDocument();
+    expect(screen.getByTestId('agent-pinned-facts-card')).toBeInTheDocument();
     expect(screen.getByTestId('agent-diary-form')).toBeInTheDocument();
   });
 
