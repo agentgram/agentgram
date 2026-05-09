@@ -20,7 +20,12 @@ import {
   Loader2,
 } from 'lucide-react';
 import { Post } from '@agentgram/shared';
-import type { PostMedia, ChatSnippetMessage } from '@agentgram/shared';
+import type {
+  PostMedia,
+  ChatSnippetMessage,
+  ChatSnippetMemoryCapture,
+  ChatSnippetMemoryCorrection,
+} from '@agentgram/shared';
 import { useLike } from '@/hooks/use-posts';
 import { useToast } from '@/hooks/use-toast';
 import { TranslateButton } from '@/components/common';
@@ -423,14 +428,9 @@ type ProactiveControlsResponse = {
   };
 };
 
-type MemoryCapture = {
-  fact: string;
-  source?: string;
-  capturedAt?: string;
-  reason?: string;
-};
-
-function normalizeMemoryCapture(value: unknown): MemoryCapture | null {
+function normalizeMemoryCapture(
+  value: unknown
+): ChatSnippetMemoryCapture | null {
   if (typeof value === 'string' && value.trim()) {
     return { fact: value.trim() };
   }
@@ -491,7 +491,7 @@ function normalizeMemoryCapture(value: unknown): MemoryCapture | null {
 function readMetadataCapture(
   metadata: Post['metadata'],
   paths: string[][]
-): MemoryCapture | null {
+): ChatSnippetMemoryCapture | null {
   if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
     return null;
   }
@@ -501,6 +501,94 @@ function readMetadataCapture(
     const capture = normalizeMemoryCapture(value);
     if (capture) {
       return capture;
+    }
+  }
+
+  return null;
+}
+
+function normalizeMemoryCorrection(
+  value: unknown
+): ChatSnippetMemoryCorrection | null {
+  if (typeof value === 'string' && value.trim()) {
+    return { correctedFact: value.trim() };
+  }
+
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const incorrectFactCandidates = [
+    record.incorrectFact,
+    record.incorrect_fact,
+    record.recalledFact,
+    record.recalled_fact,
+    record.wrongFact,
+    record.wrong_fact,
+  ];
+  const correctedFactCandidates = [
+    record.correctedFact,
+    record.corrected_fact,
+    record.correctFact,
+    record.correct_fact,
+    record.rememberThisInstead,
+    record.remember_this_instead,
+    record.replacementFact,
+    record.replacement_fact,
+    record.value,
+  ];
+  const reasonCandidates = [
+    record.reason,
+    record.summary,
+    record.explainer,
+    record.why,
+  ];
+
+  const incorrectFact = incorrectFactCandidates.find(
+    (candidate): candidate is string =>
+      typeof candidate === 'string' && candidate.trim().length > 0
+  );
+  const correctedFact = correctedFactCandidates.find(
+    (candidate): candidate is string =>
+      typeof candidate === 'string' && candidate.trim().length > 0
+  );
+  const reason = reasonCandidates.find(
+    (candidate): candidate is string =>
+      typeof candidate === 'string' && candidate.trim().length > 0
+  );
+  const required =
+    typeof record.required === 'boolean'
+      ? record.required
+      : typeof record.enabled === 'boolean'
+        ? record.enabled
+        : undefined;
+
+  if (!incorrectFact && !correctedFact && !reason && required === undefined) {
+    return null;
+  }
+
+  return {
+    required,
+    reason: reason?.trim(),
+    incorrectFact: incorrectFact?.trim(),
+    correctedFact: correctedFact?.trim(),
+  };
+}
+
+function readMetadataCorrection(
+  metadata: Post['metadata'],
+  paths: string[][]
+): ChatSnippetMemoryCorrection | null {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return null;
+  }
+
+  for (const path of paths) {
+    const value = readMetadataValue(metadata as Record<string, unknown>, path);
+    const correction = normalizeMemoryCorrection(value);
+    if (correction) {
+      return correction;
     }
   }
 
@@ -532,7 +620,8 @@ type SnippetActionMode =
   | 'recover_keep_previous_tone'
   | 'safer_rewrite'
   | 'contradiction'
-  | 'restate_key_facts';
+  | 'restate_key_facts'
+  | 'remember_instead';
 
 function isAbruptStyleShiftTrigger(value: string | undefined) {
   const normalized = value
@@ -700,7 +789,7 @@ export function PostCard({
     ['memory', 'captures'],
   ])
     .map((entry) => normalizeMemoryCapture(entry))
-    .filter((entry): entry is MemoryCapture => entry != null);
+    .filter((entry): entry is ChatSnippetMemoryCapture => entry != null);
   const memoryPreview =
     readMetadataCapture(post.metadata, [
       ['memoryPreview'],
@@ -744,6 +833,50 @@ export function PostCard({
       ['memory', 'previewLabel'],
       ['memory', 'preview_label'],
     ]) || 'Saved fact shaping this reply';
+  const memoryCorrection = readMetadataCorrection(post.metadata, [
+    ['memoryCorrection'],
+    ['memory_correction'],
+    ['wrongMemoryRecovery'],
+    ['wrong_memory_recovery'],
+    ['memory', 'correction'],
+    ['memory', 'wrongMemoryRecovery'],
+    ['memory', 'wrong_memory_recovery'],
+  ]) ?? {
+    required: readMetadataBoolean(post.metadata, [
+      ['badRecall'],
+      ['bad_recall'],
+      ['wrongMemoryRecall'],
+      ['wrong_memory_recall'],
+    ]),
+    reason: readMetadataString(post.metadata, [
+      ['badRecallReason'],
+      ['bad_recall_reason'],
+      ['wrongMemoryReason'],
+      ['wrong_memory_reason'],
+    ]),
+    incorrectFact: readMetadataString(post.metadata, [
+      ['incorrectFact'],
+      ['incorrect_fact'],
+      ['badRecallFact'],
+      ['bad_recall_fact'],
+      ['wrongMemoryFact'],
+      ['wrong_memory_fact'],
+    ]),
+    correctedFact: readMetadataString(post.metadata, [
+      ['correctedFact'],
+      ['corrected_fact'],
+      ['rememberThisInstead'],
+      ['remember_this_instead'],
+      ['replacementFact'],
+      ['replacement_fact'],
+    ]),
+  };
+  const wrongMemoryReason = memoryCorrection.reason;
+  const incorrectMemoryFact = memoryCorrection.incorrectFact;
+  const correctedMemoryFact = memoryCorrection.correctedFact;
+  const hasWrongMemoryRecovery =
+    memoryCorrection.required ??
+    Boolean(wrongMemoryReason || incorrectMemoryFact || correctedMemoryFact);
   const blockedMessage = readMetadataString(post.metadata, [
     ['blockedMessage'],
     ['blocked_message'],
@@ -1143,6 +1276,34 @@ export function PostCard({
         .join('\n');
     }
 
+    if (mode === 'remember_instead') {
+      return [
+        `Remember this instead for ${authorName}`,
+        '',
+        'The latest reply recalled the wrong memory.',
+        'Before you answer again:',
+        '',
+        '> Treat the recalled fact below as incorrect.',
+        '> Replace it with the corrected fact exactly as written.',
+        '> Acknowledge the correction naturally, then continue the reply without debating hidden memory.',
+        '',
+        'Incorrect recalled fact:',
+        incorrectMemoryFact ||
+          '- [the reply referenced a wrong remembered fact here]',
+        '',
+        'Remember this instead:',
+        correctedMemoryFact || '- [replace this line with the corrected fact]',
+        wrongMemoryReason
+          ? `Why this correction matters: ${wrongMemoryReason}`
+          : '',
+        '',
+        transcript,
+        '',
+        `Source: ${postUrl}`,
+      ]
+        .filter(Boolean)
+        .join('\n');
+    }
     if (mode === 'quote') {
       return [
         `Quoting ${authorName} on AgentGram`,
@@ -1214,6 +1375,7 @@ export function PostCard({
     safer_rewrite: 'Safer rewrite copied',
     contradiction: 'Contradiction report copied',
     restate_key_facts: 'Key facts prompt copied',
+    remember_instead: 'Correction prompt copied',
   };
 
   const handleSnippetAction = async (mode: SnippetActionMode) => {
@@ -1409,6 +1571,62 @@ export function PostCard({
                 </span>
                 <p className="mt-2 text-sm text-foreground/90 whitespace-pre-line">
                   {memoryExplanation}
+                </p>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        {hasWrongMemoryRecovery ? (
+          <div
+            data-testid="chat-snippet-bad-recall-recovery"
+            className="mt-3 rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-3"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="space-y-1">
+                <span className="inline-flex items-center rounded-full border border-rose-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-rose-700">
+                  Wrong memory recovery
+                </span>
+                <p className="text-sm text-foreground/90">
+                  {wrongMemoryReason ||
+                    'That reply pulled in the wrong remembered fact. Send the correction inline so the next answer updates its memory instead of doubling down.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                data-testid="chat-snippet-remember-instead-button"
+                onClick={() => handleSnippetAction('remember_instead')}
+                className="inline-flex items-center gap-2 rounded-full border border-rose-500/20 bg-background px-3 py-1.5 text-xs font-semibold text-rose-700 transition-colors hover:bg-rose-50"
+              >
+                <History className="h-3.5 w-3.5" aria-hidden="true" />
+                Remember this instead
+              </button>
+            </div>
+
+            {incorrectMemoryFact ? (
+              <div
+                data-testid="chat-snippet-bad-recall-incorrect-fact"
+                className="mt-3 rounded-xl border border-rose-500/20 bg-background/70 px-3 py-2"
+              >
+                <span className="inline-flex items-center rounded-full border border-rose-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-rose-700">
+                  Agent recalled
+                </span>
+                <p className="mt-2 text-sm text-foreground/90 whitespace-pre-line">
+                  {incorrectMemoryFact}
+                </p>
+              </div>
+            ) : null}
+
+            {correctedMemoryFact ? (
+              <div
+                data-testid="chat-snippet-bad-recall-corrected-fact"
+                className="mt-3 rounded-xl border border-emerald-500/20 bg-background/70 px-3 py-2"
+              >
+                <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
+                  Remember this instead
+                </span>
+                <p className="mt-2 text-sm text-foreground/90 whitespace-pre-line">
+                  {correctedMemoryFact}
                 </p>
               </div>
             ) : null}

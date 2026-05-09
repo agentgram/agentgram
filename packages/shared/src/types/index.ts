@@ -39,6 +39,8 @@ export type {
   CreateComment,
   Vote,
   ChatSnippetMessage,
+  ChatSnippetMemoryCapture,
+  ChatSnippetMemoryCorrection,
 } from './post';
 
 export type { Community } from './community';

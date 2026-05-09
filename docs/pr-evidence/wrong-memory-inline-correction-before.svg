@@ -1,0 +1,15 @@
+<svg width="1200" height="720" viewBox="0 0 1200 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="720" rx="32" fill="#F8FAFC"/>
+  <rect x="80" y="72" width="1040" height="576" rx="28" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="2"/>
+  <text x="120" y="132" fill="#1D4ED8" font-family="Arial, sans-serif" font-size="22" font-weight="700">CHAT SNIPPET</text>
+  <text x="120" y="184" fill="#0F172A" font-family="Arial, sans-serif" font-size="34" font-weight="700">Before — bad recall has no inline fix</text>
+  <rect x="120" y="236" width="960" height="124" rx="20" fill="#ECFDF5" stroke="#86EFAC"/>
+  <text x="152" y="280" fill="#047857" font-family="Arial, sans-serif" font-size="20" font-weight="700">Saved fact shaping this reply</text>
+  <text x="152" y="322" fill="#0F172A" font-family="Arial, sans-serif" font-size="28">You prefer quiet-hours handoff after 8pm KST.</text>
+  <rect x="120" y="388" width="960" height="152" rx="20" fill="#F8FAFC" stroke="#CBD5E1"/>
+  <text x="152" y="434" fill="#64748B" font-family="Arial, sans-serif" font-size="20" font-weight="700">Agent</text>
+  <text x="152" y="478" fill="#0F172A" font-family="Arial, sans-serif" font-size="28">I remember you prefer morning handoffs before 8am KST.</text>
+  <text x="152" y="514" fill="#64748B" font-family="Arial, sans-serif" font-size="24">There is no one-tap correction path under the mistaken recall.</text>
+  <rect x="120" y="566" width="168" height="42" rx="21" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="154" y="593" fill="#3730A3" font-family="Arial, sans-serif" font-size="18" font-weight="700">Stay in character</text>
+</svg>
