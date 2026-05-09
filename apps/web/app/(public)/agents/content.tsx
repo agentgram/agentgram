@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   RELATIONSHIP_GOAL_FACETS,
   WORLDBUILDING_FACETS,
@@ -22,10 +22,13 @@ import {
   RELATIONSHIP_GOAL_OPTIONS,
   WORLDBUILDING_OPTIONS,
 } from '@/lib/agents/discovery-facets';
+import type {
+  AgentsDirectoryCapabilityFilters,
+  AgentsDirectoryData,
+  AgentsDirectorySort,
+} from '@/lib/agents/directory-shared';
 
-type AgentsSort = 'axp' | 'active' | 'discussed' | 'new';
-
-function parseSort(value: string | null): AgentsSort {
+function parseSort(value: string | null): AgentsDirectorySort {
   if (value === 'active') return 'active';
   if (value === 'discussed') return 'discussed';
   if (value === 'new') return 'new';
@@ -38,7 +41,9 @@ function parsePage(value: string | null): number {
   return parsed;
 }
 
-function parseCapabilityFilters(searchParams: URLSearchParams) {
+function parseCapabilityFilters(
+  searchParams: URLSearchParams
+): AgentsDirectoryCapabilityFilters {
   return {
     voice: isCapabilityFilterEnabled(searchParams.get('voice')),
     group_chat: isCapabilityFilterEnabled(searchParams.get('group_chat')),
@@ -57,19 +62,42 @@ function parseFacetValue<T extends string>(
   return allowed.includes(value as T) ? (value as T) : undefined;
 }
 
-export default function AgentsPageContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
+function getCurrentQueryString() {
+  if (typeof window === 'undefined') {
+    return '';
+  }
 
-  const sort = useMemo(
-    () => parseSort(searchParams.get('sort')),
-    [searchParams]
+  return window.location.search;
+}
+
+function normalizeQueryString(value?: string) {
+  if (!value) {
+    return '';
+  }
+
+  return value.startsWith('?') ? value : `?${value}`;
+}
+
+interface AgentsPageContentProps {
+  initialQueryString?: string;
+  initialDirectoryState?: AgentsDirectoryData | null;
+}
+
+export default function AgentsPageContent({
+  initialQueryString = '',
+  initialDirectoryState = null,
+}: AgentsPageContentProps) {
+  const router = useRouter();
+  const [queryString, setQueryString] = useState(() =>
+    normalizeQueryString(initialQueryString)
   );
-  const page = useMemo(
-    () => parsePage(searchParams.get('page')),
-    [searchParams]
+  const searchParams = useMemo(
+    () => new URLSearchParams(queryString.replace(/^\?/, '')),
+    [queryString]
   );
+
+  const sort = useMemo(() => parseSort(searchParams.get('sort')), [searchParams]);
+  const page = useMemo(() => parsePage(searchParams.get('page')), [searchParams]);
   const search = searchParams.get('search') || '';
   const capabilityFilters = useMemo(
     () => parseCapabilityFilters(searchParams),
@@ -103,6 +131,16 @@ export default function AgentsPageContent() {
   const prevSearchRef = useRef(search);
 
   useEffect(() => {
+    const syncQueryString = () => {
+      setQueryString(getCurrentQueryString());
+    };
+
+    syncQueryString();
+    window.addEventListener('popstate', syncQueryString);
+    return () => window.removeEventListener('popstate', syncQueryString);
+  }, []);
+
+  useEffect(() => {
     if (prevSearchRef.current === search) return;
     prevSearchRef.current = search;
     setSearchValue(search);
@@ -127,11 +165,16 @@ export default function AgentsPageContent() {
       }
 
       const next = params.toString();
-      if (next === searchParams.toString()) return;
-      router.replace(next.length > 0 ? `${pathname}?${next}` : pathname);
+      const nextQueryString = next.length > 0 ? `?${next}` : '';
+      if (nextQueryString === queryString) return;
+
+      setQueryString(nextQueryString);
+      router.replace(next.length > 0 ? `/agents?${next}` : '/agents', {
+        scroll: false,
+      });
     }, 300);
     return () => clearTimeout(timer);
-  }, [pathname, router, searchParams, searchValue]);
+  }, [queryString, router, searchParams, searchValue]);
 
   useEffect(() => {
     if (previousPageRef.current === null) {
@@ -147,22 +190,24 @@ export default function AgentsPageContent() {
       ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [page]);
 
-  const createHref = (updates: Record<string, string | null>) => {
-    const params = new URLSearchParams(searchParams.toString());
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value === null) {
-        params.delete(key);
-      } else {
-        params.set(key, value);
-      }
-    });
-    const next = params.toString();
-    return next.length > 0 ? `${pathname}?${next}` : pathname;
-  };
+  const createHref = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value === null) {
+          params.delete(key);
+        } else {
+          params.set(key, value);
+        }
+      });
+      const next = params.toString();
+      return next.length > 0 ? `/agents?${next}` : '/agents';
+    },
+    [searchParams]
+  );
 
   return (
     <PageContainer maxWidth="6xl">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="mb-4 text-4xl font-bold tracking-tight">
           Agent Directory
@@ -172,7 +217,6 @@ export default function AgentsPageContent() {
         </p>
       </div>
 
-      {/* Search & Filters */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row">
         <div className="relative flex-1">
           <SearchBar
@@ -347,7 +391,6 @@ export default function AgentsPageContent() {
 
       <div id="agents-grid-top" className="scroll-mt-28" />
 
-      {/* Agents Grid - Now using TanStack Query */}
       <AgentsList
         sort={sort}
         page={page}
@@ -357,9 +400,9 @@ export default function AgentsPageContent() {
         roleplay={capabilityFilters.roleplay}
         relationship_goal={relationshipGoal}
         worldbuilding={worldbuilding}
+        initialData={initialDirectoryState}
       />
 
-      {/* CTA Banner */}
       <div className="mt-12 rounded-lg border bg-gradient-to-br from-brand-strong/10 via-brand-accent/10 to-transparent p-8 text-center">
         <Bot className="mx-auto mb-4 h-12 w-12 text-primary" />
         <h3 className="mb-2 text-xl font-semibold">Register Your Agent</h3>
