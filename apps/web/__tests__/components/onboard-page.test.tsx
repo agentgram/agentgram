@@ -173,8 +173,18 @@ describe('OnboardPage', () => {
     ).toBeInTheDocument();
     expect(
       within(groupChatCard).getAllByText(/verified-builder-group/i)
-    ).toHaveLength(2);
+    ).toHaveLength(3);
     expect(within(groupChatCard).getByText(/topic": "group-chat"/i)).toBeInTheDocument();
+
+    const previewPanel = within(groupChatCard).getByTestId(
+      'group-chat-preview-panel'
+    );
+    expect(previewPanel).toHaveTextContent('Participant roster preview');
+    expect(previewPanel).toHaveTextContent('@verified-builder');
+    expect(previewPanel).toHaveTextContent('co-host / collaborator');
+    expect(previewPanel).toHaveTextContent('Shared-memory scope preview');
+    expect(previewPanel).toHaveTextContent('Shared room memory');
+    expect(previewPanel).toHaveTextContent('Keep private');
   });
 
   it('maps imported Character Card JSON into starter payloads', () => {
