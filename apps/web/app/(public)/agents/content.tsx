@@ -3,6 +3,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import {
+  RELATIONSHIP_GOAL_FACETS,
+  WORLDBUILDING_FACETS,
+  type RelationshipGoalFacet,
+  type WorldbuildingFacet,
+} from '@agentgram/shared';
 import { Bot, TrendingUp, Activity, MessageSquareMore } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SearchBar, PageContainer } from '@/components/common';
@@ -12,6 +18,10 @@ import {
   DIRECTORY_CAPABILITY_LABELS,
   isCapabilityFilterEnabled,
 } from '@/lib/agents/capabilities';
+import {
+  RELATIONSHIP_GOAL_OPTIONS,
+  WORLDBUILDING_OPTIONS,
+} from '@/lib/agents/discovery-facets';
 
 type AgentsSort = 'axp' | 'active' | 'discussed' | 'new';
 
@@ -36,6 +46,17 @@ function parseCapabilityFilters(searchParams: URLSearchParams) {
   };
 }
 
+function parseFacetValue<T extends string>(
+  value: string | null,
+  allowed: readonly T[]
+): T | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  return allowed.includes(value as T) ? (value as T) : undefined;
+}
+
 export default function AgentsPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -54,6 +75,28 @@ export default function AgentsPageContent() {
     () => parseCapabilityFilters(searchParams),
     [searchParams]
   );
+  const relationshipGoal = useMemo(
+    () =>
+      parseFacetValue<RelationshipGoalFacet>(
+        searchParams.get('relationship_goal'),
+        RELATIONSHIP_GOAL_FACETS
+      ),
+    [searchParams]
+  );
+  const worldbuilding = useMemo(
+    () =>
+      parseFacetValue<WorldbuildingFacet>(
+        searchParams.get('worldbuilding'),
+        WORLDBUILDING_FACETS
+      ),
+    [searchParams]
+  );
+  const hasActiveFilters =
+    capabilityFilters.voice ||
+    capabilityFilters.group_chat ||
+    capabilityFilters.roleplay ||
+    Boolean(relationshipGoal) ||
+    Boolean(worldbuilding);
   const previousPageRef = useRef<number | null>(null);
 
   const [searchValue, setSearchValue] = useState(search);
@@ -177,32 +220,129 @@ export default function AgentsPageContent() {
         </Button>
       </div>
 
-      <div className="mb-8 flex flex-wrap gap-2">
-        {DIRECTORY_CAPABILITY_KEYS.map((capability) => {
-          const isEnabled = capabilityFilters[capability];
-          const href = createHref({
-            [capability]: isEnabled ? null : 'true',
-            page: null,
-          });
-
-          return (
-            <Button
-              key={capability}
-              variant={isEnabled ? 'default' : 'outline'}
-              size="sm"
-              className="rounded-full"
-              asChild
-            >
+      <div className="mb-8 space-y-4 rounded-2xl border bg-card/60 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold">Explore filters</p>
+            <p className="text-sm text-muted-foreground">
+              Narrow the directory by chat capabilities, relationship goals, and
+              worldbuilding style.
+            </p>
+          </div>
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" asChild>
               <Link
-                href={href}
-                aria-pressed={isEnabled}
-                data-testid={`agents-filter-chip-${capability}`}
+                href={createHref({
+                  voice: null,
+                  group_chat: null,
+                  roleplay: null,
+                  relationship_goal: null,
+                  worldbuilding: null,
+                  page: null,
+                })}
               >
-                {DIRECTORY_CAPABILITY_LABELS[capability]}
+                Clear filters
               </Link>
             </Button>
-          );
-        })}
+          )}
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+              Capabilities
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {DIRECTORY_CAPABILITY_KEYS.map((capability) => {
+                const isEnabled = capabilityFilters[capability];
+                const href = createHref({
+                  [capability]: isEnabled ? null : 'true',
+                  page: null,
+                });
+
+                return (
+                  <Button
+                    key={capability}
+                    variant={isEnabled ? 'default' : 'outline'}
+                    size="sm"
+                    className="rounded-full"
+                    asChild
+                  >
+                    <Link
+                      href={href}
+                      aria-pressed={isEnabled}
+                      data-testid={`agents-filter-chip-${capability}`}
+                    >
+                      {DIRECTORY_CAPABILITY_LABELS[capability]}
+                    </Link>
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+              Relationship goal
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {RELATIONSHIP_GOAL_OPTIONS.map((option) => {
+                const isEnabled = relationshipGoal === option.value;
+                return (
+                  <Button
+                    key={option.value}
+                    variant={isEnabled ? 'default' : 'outline'}
+                    size="sm"
+                    className="rounded-full"
+                    asChild
+                  >
+                    <Link
+                      href={createHref({
+                        relationship_goal: isEnabled ? null : option.value,
+                        page: null,
+                      })}
+                      aria-pressed={isEnabled}
+                      data-testid={`agents-filter-chip-relationship-goal-${option.value}`}
+                    >
+                      {option.label}
+                    </Link>
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+              Worldbuilding
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {WORLDBUILDING_OPTIONS.map((option) => {
+                const isEnabled = worldbuilding === option.value;
+                return (
+                  <Button
+                    key={option.value}
+                    variant={isEnabled ? 'default' : 'outline'}
+                    size="sm"
+                    className="rounded-full"
+                    asChild
+                  >
+                    <Link
+                      href={createHref({
+                        worldbuilding: isEnabled ? null : option.value,
+                        page: null,
+                      })}
+                      aria-pressed={isEnabled}
+                      data-testid={`agents-filter-chip-worldbuilding-${option.value}`}
+                    >
+                      {option.label}
+                    </Link>
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       </div>
 
       <div id="agents-grid-top" className="scroll-mt-28" />
@@ -215,6 +355,8 @@ export default function AgentsPageContent() {
         voice={capabilityFilters.voice}
         group_chat={capabilityFilters.group_chat}
         roleplay={capabilityFilters.roleplay}
+        relationship_goal={relationshipGoal}
+        worldbuilding={worldbuilding}
       />
 
       {/* CTA Banner */}

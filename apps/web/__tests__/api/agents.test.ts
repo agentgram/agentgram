@@ -82,6 +82,9 @@ describe('GET /api/v1/agents', () => {
           trust_score: 0.5,
           metadata: {
             relationshipPreset: 'mentor',
+            discovery: {
+              worldbuilding: 'fantasy',
+            },
             memoryPolicy: 'ephemeral_only',
             workProofUrl: 'https://example.com/proof',
             firstSuccessfulReply: true,
@@ -175,6 +178,8 @@ describe('GET /api/v1/agents', () => {
       operatorTier: 'pro',
       publicOwnerLabel: 'Ralph',
       relationshipPreset: 'mentor',
+      relationshipGoal: 'guidance',
+      worldbuilding: 'fantasy',
       diaryEntries: [
         {
           id: 'public-entry',
@@ -351,6 +356,105 @@ describe('GET /api/v1/agents', () => {
     });
     expect(mockContains).toHaveBeenNthCalledWith(2, 'metadata', {
       capabilities: { group_chat: true },
+    });
+  });
+
+  it('should filter by relationship goal and worldbuilding facets', async () => {
+    mockRange
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'agent-1',
+            name: 'mentor-fantasy',
+            display_name: 'Mentor Fantasy',
+            description: 'A fantasy mentor',
+            public_key: null,
+            email: null,
+            email_verified: true,
+            avatar_url: null,
+            axp: 100,
+            status: 'active',
+            trust_score: 0.5,
+            metadata: {
+              relationshipPreset: 'mentor',
+              discovery: {
+                worldbuilding: 'fantasy',
+              },
+            },
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: '2026-01-03T00:00:00Z',
+            developer: { display_name: 'Ralph' },
+          },
+        ],
+        error: null,
+        count: 2,
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'agent-1',
+            name: 'mentor-fantasy',
+            display_name: 'Mentor Fantasy',
+            description: 'A fantasy mentor',
+            public_key: null,
+            email: null,
+            email_verified: true,
+            avatar_url: null,
+            axp: 100,
+            status: 'active',
+            trust_score: 0.5,
+            metadata: {
+              relationshipPreset: 'mentor',
+              discovery: {
+                worldbuilding: 'fantasy',
+              },
+            },
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: '2026-01-03T00:00:00Z',
+            developer: { display_name: 'Ralph' },
+          },
+          {
+            id: 'agent-2',
+            name: 'partner-grounded',
+            display_name: 'Partner Grounded',
+            description: 'A grounded partner',
+            public_key: null,
+            email: null,
+            email_verified: true,
+            avatar_url: null,
+            axp: 95,
+            status: 'active',
+            trust_score: 0.4,
+            metadata: {
+              relationshipPreset: 'partner',
+              worldType: 'grounded',
+            },
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: '2026-01-03T00:00:00Z',
+            developer: { display_name: 'Nori' },
+          },
+        ],
+        error: null,
+        count: 2,
+      });
+
+    const { GET } = await import('../../app/api/v1/agents/route');
+    const request = new Request(
+      'http://localhost/api/v1/agents?relationship_goal=guidance&worldbuilding=fantasy'
+    );
+    const response = await GET(request as unknown as Parameters<typeof GET>[0]);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.meta.total).toBe(1);
+    expect(json.data).toHaveLength(1);
+    expect(json.data[0]).toMatchObject({
+      name: 'mentor-fantasy',
+      relationshipGoal: 'guidance',
+      worldbuilding: 'fantasy',
     });
   });
 

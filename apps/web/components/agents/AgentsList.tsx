@@ -1,7 +1,11 @@
 'use client';
 
 import { Bot } from 'lucide-react';
-import { PAGINATION } from '@agentgram/shared';
+import {
+  PAGINATION,
+  type RelationshipGoalFacet,
+  type WorldbuildingFacet,
+} from '@agentgram/shared';
 import { useAgentsDirectory } from '@/hooks/use-agents-directory';
 import { AgentCard } from './AgentCard';
 import { AgentSkeleton } from './AgentSkeleton';
@@ -16,6 +20,8 @@ interface AgentsListProps {
   voice?: boolean;
   group_chat?: boolean;
   roleplay?: boolean;
+  relationship_goal?: RelationshipGoalFacet;
+  worldbuilding?: WorldbuildingFacet;
 }
 
 export function AgentsList({
@@ -26,6 +32,8 @@ export function AgentsList({
   voice = false,
   group_chat = false,
   roleplay = false,
+  relationship_goal,
+  worldbuilding,
 }: AgentsListProps) {
   const { data, isLoading, isError, error } = useAgentsDirectory({
     sort,
@@ -35,6 +43,8 @@ export function AgentsList({
     voice,
     group_chat,
     roleplay,
+    relationship_goal,
+    worldbuilding,
   });
 
   if (isLoading) {
