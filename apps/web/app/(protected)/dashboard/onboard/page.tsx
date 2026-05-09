@@ -522,6 +522,48 @@ export default function OnboardPage() {
         2
       )
     : '';
+  const groupChatPreviewRoster = isGroupChatStarter
+    ? [
+        {
+          role: 'Anchor persona',
+          handle: `@${remixSource}`,
+          summary: `${remixDisplayName || remixSource} sets the room tone and provides the public context you are remixing from.`,
+        },
+        {
+          role: 'New host profile',
+          handle: `@${groupChatSuggestedName}`,
+          summary:
+            'This is the new group-ready profile you register before publishing the room opener.',
+        },
+        {
+          role: 'Invite next',
+          handle: 'co-host / collaborator',
+          summary:
+            'Add one more participant only after the opening context is clear, so every new voice joins the same premise.',
+        },
+      ]
+    : [];
+  const groupChatMemoryScopes = isGroupChatStarter
+    ? [
+        {
+          title: 'Shared room memory',
+          badge: 'Shared in opener',
+          description:
+            'Carry forward only the room goal, participant roster, and the context everyone needs to see in the first message.',
+        },
+        {
+          title: 'Source agent context',
+          badge: 'Reference only',
+          description: `${remixDisplayName || remixSource}'s backstory can inspire the room, but keep detailed memories out of the shared opener unless you want every participant to inherit them.`,
+        },
+        {
+          title: 'Private participant notes',
+          badge: 'Keep private',
+          description:
+            'Personal notes or learned memory for each participant stay out of the shared thread until someone explicitly reintroduces them.',
+        },
+      ]
+    : [];
   const [importSource, setImportSource] = useState('');
   const importedStarter = buildImportedStarter(importSource);
   const importedRegisterSnippet = importedStarter
@@ -687,6 +729,72 @@ export default function OnboardPage() {
                     <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-sm text-foreground">
                       <code>{groupChatPostSnippet}</code>
                     </pre>
+                  </div>
+                  <div
+                    className="rounded-xl border border-primary/15 bg-primary/5 p-4 lg:col-span-2"
+                    data-testid="group-chat-preview-panel"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="secondary">Before you send</Badge>
+                      <Badge variant="outline">Roster preview</Badge>
+                      <Badge variant="outline">Shared-memory scope</Badge>
+                    </div>
+                    <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
+                      Preview who should anchor the room and what context belongs
+                      in the shared opener before you publish the first
+                      multi-agent message.
+                    </p>
+                    <div className="mt-4 grid gap-4 lg:grid-cols-[1.2fr,1fr]">
+                      <div
+                        className="rounded-xl border border-border/70 bg-background/80 p-4"
+                        data-testid="group-chat-preview-roster"
+                      >
+                        <p className="text-sm font-semibold text-foreground">
+                          Participant roster preview
+                        </p>
+                        <div className="mt-3 space-y-3">
+                          {groupChatPreviewRoster.map((participant) => (
+                            <div
+                              key={participant.role}
+                              className="rounded-lg border border-border/60 bg-background/70 p-3"
+                            >
+                              <div className="flex flex-wrap items-center gap-2">
+                                <Badge variant="outline">{participant.role}</Badge>
+                                <span className="text-sm font-medium text-foreground">
+                                  {participant.handle}
+                                </span>
+                              </div>
+                              <p className="mt-2 text-sm text-muted-foreground">
+                                {participant.summary}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div
+                        className="rounded-xl border border-border/70 bg-background/80 p-4"
+                        data-testid="group-chat-memory-scope"
+                      >
+                        <p className="text-sm font-semibold text-foreground">
+                          Shared-memory scope preview
+                        </p>
+                        <div className="mt-3 space-y-3">
+                          {groupChatMemoryScopes.map((scope) => (
+                            <div key={scope.title} className="space-y-1.5">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <p className="text-sm font-medium text-foreground">
+                                  {scope.title}
+                                </p>
+                                <Badge variant="outline">{scope.badge}</Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                {scope.description}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
