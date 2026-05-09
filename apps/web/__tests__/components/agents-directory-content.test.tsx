@@ -7,7 +7,9 @@ const replace = vi.fn();
 const push = vi.fn();
 
 const searchParamsState = {
-  value: new URLSearchParams('sort=new&voice=true&roleplay=true&page=3'),
+  value: new URLSearchParams(
+    'sort=new&voice=true&roleplay=true&relationship_goal=guidance&worldbuilding=fantasy&page=3'
+  ),
 };
 
 vi.mock('next/link', () => ({
@@ -45,31 +47,35 @@ describe('AgentsPageContent capability browse controls', () => {
     replace.mockReset();
     push.mockReset();
     searchParamsState.value = new URLSearchParams(
-      'sort=new&voice=true&roleplay=true&page=3'
+      'sort=new&voice=true&roleplay=true&relationship_goal=guidance&worldbuilding=fantasy&page=3'
     );
   });
 
-  it('threads capability filters into the directory request and renders matching chips', () => {
+  it('threads discovery filters into the directory request and renders matching chips', () => {
     render(<AgentsPageContent />);
 
     expect(screen.getByTestId('agents-filter-chip-voice')).toHaveAttribute(
       'href',
-      '/agents?sort=new&roleplay=true'
+      '/agents?sort=new&roleplay=true&relationship_goal=guidance&worldbuilding=fantasy'
     );
-    expect(
-      screen.getByTestId('agents-filter-chip-group_chat')
-    ).toHaveAttribute(
+    expect(screen.getByTestId('agents-filter-chip-group_chat')).toHaveAttribute(
       'href',
-      '/agents?sort=new&voice=true&roleplay=true&group_chat=true'
+      '/agents?sort=new&voice=true&roleplay=true&relationship_goal=guidance&worldbuilding=fantasy&group_chat=true'
     );
     expect(screen.getByTestId('agents-filter-chip-roleplay')).toHaveAttribute(
       'href',
-      '/agents?sort=new&voice=true'
+      '/agents?sort=new&voice=true&relationship_goal=guidance&worldbuilding=fantasy'
     );
     expect(screen.getByTestId('agents-filter-chip-voice')).toHaveAttribute(
       'aria-pressed',
       'true'
     );
+    expect(
+      screen.getByTestId('agents-filter-chip-relationship-goal-guidance')
+    ).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      screen.getByTestId('agents-filter-chip-worldbuilding-fantasy')
+    ).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByTestId('agents-list-props')).toHaveTextContent(
       JSON.stringify({
         sort: 'new',
@@ -78,8 +84,13 @@ describe('AgentsPageContent capability browse controls', () => {
         voice: true,
         group_chat: false,
         roleplay: true,
+        relationship_goal: 'guidance',
+        worldbuilding: 'fantasy',
       })
     );
+    expect(
+      screen.getByRole('link', { name: /clear filters/i })
+    ).toHaveAttribute('href', '/agents?sort=new');
   });
 
   it('accepts the discussed sort and keeps it in the rendered directory props', () => {
@@ -87,10 +98,9 @@ describe('AgentsPageContent capability browse controls', () => {
 
     render(<AgentsPageContent />);
 
-    expect(screen.getByRole('link', { name: /top discussed/i })).toHaveAttribute(
-      'href',
-      '/agents?sort=discussed'
-    );
+    expect(
+      screen.getByRole('link', { name: /top discussed/i })
+    ).toHaveAttribute('href', '/agents?sort=discussed');
     expect(screen.getByTestId('agents-list-props')).toHaveTextContent(
       JSON.stringify({
         sort: 'discussed',
@@ -99,6 +109,8 @@ describe('AgentsPageContent capability browse controls', () => {
         voice: false,
         group_chat: false,
         roleplay: false,
+        relationship_goal: undefined,
+        worldbuilding: undefined,
       })
     );
   });

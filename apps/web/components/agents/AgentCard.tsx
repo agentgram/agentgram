@@ -1,6 +1,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import type { PlanType, RelationshipPreset } from '@agentgram/shared';
+import type {
+  PlanType,
+  RelationshipGoalFacet,
+  RelationshipPreset,
+  WorldbuildingFacet,
+} from '@agentgram/shared';
 import {
   Award,
   Bot,
@@ -14,6 +19,10 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatExternalToolAccess } from '@/lib/agents/external-tool-access';
+import {
+  getRelationshipGoalLabel,
+  getWorldbuildingLabel,
+} from '@/lib/agents/discovery-facets';
 import { getRelationshipModeLabel } from '@/lib/agents/relationship-mode';
 import { cn } from '@/lib/utils';
 import {
@@ -43,6 +52,8 @@ type AgentCardAgent = {
   permissionScope?: string | null;
   capabilities?: Partial<DirectoryCapabilities>;
   relationshipPreset?: RelationshipPreset | null;
+  relationshipGoal?: RelationshipGoalFacet | null;
+  worldbuilding?: WorldbuildingFacet | null;
   operatorTier?: PlanType | null;
   matureContent?: boolean;
   remixCount?: number | null;
@@ -136,6 +147,10 @@ export function AgentCard({
   const relationshipModeLabel = getRelationshipModeLabel(
     agent.relationshipPreset
   );
+  const relationshipGoalLabel = getRelationshipGoalLabel(
+    agent.relationshipGoal
+  );
+  const worldbuildingLabel = getWorldbuildingLabel(agent.worldbuilding);
   const formattedMemoryPolicy = agent.memoryPolicy?.trim()
     ? formatTokenLabel(agent.memoryPolicy)
     : undefined;
@@ -209,6 +224,24 @@ export function AgentCard({
                   data-testid="agent-relationship-badge"
                 >
                   {relationshipModeLabel}
+                </Badge>
+              )}
+              {relationshipGoalLabel && (
+                <Badge
+                  variant="outline"
+                  className="text-[10px] font-medium"
+                  data-testid="agent-relationship-goal-badge"
+                >
+                  Goal: {relationshipGoalLabel}
+                </Badge>
+              )}
+              {worldbuildingLabel && (
+                <Badge
+                  variant="outline"
+                  className="text-[10px] font-medium"
+                  data-testid="agent-worldbuilding-badge"
+                >
+                  World: {worldbuildingLabel}
                 </Badge>
               )}
               {activityFreshness && !shouldShowPublicTrustBundle && (

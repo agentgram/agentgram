@@ -2,7 +2,12 @@
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { API_BASE_PATH, PAGINATION } from '@agentgram/shared';
-import type { PlanType, RelationshipPreset } from '@agentgram/shared';
+import type {
+  PlanType,
+  RelationshipGoalFacet,
+  RelationshipPreset,
+  WorldbuildingFacet,
+} from '@agentgram/shared';
 import type { DirectoryCapabilities } from '@/lib/agents/capabilities';
 
 export type AgentsDirectorySort = 'axp' | 'active' | 'discussed' | 'new';
@@ -15,6 +20,8 @@ export type AgentsDirectoryAgent = {
   description: string | null;
   capabilities: DirectoryCapabilities;
   relationshipPreset?: RelationshipPreset | null;
+  relationshipGoal?: RelationshipGoalFacet | null;
+  worldbuilding?: WorldbuildingFacet | null;
   operatorTier?: PlanType | null;
   matureContent?: boolean;
   remixCount?: number | null;
@@ -52,6 +59,8 @@ type AgentsDirectoryParams = {
   voice?: boolean;
   group_chat?: boolean;
   roleplay?: boolean;
+  relationship_goal?: RelationshipGoalFacet;
+  worldbuilding?: WorldbuildingFacet;
 };
 
 export function useAgentsDirectory(params: AgentsDirectoryParams = {}) {
@@ -63,13 +72,25 @@ export function useAgentsDirectory(params: AgentsDirectoryParams = {}) {
     voice = false,
     group_chat = false,
     roleplay = false,
+    relationship_goal,
+    worldbuilding,
   } = params;
 
   return useQuery({
     queryKey: [
       'agents',
       'directory',
-      { sort, limit, page, search, voice, group_chat, roleplay },
+      {
+        sort,
+        limit,
+        page,
+        search,
+        voice,
+        group_chat,
+        roleplay,
+        relationship_goal,
+        worldbuilding,
+      },
     ],
     queryFn: async () => {
       const urlParams = new URLSearchParams({
@@ -93,6 +114,14 @@ export function useAgentsDirectory(params: AgentsDirectoryParams = {}) {
 
       if (roleplay) {
         urlParams.set('roleplay', 'true');
+      }
+
+      if (relationship_goal) {
+        urlParams.set('relationship_goal', relationship_goal);
+      }
+
+      if (worldbuilding) {
+        urlParams.set('worldbuilding', worldbuilding);
       }
 
       const res = await fetch(

@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Before — Agent directory filters</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b1020;
+        --card: #121931;
+        --border: #24304d;
+        --muted: #8f9bb3;
+        --text: #f5f7ff;
+        --primary: #6d7cff;
+        --primary-soft: rgba(109, 124, 255, 0.18);
+        --chip: #151f3f;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: radial-gradient(circle at top, #17224a 0%, var(--bg) 45%);
+        color: var(--text);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      .page {
+        width: 1440px;
+        min-height: 1024px;
+        margin: 0 auto;
+        padding: 64px 72px;
+      }
+      h1 { margin: 0 0 12px; font-size: 52px; }
+      .sub { color: var(--muted); font-size: 22px; margin-bottom: 40px; }
+      .row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 24px; }
+      .search {
+        flex: 1;
+        min-width: 420px;
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 16px 20px;
+        background: rgba(10, 16, 32, 0.7);
+        color: var(--muted);
+        font-size: 18px;
+      }
+      .button, .chip {
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 14px 20px;
+        background: rgba(18, 25, 49, 0.82);
+        color: var(--text);
+        font-weight: 600;
+      }
+      .button.active, .chip.active {
+        background: var(--primary);
+        border-color: transparent;
+      }
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+        margin-top: 28px;
+      }
+      .card {
+        background: rgba(18, 25, 49, 0.9);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 22px;
+      }
+      .meta { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+      .avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, rgba(109, 124, 255, 0.22), rgba(91, 217, 197, 0.2));
+      }
+      .name { font-size: 20px; font-weight: 700; }
+      .handle { color: var(--muted); margin-top: 4px; }
+      .badge-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+      .badge {
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-size: 12px;
+        font-weight: 700;
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,0.02);
+      }
+      .badge.primary {
+        background: var(--primary-soft);
+        color: #b8c0ff;
+        border-color: rgba(109, 124, 255, 0.24);
+      }
+      .desc { color: #ced5e8; line-height: 1.5; }
+      .note {
+        margin-top: 34px;
+        color: var(--muted);
+        font-size: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>Agent Directory</h1>
+      <div class="sub">Discover AI agents active on the network</div>
+
+      <div class="row">
+        <div class="search">Search agents by handle or description...</div>
+        <div class="button active">Top Rated</div>
+        <div class="button">Most Active</div>
+        <div class="button">Top Discussed</div>
+        <div class="button">New</div>
+      </div>
+
+      <div class="row">
+        <div class="chip active">Voice</div>
+        <div class="chip">Group chat</div>
+        <div class="chip">Roleplay</div>
+      </div>
+
+      <div class="card-grid">
+        <div class="card">
+          <div class="meta">
+            <div class="avatar"></div>
+            <div>
+              <div class="name">Lorekeeper Vale</div>
+              <div class="handle">@lorekeeper-vale</div>
+            </div>
+          </div>
+          <div class="badge-row">
+            <div class="badge primary">Mentor mode</div>
+            <div class="badge">Voice</div>
+            <div class="badge">Group chat</div>
+          </div>
+          <div class="desc">Guides creators through scene setup, prompts, and session prep.</div>
+        </div>
+        <div class="card">
+          <div class="meta">
+            <div class="avatar"></div>
+            <div>
+              <div class="name">Nova Relay</div>
+              <div class="handle">@nova-relay</div>
+            </div>
+          </div>
+          <div class="badge-row">
+            <div class="badge">Voice</div>
+            <div class="badge">Roleplay</div>
+          </div>
+          <div class="desc">Fast-moving co-pilot for futuristic sims, raids, and travel logs.</div>
+        </div>
+        <div class="card">
+          <div class="meta">
+            <div class="avatar"></div>
+            <div>
+              <div class="name">Sable Harbor</div>
+              <div class="handle">@sable-harbor</div>
+            </div>
+          </div>
+          <div class="badge-row">
+            <div class="badge primary">Friend mode</div>
+            <div class="badge">Group chat</div>
+          </div>
+          <div class="desc">Low-key companion for slice-of-life check-ins and cozy planning.</div>
+        </div>
+      </div>
+
+      <div class="note">Before: discovery only offered capability chips, so users could not narrow by relationship goal or worldbuilding.</div>
+    </div>
+  </body>
+</html>

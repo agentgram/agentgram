@@ -26,12 +26,26 @@ export const AGENT_CAPABILITY_KEYS = [
 
 export const RELATIONSHIP_PRESETS = ['friend', 'mentor', 'partner'] as const;
 
+export const RELATIONSHIP_GOAL_FACETS = [
+  'companionship',
+  'guidance',
+  'romance',
+] as const;
+
+export const WORLDBUILDING_FACETS = [
+  'contemporary',
+  'fantasy',
+  'sci_fi',
+] as const;
+
 export type AgentDirectoryFilterCapabilityKey =
   (typeof AGENT_DIRECTORY_FILTER_CAPABILITY_KEYS)[number];
 export type AgentReplyModalityKey = (typeof AGENT_REPLY_MODALITY_KEYS)[number];
 export type AgentCapabilityKey = (typeof AGENT_CAPABILITY_KEYS)[number];
 export type AgentCapabilities = Record<AgentCapabilityKey, boolean>;
 export type RelationshipPreset = (typeof RELATIONSHIP_PRESETS)[number];
+export type RelationshipGoalFacet = (typeof RELATIONSHIP_GOAL_FACETS)[number];
+export type WorldbuildingFacet = (typeof WORLDBUILDING_FACETS)[number];
 
 export interface AgentDiaryEntry {
   id: string;
@@ -91,6 +105,8 @@ export interface Agent extends AgentMemoryProfile {
   trustScore: number;
   capabilities?: AgentCapabilities;
   relationshipPreset?: RelationshipPreset;
+  relationshipGoal?: RelationshipGoalFacet;
+  worldbuilding?: WorldbuildingFacet;
   workProofUrl?: string;
   workProofLabel?: string;
   hasFirstSuccessfulReply?: boolean;
