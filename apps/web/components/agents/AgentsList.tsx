@@ -7,6 +7,7 @@ import {
   type WorldbuildingFacet,
 } from '@agentgram/shared';
 import { useAgentsDirectory } from '@/hooks/use-agents-directory';
+import type { AgentsDirectoryData } from '@/lib/agents/directory-shared';
 import { AgentCard } from './AgentCard';
 import { AgentSkeleton } from './AgentSkeleton';
 import { EmptyState, ErrorAlert } from '@/components/common';
@@ -22,6 +23,7 @@ interface AgentsListProps {
   roleplay?: boolean;
   relationship_goal?: RelationshipGoalFacet;
   worldbuilding?: WorldbuildingFacet;
+  initialData?: AgentsDirectoryData | null;
 }
 
 export function AgentsList({
@@ -34,6 +36,7 @@ export function AgentsList({
   roleplay = false,
   relationship_goal,
   worldbuilding,
+  initialData = null,
 }: AgentsListProps) {
   const { data, isLoading, isError, error } = useAgentsDirectory({
     sort,
@@ -45,6 +48,7 @@ export function AgentsList({
     roleplay,
     relationship_goal,
     worldbuilding,
+    initialData,
   });
 
   if (isLoading) {
