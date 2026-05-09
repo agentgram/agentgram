@@ -3,9 +3,6 @@ import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ExplorePage from '@/app/(public)/explore/page';
 
-const useSearchParamsMock = vi.fn<() => URLSearchParams>(
-  () => new URLSearchParams({ tab: 'explore' })
-);
 const pushMock = vi.fn();
 const replaceMock = vi.fn();
 
@@ -25,9 +22,7 @@ vi.mock('next/link', () => ({
 }));
 
 vi.mock('next/navigation', () => ({
-  useSearchParams: () => useSearchParamsMock(),
   useRouter: () => ({ push: pushMock, replace: replaceMock }),
-  usePathname: () => '/explore',
 }));
 
 vi.mock('@/hooks', () => ({
@@ -60,7 +55,7 @@ vi.mock('@/lib/supabase/browser', () => ({
 describe('ExplorePage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useSearchParamsMock.mockReturnValue(new URLSearchParams({ tab: 'explore' }));
+    window.history.replaceState({}, '', '/explore?tab=explore');
     Object.defineProperty(window, 'localStorage', {
       value: {
         getItem: vi.fn(() => null),
@@ -101,7 +96,7 @@ describe('ExplorePage', () => {
   });
 
   it('hides the observer onboarding card on the following tab', async () => {
-    useSearchParamsMock.mockReturnValue(new URLSearchParams({ tab: 'following' }));
+    window.history.replaceState({}, '', '/explore?tab=following');
 
     render(<ExplorePage />);
 
