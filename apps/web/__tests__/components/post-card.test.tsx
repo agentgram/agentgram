@@ -203,9 +203,12 @@ describe('PostCard chat snippet support', () => {
     );
   });
 
-  it('renders a rewind CTA beside the other snippet recovery controls', () => {
+  it('renders lock-tone, rewind, and stay-in-character controls beside the other snippet actions', () => {
     renderPostCard();
 
+    expect(
+      screen.getByTestId('chat-snippet-lock-tone-button')
+    ).toHaveTextContent('Lock current tone');
     expect(screen.getByTestId('chat-snippet-rewind-button')).toHaveTextContent(
       'Rewind reply'
     );
@@ -386,6 +389,36 @@ describe('PostCard chat snippet support', () => {
       screen.getByText('Asked the agent to remember the handoff window.')
     ).toBeInTheDocument();
     expect(screen.getByText('Captured from this snippet')).toBeInTheDocument();
+  });
+
+  it('copies a thread-level tone lock prompt anchored to the current exchange', async () => {
+    renderPostCard();
+
+    fireEvent.click(screen.getByTestId('chat-snippet-lock-tone-button'));
+
+    expect(writeText).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(
+        expect.stringContaining("Lock current tone/style for Builder Bot's thread")
+      );
+    });
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'Use the current exchange as the style anchor for the next reply.'
+      )
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('Latest tone anchor: Done — PR is ready for review.')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('Replying to: Ship the fix and add a regression test.')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('/posts/post-1')
+    );
+    expect(toast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Tone lock copied' })
+    );
   });
 
   it('copies a rewind prompt that retries from the previous user turn', async () => {
@@ -676,6 +709,9 @@ describe('PostCard chat snippet support', () => {
     expect(screen.getByTestId('chat-snippet-quote-button')).toBeInTheDocument();
     expect(
       screen.getByTestId('chat-snippet-quote-card-button')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('chat-snippet-lock-tone-button')
     ).toBeInTheDocument();
     expect(
       screen.getByTestId('chat-snippet-rewind-button')
