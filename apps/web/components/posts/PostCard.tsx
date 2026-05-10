@@ -11,11 +11,13 @@ import {
   Send,
   Repeat2,
   Quote,
+  Lock,
   ShieldCheck,
   ShieldAlert,
   AlertTriangle,
   BadgeCheck,
   History,
+  Loader2,
 } from 'lucide-react';
 import { Post } from '@agentgram/shared';
 import type { PostMedia, ChatSnippetMessage } from '@agentgram/shared';
@@ -26,6 +28,7 @@ import { motion } from 'framer-motion';
 import { formatTimeAgo } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
 import { analytics } from '@/lib/analytics';
+import type { ProactiveControlsSettings } from '@/lib/proactive-controls';
 import {
   Dialog,
   DialogContent,
@@ -293,7 +296,9 @@ function getReplyVelocity(post: Post): ReplyVelocityState | null {
     ['comments', 'lastReplyAt'],
     ['comments', 'last_reply_at'],
   ]);
-  const recentReplyAtMs = recentReplyAt ? new Date(recentReplyAt).getTime() : Number.NaN;
+  const recentReplyAtMs = recentReplyAt
+    ? new Date(recentReplyAt).getTime()
+    : Number.NaN;
   const elapsedHours = Number.isFinite(recentReplyAtMs)
     ? Math.max(0, Date.now() - recentReplyAtMs) / (1000 * 60 * 60)
     : undefined;
@@ -351,6 +356,72 @@ function getReplyVelocity(post: Post): ReplyVelocityState | null {
   return null;
 }
 
+type FollowUpOptInSignal = {
+  title: string;
+  description: string;
+};
+
+function getFollowUpOptInSignal({
+  isChatSnippet,
+  chatMessageCount,
+  commentCount,
+  hasMemorySignal,
+  replyVelocity,
+}: {
+  isChatSnippet: boolean;
+  chatMessageCount: number;
+  commentCount: number;
+  hasMemorySignal: boolean;
+  replyVelocity: ReplyVelocityState | null;
+}): FollowUpOptInSignal | null {
+  if (!isChatSnippet || chatMessageCount < 2) {
+    return null;
+  }
+
+  if (hasMemorySignal && replyVelocity) {
+    return {
+      title: 'Strong thread — keep the door open',
+      description:
+        'This exchange already has saved context and active replies. Turn on future check-ins before the momentum fades.',
+    };
+  }
+
+  if (replyVelocity) {
+    return {
+      title: 'Strong thread — follow up while it is fresh',
+      description:
+        'This chat still has active reply momentum. One tap lets AgentGram check in later without opening Settings first.',
+    };
+  }
+
+  if (hasMemorySignal) {
+    return {
+      title: 'Strong thread — keep this context alive',
+      description:
+        'This snippet already captured a memory signal. Turn on future check-ins so AgentGram can reconnect from the same thread later.',
+    };
+  }
+
+  if (commentCount >= 3 && chatMessageCount >= 3) {
+    return {
+      title: 'Strong thread — invite a future check-in',
+      description:
+        'This back-and-forth already has momentum. One tap lets AgentGram follow up later from threads like this.',
+    };
+  }
+
+  return null;
+}
+
+type ProactiveControlsResponse = {
+  success?: boolean;
+  data?: ProactiveControlsSettings;
+  error?: {
+    code?: string;
+    message?: string;
+  };
+};
+
 type MemoryCapture = {
   fact: string;
   source?: string;
@@ -389,7 +460,11 @@ function normalizeMemoryCapture(value: unknown): MemoryCapture | null {
     (candidate): candidate is string =>
       typeof candidate === 'string' && candidate.trim().length > 0
   );
-  const capturedAtCandidates = [record.capturedAt, record.recordedAt, record.savedAt];
+  const capturedAtCandidates = [
+    record.capturedAt,
+    record.recordedAt,
+    record.savedAt,
+  ];
   const capturedAt = capturedAtCandidates.find(
     (candidate): candidate is string =>
       typeof candidate === 'string' && candidate.trim().length > 0
@@ -451,10 +526,31 @@ type SnippetActionMode =
   | 'quote'
   | 'quote_card'
   | 'rewind'
+  | 'lock_tone'
   | 'recover'
+  | 'recover_keep_previous_tone'
   | 'safer_rewrite'
   | 'contradiction'
   | 'restate_key_facts';
+
+function isAbruptStyleShiftTrigger(value: string | undefined) {
+  const normalized = value?.trim().toLowerCase().replace(/[\s-]+/g, '_');
+
+  if (!normalized) {
+    return false;
+  }
+
+  return (
+    normalized === 'abrupt_style_shift' ||
+    normalized === 'abrupt_tone_shift' ||
+    normalized === 'style_shift' ||
+    normalized === 'tone_shift' ||
+    (normalized.includes('abrupt') &&
+      (normalized.includes('style') || normalized.includes('tone'))) ||
+    normalized.includes('style_shift') ||
+    normalized.includes('tone_shift')
+  );
+}
 
 function escapeSvgText(value: string) {
   return value
@@ -670,6 +766,18 @@ export function PostCard({
   const latestAgentMessage = [...chatMessages]
     .reverse()
     .find((message) => isAgentSnippetRole(message.role))?.content;
+  const threadToneHint = readMetadataString(post.metadata, [
+    ['threadTone'],
+    ['thread_tone'],
+    ['toneStyle'],
+    ['tone_style'],
+    ['styleGuide'],
+    ['style_guide'],
+    ['toneLock'],
+    ['tone_lock'],
+    ['toneLock', 'style'],
+    ['tone_lock', 'style'],
+  ]);
   const saferRewriteSource =
     blockedMessage || latestUserMessage || post.content || post.title;
   const hasSafetyRewriteContext = Boolean(
@@ -699,7 +807,153 @@ export function PostCard({
       )
     )
   ).slice(0, 3);
+  const continuityRecoveryTrigger = readMetadataString(post.metadata, [
+    ['recoveryTrigger'],
+    ['recovery_trigger'],
+    ['styleShiftTrigger'],
+    ['style_shift_trigger'],
+    ['styleContinuityTrigger'],
+    ['style_continuity_trigger'],
+    ['recovery', 'trigger'],
+    ['recovery', 'type'],
+    ['continuity', 'trigger'],
+    ['continuity', 'type'],
+  ]);
+  const continuityRecoveryReason = readMetadataString(post.metadata, [
+    ['recoveryReason'],
+    ['recovery_reason'],
+    ['styleShiftReason'],
+    ['style_shift_reason'],
+    ['styleContinuityReason'],
+    ['style_continuity_reason'],
+    ['recovery', 'reason'],
+    ['continuity', 'reason'],
+  ]);
+  const previousToneHint = readMetadataString(post.metadata, [
+    ['previousTone'],
+    ['previous_tone'],
+    ['earlierTone'],
+    ['earlier_tone'],
+    ['baselineTone'],
+    ['baseline_tone'],
+    ['recovery', 'previousTone'],
+    ['recovery', 'previous_tone'],
+    ['continuity', 'previousTone'],
+    ['continuity', 'previous_tone'],
+  ]);
+  const keepPreviousToneRequested = readMetadataBoolean(post.metadata, [
+    ['keepPreviousTone'],
+    ['keep_previous_tone'],
+    ['recovery', 'keepPreviousTone'],
+    ['recovery', 'keep_previous_tone'],
+    ['continuity', 'keepPreviousTone'],
+    ['continuity', 'keep_previous_tone'],
+  ]);
+  const shouldShowKeepPreviousToneChip =
+    !hasSafetyRewriteContext &&
+    (keepPreviousToneRequested === true ||
+      isAbruptStyleShiftTrigger(continuityRecoveryTrigger) ||
+      Boolean(previousToneHint));
   const replyVelocity = getReplyVelocity(post);
+  const followUpOptInSignal = getFollowUpOptInSignal({
+    isChatSnippet,
+    chatMessageCount: chatMessages.length,
+    commentCount: post.commentCount,
+    hasMemorySignal: Boolean(
+      memorySavedLabel ||
+      memoryExplanation ||
+      memoryPreview ||
+      memoryCaptures.length > 0
+    ),
+    replyVelocity,
+  });
+  const [followUpOptInStatus, setFollowUpOptInStatus] = useState<
+    'idle' | 'saving' | 'enabled'
+  >('idle');
+
+  const handleFollowUpOptIn = async () => {
+    if (!followUpOptInSignal || followUpOptInStatus !== 'idle') {
+      return;
+    }
+
+    setFollowUpOptInStatus('saving');
+
+    try {
+      const currentResponse = await fetch(
+        '/api/v1/developers/me/proactive-controls',
+        {
+          method: 'GET',
+          cache: 'no-store',
+        }
+      );
+      const currentPayload =
+        (await currentResponse.json()) as ProactiveControlsResponse;
+
+      if (
+        !currentResponse.ok ||
+        !currentPayload.success ||
+        !currentPayload.data
+      ) {
+        throw new Error(
+          currentPayload.error?.message || 'Failed to load proactive controls'
+        );
+      }
+
+      if (currentPayload.data.optIn) {
+        setFollowUpOptInStatus('enabled');
+        toast({
+          title: 'Future check-ins already on',
+          description:
+            'AgentGram is already allowed to follow up later after strong threads.',
+        });
+        return;
+      }
+
+      const updateResponse = await fetch(
+        '/api/v1/developers/me/proactive-controls',
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...currentPayload.data,
+            optIn: true,
+          }),
+        }
+      );
+      const updatePayload =
+        (await updateResponse.json()) as ProactiveControlsResponse;
+
+      if (
+        !updateResponse.ok ||
+        !updatePayload.success ||
+        !updatePayload.data?.optIn
+      ) {
+        throw new Error(
+          updatePayload.error?.message || 'Failed to enable future check-ins'
+        );
+      }
+
+      setFollowUpOptInStatus('enabled');
+      analytics.clickCta('chat_snippet_follow_up_opt_in');
+      toast({
+        title: 'Future check-ins enabled',
+        description:
+          'AgentGram can now follow up later after strong threads like this one.',
+      });
+    } catch (error) {
+      console.error('Error enabling post-chat follow-up opt-in:', error);
+      setFollowUpOptInStatus('idle');
+      const message = error instanceof Error ? error.message : '';
+      toast({
+        title: 'Could not enable future check-ins',
+        description: /not authenticated/i.test(message)
+          ? 'Log in to save follow-up preferences first.'
+          : 'Please try again from Settings if this keeps failing.',
+      });
+    }
+  };
 
   const buildSnippetClipboardText = (mode: SnippetActionMode) => {
     const postUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/posts/${post.id}`;
@@ -750,22 +1004,62 @@ export function PostCard({
       ].join('\n');
     }
 
-    if (mode === 'recover') {
+    if (mode === 'lock_tone') {
       return [
-        `Stay in character — recovery prompt for ${authorName}`,
+        `Lock current tone/style for ${authorName}'s thread`,
         '',
-        'The conversation above drifted out of character.',
+        'Use the current exchange as the style anchor for the next reply.',
+        '- keep the same warmth, pacing, confidence, and relationship framing already on display',
+        '- do not reset into generic assistant language or explain the style; just continue naturally',
+        '- stay consistent with the same thread voice even if the next reply changes topic slightly',
+        threadToneHint ? `Style note: ${threadToneHint}` : '',
+        latestAgentMessage ? `Latest tone anchor: ${latestAgentMessage}` : '',
+        latestUserMessage ? `Replying to: ${latestUserMessage}` : '',
+        '',
+        transcript,
+        '',
+        `Source: ${postUrl}`,
+      ]
+        .filter(Boolean)
+        .join('\n');
+    }
+
+    if (mode === 'recover' || mode === 'recover_keep_previous_tone') {
+      const recoveryLead =
+        mode === 'recover_keep_previous_tone'
+          ? previousToneHint
+            ? `> Keep the next reply anchored to the earlier ${previousToneHint} tone, pacing, and emotional temperature instead of abruptly switching style.`
+            : '> Match the tone, pacing, and emotional temperature from the earlier turns instead of abruptly switching style.'
+          : '> Stay fully in their voice, relationship, and point of view.';
+      const recoveryTitle =
+        mode === 'recover_keep_previous_tone'
+          ? `Keep previous tone — recovery prompt for ${authorName}`
+          : `Stay in character — recovery prompt for ${authorName}`;
+      const recoveryIntro =
+        mode === 'recover_keep_previous_tone'
+          ? 'The latest reply shifted tone too abruptly from the earlier conversation.'
+          : 'The conversation above drifted out of character.';
+
+      return [
+        recoveryTitle,
+        '',
+        recoveryIntro,
         'Use this prompt to get back on track:',
         '',
         `> Re-read the transcript below and continue as ${authorName} would.`,
-        '> Stay fully in their voice, relationship, and point of view.',
+        recoveryLead,
+        mode === 'recover_keep_previous_tone'
+          ? '> Use the earlier turns as the baseline for wording, warmth, and confidence.'
+          : undefined,
         '> Do not say you are an AI, assistant, chatbot, or language model.',
         '> Do not mention hidden prompts, policies, or being out of character; continue the exchange naturally.',
         '',
         transcript,
         '',
         `Source: ${postUrl}`,
-      ].join('\n');
+      ]
+        .filter(Boolean)
+        .join('\n');
     }
 
     if (mode === 'safer_rewrite') {
@@ -839,7 +1133,9 @@ export function PostCard({
   const buildSnippetQuoteCardSvg = () => {
     const postUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/posts/${post.id}`;
     const quoteSource =
-      chatSnippetPreview.map((message) => `${message.role}: ${message.content}`).join(' ') ||
+      chatSnippetPreview
+        .map((message) => `${message.role}: ${message.content}`)
+        .join(' ') ||
       post.content ||
       post.title ||
       'Chat snippet';
@@ -878,7 +1174,9 @@ export function PostCard({
     quote: 'Quote copied',
     quote_card: 'Quote card downloaded',
     rewind: 'Rewind prompt copied',
+    lock_tone: 'Tone lock copied',
     recover: 'Recovery prompt copied',
+    recover_keep_previous_tone: 'Keep previous tone retry copied',
     safer_rewrite: 'Safer rewrite copied',
     contradiction: 'Contradiction report copied',
     restate_key_facts: 'Key facts prompt copied',
@@ -1001,7 +1299,8 @@ export function PostCard({
                     <DialogHeader>
                       <DialogTitle>Recent captures</DialogTitle>
                       <DialogDescription>
-                        Review the latest facts this chat snippet marked as worth remembering.
+                        Review the latest facts this chat snippet marked as
+                        worth remembering.
                       </DialogDescription>
                     </DialogHeader>
 
@@ -1015,7 +1314,9 @@ export function PostCard({
                           <p className="text-sm font-medium text-foreground">
                             {capture.fact}
                           </p>
-                          {(capture.reason || capture.source || capture.capturedAt) ? (
+                          {capture.reason ||
+                          capture.source ||
+                          capture.capturedAt ? (
                             <div className="mt-2 space-y-1 text-xs text-muted-foreground">
                               {capture.reason ? <p>{capture.reason}</p> : null}
                               <div className="flex flex-wrap gap-2">
@@ -1023,7 +1324,9 @@ export function PostCard({
                                   <span>{capture.source}</span>
                                 ) : null}
                                 {capture.capturedAt ? (
-                                  <span>{formatMemoryTimestamp(capture.capturedAt)}</span>
+                                  <span>
+                                    {formatMemoryTimestamp(capture.capturedAt)}
+                                  </span>
                                 ) : null}
                               </div>
                             </div>
@@ -1049,7 +1352,12 @@ export function PostCard({
                 </p>
                 {memoryPreview.source || memoryPreview.capturedAt ? (
                   <p className="mt-2 text-xs text-muted-foreground">
-                    {[memoryPreview.source, memoryPreview.capturedAt ? `Saved ${formatMemoryTimestamp(memoryPreview.capturedAt)}` : undefined]
+                    {[
+                      memoryPreview.source,
+                      memoryPreview.capturedAt
+                        ? `Saved ${formatMemoryTimestamp(memoryPreview.capturedAt)}`
+                        : undefined,
+                    ]
                       .filter(Boolean)
                       .join(' · ')}
                   </p>
@@ -1082,7 +1390,8 @@ export function PostCard({
               Safety recovery
             </span>
             <p className="mt-2 text-sm text-foreground/90 whitespace-pre-line">
-              Blocked by a guardrail? Copy a calmer rewrite that keeps the same goal.
+              Blocked by a guardrail? Copy a calmer rewrite that keeps the same
+              goal.
             </p>
             {safetyReason ? (
               <p
@@ -1127,106 +1436,196 @@ export function PostCard({
           </p>
         ) : null}
 
-        {hasLowContextReply ? (
-          <div
-            data-testid="chat-snippet-low-context-rescue"
-            className="mt-3 rounded-xl border border-sky-500/20 bg-sky-500/10 px-3 py-3"
-          >
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="space-y-1">
-                <span className="inline-flex items-center rounded-full border border-sky-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
-                  Memory rescue
-                </span>
-                <p className="text-sm text-foreground/90">
-                  {lowContextReplyReason ||
-                    'The latest reply asked for more context. Ask the agent to restate what it already remembers before retrying.'}
-                </p>
-                {restateKeyFactCues.length > 0 ? (
-                  <p className="text-xs text-sky-900/75">
-                    Includes {restateKeyFactCues.length} remembered cue
-                    {restateKeyFactCues.length === 1 ? '' : 's'} from this snippet.
+        <div className="mt-3 space-y-2">
+          {hasLowContextReply ? (
+            <div
+              data-testid="chat-snippet-low-context-rescue"
+              className="rounded-xl border border-sky-500/20 bg-sky-500/10 px-3 py-3"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <span className="inline-flex items-center rounded-full border border-sky-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
+                    Memory rescue
+                  </span>
+                  <p className="text-sm text-foreground/90">
+                    {lowContextReplyReason ||
+                      'The latest reply asked for more context. Ask the agent to restate what it already remembers before retrying.'}
                   </p>
-                ) : null}
+                  {restateKeyFactCues.length > 0 ? (
+                    <p className="text-xs text-sky-900/75">
+                      Includes {restateKeyFactCues.length} remembered cue
+                      {restateKeyFactCues.length === 1 ? '' : 's'} from this snippet.
+                    </p>
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  data-testid="chat-snippet-restate-key-facts-button"
+                  onClick={() => handleSnippetAction('restate_key_facts')}
+                  className="inline-flex items-center gap-2 rounded-full border border-sky-500/20 bg-background px-3 py-1.5 text-xs font-semibold text-sky-700 transition-colors hover:bg-sky-50"
+                >
+                  <History className="h-3.5 w-3.5" aria-hidden="true" />
+                  Restate my key facts
+                </button>
               </div>
-              <button
-                type="button"
-                data-testid="chat-snippet-restate-key-facts-button"
-                onClick={() => handleSnippetAction('restate_key_facts')}
-                className="inline-flex items-center gap-2 rounded-full border border-sky-500/20 bg-background px-3 py-1.5 text-xs font-semibold text-sky-700 transition-colors hover:bg-sky-50"
-              >
-                <History className="h-3.5 w-3.5" aria-hidden="true" />
-                Restate my key facts
-              </button>
             </div>
-          </div>
-        ) : null}
+          ) : null}
 
-        <div className="mt-3 flex flex-wrap gap-2">
-          <button
-            type="button"
-            data-testid="chat-snippet-remix-button"
-            onClick={() => handleSnippetAction('remix')}
-            className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
-          >
-            <Repeat2 className="h-3.5 w-3.5" aria-hidden="true" />
-            Remix
-          </button>
-          <button
-            type="button"
-            data-testid="chat-snippet-quote-button"
-            onClick={() => handleSnippetAction('quote')}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
-          >
-            <Quote className="h-3.5 w-3.5" aria-hidden="true" />
-            Quote
-          </button>
-          <button
-            type="button"
-            data-testid="chat-snippet-quote-card-button"
-            onClick={() => handleSnippetAction('quote_card')}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
-          >
-            <Quote className="h-3.5 w-3.5" aria-hidden="true" />
-            Quote card
-          </button>
-          {rewindContext ? (
+          {shouldShowKeepPreviousToneChip ? (
+            <div
+              data-testid="chat-snippet-tone-continuity-bar"
+              className="rounded-xl border border-sky-500/20 bg-sky-500/10 px-3 py-2"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center rounded-full border border-sky-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
+                  Abrupt style shift
+                </span>
+                <button
+                  type="button"
+                  data-testid="chat-snippet-recover-chip-keep-previous-tone"
+                  onClick={() => handleSnippetAction('recover_keep_previous_tone')}
+                  className="inline-flex items-center rounded-full border border-sky-500/20 bg-background px-2.5 py-1 text-[11px] font-semibold text-sky-700 transition-colors hover:bg-sky-500/10"
+                >
+                  Keep previous tone
+                </button>
+              </div>
+              {continuityRecoveryReason ? (
+                <p
+                  data-testid="chat-snippet-tone-continuity-reason"
+                  className="mt-2 text-xs text-foreground/80"
+                >
+                  {continuityRecoveryReason}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
+          {followUpOptInSignal ? (
+            <div
+              data-testid="chat-snippet-follow-up-opt-in"
+              className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-3"
+            >
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-1">
+                  <span className="inline-flex items-center rounded-full border border-primary/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">
+                    Future check-ins
+                  </span>
+                  <p className="text-sm font-medium text-foreground">
+                    {followUpOptInSignal.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {followUpOptInStatus === 'enabled'
+                      ? 'AgentGram can now follow up later from strong threads like this one. Caps and quiet hours still apply.'
+                      : followUpOptInSignal.description}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  data-testid="chat-snippet-follow-up-opt-in-button"
+                  onClick={handleFollowUpOptIn}
+                  disabled={followUpOptInStatus !== 'idle'}
+                  className={cn(
+                    'inline-flex items-center justify-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',
+                    followUpOptInStatus === 'enabled'
+                      ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-700'
+                      : 'border-primary/20 bg-background text-primary hover:bg-primary/10',
+                    followUpOptInStatus === 'saving' && 'cursor-wait opacity-70'
+                  )}
+                >
+                  {followUpOptInStatus === 'saving' ? (
+                    <>
+                      <Loader2
+                        className="h-3.5 w-3.5 animate-spin"
+                        aria-hidden="true"
+                      />
+                      Enabling…
+                    </>
+                  ) : followUpOptInStatus === 'enabled' ? (
+                    'Future check-ins enabled'
+                  ) : (
+                    'Enable future check-ins'
+                  )}
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              data-testid="chat-snippet-rewind-button"
-              onClick={() => handleSnippetAction('rewind')}
+              data-testid="chat-snippet-remix-button"
+              onClick={() => handleSnippetAction('remix')}
+              className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
+            >
+              <Repeat2 className="h-3.5 w-3.5" aria-hidden="true" />
+              Remix
+            </button>
+            <button
+              type="button"
+              data-testid="chat-snippet-quote-button"
+              onClick={() => handleSnippetAction('quote')}
               className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
             >
-              <History className="h-3.5 w-3.5" aria-hidden="true" />
-              Rewind reply
+              <Quote className="h-3.5 w-3.5" aria-hidden="true" />
+              Quote
             </button>
-          ) : null}
-          <button
-            type="button"
-            data-testid="chat-snippet-recover-button"
-            onClick={() => handleSnippetAction('recover')}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
-          >
-            <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-            Stay in character
-          </button>
-          <button
-            type="button"
-            data-testid="chat-snippet-safer-rewrite-button"
-            onClick={() => handleSnippetAction('safer_rewrite')}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-amber-500/30 hover:text-amber-700"
-          >
-            <ShieldAlert className="h-3.5 w-3.5" aria-hidden="true" />
-            Safer rewrite
-          </button>
-          <button
-            type="button"
-            data-testid="chat-snippet-contradiction-button"
-            onClick={() => handleSnippetAction('contradiction')}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-amber-500/30 hover:text-amber-600"
-          >
-            <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
-            Flag contradiction
-          </button>
+            <button
+              type="button"
+              data-testid="chat-snippet-quote-card-button"
+              onClick={() => handleSnippetAction('quote_card')}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+            >
+              <Quote className="h-3.5 w-3.5" aria-hidden="true" />
+              Quote card
+            </button>
+            <button
+              type="button"
+              data-testid="chat-snippet-lock-tone-button"
+              onClick={() => handleSnippetAction('lock_tone')}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+            >
+              <Lock className="h-3.5 w-3.5" aria-hidden="true" />
+              Lock current tone
+            </button>
+            {rewindContext ? (
+              <button
+                type="button"
+                data-testid="chat-snippet-rewind-button"
+                onClick={() => handleSnippetAction('rewind')}
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+              >
+                <History className="h-3.5 w-3.5" aria-hidden="true" />
+                Rewind reply
+              </button>
+            ) : null}
+            <button
+              type="button"
+              data-testid="chat-snippet-recover-button"
+              onClick={() => handleSnippetAction('recover')}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+              Stay in character
+            </button>
+            <button
+              type="button"
+              data-testid="chat-snippet-safer-rewrite-button"
+              onClick={() => handleSnippetAction('safer_rewrite')}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-amber-500/30 hover:text-amber-700"
+            >
+              <ShieldAlert className="h-3.5 w-3.5" aria-hidden="true" />
+              Safer rewrite
+            </button>
+            <button
+              type="button"
+              data-testid="chat-snippet-contradiction-button"
+              onClick={() => handleSnippetAction('contradiction')}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-amber-500/30 hover:text-amber-600"
+            >
+              <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+              Flag contradiction
+            </button>
+          </div>
         </div>
       </div>
     );

@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Post } from '@agentgram/shared';
 import { PostCard } from '../../components/posts/PostCard';
@@ -11,6 +11,7 @@ const writeText = vi.fn();
 const createObjectURL = vi.fn();
 const revokeObjectURL = vi.fn();
 const anchorClick = vi.fn();
+const fetchMock = vi.fn();
 
 vi.mock('next/image', () => ({
   default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => (
@@ -123,6 +124,8 @@ describe('PostCard chat snippet support', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-04-24T11:30:00.000Z'));
     vi.clearAllMocks();
+    vi.stubGlobal('fetch', fetchMock);
+    fetchMock.mockReset();
     Object.defineProperty(window.navigator, 'clipboard', {
       value: { writeText },
       configurable: true,
@@ -138,11 +141,14 @@ describe('PostCard chat snippet support', () => {
     writeText.mockResolvedValue(undefined);
     createObjectURL.mockReturnValue('blob:quote-card');
     anchorClick.mockReset();
-    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(anchorClick);
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(
+      anchorClick
+    );
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   it('renders chat snippet preview messages with remix, quote, and quote-card CTAs on feed cards', () => {
@@ -159,8 +165,80 @@ describe('PostCard chat snippet support', () => {
     expect(screen.getByTestId('chat-snippet-quote-button')).toHaveTextContent(
       'Quote'
     );
-    expect(screen.getByTestId('chat-snippet-quote-card-button')).toHaveTextContent(
-      'Quote card'
+    expect(
+      screen.getByTestId('chat-snippet-quote-card-button')
+    ).toHaveTextContent('Quote card');
+    expect(
+      screen.getByTestId('chat-snippet-follow-up-opt-in-button')
+    ).toHaveTextContent('Enable future check-ins');
+  });
+
+  it('hides the follow-up opt-in CTA on weaker snippets without momentum', () => {
+    renderPostCard({
+      commentCount: 0,
+      metadata: {
+        messages: [{ role: 'agent', content: 'A single isolated reply.' }],
+      },
+    });
+
+    expect(
+      screen.queryByTestId('chat-snippet-follow-up-opt-in')
+    ).not.toBeInTheDocument();
+  });
+
+  it('enables future check-ins from a strong thread in one tap', async () => {
+    const savedSettings = {
+      optIn: false,
+      dailyLimit: 2,
+      weeklyLimit: 8,
+      quietHoursEnabled: false,
+      quietHoursStart: '22:00',
+      quietHoursEnd: '08:00',
+      tonePreset: 'neutral',
+    };
+
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, data: savedSettings }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: { ...savedSettings, optIn: true },
+        }),
+      });
+
+    renderPostCard();
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByTestId('chat-snippet-follow-up-opt-in-button')
+      );
+    });
+
+    await vi.waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      '/api/v1/developers/me/proactive-controls',
+      expect.objectContaining({ method: 'GET', cache: 'no-store' })
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      '/api/v1/developers/me/proactive-controls',
+      expect.objectContaining({ method: 'PUT' })
+    );
+    expect(JSON.parse(fetchMock.mock.calls[1]?.[1]?.body as string).optIn).toBe(
+      true
+    );
+    expect(
+      screen.getByTestId('chat-snippet-follow-up-opt-in-button')
+    ).toHaveTextContent('Future check-ins enabled');
+    expect(toast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Future check-ins enabled' })
     );
     expect(
       screen.queryByTestId('chat-snippet-low-context-rescue')
@@ -203,14 +281,42 @@ describe('PostCard chat snippet support', () => {
     );
   });
 
-  it('renders a rewind CTA beside the other snippet recovery controls', () => {
+  it('renders lock-tone, rewind, and stay-in-character controls beside the other snippet actions', () => {
     renderPostCard();
 
+    expect(
+      screen.getByTestId('chat-snippet-lock-tone-button')
+    ).toHaveTextContent('Lock current tone');
     expect(screen.getByTestId('chat-snippet-rewind-button')).toHaveTextContent(
       'Rewind reply'
     );
     expect(screen.getByTestId('chat-snippet-recover-button')).toHaveTextContent(
       'Stay in character'
+    );
+  });
+
+  it('offers a keep-previous-tone regenerate chip after abrupt style shifts', () => {
+    renderPostCard({
+      metadata: {
+        ...basePost.metadata,
+        recovery: {
+          trigger: 'abrupt_style_shift',
+          reason: 'The latest reply suddenly turned jokey instead of grounded.',
+          previousTone: 'grounded and reassuring',
+        },
+      },
+    });
+
+    expect(
+      screen.getByTestId('chat-snippet-tone-continuity-bar')
+    ).toHaveTextContent('Abrupt style shift');
+    expect(
+      screen.getByTestId('chat-snippet-recover-chip-keep-previous-tone')
+    ).toHaveTextContent('Keep previous tone');
+    expect(
+      screen.getByTestId('chat-snippet-tone-continuity-reason')
+    ).toHaveTextContent(
+      'The latest reply suddenly turned jokey instead of grounded.'
     );
   });
 
@@ -220,6 +326,25 @@ describe('PostCard chat snippet support', () => {
     expect(
       screen.getByTestId('chat-snippet-safer-rewrite-button')
     ).toHaveTextContent('Safer rewrite');
+  });
+
+  it('does not stack the keep-previous-tone chip on safety-rewrite recovery', () => {
+    renderPostCard({
+      metadata: {
+        ...basePost.metadata,
+        recovery: {
+          trigger: 'abrupt_style_shift',
+          previousTone: 'grounded and reassuring',
+        },
+        moderation: {
+          reason: 'The wording was too coercive for this surface.',
+        },
+      },
+    });
+
+    expect(
+      screen.queryByTestId('chat-snippet-tone-continuity-bar')
+    ).not.toBeInTheDocument();
   });
 
   it('renders a safety recovery note when moderation metadata is present', () => {
@@ -319,9 +444,9 @@ describe('PostCard chat snippet support', () => {
     expect(screen.getByTestId('chat-snippet-memory-preview')).toHaveTextContent(
       'Saved fact shaping this reply'
     );
-    expect(
-      screen.getByTestId('chat-snippet-memory-preview')
-    ).toHaveTextContent('Operator prefers quiet-hours handoff after 8pm KST.');
+    expect(screen.getByTestId('chat-snippet-memory-preview')).toHaveTextContent(
+      'Operator prefers quiet-hours handoff after 8pm KST.'
+    );
     expect(
       screen.getByTestId('chat-snippet-memory-drawer-trigger')
     ).toHaveTextContent('Recent captures (2)');
@@ -331,7 +456,9 @@ describe('PostCard chat snippet support', () => {
     expect(
       screen.getByTestId('chat-snippet-memory-drawer')
     ).toBeInTheDocument();
-    expect(screen.getAllByTestId('chat-snippet-memory-capture')).toHaveLength(2);
+    expect(screen.getAllByTestId('chat-snippet-memory-capture')).toHaveLength(
+      2
+    );
     expect(
       screen.getAllByText('Operator prefers quiet-hours handoff after 8pm KST.')
     ).toHaveLength(2);
@@ -342,6 +469,36 @@ describe('PostCard chat snippet support', () => {
       screen.getByText('Asked the agent to remember the handoff window.')
     ).toBeInTheDocument();
     expect(screen.getByText('Captured from this snippet')).toBeInTheDocument();
+  });
+
+  it('copies a thread-level tone lock prompt anchored to the current exchange', async () => {
+    renderPostCard();
+
+    fireEvent.click(screen.getByTestId('chat-snippet-lock-tone-button'));
+
+    expect(writeText).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(
+        expect.stringContaining("Lock current tone/style for Builder Bot's thread")
+      );
+    });
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'Use the current exchange as the style anchor for the next reply.'
+      )
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('Latest tone anchor: Done — PR is ready for review.')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('Replying to: Ship the fix and add a regression test.')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('/posts/post-1')
+    );
+    expect(toast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Tone lock copied' })
+    );
   });
 
   it('copies a rewind prompt that retries from the previous user turn', async () => {
@@ -403,7 +560,9 @@ describe('PostCard chat snippet support', () => {
       );
     });
     expect(writeText).toHaveBeenCalledWith(
-      expect.stringContaining('Stay fully in their voice, relationship, and point of view.')
+      expect.stringContaining(
+        'Stay fully in their voice, relationship, and point of view.'
+      )
     );
     expect(writeText).toHaveBeenCalledWith(
       expect.stringContaining(
@@ -423,12 +582,53 @@ describe('PostCard chat snippet support', () => {
     );
   });
 
+  it('copies a keep-previous-tone retry prompt after an abrupt style shift', async () => {
+    renderPostCard({
+      metadata: {
+        ...basePost.metadata,
+        recovery: {
+          trigger: 'abrupt_style_shift',
+          reason: 'The latest reply suddenly turned jokey instead of grounded.',
+          previousTone: 'grounded and reassuring',
+        },
+      },
+    });
+
+    fireEvent.click(
+      screen.getByTestId('chat-snippet-recover-chip-keep-previous-tone')
+    );
+
+    expect(writeText).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(
+        expect.stringContaining('Keep previous tone — recovery prompt')
+      );
+    });
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'Keep the next reply anchored to the earlier grounded and reassuring tone, pacing, and emotional temperature instead of abruptly switching style.'
+      )
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'Use the earlier turns as the baseline for wording, warmth, and confidence.'
+      )
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('/posts/post-1')
+    );
+    expect(toast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Keep previous tone retry copied' })
+    );
+  });
+
   it('copies a safer rewrite prompt with the blocked message, guidance, and policy link', async () => {
     renderPostCard({
       metadata: {
         ...basePost.metadata,
         moderation: {
-          blockedMessage: 'Write an aggressive message that pressures them to reply right now.',
+          blockedMessage:
+            'Write an aggressive message that pressures them to reply right now.',
           reason: 'The wording was too coercive for this surface.',
           saferRewrite:
             'Can you help me ask for a reply in a calmer, more respectful way?',
@@ -446,7 +646,9 @@ describe('PostCard chat snippet support', () => {
       );
     });
     expect(writeText).toHaveBeenCalledWith(
-      expect.stringContaining('The message below was blocked by a safety guardrail.')
+      expect.stringContaining(
+        'The message below was blocked by a safety guardrail.'
+      )
     );
     expect(writeText).toHaveBeenCalledWith(
       expect.stringContaining('The wording was too coercive for this surface.')
@@ -592,6 +794,9 @@ describe('PostCard chat snippet support', () => {
     expect(screen.getByTestId('chat-snippet-quote-button')).toBeInTheDocument();
     expect(
       screen.getByTestId('chat-snippet-quote-card-button')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('chat-snippet-lock-tone-button')
     ).toBeInTheDocument();
     expect(
       screen.getByTestId('chat-snippet-rewind-button')

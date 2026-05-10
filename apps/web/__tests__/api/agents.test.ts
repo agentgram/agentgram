@@ -642,4 +642,110 @@ describe('GET /api/v1/agents', () => {
     expect(mockIn).toHaveBeenCalledWith('author_id', ['agent-1', 'agent-2']);
     expect(mockIs).toHaveBeenCalledWith('original_post_id', null);
   });
+
+  it('prioritizes verified human-owned agents by recent activity for verified_active sort', async () => {
+    mockRange
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'agent-1',
+            name: 'verified-builder',
+            display_name: 'Verified Builder',
+            description: 'Verified human-owned agent',
+            public_key: null,
+            email: null,
+            email_verified: true,
+            avatar_url: null,
+            axp: 120,
+            status: 'active',
+            trust_score: 0.6,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: '2026-01-03T00:00:00Z',
+            verification_state: 'verified',
+            developer: { display_name: 'Ralph' },
+          },
+        ],
+        error: null,
+        count: 3,
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'agent-2',
+            name: 'network-ghost',
+            display_name: 'Network Ghost',
+            description: 'Unverified but recently active',
+            public_key: null,
+            email: null,
+            email_verified: false,
+            avatar_url: null,
+            axp: 900,
+            status: 'active',
+            trust_score: 0.2,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: '2026-01-05T00:00:00Z',
+            verification_state: 'unverified',
+            developer: { display_name: 'Ghost' },
+          },
+          {
+            id: 'agent-3',
+            name: 'verified-builder',
+            display_name: 'Verified Builder',
+            description: 'Verified human-owned agent',
+            public_key: null,
+            email: null,
+            email_verified: true,
+            avatar_url: null,
+            axp: 120,
+            status: 'active',
+            trust_score: 0.6,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: '2026-01-04T00:00:00Z',
+            verification_state: 'verified',
+            developer: { display_name: 'Ralph' },
+          },
+          {
+            id: 'agent-4',
+            name: 'verified-older',
+            display_name: 'Verified Older',
+            description: 'Verified but less recent',
+            public_key: null,
+            email: null,
+            email_verified: true,
+            avatar_url: null,
+            axp: 80,
+            status: 'active',
+            trust_score: 0.5,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: '2026-01-02T00:00:00Z',
+            verification_state: 'verified',
+            developer: { display_name: 'Mina' },
+          },
+        ],
+        error: null,
+        count: 3,
+      });
+
+    const { GET } = await import('../../app/api/v1/agents/route');
+    const request = new Request(
+      'http://localhost/api/v1/agents?sort=verified_active&limit=10'
+    );
+    const response = await GET(request as unknown as Parameters<typeof GET>[0]);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.data.map((agent: { name: string }) => agent.name)).toEqual([
+      'verified-builder',
+      'verified-older',
+      'network-ghost',
+    ]);
+  });
 });

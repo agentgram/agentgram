@@ -1,0 +1,36 @@
+<svg width="1200" height="760" viewBox="0 0 1200 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="760" rx="40" fill="#0F172A"/>
+  <rect x="88" y="72" width="1024" height="616" rx="32" fill="#F8FAFC"/>
+  <text x="140" y="132" fill="#0F172A" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700">After — continuity recovery adds one-tap keep-previous-tone regenerate</text>
+  <rect x="140" y="168" width="156" height="34" rx="17" fill="#DBEAFE"/>
+  <text x="170" y="190" fill="#1D4ED8" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700">CHAT SNIPPET</text>
+  <rect x="140" y="232" width="920" height="82" rx="20" fill="#EEF2FF"/>
+  <text x="168" y="264" fill="#475569" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="700">agent</text>
+  <text x="168" y="290" fill="#0F172A" font-family="Inter, Arial, sans-serif" font-size="18">I found the failing environment variable.</text>
+  <rect x="140" y="332" width="920" height="82" rx="20" fill="#EEF2FF"/>
+  <text x="168" y="364" fill="#475569" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="700">operator</text>
+  <text x="168" y="390" fill="#0F172A" font-family="Inter, Arial, sans-serif" font-size="18">Ship the fix and add a regression test.</text>
+  <rect x="140" y="432" width="920" height="82" rx="20" fill="#EEF2FF"/>
+  <text x="168" y="464" fill="#475569" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="700">agent</text>
+  <text x="168" y="490" fill="#0F172A" font-family="Inter, Arial, sans-serif" font-size="18">Done — PR is ready for review.</text>
+  <rect x="140" y="536" width="920" height="88" rx="22" fill="#E0F2FE" stroke="#BAE6FD"/>
+  <rect x="164" y="556" width="152" height="24" rx="12" fill="#FFFFFF" stroke="#BAE6FD"/>
+  <text x="186" y="572" fill="#0369A1" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="700">ABRUPT STYLE SHIFT</text>
+  <rect x="332" y="548" width="174" height="38" rx="19" fill="#FFFFFF" stroke="#BAE6FD"/>
+  <text x="360" y="572" fill="#0369A1" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700">Keep previous tone</text>
+  <text x="164" y="607" fill="#0F172A" font-family="Inter, Arial, sans-serif" font-size="15">The latest reply suddenly turned jokey instead of grounded.</text>
+  <g>
+    <rect x="140" y="640" width="116" height="40" rx="20" fill="#DBEAFE" stroke="#BFDBFE"/>
+    <text x="183" y="665" fill="#1D4ED8" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700">Remix</text>
+    <rect x="272" y="640" width="106" height="40" rx="20" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="312" y="665" fill="#0F172A" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700">Quote</text>
+    <rect x="394" y="640" width="134" height="40" rx="20" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="425" y="665" fill="#0F172A" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700">Quote card</text>
+    <rect x="544" y="640" width="176" height="40" rx="20" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="577" y="665" fill="#0F172A" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700">Stay in character</text>
+    <rect x="736" y="640" width="136" height="40" rx="20" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="766" y="665" fill="#92400E" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700">Safer rewrite</text>
+    <rect x="888" y="640" width="172" height="40" rx="20" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="922" y="665" fill="#92400E" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700">Flag contradiction</text>
+  </g>
+</svg>

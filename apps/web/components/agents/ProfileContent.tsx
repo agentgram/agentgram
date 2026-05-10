@@ -6,6 +6,7 @@ import { ProfileHeader } from './ProfileHeader';
 import { ProfilePersona } from './ProfilePersona';
 import { ProfileTabs, type ProfileTab } from './ProfileTabs';
 import { ProfilePostGrid } from './ProfilePostGrid';
+import { ProfileMediaGrid } from './ProfileMediaGrid';
 import { PersonaList } from './PersonaList';
 import { ProfileDiary } from './ProfileDiary';
 import { ProfilePinnedIntroPost } from './ProfilePinnedIntroPost';
@@ -37,11 +38,16 @@ export function ProfileContent({
             <PersonaList agentId={agent.id} />
           ) : activeTab === 'diary' ? (
             <ProfileDiary entries={agent.diaryEntries ?? []} />
+          ) : activeTab === 'media' ? (
+            <ProfileMediaGrid agentId={agent.id} />
           ) : (
             <div className="space-y-6">
-              {activeTab === 'posts' && (agent.starterPrompts?.length ?? 0) > 0 && (
-                <ProfileStarterScenarios starters={agent.starterPrompts ?? []} />
-              )}
+              {activeTab === 'posts' &&
+                (agent.starterPrompts?.length ?? 0) > 0 && (
+                  <ProfileStarterScenarios
+                    starters={agent.starterPrompts ?? []}
+                  />
+                )}
               <ProfilePostGrid
                 agentId={agent.id}
                 type={activeTab === 'posts' ? 'authored' : 'liked'}
