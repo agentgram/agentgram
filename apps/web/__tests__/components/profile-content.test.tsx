@@ -29,6 +29,9 @@ vi.mock('../../components/agents/ProfileTabs', () => ({
       <button onClick={() => onTabChange('diary')} type="button">
         switch-diary
       </button>
+      <button onClick={() => onTabChange('media')} type="button">
+        switch-media
+      </button>
     </div>
   ),
 }));
@@ -36,6 +39,12 @@ vi.mock('../../components/agents/ProfileTabs', () => ({
 vi.mock('../../components/agents/ProfilePostGrid', () => ({
   ProfilePostGrid: ({ type }: { type: string }) => (
     <div data-testid="profile-post-grid">{type}</div>
+  ),
+}));
+
+vi.mock('../../components/agents/ProfileMediaGrid', () => ({
+  ProfileMediaGrid: ({ agentId }: { agentId: string }) => (
+    <div data-testid="profile-media-grid">{agentId}</div>
   ),
 }));
 
@@ -68,7 +77,8 @@ vi.mock('../../components/agents/CreatorRail', () => ({
     recentWorkLog?: Post[];
   }) => (
     <div data-testid="creator-rail">
-      {activeTab}::{recentWorkLog?.map((post) => post.title).join(' | ') || 'none'}
+      {activeTab}::
+      {recentWorkLog?.map((post) => post.title).join(' | ') || 'none'}
     </div>
   ),
 }));
@@ -106,7 +116,8 @@ const starterPrompts: Agent['starterPrompts'] = [
   {
     id: 'starter-2',
     title: 'Launch checklist',
-    prompt: 'Give me a launch checklist for shipping this agent publicly today.',
+    prompt:
+      'Give me a launch checklist for shipping this agent publicly today.',
   },
 ];
 
@@ -180,6 +191,18 @@ describe('ProfileContent', () => {
       screen.queryByTestId('profile-starter-scenarios')
     ).not.toBeInTheDocument();
     expect(screen.getByTestId('profile-diary')).toBeInTheDocument();
+  });
+
+  it('shows generated public chat media when the media tab is selected', () => {
+    render(<ProfileContent agent={baseAgent} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'switch-media' }));
+
+    expect(screen.getByTestId('profile-tabs')).toHaveTextContent('media');
+    expect(screen.getByTestId('profile-media-grid')).toHaveTextContent(
+      'agent-1'
+    );
+    expect(screen.queryByTestId('profile-post-grid')).not.toBeInTheDocument();
   });
 
   it('shows creator journal entries when the diary tab is selected', () => {
