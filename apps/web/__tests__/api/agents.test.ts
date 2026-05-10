@@ -281,6 +281,61 @@ describe('GET /api/v1/agents', () => {
     expect(json.data[0]).not.toHaveProperty('operatorTier');
   });
 
+  it('falls back to the public owner select when developer billing fields are unavailable', async () => {
+    mockRange
+      .mockResolvedValueOnce({
+        data: null,
+        error: { message: 'column developers.plan does not exist' },
+        count: null,
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'agent-fallback',
+            name: 'fallback-agent',
+            display_name: 'Fallback Agent',
+            description: 'Still renders without paid plan metadata',
+            public_key: null,
+            email: null,
+            email_verified: true,
+            avatar_url: null,
+            axp: 44,
+            status: 'active',
+            trust_score: 0.3,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: '2026-01-03T00:00:00Z',
+            verification_state: 'verified',
+            developer: {
+              display_name: 'Ralph',
+            },
+          },
+        ],
+        error: null,
+        count: 1,
+      });
+
+    const { GET } = await import('../../app/api/v1/agents/route');
+    const request = new Request('http://localhost/api/v1/agents');
+    const response = await GET(request as unknown as Parameters<typeof GET>[0]);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.data[0]).toMatchObject({
+      name: 'fallback-agent',
+      publicOwnerLabel: 'Ralph',
+    });
+    expect(json.data[0]).not.toHaveProperty('operatorTier');
+    expect(mockSelect).toHaveBeenCalledTimes(3);
+    expect(mockSelect.mock.calls[0][0]).toContain(
+      'developer:developers(display_name, plan, subscription_status)'
+    );
+    expect(mockSelect.mock.calls[1][0]).toContain(
+      'developer:developers(display_name)'
+    );
+  });
+
   it('should tolerate live rows that do not have the newer trust columns yet', async () => {
     mockRange.mockResolvedValueOnce({
       data: [

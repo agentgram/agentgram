@@ -21,6 +21,46 @@ type SortableQuery<TQuery> = {
   order(column: string, options: { ascending: boolean }): TQuery;
 };
 
+const AGENTS_DIRECTORY_SELECT = `
+  id,
+  name,
+  display_name,
+  description,
+  public_key,
+  email,
+  email_verified,
+  axp,
+  status,
+  trust_score,
+  metadata,
+  avatar_url,
+  created_at,
+  updated_at,
+  last_active,
+  verification_state,
+  developer:developers(display_name, plan, subscription_status)
+`;
+
+const AGENTS_DIRECTORY_FALLBACK_SELECT = `
+  id,
+  name,
+  display_name,
+  description,
+  public_key,
+  email,
+  email_verified,
+  axp,
+  status,
+  trust_score,
+  metadata,
+  avatar_url,
+  created_at,
+  updated_at,
+  last_active,
+  verification_state,
+  developer:developers(display_name)
+`;
+
 function isCapabilityFilterEnabled(value: string | null): boolean {
   if (value == null) {
     return false;
@@ -115,6 +155,15 @@ function matchesDiscoveryFacets(
   return true;
 }
 
+function shouldRetryWithoutDeveloperBilling(error: unknown) {
+  const message =
+    error && typeof error === 'object' && 'message' in error
+      ? String(error.message).toLowerCase()
+      : '';
+
+  return message.includes('plan') || message.includes('subscription_status');
+}
+
 // GET /api/v1/agents - Fetch agent directory
 export async function GET(req: NextRequest) {
   try {
@@ -159,29 +208,10 @@ export async function GET(req: NextRequest) {
 
     const supabase = getSupabaseClient();
 
-    const buildAgentsQuery = () => {
-      let query = supabase.from('agents').select(
-        `
-          id,
-          name,
-          display_name,
-          description,
-          public_key,
-          email,
-          email_verified,
-          axp,
-          status,
-          trust_score,
-          metadata,
-          avatar_url,
-          created_at,
-          updated_at,
-          last_active,
-          verification_state,
-          developer:developers(display_name, plan, subscription_status)
-        `,
-        { count: 'exact' }
-      );
+    const buildAgentsQuery = (selectClause: string) => {
+      let query = supabase.from('agents').select(selectClause, {
+        count: 'exact',
+      });
 
       if (search) {
         const escaped = search.replace(/[%_\\]/g, '\\$&');
@@ -204,114 +234,131 @@ export async function GET(req: NextRequest) {
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
-    let agents: AgentResponse[] = [];
-    let count = 0;
+    const fetchAgentsDirectoryPage = async (selectClause: string) => {
+      let agents: AgentResponse[] = [];
+      let count = 0;
 
-    if (requiresInMemoryProcessing) {
-      const { error: countError, count: totalCount } =
-        await buildAgentsQuery().range(0, 0);
+      if (requiresInMemoryProcessing) {
+        const { error: countError, count: totalCount } = await buildAgentsQuery(
+          selectClause
+        ).range(0, 0);
 
-      if (countError) {
-        console.error('Agents query error:', countError);
-        return jsonResponse(
-          ErrorResponses.databaseError('Failed to fetch agents'),
-          500
-        );
-      }
-
-      const baseCount = totalCount || 0;
-      const { data: fullFetchData, error: allAgentsError } =
-        baseCount === 0
-          ? { data: [], error: null }
-          : await applySort(buildAgentsQuery(), sort).range(
-              0,
-              Math.max(baseCount - 1, 0)
-            );
-
-      if (allAgentsError) {
-        console.error('Agents query error:', allAgentsError);
-        return jsonResponse(
-          ErrorResponses.databaseError('Failed to fetch agents'),
-          500
-        );
-      }
-
-      const allAgents = (fullFetchData ?? []) as AgentResponse[];
-      let filteredAgents = allAgents;
-
-      if (sort === 'discussed') {
-        const discussionCounts = new Map<string, number>();
-
-        if (allAgents.length > 0) {
-          const { data: discussionRows, error: discussionError } =
-            await supabase
-              .from('posts')
-              .select('author_id, comment_count')
-              .in(
-                'author_id',
-                allAgents.map((agent) => agent.id)
-              )
-              .is('original_post_id', null);
-
-          if (discussionError) {
-            console.error('Agent discussion query error:', discussionError);
-            return jsonResponse(
-              ErrorResponses.databaseError('Failed to fetch agents'),
-              500
-            );
-          }
-
-          for (const row of discussionRows || []) {
-            if (!row.author_id) continue;
-
-            discussionCounts.set(
-              row.author_id,
-              (discussionCounts.get(row.author_id) || 0) +
-                (row.comment_count || 0)
-            );
-          }
+        if (countError) {
+          return { error: countError };
         }
 
-        filteredAgents = [...allAgents].sort((a, b) => {
-          const discussionDelta =
-            (discussionCounts.get(b.id) || 0) -
-            (discussionCounts.get(a.id) || 0);
-          if (discussionDelta !== 0) return discussionDelta;
+        const baseCount = totalCount || 0;
+        const { data: fullFetchData, error: allAgentsError } =
+          baseCount === 0
+            ? { data: [], error: null }
+            : await applySort(buildAgentsQuery(selectClause), sort).range(
+                0,
+                Math.max(baseCount - 1, 0)
+              );
 
-          const lastActiveDelta =
-            getTimestamp(b.last_active) - getTimestamp(a.last_active);
-          if (lastActiveDelta !== 0) return lastActiveDelta;
+        if (allAgentsError) {
+          return { error: allAgentsError };
+        }
 
-          return (b.axp || 0) - (a.axp || 0);
-        });
-      }
+        const allAgents = (fullFetchData ?? []) as AgentResponse[];
+        let filteredAgents = allAgents;
 
-      if (sort === 'verified_active') {
-        filteredAgents = [...filteredAgents].sort(compareVerifiedActiveAgents);
-      }
+        if (sort === 'discussed') {
+          const discussionCounts = new Map<string, number>();
 
-      if (relationshipGoal || worldbuilding) {
-        filteredAgents = filteredAgents.filter((agent) =>
-          matchesDiscoveryFacets(agent, relationshipGoal, worldbuilding)
+          if (allAgents.length > 0) {
+            const { data: discussionRows, error: discussionError } =
+              await supabase
+                .from('posts')
+                .select('author_id, comment_count')
+                .in(
+                  'author_id',
+                  allAgents.map((agent) => agent.id)
+                )
+                .is('original_post_id', null);
+
+            if (discussionError) {
+              return { error: discussionError };
+            }
+
+            for (const row of discussionRows || []) {
+              if (!row.author_id) continue;
+
+              discussionCounts.set(
+                row.author_id,
+                (discussionCounts.get(row.author_id) || 0) +
+                  (row.comment_count || 0)
+              );
+            }
+          }
+
+          filteredAgents = [...allAgents].sort((a, b) => {
+            const discussionDelta =
+              (discussionCounts.get(b.id) || 0) -
+              (discussionCounts.get(a.id) || 0);
+            if (discussionDelta !== 0) return discussionDelta;
+
+            const lastActiveDelta =
+              getTimestamp(b.last_active) - getTimestamp(a.last_active);
+            if (lastActiveDelta !== 0) return lastActiveDelta;
+
+            return (b.axp || 0) - (a.axp || 0);
+          });
+        }
+
+        if (sort === 'verified_active') {
+          filteredAgents = [...filteredAgents].sort(compareVerifiedActiveAgents);
+        }
+
+        if (relationshipGoal || worldbuilding) {
+          filteredAgents = filteredAgents.filter((agent) =>
+            matchesDiscoveryFacets(agent, relationshipGoal, worldbuilding)
+          );
+        }
+
+        count = filteredAgents.length;
+        agents = filteredAgents.slice(from, to + 1);
+      } else {
+        const result = await applySort(buildAgentsQuery(selectClause), sort).range(
+          from,
+          to
         );
+
+        if (result.error) {
+          return { error: result.error };
+        }
+
+        agents = (result.data ?? []) as AgentResponse[];
+        count = result.count || 0;
       }
 
-      count = filteredAgents.length;
-      agents = filteredAgents.slice(from, to + 1);
-    } else {
-      const result = await applySort(buildAgentsQuery(), sort).range(from, to);
+      return { agents, count };
+    };
 
-      if (result.error) {
-        console.error('Agents query error:', result.error);
-        return jsonResponse(
-          ErrorResponses.databaseError('Failed to fetch agents'),
-          500
-        );
-      }
+    let directoryResult = await fetchAgentsDirectoryPage(AGENTS_DIRECTORY_SELECT);
 
-      agents = (result.data ?? []) as AgentResponse[];
-      count = result.count || 0;
+    if (
+      'error' in directoryResult &&
+      shouldRetryWithoutDeveloperBilling(directoryResult.error)
+    ) {
+      console.warn(
+        'Agents query failed with developer billing fields; retrying without plan metadata.',
+        directoryResult.error
+      );
+      directoryResult = await fetchAgentsDirectoryPage(
+        AGENTS_DIRECTORY_FALLBACK_SELECT
+      );
     }
+
+    if ('error' in directoryResult) {
+      console.error('Agents query error:', directoryResult.error);
+      return jsonResponse(
+        ErrorResponses.databaseError('Failed to fetch agents'),
+        500
+      );
+    }
+
+    const { agents, count } = directoryResult;
 
     const remixCountsByName = await getRemixCountsBySourceNames(
       supabase,
