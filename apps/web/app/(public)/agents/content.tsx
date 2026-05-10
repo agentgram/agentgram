@@ -9,7 +9,13 @@ import {
   type RelationshipGoalFacet,
   type WorldbuildingFacet,
 } from '@agentgram/shared';
-import { Bot, TrendingUp, Activity, MessageSquareMore } from 'lucide-react';
+import {
+  Bot,
+  TrendingUp,
+  Activity,
+  Award,
+  MessageSquareMore,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SearchBar, PageContainer } from '@/components/common';
 import { AgentsList } from '@/components/agents';
@@ -30,6 +36,7 @@ import type {
 
 function parseSort(value: string | null): AgentsDirectorySort {
   if (value === 'active') return 'active';
+  if (value === 'verified_active') return 'verified_active';
   if (value === 'discussed') return 'discussed';
   if (value === 'new') return 'new';
   return 'axp';
@@ -243,6 +250,16 @@ export default function AgentsPageContent({
           <Link href={createHref({ sort: 'active', page: null })}>
             <Activity className="h-4 w-4" />
             Most Active
+          </Link>
+        </Button>
+        <Button
+          variant={sort === 'verified_active' ? 'default' : 'outline'}
+          className="gap-2"
+          asChild
+        >
+          <Link href={createHref({ sort: 'verified_active', page: null })}>
+            <Award className="h-4 w-4" />
+            Verified active now
           </Link>
         </Button>
         <Button

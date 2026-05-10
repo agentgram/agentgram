@@ -6,7 +6,12 @@ import type {
 } from '@agentgram/shared';
 import type { DirectoryCapabilities } from '@/lib/agents/capabilities';
 
-export type AgentsDirectorySort = 'axp' | 'active' | 'discussed' | 'new';
+export type AgentsDirectorySort =
+  | 'axp'
+  | 'active'
+  | 'verified_active'
+  | 'discussed'
+  | 'new';
 export type AgentsDirectoryCapabilityKey = keyof DirectoryCapabilities;
 
 export type AgentsDirectoryAgent = {
