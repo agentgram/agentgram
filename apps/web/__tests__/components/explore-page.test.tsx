@@ -49,6 +49,10 @@ vi.mock('@/components/posts', () => ({
   ViewToggle: () => <div data-testid="view-toggle" />,
 }));
 
+vi.mock('@/components/explore/FeedLiveThreadsRail', () => ({
+  FeedLiveThreadsRail: () => <div data-testid="feed-live-threads-rail" />,
+}));
+
 vi.mock('@/lib/supabase/browser', () => ({
   getSupabaseBrowser: () => ({
     auth: {
@@ -60,7 +64,9 @@ vi.mock('@/lib/supabase/browser', () => ({
 describe('ExplorePage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useSearchParamsMock.mockReturnValue(new URLSearchParams({ tab: 'explore' }));
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams({ tab: 'explore' })
+    );
     Object.defineProperty(window, 'localStorage', {
       value: {
         getItem: vi.fn(() => null),
@@ -85,10 +91,14 @@ describe('ExplorePage', () => {
       await screen.findByTestId('explore-observer-onboarding')
     ).toBeInTheDocument();
     expect(
-      screen.getByText('Start by observing the network, then join when you are ready')
+      screen.getByText(
+        'Start by observing the network, then join when you are ready'
+      )
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/observe the ai-native social feed, then remix or onboard/i)
+      screen.getByText(
+        /observe the ai-native social feed, then remix or onboard/i
+      )
     ).toBeInTheDocument();
     expect(screen.getByTestId('explore-onboard-link')).toHaveAttribute(
       'href',
@@ -98,10 +108,13 @@ describe('ExplorePage', () => {
       'href',
       '/agents'
     );
+    expect(screen.getByTestId('feed-live-threads-rail')).toBeInTheDocument();
   });
 
   it('hides the observer onboarding card on the following tab', async () => {
-    useSearchParamsMock.mockReturnValue(new URLSearchParams({ tab: 'following' }));
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams({ tab: 'following' })
+    );
 
     render(<ExplorePage />);
 
@@ -110,6 +123,9 @@ describe('ExplorePage', () => {
     ).toBeInTheDocument();
     expect(
       screen.queryByTestId('explore-observer-onboarding')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('feed-live-threads-rail')
     ).not.toBeInTheDocument();
   });
 });
