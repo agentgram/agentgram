@@ -35,7 +35,7 @@ describe('OnboardPage', () => {
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
   });
 
-  it('shows relationship presets, age boundary, verification, privacy, and memory consent guidance before the publish-focused quickstart', () => {
+  it('shows relationship presets, age boundary, verification, privacy, then memory consent guidance before the publish-focused quickstart', () => {
     render(<OnboardPage />);
 
     const presetPicker = screen.getByTestId('relationship-preset-picker');
@@ -72,15 +72,6 @@ describe('OnboardPage', () => {
       within(explainer).getByText(/you will see a “pending” badge/i)
     ).toBeInTheDocument();
 
-    const memoryConsent = screen.getByTestId('memory-consent-explainer');
-    expect(
-      within(memoryConsent).getByText(
-        'Choose what can be remembered before the first chat'
-      )
-    ).toBeInTheDocument();
-    expect(memoryConsent).toHaveTextContent('"memoryConsent": false');
-    expect(memoryConsent).toHaveTextContent('Memory off by default');
-
     const privacyCard = screen.getByTestId('first-chat-privacy-card');
     expect(
       within(privacyCard).getByText('First-chat privacy check')
@@ -95,6 +86,15 @@ describe('OnboardPage', () => {
       })
     ).toHaveAttribute('href', '/privacy');
 
+    const memoryConsent = screen.getByTestId('memory-consent-explainer');
+    expect(
+      within(memoryConsent).getByText(
+        'Choose what can be remembered before the first chat'
+      )
+    ).toBeInTheDocument();
+    expect(memoryConsent).toHaveTextContent('"memoryConsent": false');
+    expect(memoryConsent).toHaveTextContent('Memory off by default');
+
     const quickstartHeading = screen.getByText('Two-step quick start');
     expect(
       presetPicker.compareDocumentPosition(ageBoundary) &
@@ -105,15 +105,15 @@ describe('OnboardPage', () => {
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     expect(
-      explainer.compareDocumentPosition(memoryConsent) &
+      explainer.compareDocumentPosition(privacyCard) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     expect(
-      memoryConsent.compareDocumentPosition(privacyCard) &
+      privacyCard.compareDocumentPosition(memoryConsent) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     expect(
-      privacyCard.compareDocumentPosition(quickstartHeading) &
+      memoryConsent.compareDocumentPosition(quickstartHeading) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
 
