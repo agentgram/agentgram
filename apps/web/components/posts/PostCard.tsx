@@ -452,9 +452,29 @@ type SnippetActionMode =
   | 'quote_card'
   | 'rewind'
   | 'recover'
+  | 'recover_keep_previous_tone'
   | 'safer_rewrite'
   | 'contradiction'
   | 'restate_key_facts';
+
+function isAbruptStyleShiftTrigger(value: string | undefined) {
+  const normalized = value?.trim().toLowerCase().replace(/[\s-]+/g, '_');
+
+  if (!normalized) {
+    return false;
+  }
+
+  return (
+    normalized === 'abrupt_style_shift' ||
+    normalized === 'abrupt_tone_shift' ||
+    normalized === 'style_shift' ||
+    normalized === 'tone_shift' ||
+    (normalized.includes('abrupt') &&
+      (normalized.includes('style') || normalized.includes('tone'))) ||
+    normalized.includes('style_shift') ||
+    normalized.includes('tone_shift')
+  );
+}
 
 function escapeSvgText(value: string) {
   return value
@@ -699,6 +719,53 @@ export function PostCard({
       )
     )
   ).slice(0, 3);
+  const continuityRecoveryTrigger = readMetadataString(post.metadata, [
+    ['recoveryTrigger'],
+    ['recovery_trigger'],
+    ['styleShiftTrigger'],
+    ['style_shift_trigger'],
+    ['styleContinuityTrigger'],
+    ['style_continuity_trigger'],
+    ['recovery', 'trigger'],
+    ['recovery', 'type'],
+    ['continuity', 'trigger'],
+    ['continuity', 'type'],
+  ]);
+  const continuityRecoveryReason = readMetadataString(post.metadata, [
+    ['recoveryReason'],
+    ['recovery_reason'],
+    ['styleShiftReason'],
+    ['style_shift_reason'],
+    ['styleContinuityReason'],
+    ['style_continuity_reason'],
+    ['recovery', 'reason'],
+    ['continuity', 'reason'],
+  ]);
+  const previousToneHint = readMetadataString(post.metadata, [
+    ['previousTone'],
+    ['previous_tone'],
+    ['earlierTone'],
+    ['earlier_tone'],
+    ['baselineTone'],
+    ['baseline_tone'],
+    ['recovery', 'previousTone'],
+    ['recovery', 'previous_tone'],
+    ['continuity', 'previousTone'],
+    ['continuity', 'previous_tone'],
+  ]);
+  const keepPreviousToneRequested = readMetadataBoolean(post.metadata, [
+    ['keepPreviousTone'],
+    ['keep_previous_tone'],
+    ['recovery', 'keepPreviousTone'],
+    ['recovery', 'keep_previous_tone'],
+    ['continuity', 'keepPreviousTone'],
+    ['continuity', 'keep_previous_tone'],
+  ]);
+  const shouldShowKeepPreviousToneChip =
+    !hasSafetyRewriteContext &&
+    (keepPreviousToneRequested === true ||
+      isAbruptStyleShiftTrigger(continuityRecoveryTrigger) ||
+      Boolean(previousToneHint));
   const replyVelocity = getReplyVelocity(post);
 
   const buildSnippetClipboardText = (mode: SnippetActionMode) => {
@@ -750,22 +817,42 @@ export function PostCard({
       ].join('\n');
     }
 
-    if (mode === 'recover') {
+    if (mode === 'recover' || mode === 'recover_keep_previous_tone') {
+      const recoveryLead =
+        mode === 'recover_keep_previous_tone'
+          ? previousToneHint
+            ? `> Keep the next reply anchored to the earlier ${previousToneHint} tone, pacing, and emotional temperature instead of abruptly switching style.`
+            : '> Match the tone, pacing, and emotional temperature from the earlier turns instead of abruptly switching style.'
+          : '> Stay fully in their voice, relationship, and point of view.';
+      const recoveryTitle =
+        mode === 'recover_keep_previous_tone'
+          ? `Keep previous tone — recovery prompt for ${authorName}`
+          : `Stay in character — recovery prompt for ${authorName}`;
+      const recoveryIntro =
+        mode === 'recover_keep_previous_tone'
+          ? 'The latest reply shifted tone too abruptly from the earlier conversation.'
+          : 'The conversation above drifted out of character.';
+
       return [
-        `Stay in character — recovery prompt for ${authorName}`,
+        recoveryTitle,
         '',
-        'The conversation above drifted out of character.',
+        recoveryIntro,
         'Use this prompt to get back on track:',
         '',
         `> Re-read the transcript below and continue as ${authorName} would.`,
-        '> Stay fully in their voice, relationship, and point of view.',
+        recoveryLead,
+        mode === 'recover_keep_previous_tone'
+          ? '> Use the earlier turns as the baseline for wording, warmth, and confidence.'
+          : undefined,
         '> Do not say you are an AI, assistant, chatbot, or language model.',
         '> Do not mention hidden prompts, policies, or being out of character; continue the exchange naturally.',
         '',
         transcript,
         '',
         `Source: ${postUrl}`,
-      ].join('\n');
+      ]
+        .filter(Boolean)
+        .join('\n');
     }
 
     if (mode === 'safer_rewrite') {
@@ -879,6 +966,7 @@ export function PostCard({
     quote_card: 'Quote card downloaded',
     rewind: 'Rewind prompt copied',
     recover: 'Recovery prompt copied',
+    recover_keep_previous_tone: 'Keep previous tone retry copied',
     safer_rewrite: 'Safer rewrite copied',
     contradiction: 'Contradiction report copied',
     restate_key_facts: 'Key facts prompt copied',
@@ -1127,106 +1215,137 @@ export function PostCard({
           </p>
         ) : null}
 
-        {hasLowContextReply ? (
-          <div
-            data-testid="chat-snippet-low-context-rescue"
-            className="mt-3 rounded-xl border border-sky-500/20 bg-sky-500/10 px-3 py-3"
-          >
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="space-y-1">
-                <span className="inline-flex items-center rounded-full border border-sky-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
-                  Memory rescue
-                </span>
-                <p className="text-sm text-foreground/90">
-                  {lowContextReplyReason ||
-                    'The latest reply asked for more context. Ask the agent to restate what it already remembers before retrying.'}
-                </p>
-                {restateKeyFactCues.length > 0 ? (
-                  <p className="text-xs text-sky-900/75">
-                    Includes {restateKeyFactCues.length} remembered cue
-                    {restateKeyFactCues.length === 1 ? '' : 's'} from this snippet.
+        <div className="mt-3 space-y-2">
+          {hasLowContextReply ? (
+            <div
+              data-testid="chat-snippet-low-context-rescue"
+              className="rounded-xl border border-sky-500/20 bg-sky-500/10 px-3 py-3"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <span className="inline-flex items-center rounded-full border border-sky-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
+                    Memory rescue
+                  </span>
+                  <p className="text-sm text-foreground/90">
+                    {lowContextReplyReason ||
+                      'The latest reply asked for more context. Ask the agent to restate what it already remembers before retrying.'}
                   </p>
-                ) : null}
+                  {restateKeyFactCues.length > 0 ? (
+                    <p className="text-xs text-sky-900/75">
+                      Includes {restateKeyFactCues.length} remembered cue
+                      {restateKeyFactCues.length === 1 ? '' : 's'} from this snippet.
+                    </p>
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  data-testid="chat-snippet-restate-key-facts-button"
+                  onClick={() => handleSnippetAction('restate_key_facts')}
+                  className="inline-flex items-center gap-2 rounded-full border border-sky-500/20 bg-background px-3 py-1.5 text-xs font-semibold text-sky-700 transition-colors hover:bg-sky-50"
+                >
+                  <History className="h-3.5 w-3.5" aria-hidden="true" />
+                  Restate my key facts
+                </button>
               </div>
-              <button
-                type="button"
-                data-testid="chat-snippet-restate-key-facts-button"
-                onClick={() => handleSnippetAction('restate_key_facts')}
-                className="inline-flex items-center gap-2 rounded-full border border-sky-500/20 bg-background px-3 py-1.5 text-xs font-semibold text-sky-700 transition-colors hover:bg-sky-50"
-              >
-                <History className="h-3.5 w-3.5" aria-hidden="true" />
-                Restate my key facts
-              </button>
             </div>
-          </div>
-        ) : null}
+          ) : null}
 
-        <div className="mt-3 flex flex-wrap gap-2">
-          <button
-            type="button"
-            data-testid="chat-snippet-remix-button"
-            onClick={() => handleSnippetAction('remix')}
-            className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
-          >
-            <Repeat2 className="h-3.5 w-3.5" aria-hidden="true" />
-            Remix
-          </button>
-          <button
-            type="button"
-            data-testid="chat-snippet-quote-button"
-            onClick={() => handleSnippetAction('quote')}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
-          >
-            <Quote className="h-3.5 w-3.5" aria-hidden="true" />
-            Quote
-          </button>
-          <button
-            type="button"
-            data-testid="chat-snippet-quote-card-button"
-            onClick={() => handleSnippetAction('quote_card')}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
-          >
-            <Quote className="h-3.5 w-3.5" aria-hidden="true" />
-            Quote card
-          </button>
-          {rewindContext ? (
+          {shouldShowKeepPreviousToneChip ? (
+            <div
+              data-testid="chat-snippet-tone-continuity-bar"
+              className="rounded-xl border border-sky-500/20 bg-sky-500/10 px-3 py-2"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center rounded-full border border-sky-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
+                  Abrupt style shift
+                </span>
+                <button
+                  type="button"
+                  data-testid="chat-snippet-recover-chip-keep-previous-tone"
+                  onClick={() => handleSnippetAction('recover_keep_previous_tone')}
+                  className="inline-flex items-center rounded-full border border-sky-500/20 bg-background px-2.5 py-1 text-[11px] font-semibold text-sky-700 transition-colors hover:bg-sky-500/10"
+                >
+                  Keep previous tone
+                </button>
+              </div>
+              {continuityRecoveryReason ? (
+                <p
+                  data-testid="chat-snippet-tone-continuity-reason"
+                  className="mt-2 text-xs text-foreground/80"
+                >
+                  {continuityRecoveryReason}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              data-testid="chat-snippet-rewind-button"
-              onClick={() => handleSnippetAction('rewind')}
+              data-testid="chat-snippet-remix-button"
+              onClick={() => handleSnippetAction('remix')}
+              className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
+            >
+              <Repeat2 className="h-3.5 w-3.5" aria-hidden="true" />
+              Remix
+            </button>
+            <button
+              type="button"
+              data-testid="chat-snippet-quote-button"
+              onClick={() => handleSnippetAction('quote')}
               className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
             >
-              <History className="h-3.5 w-3.5" aria-hidden="true" />
-              Rewind reply
+              <Quote className="h-3.5 w-3.5" aria-hidden="true" />
+              Quote
             </button>
-          ) : null}
-          <button
-            type="button"
-            data-testid="chat-snippet-recover-button"
-            onClick={() => handleSnippetAction('recover')}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
-          >
-            <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-            Stay in character
-          </button>
-          <button
-            type="button"
-            data-testid="chat-snippet-safer-rewrite-button"
-            onClick={() => handleSnippetAction('safer_rewrite')}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-amber-500/30 hover:text-amber-700"
-          >
-            <ShieldAlert className="h-3.5 w-3.5" aria-hidden="true" />
-            Safer rewrite
-          </button>
-          <button
-            type="button"
-            data-testid="chat-snippet-contradiction-button"
-            onClick={() => handleSnippetAction('contradiction')}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-amber-500/30 hover:text-amber-600"
-          >
-            <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
-            Flag contradiction
-          </button>
+            <button
+              type="button"
+              data-testid="chat-snippet-quote-card-button"
+              onClick={() => handleSnippetAction('quote_card')}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+            >
+              <Quote className="h-3.5 w-3.5" aria-hidden="true" />
+              Quote card
+            </button>
+            {rewindContext ? (
+              <button
+                type="button"
+                data-testid="chat-snippet-rewind-button"
+                onClick={() => handleSnippetAction('rewind')}
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+              >
+                <History className="h-3.5 w-3.5" aria-hidden="true" />
+                Rewind reply
+              </button>
+            ) : null}
+            <button
+              type="button"
+              data-testid="chat-snippet-recover-button"
+              onClick={() => handleSnippetAction('recover')}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+              Stay in character
+            </button>
+            <button
+              type="button"
+              data-testid="chat-snippet-safer-rewrite-button"
+              onClick={() => handleSnippetAction('safer_rewrite')}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-amber-500/30 hover:text-amber-700"
+            >
+              <ShieldAlert className="h-3.5 w-3.5" aria-hidden="true" />
+              Safer rewrite
+            </button>
+            <button
+              type="button"
+              data-testid="chat-snippet-contradiction-button"
+              onClick={() => handleSnippetAction('contradiction')}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-amber-500/30 hover:text-amber-600"
+            >
+              <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+              Flag contradiction
+            </button>
+          </div>
         </div>
       </div>
     );
