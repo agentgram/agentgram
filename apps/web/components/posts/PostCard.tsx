@@ -17,6 +17,7 @@ import {
   AlertTriangle,
   BadgeCheck,
   History,
+  Loader2,
 } from 'lucide-react';
 import { Post } from '@agentgram/shared';
 import type { PostMedia, ChatSnippetMessage } from '@agentgram/shared';
@@ -27,6 +28,7 @@ import { motion } from 'framer-motion';
 import { formatTimeAgo } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
 import { analytics } from '@/lib/analytics';
+import type { ProactiveControlsSettings } from '@/lib/proactive-controls';
 import {
   Dialog,
   DialogContent,
@@ -294,7 +296,9 @@ function getReplyVelocity(post: Post): ReplyVelocityState | null {
     ['comments', 'lastReplyAt'],
     ['comments', 'last_reply_at'],
   ]);
-  const recentReplyAtMs = recentReplyAt ? new Date(recentReplyAt).getTime() : Number.NaN;
+  const recentReplyAtMs = recentReplyAt
+    ? new Date(recentReplyAt).getTime()
+    : Number.NaN;
   const elapsedHours = Number.isFinite(recentReplyAtMs)
     ? Math.max(0, Date.now() - recentReplyAtMs) / (1000 * 60 * 60)
     : undefined;
@@ -352,6 +356,72 @@ function getReplyVelocity(post: Post): ReplyVelocityState | null {
   return null;
 }
 
+type FollowUpOptInSignal = {
+  title: string;
+  description: string;
+};
+
+function getFollowUpOptInSignal({
+  isChatSnippet,
+  chatMessageCount,
+  commentCount,
+  hasMemorySignal,
+  replyVelocity,
+}: {
+  isChatSnippet: boolean;
+  chatMessageCount: number;
+  commentCount: number;
+  hasMemorySignal: boolean;
+  replyVelocity: ReplyVelocityState | null;
+}): FollowUpOptInSignal | null {
+  if (!isChatSnippet || chatMessageCount < 2) {
+    return null;
+  }
+
+  if (hasMemorySignal && replyVelocity) {
+    return {
+      title: 'Strong thread — keep the door open',
+      description:
+        'This exchange already has saved context and active replies. Turn on future check-ins before the momentum fades.',
+    };
+  }
+
+  if (replyVelocity) {
+    return {
+      title: 'Strong thread — follow up while it is fresh',
+      description:
+        'This chat still has active reply momentum. One tap lets AgentGram check in later without opening Settings first.',
+    };
+  }
+
+  if (hasMemorySignal) {
+    return {
+      title: 'Strong thread — keep this context alive',
+      description:
+        'This snippet already captured a memory signal. Turn on future check-ins so AgentGram can reconnect from the same thread later.',
+    };
+  }
+
+  if (commentCount >= 3 && chatMessageCount >= 3) {
+    return {
+      title: 'Strong thread — invite a future check-in',
+      description:
+        'This back-and-forth already has momentum. One tap lets AgentGram follow up later from threads like this.',
+    };
+  }
+
+  return null;
+}
+
+type ProactiveControlsResponse = {
+  success?: boolean;
+  data?: ProactiveControlsSettings;
+  error?: {
+    code?: string;
+    message?: string;
+  };
+};
+
 type MemoryCapture = {
   fact: string;
   source?: string;
@@ -390,7 +460,11 @@ function normalizeMemoryCapture(value: unknown): MemoryCapture | null {
     (candidate): candidate is string =>
       typeof candidate === 'string' && candidate.trim().length > 0
   );
-  const capturedAtCandidates = [record.capturedAt, record.recordedAt, record.savedAt];
+  const capturedAtCandidates = [
+    record.capturedAt,
+    record.recordedAt,
+    record.savedAt,
+  ];
   const capturedAt = capturedAtCandidates.find(
     (candidate): candidate is string =>
       typeof candidate === 'string' && candidate.trim().length > 0
@@ -781,6 +855,105 @@ export function PostCard({
       isAbruptStyleShiftTrigger(continuityRecoveryTrigger) ||
       Boolean(previousToneHint));
   const replyVelocity = getReplyVelocity(post);
+  const followUpOptInSignal = getFollowUpOptInSignal({
+    isChatSnippet,
+    chatMessageCount: chatMessages.length,
+    commentCount: post.commentCount,
+    hasMemorySignal: Boolean(
+      memorySavedLabel ||
+      memoryExplanation ||
+      memoryPreview ||
+      memoryCaptures.length > 0
+    ),
+    replyVelocity,
+  });
+  const [followUpOptInStatus, setFollowUpOptInStatus] = useState<
+    'idle' | 'saving' | 'enabled'
+  >('idle');
+
+  const handleFollowUpOptIn = async () => {
+    if (!followUpOptInSignal || followUpOptInStatus !== 'idle') {
+      return;
+    }
+
+    setFollowUpOptInStatus('saving');
+
+    try {
+      const currentResponse = await fetch(
+        '/api/v1/developers/me/proactive-controls',
+        {
+          method: 'GET',
+          cache: 'no-store',
+        }
+      );
+      const currentPayload =
+        (await currentResponse.json()) as ProactiveControlsResponse;
+
+      if (
+        !currentResponse.ok ||
+        !currentPayload.success ||
+        !currentPayload.data
+      ) {
+        throw new Error(
+          currentPayload.error?.message || 'Failed to load proactive controls'
+        );
+      }
+
+      if (currentPayload.data.optIn) {
+        setFollowUpOptInStatus('enabled');
+        toast({
+          title: 'Future check-ins already on',
+          description:
+            'AgentGram is already allowed to follow up later after strong threads.',
+        });
+        return;
+      }
+
+      const updateResponse = await fetch(
+        '/api/v1/developers/me/proactive-controls',
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...currentPayload.data,
+            optIn: true,
+          }),
+        }
+      );
+      const updatePayload =
+        (await updateResponse.json()) as ProactiveControlsResponse;
+
+      if (
+        !updateResponse.ok ||
+        !updatePayload.success ||
+        !updatePayload.data?.optIn
+      ) {
+        throw new Error(
+          updatePayload.error?.message || 'Failed to enable future check-ins'
+        );
+      }
+
+      setFollowUpOptInStatus('enabled');
+      analytics.clickCta('chat_snippet_follow_up_opt_in');
+      toast({
+        title: 'Future check-ins enabled',
+        description:
+          'AgentGram can now follow up later after strong threads like this one.',
+      });
+    } catch (error) {
+      console.error('Error enabling post-chat follow-up opt-in:', error);
+      setFollowUpOptInStatus('idle');
+      const message = error instanceof Error ? error.message : '';
+      toast({
+        title: 'Could not enable future check-ins',
+        description: /not authenticated/i.test(message)
+          ? 'Log in to save follow-up preferences first.'
+          : 'Please try again from Settings if this keeps failing.',
+      });
+    }
+  };
 
   const buildSnippetClipboardText = (mode: SnippetActionMode) => {
     const postUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/posts/${post.id}`;
@@ -960,7 +1133,9 @@ export function PostCard({
   const buildSnippetQuoteCardSvg = () => {
     const postUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/posts/${post.id}`;
     const quoteSource =
-      chatSnippetPreview.map((message) => `${message.role}: ${message.content}`).join(' ') ||
+      chatSnippetPreview
+        .map((message) => `${message.role}: ${message.content}`)
+        .join(' ') ||
       post.content ||
       post.title ||
       'Chat snippet';
@@ -1124,7 +1299,8 @@ export function PostCard({
                     <DialogHeader>
                       <DialogTitle>Recent captures</DialogTitle>
                       <DialogDescription>
-                        Review the latest facts this chat snippet marked as worth remembering.
+                        Review the latest facts this chat snippet marked as
+                        worth remembering.
                       </DialogDescription>
                     </DialogHeader>
 
@@ -1138,7 +1314,9 @@ export function PostCard({
                           <p className="text-sm font-medium text-foreground">
                             {capture.fact}
                           </p>
-                          {(capture.reason || capture.source || capture.capturedAt) ? (
+                          {capture.reason ||
+                          capture.source ||
+                          capture.capturedAt ? (
                             <div className="mt-2 space-y-1 text-xs text-muted-foreground">
                               {capture.reason ? <p>{capture.reason}</p> : null}
                               <div className="flex flex-wrap gap-2">
@@ -1146,7 +1324,9 @@ export function PostCard({
                                   <span>{capture.source}</span>
                                 ) : null}
                                 {capture.capturedAt ? (
-                                  <span>{formatMemoryTimestamp(capture.capturedAt)}</span>
+                                  <span>
+                                    {formatMemoryTimestamp(capture.capturedAt)}
+                                  </span>
                                 ) : null}
                               </div>
                             </div>
@@ -1172,7 +1352,12 @@ export function PostCard({
                 </p>
                 {memoryPreview.source || memoryPreview.capturedAt ? (
                   <p className="mt-2 text-xs text-muted-foreground">
-                    {[memoryPreview.source, memoryPreview.capturedAt ? `Saved ${formatMemoryTimestamp(memoryPreview.capturedAt)}` : undefined]
+                    {[
+                      memoryPreview.source,
+                      memoryPreview.capturedAt
+                        ? `Saved ${formatMemoryTimestamp(memoryPreview.capturedAt)}`
+                        : undefined,
+                    ]
                       .filter(Boolean)
                       .join(' · ')}
                   </p>
@@ -1205,7 +1390,8 @@ export function PostCard({
               Safety recovery
             </span>
             <p className="mt-2 text-sm text-foreground/90 whitespace-pre-line">
-              Blocked by a guardrail? Copy a calmer rewrite that keeps the same goal.
+              Blocked by a guardrail? Copy a calmer rewrite that keeps the same
+              goal.
             </p>
             {safetyReason ? (
               <p
@@ -1311,6 +1497,56 @@ export function PostCard({
                   {continuityRecoveryReason}
                 </p>
               ) : null}
+            </div>
+          ) : null}
+
+          {followUpOptInSignal ? (
+            <div
+              data-testid="chat-snippet-follow-up-opt-in"
+              className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-3"
+            >
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-1">
+                  <span className="inline-flex items-center rounded-full border border-primary/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">
+                    Future check-ins
+                  </span>
+                  <p className="text-sm font-medium text-foreground">
+                    {followUpOptInSignal.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {followUpOptInStatus === 'enabled'
+                      ? 'AgentGram can now follow up later from strong threads like this one. Caps and quiet hours still apply.'
+                      : followUpOptInSignal.description}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  data-testid="chat-snippet-follow-up-opt-in-button"
+                  onClick={handleFollowUpOptIn}
+                  disabled={followUpOptInStatus !== 'idle'}
+                  className={cn(
+                    'inline-flex items-center justify-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',
+                    followUpOptInStatus === 'enabled'
+                      ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-700'
+                      : 'border-primary/20 bg-background text-primary hover:bg-primary/10',
+                    followUpOptInStatus === 'saving' && 'cursor-wait opacity-70'
+                  )}
+                >
+                  {followUpOptInStatus === 'saving' ? (
+                    <>
+                      <Loader2
+                        className="h-3.5 w-3.5 animate-spin"
+                        aria-hidden="true"
+                      />
+                      Enabling…
+                    </>
+                  ) : followUpOptInStatus === 'enabled' ? (
+                    'Future check-ins enabled'
+                  ) : (
+                    'Enable future check-ins'
+                  )}
+                </button>
+              </div>
             </div>
           ) : null}
 
