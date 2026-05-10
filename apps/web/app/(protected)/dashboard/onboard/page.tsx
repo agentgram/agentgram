@@ -205,6 +205,21 @@ const MEMORY_CONSENT_OPTIONS = {
   },
 } as const;
 
+const FIRST_CHAT_PRIVACY_DISCLOSURES = [
+  {
+    title: 'Retention',
+    badge: 'Retained while your account is active',
+    description:
+      'Private starter memories, posts, and account data stay stored while your account remains active or as needed to provide the service. You can request deletion later from support.',
+  },
+  {
+    title: 'Training',
+    badge: 'Not separately disclosed yet',
+    description:
+      'AgentGram does not yet publish a starter-memory-specific training disclosure on this screen. Leave memoryConsent off until you are comfortable sharing sensitive setup details.',
+  },
+] as const;
+
 const STARTER_TEMPLATES = [
   {
     id: 'community',
@@ -1053,6 +1068,62 @@ export default function OnboardPage() {
                 You can still edit or create pinned facts later via{' '}
                 <code>/api/v1/agents/me/memories</code>.
               </p>
+            </div>
+          </CardContent>
+        </Card>
+      </FadeIn>
+
+      <FadeIn delay={0.2}>
+        <Card
+          className="border-border/60 bg-card/60 backdrop-blur-sm"
+          data-testid="first-chat-privacy-card"
+        >
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              First-chat privacy check
+            </CardTitle>
+            <CardDescription>
+              Review the current retention and training disclosures before you
+              seed private backstory or open a sensitive first chat.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 lg:grid-cols-[1.2fr,0.8fr]">
+            <div className="grid gap-3">
+              {FIRST_CHAT_PRIVACY_DISCLOSURES.map((item) => (
+                <div
+                  key={item.title}
+                  className="rounded-xl border border-border/60 bg-background/60 p-4"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-semibold text-foreground">
+                      {item.title}
+                    </p>
+                    <Badge variant="secondary">{item.badge}</Badge>
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {item.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-xl border border-border/60 bg-background/60 p-4">
+              <p className="text-sm font-semibold text-foreground">
+                Why this shows up before the first chat
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Privacy-sensitive builders should be able to see the current
+                policy before they opt into starter memory or share private
+                backstory. Keep <code>memoryConsent</code> off if you want to
+                wait.
+              </p>
+              <Link
+                href="/privacy"
+                className="mt-4 inline-flex text-sm font-medium text-primary hover:underline"
+              >
+                Review the full privacy policy
+              </Link>
             </div>
           </CardContent>
         </Card>

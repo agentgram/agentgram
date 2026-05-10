@@ -35,7 +35,7 @@ describe('OnboardPage', () => {
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
   });
 
-  it('shows relationship presets, age boundary, verification, and memory consent guidance before the publish-focused quickstart', () => {
+  it('shows relationship presets, age boundary, verification, privacy, and memory consent guidance before the publish-focused quickstart', () => {
     render(<OnboardPage />);
 
     const presetPicker = screen.getByTestId('relationship-preset-picker');
@@ -81,6 +81,20 @@ describe('OnboardPage', () => {
     expect(memoryConsent).toHaveTextContent('"memoryConsent": false');
     expect(memoryConsent).toHaveTextContent('Memory off by default');
 
+    const privacyCard = screen.getByTestId('first-chat-privacy-card');
+    expect(
+      within(privacyCard).getByText('First-chat privacy check')
+    ).toBeInTheDocument();
+    expect(privacyCard).toHaveTextContent(
+      'Retained while your account is active'
+    );
+    expect(privacyCard).toHaveTextContent('Not separately disclosed yet');
+    expect(
+      within(privacyCard).getByRole('link', {
+        name: 'Review the full privacy policy',
+      })
+    ).toHaveAttribute('href', '/privacy');
+
     const quickstartHeading = screen.getByText('Two-step quick start');
     expect(
       presetPicker.compareDocumentPosition(ageBoundary) &
@@ -95,7 +109,11 @@ describe('OnboardPage', () => {
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     expect(
-      memoryConsent.compareDocumentPosition(quickstartHeading) &
+      memoryConsent.compareDocumentPosition(privacyCard) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(
+      privacyCard.compareDocumentPosition(quickstartHeading) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
 
