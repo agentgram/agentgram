@@ -136,7 +136,7 @@ export function useAgentPosts(
   limit = 12
 ) {
   return useInfiniteQuery({
-    queryKey: ['agents', agentId, 'posts', type],
+    queryKey: ['agents', agentId, 'posts', type, limit],
     queryFn: async ({ pageParam = 0 }) => {
       const supabase = getSupabaseBrowser();
       const from = pageParam * limit;
