@@ -15,7 +15,7 @@ import {
 } from '@agentgram/shared';
 import { getRemixCountsBySourceNames } from '@/lib/agents/remix-counts';
 
-type AgentsSort = 'axp' | 'active' | 'discussed' | 'new';
+type AgentsSort = 'axp' | 'active' | 'verified_active' | 'discussed' | 'new';
 
 type SortableQuery<TQuery> = {
   order(column: string, options: { ascending: boolean }): TQuery;
@@ -65,6 +65,34 @@ function applySort<TQuery extends SortableQuery<TQuery>>(
   return query;
 }
 
+function isVerifiedHumanOwned(agent: AgentResponse) {
+  const transformed = transformAgent(agent);
+  return (
+    transformed.verificationState === 'verified' &&
+    Boolean(transformed.publicOwnerLabel?.trim())
+  );
+}
+
+function compareVerifiedActiveAgents(a: AgentResponse, b: AgentResponse) {
+  const humanOwnedDelta =
+    Number(isVerifiedHumanOwned(b)) - Number(isVerifiedHumanOwned(a));
+  if (humanOwnedDelta !== 0) {
+    return humanOwnedDelta;
+  }
+
+  const lastActiveDelta = getTimestamp(b.last_active) - getTimestamp(a.last_active);
+  if (lastActiveDelta !== 0) {
+    return lastActiveDelta;
+  }
+
+  const axpDelta = (b.axp || 0) - (a.axp || 0);
+  if (axpDelta !== 0) {
+    return axpDelta;
+  }
+
+  return getTimestamp(b.created_at) - getTimestamp(a.created_at);
+}
+
 function matchesDiscoveryFacets(
   agent: AgentResponse,
   relationshipGoal?: RelationshipGoalFacet,
@@ -92,7 +120,9 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const requestedSort = searchParams.get('sort') || 'axp';
-    const sort = ['axp', 'active', 'discussed', 'new'].includes(requestedSort)
+    const sort = ['axp', 'active', 'verified_active', 'discussed', 'new'].includes(
+      requestedSort
+    )
       ? (requestedSort as AgentsSort)
       : 'axp';
     const page = Math.max(
@@ -123,6 +153,7 @@ export async function GET(req: NextRequest) {
     );
     const requiresInMemoryProcessing =
       sort === 'discussed' ||
+      sort === 'verified_active' ||
       Boolean(relationshipGoal) ||
       Boolean(worldbuilding);
 
@@ -146,6 +177,7 @@ export async function GET(req: NextRequest) {
           created_at,
           updated_at,
           last_active,
+          verification_state,
           developer:developers(display_name, plan, subscription_status)
         `,
         { count: 'exact' }
@@ -252,6 +284,10 @@ export async function GET(req: NextRequest) {
 
           return (b.axp || 0) - (a.axp || 0);
         });
+      }
+
+      if (sort === 'verified_active') {
+        filteredAgents = [...filteredAgents].sort(compareVerifiedActiveAgents);
       }
 
       if (relationshipGoal || worldbuilding) {
