@@ -60,6 +60,12 @@ const AGENTS_DIRECTORY_FALLBACK_SELECT = `
   developer:developers(display_name)
 `;
 
+const AGENTS_DIRECTORY_COMPAT_SELECT = `
+  ${AGENTS_DIRECTORY_BASE_SELECT},
+  email_verified,
+  developer:developers(display_name)
+`;
+
 const AGENTS_DIRECTORY_LEGACY_SELECT = `
   ${AGENTS_DIRECTORY_BASE_SELECT},
   verification_state
@@ -115,8 +121,32 @@ function applySort<TQuery extends SortableQuery<TQuery>>(
   return query;
 }
 
+function hasPublicOwnerDisplayName(agent: AgentResponse) {
+  const developer = Array.isArray(agent.developer)
+    ? agent.developer[0]
+    : agent.developer;
+
+  return Boolean(developer?.display_name?.trim());
+}
+
+function normalizeLegacyVerificationState(
+  agent: DirectoryAgentResponse
+): DirectoryAgentResponse {
+  if (agent.verification_state) {
+    return agent;
+  }
+
+  return {
+    ...agent,
+    verification_state:
+      agent.email_verified && hasPublicOwnerDisplayName(agent)
+        ? 'verified'
+        : 'unverified',
+  };
+}
+
 function isVerifiedHumanOwned(agent: AgentResponse) {
-  const transformed = transformAgent(agent);
+  const transformed = transformAgent(normalizeLegacyVerificationState(agent));
   return (
     transformed.verificationState === 'verified' &&
     Boolean(transformed.publicOwnerLabel?.trim())
@@ -177,11 +207,14 @@ function shouldRetryWithoutDeveloperBilling(error: unknown) {
   return message.includes('plan') || message.includes('subscription_status');
 }
 
+function shouldRetryWithCompatibilityDirectorySelect(error: unknown) {
+  return getErrorMessage(error).includes('verification_state');
+}
+
 function shouldRetryWithLegacyDirectorySelect(error: unknown) {
   const message = getErrorMessage(error);
 
   if (
-    message.includes('verification_state') ||
     message.includes('capability_summary') ||
     message.includes('permission_scope') ||
     message.includes('public_key') ||
@@ -361,9 +394,11 @@ export async function GET(req: NextRequest) {
           return { error: allAgentsError };
         }
 
-        const allAgents = await hydrateDirectoryAgentsWithDevelopers(
-          coerceDirectoryAgentRows(fullFetchData)
-        );
+        const allAgents = (
+          await hydrateDirectoryAgentsWithDevelopers(
+            coerceDirectoryAgentRows(fullFetchData)
+          )
+        ).map(normalizeLegacyVerificationState);
         let filteredAgents = allAgents;
 
         if (sort === 'discussed') {
@@ -435,14 +470,49 @@ export async function GET(req: NextRequest) {
       }
 
       return {
-        agents: await hydrateDirectoryAgentsWithDevelopers(
-          coerceDirectoryAgentRows(result.data)
-        ),
+        agents: (
+          await hydrateDirectoryAgentsWithDevelopers(
+            coerceDirectoryAgentRows(result.data)
+          )
+        ).map(normalizeLegacyVerificationState),
         count: result.count || 0,
       };
     };
 
     let directoryResult = await fetchAgentsDirectoryPage(AGENTS_DIRECTORY_SELECT);
+
+    const retryWithMinimalDirectorySelect = async (message: string) => {
+      console.warn(message, directoryResult.error);
+      directoryResult = await fetchAgentsDirectoryPage(
+        AGENTS_DIRECTORY_MINIMAL_SELECT
+      );
+    };
+
+    const retryWithLegacyDirectorySelect = async (message: string) => {
+      console.warn(message, directoryResult.error);
+      directoryResult = await fetchAgentsDirectoryPage(
+        AGENTS_DIRECTORY_LEGACY_SELECT
+      );
+
+      if ('error' in directoryResult) {
+        await retryWithMinimalDirectorySelect(
+          'Agents query still failed after legacy retry; retrying with the minimal public directory columns.'
+        );
+      }
+    };
+
+    const retryWithCompatibilityDirectorySelect = async (message: string) => {
+      console.warn(message, directoryResult.error);
+      directoryResult = await fetchAgentsDirectoryPage(
+        AGENTS_DIRECTORY_COMPAT_SELECT
+      );
+
+      if ('error' in directoryResult) {
+        await retryWithMinimalDirectorySelect(
+          'Agents compatibility query still failed; retrying with the minimal public directory columns.'
+        );
+      }
+    };
 
     if ('error' in directoryResult) {
       if (shouldRetryWithoutDeveloperBilling(directoryResult.error)) {
@@ -454,46 +524,25 @@ export async function GET(req: NextRequest) {
           AGENTS_DIRECTORY_FALLBACK_SELECT
         );
 
-        if (
-          'error' in directoryResult &&
-          shouldRetryWithLegacyDirectorySelect(directoryResult.error)
-        ) {
-          console.warn(
-            'Agents query still failed after removing billing metadata; retrying with legacy directory columns.',
-            directoryResult.error
-          );
-          directoryResult = await fetchAgentsDirectoryPage(
-            AGENTS_DIRECTORY_LEGACY_SELECT
-          );
-
-          if ('error' in directoryResult) {
-            console.warn(
-              'Agents query still failed after legacy retry; retrying with the minimal public directory columns.',
-              directoryResult.error
+        if ('error' in directoryResult) {
+          if (shouldRetryWithCompatibilityDirectorySelect(directoryResult.error)) {
+            await retryWithCompatibilityDirectorySelect(
+              'Agents query still failed on verification_state after removing billing metadata; retrying with compatibility directory columns.'
             );
-            directoryResult = await fetchAgentsDirectoryPage(
-              AGENTS_DIRECTORY_MINIMAL_SELECT
+          } else if (shouldRetryWithLegacyDirectorySelect(directoryResult.error)) {
+            await retryWithLegacyDirectorySelect(
+              'Agents query still failed after removing billing metadata; retrying with legacy directory columns.'
             );
           }
         }
+      } else if (shouldRetryWithCompatibilityDirectorySelect(directoryResult.error)) {
+        await retryWithCompatibilityDirectorySelect(
+          'Agents query failed on verification_state; retrying with compatibility directory columns.'
+        );
       } else if (shouldRetryWithLegacyDirectorySelect(directoryResult.error)) {
-        console.warn(
-          'Agents query failed against newer public schema fields; retrying with legacy directory columns.',
-          directoryResult.error
+        await retryWithLegacyDirectorySelect(
+          'Agents query failed against newer public schema fields; retrying with legacy directory columns.'
         );
-        directoryResult = await fetchAgentsDirectoryPage(
-          AGENTS_DIRECTORY_LEGACY_SELECT
-        );
-
-        if ('error' in directoryResult) {
-          console.warn(
-            'Agents query still failed after legacy retry; retrying with the minimal public directory columns.',
-            directoryResult.error
-          );
-          directoryResult = await fetchAgentsDirectoryPage(
-            AGENTS_DIRECTORY_MINIMAL_SELECT
-          );
-        }
       }
     }
 
