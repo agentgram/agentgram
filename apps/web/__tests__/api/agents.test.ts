@@ -347,13 +347,8 @@ describe('GET /api/v1/agents', () => {
     );
   });
 
-  it('falls back to minimal directory columns when verification_state is unavailable on live agents rows', async () => {
+  it('falls back to compatibility directory columns when verification_state is unavailable on live agents rows', async () => {
     mockRange
-      .mockResolvedValueOnce({
-        data: null,
-        error: { message: 'column agents.verification_state does not exist' },
-        count: null,
-      })
       .mockResolvedValueOnce({
         data: null,
         error: { message: 'column agents.verification_state does not exist' },
@@ -366,6 +361,7 @@ describe('GET /api/v1/agents', () => {
             name: 'legacy-fallback-agent',
             display_name: 'Legacy Fallback Agent',
             description: 'Still renders when verification_state is missing',
+            email_verified: true,
             developer_id: 'dev-legacy',
             avatar_url: null,
             axp: 7,
@@ -375,6 +371,9 @@ describe('GET /api/v1/agents', () => {
             created_at: '2026-01-01T00:00:00Z',
             updated_at: '2026-01-02T00:00:00Z',
             last_active: '2026-01-03T00:00:00Z',
+            developer: {
+              display_name: 'Legacy Owner',
+            },
           },
         ],
         error: null,
@@ -389,6 +388,78 @@ describe('GET /api/v1/agents', () => {
     expect(response.status).toBe(200);
     expect(json.data[0]).toMatchObject({
       name: 'legacy-fallback-agent',
+      verificationState: 'verified',
+      publicOwnerLabel: 'Legacy Owner',
+      capabilities: {
+        voice: false,
+        group_chat: false,
+        roleplay: false,
+      },
+    });
+    expect(mockSelect).toHaveBeenCalledTimes(3);
+    expect(mockSelect.mock.calls[0][0]).toContain('verification_state');
+    expect(mockSelect.mock.calls[1][0]).not.toContain('verification_state');
+    expect(mockSelect.mock.calls[1][0]).toContain('email_verified');
+    expect(mockSelect.mock.calls[1][0]).toContain('developer:developers(display_name)');
+  });
+
+  it('falls back to minimal directory columns when compatibility directory columns still drift', async () => {
+    mockRange
+      .mockResolvedValueOnce({
+        data: null,
+        error: { message: 'column agents.verification_state does not exist' },
+        count: null,
+      })
+      .mockResolvedValueOnce({
+        data: null,
+        error: {
+          message:
+            "Could not find a relationship between 'agents' and 'developers' in the schema cache",
+        },
+        count: null,
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'agent-minimal-fallback',
+            name: 'minimal-fallback-agent',
+            display_name: 'Minimal Fallback Agent',
+            description: 'Still renders when compatibility owner joins drift',
+            developer_id: 'dev-minimal',
+            avatar_url: null,
+            axp: 7,
+            status: 'active',
+            trust_score: 0.1,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: '2026-01-03T00:00:00Z',
+          },
+        ],
+        error: null,
+        count: 1,
+      });
+
+    mockDeveloperIn.mockResolvedValueOnce({
+      data: [
+        {
+          id: 'dev-minimal',
+          display_name: 'Minimal Owner',
+          plan: null,
+          subscription_status: null,
+        },
+      ],
+      error: null,
+    });
+
+    const { GET } = await import('../../app/api/v1/agents/route');
+    const request = new Request('http://localhost/api/v1/agents');
+    const response = await GET(request as unknown as Parameters<typeof GET>[0]);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.data[0]).toMatchObject({
+      name: 'minimal-fallback-agent',
       verificationState: 'unverified',
       capabilities: {
         voice: false,
@@ -399,8 +470,8 @@ describe('GET /api/v1/agents', () => {
     expect(json.data[0]).not.toHaveProperty('publicOwnerLabel');
     expect(mockSelect).toHaveBeenCalledTimes(5);
     expect(mockSelect.mock.calls[0][0]).toContain('verification_state');
-    expect(mockSelect.mock.calls[1][0]).toContain('verification_state');
-    expect(mockSelect.mock.calls[1][0]).not.toContain('developer:developers(');
+    expect(mockSelect.mock.calls[1][0]).not.toContain('verification_state');
+    expect(mockSelect.mock.calls[1][0]).toContain('developer:developers(display_name)');
     expect(mockSelect.mock.calls[2][0]).not.toContain('verification_state');
     expect(mockSelect.mock.calls[2][0]).not.toContain('developer:developers(');
     expect(mockSelect.mock.calls[3][0]).toBe(
@@ -933,5 +1004,110 @@ describe('GET /api/v1/agents', () => {
       'verified-older',
       'network-ghost',
     ]);
+  });
+
+  it('keeps verified_active sorting working when verification_state is missing but owner labels still exist', async () => {
+    mockRange
+      .mockResolvedValueOnce({
+        data: null,
+        error: { message: 'column agents.verification_state does not exist' },
+        count: null,
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'agent-compat-count',
+            name: 'compat-count',
+            display_name: 'Compat Count',
+            description: 'Count probe row',
+            email_verified: true,
+            avatar_url: null,
+            axp: 5,
+            status: 'active',
+            trust_score: 0.1,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: '2026-01-03T00:00:00Z',
+            developer: { display_name: 'Compat Owner' },
+          },
+        ],
+        error: null,
+        count: 3,
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'agent-ghost',
+            name: 'network-ghost',
+            display_name: 'Network Ghost',
+            description: 'Unverified but recently active',
+            email_verified: false,
+            avatar_url: null,
+            axp: 900,
+            status: 'active',
+            trust_score: 0.2,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: '2026-01-05T00:00:00Z',
+            developer: { display_name: 'Ghost' },
+          },
+          {
+            id: 'agent-builder',
+            name: 'verified-builder',
+            display_name: 'Verified Builder',
+            description: 'Verified human-owned agent',
+            email_verified: true,
+            avatar_url: null,
+            axp: 120,
+            status: 'active',
+            trust_score: 0.6,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: '2026-01-04T00:00:00Z',
+            developer: { display_name: 'Ralph' },
+          },
+          {
+            id: 'agent-older',
+            name: 'verified-older',
+            display_name: 'Verified Older',
+            description: 'Verified but less recent',
+            email_verified: true,
+            avatar_url: null,
+            axp: 80,
+            status: 'active',
+            trust_score: 0.5,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: '2026-01-02T00:00:00Z',
+            developer: { display_name: 'Mina' },
+          },
+        ],
+        error: null,
+        count: 3,
+      });
+
+    const { GET } = await import('../../app/api/v1/agents/route');
+    const request = new Request(
+      'http://localhost/api/v1/agents?sort=verified_active&limit=10'
+    );
+    const response = await GET(request as unknown as Parameters<typeof GET>[0]);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.data.map((agent: { name: string }) => agent.name)).toEqual([
+      'verified-builder',
+      'verified-older',
+      'network-ghost',
+    ]);
+    expect(json.data[0]).toMatchObject({
+      verificationState: 'verified',
+      publicOwnerLabel: 'Ralph',
+    });
+    expect(mockSelect.mock.calls[1][0]).toContain('developer:developers(display_name)');
+    expect(mockSelect.mock.calls[1][0]).not.toContain('verification_state');
   });
 });
