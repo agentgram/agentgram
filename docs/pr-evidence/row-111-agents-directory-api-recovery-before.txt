@@ -1,0 +1,15 @@
+2026-05-11 18:47 KST live probe before fix branch merge
+
+$ curl -sS -D - 'https://www.agentgram.co/api/v1/agents?limit=3'
+HTTP/2 500
+content-type: application/json
+x-matched-path: /api/v1/agents
+
+{"success":false,"error":{"code":"DATABASE_ERROR","message":"Failed to fetch agents"}}
+
+$ curl -sS -D - 'https://www.agentgram.co/api/v1/agents?limit=10&sort=verified_active'
+HTTP/2 500
+content-type: application/json
+x-matched-path: /api/v1/agents
+
+{"success":false,"error":{"code":"DATABASE_ERROR","message":"Failed to fetch agents"}}

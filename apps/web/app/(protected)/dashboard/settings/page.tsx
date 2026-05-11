@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import {
   AgentDiaryForm,
+  AgentLorebookForm,
   AgentMemoryTrustForm,
   AgentPinnedFactsCard,
   FadeIn,
@@ -14,6 +15,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { readAgentDiaryFromMetadata } from '@/lib/agent-diary';
+import { readAgentLorebookFromMetadata } from '@/lib/agent-lorebook';
 import { readProactiveControlsFromMetadata } from '@/lib/proactive-controls';
 import type { AgentPinnedFactRecord } from '@/components/dashboard/AgentPinnedFactsCard';
 
@@ -26,11 +28,13 @@ type AgentSettingsRecord = {
   agentName: string;
   agentLabel: string;
   personaName?: string;
+  developerPlan: string;
   initialSnapshot: {
     displayName: string;
     description: string;
     backstory: string;
   };
+  initialLorebook: ReturnType<typeof readAgentLorebookFromMetadata>;
   initialDiaryEntries: ReturnType<typeof readAgentDiaryFromMetadata>;
   pinnedFacts: AgentPinnedFactRecord[];
 };
@@ -108,7 +112,9 @@ export default async function SettingsPage() {
   if (!member) {
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center space-y-4">
-        <h2 className="text-2xl font-bold tracking-tight">Settings Unavailable</h2>
+        <h2 className="text-2xl font-bold tracking-tight">
+          Settings Unavailable
+        </h2>
         <p className="text-muted-foreground">
           Please complete your developer profile first.
         </p>
@@ -119,7 +125,7 @@ export default async function SettingsPage() {
   const { developer_id } = member as { developer_id: string };
   const { data: developer } = await supabase
     .from('developers')
-    .select('metadata')
+    .select('metadata, plan')
     .eq('id', developer_id)
     .single();
 
@@ -181,17 +187,22 @@ export default async function SettingsPage() {
       agentName: agent.name,
       agentLabel: agent.display_name || agent.name,
       personaName: activePersona?.name ?? undefined,
+      developerPlan:
+        typeof developer?.plan === 'string' ? developer.plan : 'free',
       initialSnapshot: {
         displayName: agent.display_name ?? '',
         description: agent.description ?? '',
         backstory: activePersona?.backstory ?? '',
       },
+      initialLorebook: readAgentLorebookFromMetadata(agent.metadata),
       initialDiaryEntries: readAgentDiaryFromMetadata(agent.metadata),
       pinnedFacts,
     };
   });
 
-  const initialSettings = readProactiveControlsFromMetadata(developer?.metadata);
+  const initialSettings = readProactiveControlsFromMetadata(
+    developer?.metadata
+  );
 
   return (
     <div className="space-y-8">
@@ -199,7 +210,8 @@ export default async function SettingsPage() {
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
           <p className="text-muted-foreground">
-            Manage the first developer-facing controls for proactive outreach.
+            Manage proactive controls, private lorebook canon, and profile trust
+            settings in one place.
           </p>
         </div>
       </FadeIn>
@@ -229,6 +241,16 @@ export default async function SettingsPage() {
                     facts: settings.pinnedFacts,
                   }}
                 />
+                <AgentLorebookForm
+                  settings={{
+                    agentId: settings.agentId,
+                    agentName: settings.agentName,
+                    agentLabel: settings.agentLabel,
+                    personaName: settings.personaName,
+                    developerPlan: settings.developerPlan,
+                    initialLorebook: settings.initialLorebook,
+                  }}
+                />
                 <AgentDiaryForm
                   settings={{
                     agentId: settings.agentId,
@@ -243,13 +265,14 @@ export default async function SettingsPage() {
               <CardHeader>
                 <CardTitle>Memory trust</CardTitle>
                 <CardDescription>
-                  Claim or register an agent to edit profile and backstory memory
-                  in one place.
+                  Claim or register an agent to edit profile trust, private
+                  lorebook fields, and creator journal entries in one place.
                 </CardDescription>
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground">
-                This digest, pinned-fact provenance view, and rollback flow appear
-                here as soon as a claimed agent exists in your dashboard.
+                This digest, pinned-fact provenance view, lorebook editor, and
+                rollback flow appear here as soon as a claimed agent exists in
+                your dashboard.
               </CardContent>
             </Card>
           )}

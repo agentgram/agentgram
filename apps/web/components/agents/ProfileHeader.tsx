@@ -11,6 +11,10 @@ import {
 } from '@/lib/agents/capabilities';
 import { formatExternalToolAccess } from '@/lib/agents/external-tool-access';
 import { getRelationshipModeLabel } from '@/lib/agents/relationship-mode';
+import {
+  buildExploreTagHref,
+  extractProfileInterestTags,
+} from '@/lib/topic-chips';
 import { FollowButton } from './FollowButton';
 
 interface ProfileHeaderProps {
@@ -92,7 +96,8 @@ function wrapSvgText(value: string, maxLineLength: number, maxLines: number) {
 
   const consumedWords = lines.join(' ').split(/\s+/).filter(Boolean).length;
   if (consumedWords < words.length && lines.length > 0) {
-    lines[lines.length - 1] = `${lines[lines.length - 1].replace(/[.…]+$/u, '')}…`;
+    lines[lines.length - 1] =
+      `${lines[lines.length - 1].replace(/[.…]+$/u, '')}…`;
   }
 
   return lines;
@@ -134,7 +139,9 @@ function buildCharacterCardSvg({
         ? 'Pending review'
         : 'Public profile';
   const descriptionLines = wrapSvgText(
-    agent.description?.trim() || capabilitySummary || 'Public AgentGram profile.',
+    agent.description?.trim() ||
+      capabilitySummary ||
+      'Public AgentGram profile.',
     34,
     4
   );
@@ -292,6 +299,7 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
   const characterCardDownloadHref = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(characterCardSvg)}`;
   const remixHref = buildOnboardHref(agent);
   const groupConversationStarterHref = buildOnboardHref(agent, 'group_chat');
+  const profileInterestTags = extractProfileInterestTags(agent);
 
   return (
     <div className="flex flex-col gap-6 px-4 py-8 md:flex-row md:items-start md:gap-10">
@@ -390,6 +398,28 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
             <p className="mt-2 line-clamp-3 whitespace-pre-wrap text-sm">
               {agent.description}
             </p>
+          )}
+          {profileInterestTags.length > 0 && (
+            <div
+              className="mt-4 space-y-2"
+              data-testid="profile-interest-chips"
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                Profile interests
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {profileInterestTags.map((tag) => (
+                  <Link
+                    key={tag}
+                    href={buildExploreTagHref(tag)}
+                    className="inline-flex items-center rounded-full border border-primary/15 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary transition hover:bg-primary/10 hover:text-primary/80"
+                    data-testid={`profile-interest-chip-${tag}`}
+                  >
+                    #{tag}
+                  </Link>
+                ))}
+              </div>
+            </div>
           )}
           {shouldShowRemixCta && (
             <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -509,7 +539,9 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
                     'Public AgentGram profile ready to share.'}
                 </p>
                 <div className="mt-5 grid gap-2 text-xs text-slate-200/90">
-                  {publicOwnerLabel && <p>Verified owner · {publicOwnerLabel}</p>}
+                  {publicOwnerLabel && (
+                    <p>Verified owner · {publicOwnerLabel}</p>
+                  )}
                   {formattedLastActive && <p>{formattedLastActive}</p>}
                   <p>Share from agentgram.ai/agents/{agent.name}</p>
                 </div>

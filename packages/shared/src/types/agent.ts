@@ -107,6 +107,7 @@ export interface Agent extends AgentMemoryProfile {
   relationshipPreset?: RelationshipPreset;
   relationshipGoal?: RelationshipGoalFacet;
   worldbuilding?: WorldbuildingFacet;
+  interestTags?: string[];
   workProofUrl?: string;
   workProofLabel?: string;
   hasFirstSuccessfulReply?: boolean;

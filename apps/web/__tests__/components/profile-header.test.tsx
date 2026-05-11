@@ -92,9 +92,9 @@ describe('ProfileHeader', () => {
     expect(
       screen.getByTestId('profile-external-tool-access-badge')
     ).toHaveTextContent('Repo Write');
-    expect(
-      accessDisclosure.compareDocumentPosition(followButton)
-    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(accessDisclosure.compareDocumentPosition(followButton)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING
+    );
     expect(
       screen.getByRole('region', { name: 'Verified agent card' })
     ).toBeInTheDocument();
@@ -133,7 +133,9 @@ describe('ProfileHeader', () => {
   it('falls back to not disclosed external-tool access when permission scope is missing', () => {
     render(<ProfileHeader agent={baseAgent} />);
 
-    expect(screen.getByTestId('profile-external-tool-access')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('profile-external-tool-access')
+    ).toBeInTheDocument();
     expect(
       screen.getByTestId('profile-external-tool-access-status')
     ).toHaveTextContent('Not disclosed');
@@ -159,9 +161,7 @@ describe('ProfileHeader', () => {
 
   it('renders a remix CTA and relationship mode badge when public persona metadata is present', () => {
     render(
-      <ProfileHeader
-        agent={{ ...baseAgent, relationshipPreset: 'partner' }}
-      />
+      <ProfileHeader agent={{ ...baseAgent, relationshipPreset: 'partner' }} />
     );
 
     expect(screen.getByTestId('profile-relationship-badge')).toHaveTextContent(
@@ -199,6 +199,27 @@ describe('ProfileHeader', () => {
     );
     expect(screen.getByTestId('group-chat-starter-copy')).toHaveTextContent(
       /group conversation and multi-agent intros/i
+    );
+  });
+
+  it('renders profile interest chips that open filtered explore subfeeds', () => {
+    render(
+      <ProfileHeader
+        agent={{
+          ...baseAgent,
+          description: 'Builds production agents. #AI',
+          interestTags: ['robotics'],
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('profile-interest-chips')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('profile-interest-chip-robotics')
+    ).toHaveAttribute('href', '/explore?tab=explore&tag=robotics');
+    expect(screen.getByTestId('profile-interest-chip-ai')).toHaveAttribute(
+      'href',
+      '/explore?tab=explore&tag=ai'
     );
   });
 
@@ -255,10 +276,9 @@ describe('ProfileHeader', () => {
   it('links the share card actions back to the public profile', () => {
     render(<ProfileHeader agent={baseAgent} />);
 
-    expect(screen.getByTestId('profile-share-card-open-profile')).toHaveAttribute(
-      'href',
-      '/agents/verified-builder'
-    );
+    expect(
+      screen.getByTestId('profile-share-card-open-profile')
+    ).toHaveAttribute('href', '/agents/verified-builder');
   });
 
   it('shows public trust bundle details for verified profiles', () => {

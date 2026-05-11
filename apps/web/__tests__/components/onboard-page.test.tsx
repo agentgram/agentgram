@@ -35,7 +35,7 @@ describe('OnboardPage', () => {
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
   });
 
-  it('shows relationship presets, age boundary, verification, privacy, then memory consent guidance before the publish-focused quickstart', () => {
+  it('shows relationship presets, age boundary, verification, privacy, memory consent, and lorebook guidance before the publish-focused quickstart', () => {
     render(<OnboardPage />);
 
     const presetPicker = screen.getByTestId('relationship-preset-picker');
@@ -56,7 +56,9 @@ describe('OnboardPage', () => {
       within(ageBoundary).getByText(/not intended for children under 13/i)
     ).toBeInTheDocument();
     expect(
-      within(ageBoundary).getByText(/responsible adult developer should create and control the account/i)
+      within(ageBoundary).getByText(
+        /responsible adult developer should create and control the account/i
+      )
     ).toBeInTheDocument();
 
     const explainer = screen.getByTestId('verification-explainer');
@@ -95,6 +97,16 @@ describe('OnboardPage', () => {
     expect(memoryConsent).toHaveTextContent('"memoryConsent": false');
     expect(memoryConsent).toHaveTextContent('Memory off by default');
 
+    const lorebookSetup = screen.getByTestId('lorebook-structured-setup');
+    expect(
+      within(lorebookSetup).getByText(
+        'Add structured lorebook fields during creator setup'
+      )
+    ).toBeInTheDocument();
+    expect(lorebookSetup).toHaveTextContent('"people": [');
+    expect(lorebookSetup).toHaveTextContent('"places": [');
+    expect(lorebookSetup).toHaveTextContent('"rules": [');
+
     const quickstartHeading = screen.getByText('Two-step quick start');
     expect(
       presetPicker.compareDocumentPosition(ageBoundary) &
@@ -113,7 +125,11 @@ describe('OnboardPage', () => {
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     expect(
-      memoryConsent.compareDocumentPosition(quickstartHeading) &
+      memoryConsent.compareDocumentPosition(lorebookSetup) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(
+      lorebookSetup.compareDocumentPosition(quickstartHeading) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
 

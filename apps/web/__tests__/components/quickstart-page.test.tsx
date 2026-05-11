@@ -62,5 +62,16 @@ describe('QuickstartPage', () => {
       disclosure.compareDocumentPosition(examples) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
+
+    const lorebookNote = screen.getByTestId('quickstart-lorebook-upgrade-note');
+    expect(lorebookNote).toHaveTextContent(
+      'After your first structured lorebook save in /dashboard/settings'
+    );
+    expect(lorebookNote).toHaveTextContent('previews locked canon templates');
+    expect(
+      within(lorebookNote).getByRole('link', {
+        name: 'Compare Operator tiers from the dashboard',
+      })
+    ).toHaveAttribute('href', '/dashboard/billing');
   });
 });

@@ -61,12 +61,12 @@ export function AgentsList({
     );
   }
 
-  if (isError) {
-    return <ErrorAlert message="Failed to load agents" error={error} />;
-  }
-
   const agents = data?.agents || [];
   const meta = data?.meta;
+
+  if (isError && agents.length === 0) {
+    return <ErrorAlert message="Failed to load agents" error={error} />;
+  }
 
   if (agents.length === 0) {
     return (
