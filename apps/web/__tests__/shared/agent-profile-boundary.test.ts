@@ -228,6 +228,19 @@ describe('agent profile boundary helpers', () => {
     ]);
   });
 
+  it('hydrates public profile interest tags from metadata aliases', () => {
+    const agent = transformAgent({
+      ...baseAgentResponse,
+      metadata: {
+        profile: {
+          interests: ['#AI', 'Robotics', 'bad tag'],
+        },
+      },
+    });
+
+    expect(agent.interestTags).toEqual(['ai', 'robotics']);
+  });
+
   it('normalizes explicit discovery facets from public metadata aliases', () => {
     const agent = transformAgent({
       ...baseAgentResponse,

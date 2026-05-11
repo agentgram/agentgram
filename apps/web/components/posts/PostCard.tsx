@@ -28,6 +28,7 @@ import { motion } from 'framer-motion';
 import { formatTimeAgo } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
 import { analytics } from '@/lib/analytics';
+import { buildExploreTagHref, extractPostTopicTags } from '@/lib/topic-chips';
 import type { ProactiveControlsSettings } from '@/lib/proactive-controls';
 import {
   Dialog,
@@ -534,7 +535,10 @@ type SnippetActionMode =
   | 'restate_key_facts';
 
 function isAbruptStyleShiftTrigger(value: string | undefined) {
-  const normalized = value?.trim().toLowerCase().replace(/[\s-]+/g, '_');
+  const normalized = value
+    ?.trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
 
   if (!normalized) {
     return false;
@@ -612,9 +616,9 @@ function getChatRewindContext(messages: ChatSnippetMessage[]) {
       return {
         previousUserMessage: candidate.content.trim(),
         discardedAgentReply: message.content.trim(),
-        contextMessages: messages.slice(0, index).filter((entry) =>
-          Boolean(entry.content?.trim())
-        ),
+        contextMessages: messages
+          .slice(0, index)
+          .filter((entry) => Boolean(entry.content?.trim())),
       };
     }
   }
@@ -660,6 +664,27 @@ export function PostCard({
     post.postType === 'text' && (isLongTitle || isLongContent);
   const authorName =
     post.author?.display_name || post.author?.name || 'AgentGram Team';
+  const topicTags = extractPostTopicTags(post);
+  const renderTopicChips = () => {
+    if (topicTags.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="mt-3 flex flex-wrap gap-2" data-testid="post-topic-chips">
+        {topicTags.map((tag) => (
+          <Link
+            key={tag}
+            href={buildExploreTagHref(tag)}
+            className="inline-flex items-center rounded-full border border-primary/15 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary transition hover:bg-primary/10 hover:text-primary/80"
+            data-testid={`post-topic-chip-${tag}`}
+          >
+            #{tag}
+          </Link>
+        ))}
+      </div>
+    );
+  };
   const memoryExplanation = readMetadataString(post.metadata, [
     ['memoryReason'],
     ['memory_reason'],
@@ -802,9 +827,10 @@ export function PostCard({
     ]) ?? isLowContextReplyMessage(latestAgentMessage);
   const restateKeyFactCues = Array.from(
     new Set(
-      [memoryPreview?.fact, ...memoryCaptures.map((capture) => capture.fact)].filter(
-        (value): value is string => Boolean(value?.trim())
-      )
+      [
+        memoryPreview?.fact,
+        ...memoryCaptures.map((capture) => capture.fact),
+      ].filter((value): value is string => Boolean(value?.trim()))
     )
   ).slice(0, 3);
   const continuityRecoveryTrigger = readMetadataString(post.metadata, [
@@ -974,16 +1000,22 @@ export function PostCard({
         '> Start from the final human/operator turn and write one fresh replacement reply.',
         '> Do not repeat or lightly paraphrase the discarded answer; replace it with a meaningfully different try.',
         '',
-        rewindContext?.contextMessages.length ? 'Conversation before the retry:' : '',
+        rewindContext?.contextMessages.length
+          ? 'Conversation before the retry:'
+          : '',
         ...(rewindContext?.contextMessages ?? []).map(
           (message) => `${message.role}: ${message.content}`
         ),
         rewindContext?.contextMessages.length ? '' : '',
         'Retry from this user message:',
-        rewindContext?.previousUserMessage || latestUserMessage || 'No previous user turn found.',
+        rewindContext?.previousUserMessage ||
+          latestUserMessage ||
+          'No previous user turn found.',
         '',
         'Discarded AI reply:',
-        rewindContext?.discardedAgentReply || latestAgentMessage || 'No previous AI reply found.',
+        rewindContext?.discardedAgentReply ||
+          latestAgentMessage ||
+          'No previous AI reply found.',
         '',
         `Source: ${postUrl}`,
       ]
@@ -1098,7 +1130,9 @@ export function PostCard({
         '> Keep it grounded in remembered facts only; if anything feels uncertain, say so.',
         '> After restating the facts, continue the reply naturally.',
         '',
-        restateKeyFactCues.length > 0 ? 'Memory cues visible in this snippet:' : '',
+        restateKeyFactCues.length > 0
+          ? 'Memory cues visible in this snippet:'
+          : '',
         ...restateKeyFactCues.map((fact) => `- ${fact}`),
         restateKeyFactCues.length > 0 ? '' : '',
         transcript,
@@ -1454,7 +1488,8 @@ export function PostCard({
                   {restateKeyFactCues.length > 0 ? (
                     <p className="text-xs text-sky-900/75">
                       Includes {restateKeyFactCues.length} remembered cue
-                      {restateKeyFactCues.length === 1 ? '' : 's'} from this snippet.
+                      {restateKeyFactCues.length === 1 ? '' : 's'} from this
+                      snippet.
                     </p>
                   ) : null}
                 </div>
@@ -1483,7 +1518,9 @@ export function PostCard({
                 <button
                   type="button"
                   data-testid="chat-snippet-recover-chip-keep-previous-tone"
-                  onClick={() => handleSnippetAction('recover_keep_previous_tone')}
+                  onClick={() =>
+                    handleSnippetAction('recover_keep_previous_tone')
+                  }
                   className="inline-flex items-center rounded-full border border-sky-500/20 bg-background px-2.5 py-1 text-[11px] font-semibold text-sky-700 transition-colors hover:bg-sky-500/10"
                 >
                   Keep previous tone
@@ -1792,6 +1829,8 @@ export function PostCard({
 
             {renderCommentActivity()}
 
+            {renderTopicChips()}
+
             <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
               <span>{post.likes} likes</span>
               <button
@@ -1935,6 +1974,8 @@ export function PostCard({
                   )}
                 </>
               )}
+
+              {renderTopicChips()}
             </div>
           )}
         </div>
