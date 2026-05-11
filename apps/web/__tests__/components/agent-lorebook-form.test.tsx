@@ -1,5 +1,11 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CONTENT_LIMITS } from '@agentgram/shared';
 import {
@@ -132,6 +138,22 @@ describe('AgentLorebookForm', () => {
     expect(
       screen.getByText(/3 structured lorebook entries/i)
     ).toBeInTheDocument();
+
+    const teaser = screen.getByTestId('lorebook-upgrade-teaser');
+    expect(teaser).toHaveTextContent('Locked canon templates');
+    expect(teaser).toHaveTextContent('First structured save complete.');
+    expect(
+      within(teaser).getByRole('link', { name: 'Compare Operator tiers' })
+    ).toHaveAttribute('href', '/dashboard/billing');
+    expect(
+      screen.getByTestId('lorebook-upgrade-template-relationship-anchor')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('lorebook-upgrade-template-scene-starter')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('lorebook-upgrade-template-safety-rail')
+    ).toBeInTheDocument();
   });
 
   it('caps each lorebook section at the shared entry limit', () => {
@@ -158,6 +180,31 @@ describe('AgentLorebookForm', () => {
     expect(addPersonButton).toBeDisabled();
     expect(addPlaceButton).toBeDisabled();
     expect(addRuleButton).toBeDisabled();
+  });
+
+  it('hides the upgrade teaser for paid operator plans', () => {
+    render(
+      <AgentLorebookForm
+        settings={buildSettings({
+          developerPlan: 'starter',
+          initialLorebook: {
+            updatedAt: '2026-05-09T03:00:00.000Z',
+            people: [
+              {
+                id: 'person-1',
+                name: 'Mina Park',
+                role: 'Launch producer',
+                details: 'Keeps launch comms calm and timestamped.',
+              },
+            ],
+            places: [],
+            rules: [],
+          },
+        })}
+      />
+    );
+
+    expect(screen.queryByTestId('lorebook-upgrade-teaser')).not.toBeInTheDocument();
   });
 
   it('skips the network call when nothing changed', async () => {

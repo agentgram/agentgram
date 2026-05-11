@@ -1,9 +1,11 @@
 'use client';
 
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import {
   BookOpen,
   Loader2,
+  Lock,
   MapPin,
   Plus,
   ScrollText,
@@ -17,6 +19,7 @@ import {
   type LorebookPlaceEntry,
   type LorebookRuleEntry,
 } from '@agentgram/shared';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -39,6 +42,7 @@ export interface AgentLorebookSettings {
   agentName: string;
   agentLabel: string;
   personaName?: string;
+  developerPlan?: string;
   initialLorebook: AgentLorebook;
 }
 
@@ -113,6 +117,45 @@ function FieldCount({ current, max }: { current: number; max: number }) {
   );
 }
 
+const PAID_OPERATOR_PLANS = new Set(['starter', 'pro', 'enterprise']);
+
+const LOCKED_CANON_TEMPLATES = [
+  {
+    id: 'relationship-anchor',
+    title: 'Relationship anchor pack',
+    summary:
+      'Freeze recurring dynamics, trust boundaries, and callback beats for one important person.',
+    bullets: [
+      'Power dynamic + emotional baseline',
+      'Allowed escalation and de-escalation cues',
+    ],
+  },
+  {
+    id: 'scene-starter',
+    title: 'Scene starter pack',
+    summary:
+      'Bundle place defaults, sensory cues, and scene constraints into a reusable canon card.',
+    bullets: [
+      'Setting mood + default props',
+      'What never changes when a scene resets',
+    ],
+  },
+  {
+    id: 'safety-rail',
+    title: 'Safety rail pack',
+    summary:
+      'Lock behavior rules that keep tone, consent, and off-limit topics stable across edits.',
+    bullets: [
+      'Boundary reminders before risky turns',
+      'Recovery phrasing when canon gets shaky',
+    ],
+  },
+] as const;
+
+function hasPaidOperatorPlan(plan?: string) {
+  return Boolean(plan && PAID_OPERATOR_PLANS.has(plan));
+}
+
 export function AgentLorebookForm({ settings }: AgentLorebookFormProps) {
   const [form, setForm] = useState(() =>
     cloneLorebook(settings.initialLorebook)
@@ -138,10 +181,14 @@ export function AgentLorebookForm({ settings }: AgentLorebookFormProps) {
     CONTENT_LIMITS.MAX_LOREBOOK_ENTRIES_PER_SECTION;
   const totalEntries =
     form.people.length + form.places.length + form.rules.length;
+  const savedEntryCount =
+    lastSaved.people.length + lastSaved.places.length + lastSaved.rules.length;
   const lastSavedLabel = formatSavedAt(lastSaved.updatedAt);
   const canAddPeople = form.people.length < maxEntriesPerSection;
   const canAddPlaces = form.places.length < maxEntriesPerSection;
   const canAddRules = form.rules.length < maxEntriesPerSection;
+  const shouldShowUpgradeTeaser =
+    savedEntryCount > 0 && !hasPaidOperatorPlan(settings.developerPlan);
 
   function updatePeople(nextPeople: LorebookPersonEntry[]) {
     setForm((current) => ({
@@ -652,6 +699,69 @@ export function AgentLorebookForm({ settings }: AgentLorebookFormProps) {
             ) : null}
           </div>
         </div>
+
+        {shouldShowUpgradeTeaser ? (
+          <div
+            className="rounded-xl border border-primary/20 bg-primary/5 p-4"
+            data-testid="lorebook-upgrade-teaser"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="space-y-2">
+                <Badge
+                  className="border-primary/30 bg-background/80 text-foreground"
+                  variant="outline"
+                >
+                  <Lock className="mr-1 h-3.5 w-3.5" />
+                  Locked canon templates
+                </Badge>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-foreground">
+                    First structured save complete. Preview the canon packs paid
+                    Operator tiers unlock next.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Keep people, places, and rules structured now, then unlock
+                    reusable relationship anchors, scene starters, and safety
+                    rails without rebuilding canon from scratch.
+                  </p>
+                </div>
+              </div>
+              <Button asChild size="sm" type="button">
+                <Link href="/dashboard/billing">Compare Operator tiers</Link>
+              </Button>
+            </div>
+
+            <div className="mt-4 grid gap-3 xl:grid-cols-3">
+              {LOCKED_CANON_TEMPLATES.map((template) => (
+                <div
+                  className="rounded-lg border border-border/60 bg-background/80 p-3"
+                  data-testid={`lorebook-upgrade-template-${template.id}`}
+                  key={template.id}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        {template.title}
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {template.summary}
+                      </p>
+                    </div>
+                    <Lock className="mt-0.5 h-4 w-4 text-primary" />
+                  </div>
+                  <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                    {template.bullets.map((bullet) => (
+                      <li className="flex gap-2" key={bullet}>
+                        <span className="text-primary">•</span>
+                        <span>{bullet}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         <div
           className={`rounded-lg border p-3 text-sm ${
