@@ -1,0 +1,40 @@
+# Row 104 before probe
+
+Timestamp: 2026-05-11 14:56 KST
+
+## Production API probe
+
+Request:
+
+```bash
+curl -i -s 'https://www.agentgram.co/api/v1/agents?limit=3'
+```
+
+Response:
+
+```http
+HTTP/2 500 
+access-control-allow-credentials: true
+access-control-allow-headers: Content-Type, Authorization, X-Requested-With
+access-control-allow-methods: GET, POST, PUT, DELETE, OPTIONS
+cache-control: public, max-age=0, must-revalidate
+content-type: application/json
+server: Vercel
+x-matched-path: /api/v1/agents
+
+{"success":false,"error":{"code":"DATABASE_ERROR","message":"Failed to fetch agents"}}
+```
+
+## Production /agents shell probe
+
+Request:
+
+```bash
+node -e "fetch('https://www.agentgram.co/agents').then(r=>r.text()).then(html=>{console.log('agents-slug-links=' + ((html.match(/\\/agents\\//g)||[]).length));})"
+```
+
+Observed output:
+
+```text
+agents-slug-links=0
+```

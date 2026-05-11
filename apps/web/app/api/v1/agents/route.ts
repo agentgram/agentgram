@@ -21,7 +21,7 @@ type SortableQuery<TQuery> = {
   order(column: string, options: { ascending: boolean }): TQuery;
 };
 
-const AGENTS_DIRECTORY_SELECT = `
+const AGENTS_DIRECTORY_BASE_SELECT = `
   id,
   name,
   display_name,
@@ -36,30 +36,22 @@ const AGENTS_DIRECTORY_SELECT = `
   avatar_url,
   created_at,
   updated_at,
-  last_active,
+  last_active
+`;
+
+const AGENTS_DIRECTORY_SELECT = `
+  ${AGENTS_DIRECTORY_BASE_SELECT},
   verification_state,
   developer:developers(display_name, plan, subscription_status)
 `;
 
 const AGENTS_DIRECTORY_FALLBACK_SELECT = `
-  id,
-  name,
-  display_name,
-  description,
-  public_key,
-  email,
-  email_verified,
-  axp,
-  status,
-  trust_score,
-  metadata,
-  avatar_url,
-  created_at,
-  updated_at,
-  last_active,
+  ${AGENTS_DIRECTORY_BASE_SELECT},
   verification_state,
   developer:developers(display_name)
 `;
+
+const AGENTS_DIRECTORY_LEGACY_SELECT = AGENTS_DIRECTORY_BASE_SELECT;
 
 function isCapabilityFilterEnabled(value: string | null): boolean {
   if (value == null) {
@@ -155,13 +147,38 @@ function matchesDiscoveryFacets(
   return true;
 }
 
+function getErrorMessage(error: unknown) {
+  return error && typeof error === 'object' && 'message' in error
+    ? String(error.message).toLowerCase()
+    : '';
+}
+
 function shouldRetryWithoutDeveloperBilling(error: unknown) {
-  const message =
-    error && typeof error === 'object' && 'message' in error
-      ? String(error.message).toLowerCase()
-      : '';
+  const message = getErrorMessage(error);
 
   return message.includes('plan') || message.includes('subscription_status');
+}
+
+function shouldRetryWithLegacyDirectorySelect(error: unknown) {
+  const message = getErrorMessage(error);
+
+  if (
+    message.includes('verification_state') ||
+    message.includes('capability_summary') ||
+    message.includes('permission_scope')
+  ) {
+    return true;
+  }
+
+  const mentionsDeveloperJoin =
+    message.includes('developers') || message.includes('developer_id');
+  const mentionsSchemaDrift =
+    message.includes('schema cache') ||
+    message.includes('relationship') ||
+    message.includes('does not exist') ||
+    message.includes('not exist');
+
+  return mentionsDeveloperJoin && mentionsSchemaDrift;
 }
 
 // GET /api/v1/agents - Fetch agent directory
@@ -336,17 +353,37 @@ export async function GET(req: NextRequest) {
 
     let directoryResult = await fetchAgentsDirectoryPage(AGENTS_DIRECTORY_SELECT);
 
-    if (
-      'error' in directoryResult &&
-      shouldRetryWithoutDeveloperBilling(directoryResult.error)
-    ) {
-      console.warn(
-        'Agents query failed with developer billing fields; retrying without plan metadata.',
-        directoryResult.error
-      );
-      directoryResult = await fetchAgentsDirectoryPage(
-        AGENTS_DIRECTORY_FALLBACK_SELECT
-      );
+    if ('error' in directoryResult) {
+      if (shouldRetryWithoutDeveloperBilling(directoryResult.error)) {
+        console.warn(
+          'Agents query failed with developer billing fields; retrying without plan metadata.',
+          directoryResult.error
+        );
+        directoryResult = await fetchAgentsDirectoryPage(
+          AGENTS_DIRECTORY_FALLBACK_SELECT
+        );
+
+        if (
+          'error' in directoryResult &&
+          shouldRetryWithLegacyDirectorySelect(directoryResult.error)
+        ) {
+          console.warn(
+            'Agents query still failed after removing billing metadata; retrying with legacy directory columns.',
+            directoryResult.error
+          );
+          directoryResult = await fetchAgentsDirectoryPage(
+            AGENTS_DIRECTORY_LEGACY_SELECT
+          );
+        }
+      } else if (shouldRetryWithLegacyDirectorySelect(directoryResult.error)) {
+        console.warn(
+          'Agents query failed against newer public schema fields; retrying with legacy directory columns.',
+          directoryResult.error
+        );
+        directoryResult = await fetchAgentsDirectoryPage(
+          AGENTS_DIRECTORY_LEGACY_SELECT
+        );
+      }
     }
 
     if ('error' in directoryResult) {
