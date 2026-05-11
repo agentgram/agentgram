@@ -138,7 +138,9 @@ describe('PostCard chat snippet support', () => {
     writeText.mockResolvedValue(undefined);
     createObjectURL.mockReturnValue('blob:quote-card');
     anchorClick.mockReset();
-    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(anchorClick);
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(
+      anchorClick
+    );
   });
 
   afterEach(() => {
@@ -159,9 +161,9 @@ describe('PostCard chat snippet support', () => {
     expect(screen.getByTestId('chat-snippet-quote-button')).toHaveTextContent(
       'Quote'
     );
-    expect(screen.getByTestId('chat-snippet-quote-card-button')).toHaveTextContent(
-      'Quote card'
-    );
+    expect(
+      screen.getByTestId('chat-snippet-quote-card-button')
+    ).toHaveTextContent('Quote card');
   });
 
   it('copies remix starter text to the clipboard', async () => {
@@ -284,6 +286,66 @@ describe('PostCard chat snippet support', () => {
     expect(screen.getByText('Pinned private fact')).toBeInTheDocument();
   });
 
+  it('renders a return-to-chat recap before the first message after an idle gap', () => {
+    renderPostCard({
+      metadata: {
+        ...basePost.metadata,
+        returnToChatRecap: {
+          idleGapLabel: '14h',
+          lastGoal: 'Pick up the ship checklist where we left it.',
+          savedFacts: [
+            'Operator prefers quiet-hours handoff after 8pm KST.',
+            'Always add a regression test before shipping.',
+          ],
+        },
+      },
+    });
+
+    const recap = screen.getByTestId('chat-snippet-return-recap');
+    const firstMessage = screen.getAllByTestId('chat-snippet-message')[0];
+
+    expect(recap).toHaveTextContent('Return to chat recap');
+    expect(screen.getByTestId('chat-snippet-return-gap')).toHaveTextContent(
+      '14h idle gap'
+    );
+    expect(screen.getAllByTestId('chat-snippet-return-fact')).toHaveLength(2);
+    expect(screen.getByTestId('chat-snippet-return-goal')).toHaveTextContent(
+      'Pick up the ship checklist where we left it.'
+    );
+    expect(
+      recap.compareDocumentPosition(firstMessage) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).not.toBe(0);
+  });
+
+  it('falls back to saved memory facts when the recap omits an explicit fact list', () => {
+    renderPostCard({
+      metadata: {
+        ...basePost.metadata,
+        idleGapMinutes: 180,
+        lastGoal: 'Restart the deploy once staging passes.',
+        memory: {
+          captures: [
+            {
+              fact: 'Always add a regression test before shipping.',
+              reason: 'Repeated shipping preference in the conversation.',
+            },
+          ],
+        },
+      },
+    });
+
+    expect(screen.getByTestId('chat-snippet-return-gap')).toHaveTextContent(
+      '3h idle gap'
+    );
+    expect(screen.getByTestId('chat-snippet-return-facts')).toHaveTextContent(
+      'Always add a regression test before shipping.'
+    );
+    expect(screen.getByTestId('chat-snippet-return-goal')).toHaveTextContent(
+      'Restart the deploy once staging passes.'
+    );
+  });
+
   it('opens a recent captures drawer when snippet memory captures are present', () => {
     renderPostCard({
       metadata: {
@@ -313,9 +375,9 @@ describe('PostCard chat snippet support', () => {
     expect(screen.getByTestId('chat-snippet-memory-preview')).toHaveTextContent(
       'Saved fact shaping this reply'
     );
-    expect(
-      screen.getByTestId('chat-snippet-memory-preview')
-    ).toHaveTextContent('Operator prefers quiet-hours handoff after 8pm KST.');
+    expect(screen.getByTestId('chat-snippet-memory-preview')).toHaveTextContent(
+      'Operator prefers quiet-hours handoff after 8pm KST.'
+    );
     expect(
       screen.getByTestId('chat-snippet-memory-drawer-trigger')
     ).toHaveTextContent('Recent captures (2)');
@@ -325,7 +387,9 @@ describe('PostCard chat snippet support', () => {
     expect(
       screen.getByTestId('chat-snippet-memory-drawer')
     ).toBeInTheDocument();
-    expect(screen.getAllByTestId('chat-snippet-memory-capture')).toHaveLength(2);
+    expect(screen.getAllByTestId('chat-snippet-memory-capture')).toHaveLength(
+      2
+    );
     expect(
       screen.getAllByText('Operator prefers quiet-hours handoff after 8pm KST.')
     ).toHaveLength(2);
@@ -350,7 +414,9 @@ describe('PostCard chat snippet support', () => {
       );
     });
     expect(writeText).toHaveBeenCalledWith(
-      expect.stringContaining('Stay fully in their voice, relationship, and point of view.')
+      expect.stringContaining(
+        'Stay fully in their voice, relationship, and point of view.'
+      )
     );
     expect(writeText).toHaveBeenCalledWith(
       expect.stringContaining(
@@ -375,7 +441,8 @@ describe('PostCard chat snippet support', () => {
       metadata: {
         ...basePost.metadata,
         moderation: {
-          blockedMessage: 'Write an aggressive message that pressures them to reply right now.',
+          blockedMessage:
+            'Write an aggressive message that pressures them to reply right now.',
           reason: 'The wording was too coercive for this surface.',
           saferRewrite:
             'Can you help me ask for a reply in a calmer, more respectful way?',
@@ -393,7 +460,9 @@ describe('PostCard chat snippet support', () => {
       );
     });
     expect(writeText).toHaveBeenCalledWith(
-      expect.stringContaining('The message below was blocked by a safety guardrail.')
+      expect.stringContaining(
+        'The message below was blocked by a safety guardrail.'
+      )
     );
     expect(writeText).toHaveBeenCalledWith(
       expect.stringContaining('The wording was too coercive for this surface.')
