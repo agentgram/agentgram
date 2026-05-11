@@ -1,7 +1,14 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { PlanType, RelationshipPreset } from '@agentgram/shared';
-import { Award, Bot, Lock, ShieldAlert, Sparkles } from 'lucide-react';
+import {
+  Award,
+  Bot,
+  Lock,
+  ShieldAlert,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { getRelationshipModeLabel } from '@/lib/agents/relationship-mode';
 import { cn } from '@/lib/utils';
@@ -118,12 +125,14 @@ export function AgentCard({
     ? formatTokenLabel(agent.memoryPolicy)
     : undefined;
   const paidTierLabel = formatOperatorTierLabel(agent.operatorTier);
-  const shouldShowPublicTrustBundle =
+  const shouldShowPublicTrustStrip =
     agent.verificationState === 'verified' &&
     Boolean(publicOwnerLabel || formattedMemoryPolicy || activityFreshness);
   const shouldShowPremiumTrustStrip = Boolean(
     paidTierLabel || agent.matureContent
   );
+  const shouldShowAnyTrustStrip =
+    shouldShowPremiumTrustStrip || shouldShowPublicTrustStrip;
 
   const isNew =
     showNewBadge &&
@@ -182,7 +191,7 @@ export function AgentCard({
                   {relationshipModeLabel}
                 </Badge>
               )}
-              {activityFreshness && !shouldShowPublicTrustBundle && (
+              {activityFreshness && !shouldShowPublicTrustStrip && (
                 <span
                   data-testid="agent-card-freshness-badge"
                   className={cn(
@@ -198,11 +207,41 @@ export function AgentCard({
         </div>
       </div>
 
-      {shouldShowPremiumTrustStrip && (
+      {shouldShowAnyTrustStrip && (
         <div
           className="mt-3 flex flex-wrap gap-2"
           data-testid="agent-card-trust-strip"
         >
+          {publicOwnerLabel && (
+            <Badge
+              variant="secondary"
+              className="gap-1.5 border border-emerald-500/20 bg-emerald-500/10 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300"
+              data-testid="agent-card-trust-badge-owner"
+            >
+              <ShieldCheck className="h-3 w-3" />
+              Verified owner: {publicOwnerLabel}
+            </Badge>
+          )}
+          {activityFreshness && shouldShowPublicTrustStrip && (
+            <span
+              className={cn(
+                'inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide',
+                activityFreshness.className
+              )}
+              data-testid="agent-card-trust-last-active"
+            >
+              {activityFreshness.label}
+            </span>
+          )}
+          {formattedMemoryPolicy && (
+            <Badge
+              variant="secondary"
+              className="border border-primary/15 bg-background text-[10px] font-semibold uppercase tracking-wide text-foreground/80"
+              data-testid="agent-card-memory-consent"
+            >
+              Memory consent: {formattedMemoryPolicy}
+            </Badge>
+          )}
           {paidTierLabel && (
             <Badge
               variant="secondary"
@@ -244,54 +283,6 @@ export function AgentCard({
           </div>
         )}
       </div>
-
-      {shouldShowPublicTrustBundle && (
-        <div
-          className="mt-3 rounded-xl border border-primary/15 bg-primary/5 p-3"
-          data-testid="agent-card-trust-bundle"
-        >
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-            Public trust bundle
-          </p>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-foreground/80">
-            {publicOwnerLabel && (
-              <span
-                className="inline-flex items-center rounded-full bg-background px-2.5 py-1 font-medium"
-                data-testid="agent-card-owner-label"
-              >
-                Verified owner: {publicOwnerLabel}
-              </span>
-            )}
-            {relationshipModeLabel && (
-              <span
-                className="inline-flex items-center rounded-full bg-background px-2.5 py-1 font-medium"
-                data-testid="agent-card-relationship-mode"
-              >
-                Relationship mode: {relationshipModeLabel}
-              </span>
-            )}
-            {formattedMemoryPolicy && (
-              <span
-                className="inline-flex items-center rounded-full bg-background px-2.5 py-1 font-medium"
-                data-testid="agent-card-memory-consent"
-              >
-                Memory consent: {formattedMemoryPolicy}
-              </span>
-            )}
-            {activityFreshness && (
-              <span
-                className={cn(
-                  'inline-flex items-center rounded-full px-2.5 py-1 font-medium',
-                  activityFreshness.className
-                )}
-                data-testid="agent-card-trust-last-active"
-              >
-                {activityFreshness.label}
-              </span>
-            )}
-          </div>
-        </div>
-      )}
 
       {agent.capabilities && (
         <div className="mt-3 flex flex-wrap gap-2">

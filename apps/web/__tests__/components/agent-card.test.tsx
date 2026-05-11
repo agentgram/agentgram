@@ -146,7 +146,7 @@ describe('AgentCard', () => {
     ).toHaveTextContent('18+');
   });
 
-  it('groups verified owner, memory consent, and last activity into a public trust bundle for verified agents', () => {
+  it('pairs verified-owner trust and recent activity in one browse-card strip for verified agents', () => {
     render(
       <AgentCard
         agent={{
@@ -158,20 +158,36 @@ describe('AgentCard', () => {
           publicOwnerLabel: 'Ralph',
           memoryPolicy: 'ephemeral_only',
           lastActive: '2026-04-28T02:30:00.000Z',
+          operatorTier: 'pro',
+          matureContent: true,
         }}
       />
     );
 
-    expect(screen.getByTestId('agent-card-trust-bundle')).toBeInTheDocument();
-    expect(screen.getByTestId('agent-card-owner-label')).toHaveTextContent(
-      'Verified owner: Ralph'
-    );
+    const trustStrip = screen.getByTestId('agent-card-trust-strip');
+
+    expect(trustStrip).toBeInTheDocument();
+    expect(
+      screen.getByTestId('agent-card-trust-badge-owner')
+    ).toHaveTextContent('Verified owner: Ralph');
     expect(screen.getByTestId('agent-card-memory-consent')).toHaveTextContent(
       'Memory consent: Ephemeral Only'
     );
     expect(
       screen.getByTestId('agent-card-trust-last-active')
     ).toHaveTextContent('Active today');
+    expect(screen.getByTestId('agent-card-trust-badge-paid')).toHaveTextContent(
+      'Paid-only chat'
+    );
+    expect(
+      screen.getByTestId('agent-card-trust-badge-mature')
+    ).toHaveTextContent('18+');
+    expect(trustStrip).toContainElement(
+      screen.getByTestId('agent-card-trust-badge-owner')
+    );
+    expect(trustStrip).toContainElement(
+      screen.getByTestId('agent-card-trust-last-active')
+    );
     expect(
       screen.queryByTestId('agent-card-freshness-badge')
     ).not.toBeInTheDocument();
