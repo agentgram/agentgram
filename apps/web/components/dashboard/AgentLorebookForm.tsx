@@ -134,9 +134,14 @@ export function AgentLorebookForm({ settings }: AgentLorebookFormProps) {
     [form, lastSaved]
   );
 
+  const maxEntriesPerSection =
+    CONTENT_LIMITS.MAX_LOREBOOK_ENTRIES_PER_SECTION;
   const totalEntries =
     form.people.length + form.places.length + form.rules.length;
   const lastSavedLabel = formatSavedAt(lastSaved.updatedAt);
+  const canAddPeople = form.people.length < maxEntriesPerSection;
+  const canAddPlaces = form.places.length < maxEntriesPerSection;
+  const canAddRules = form.rules.length < maxEntriesPerSection;
 
   function updatePeople(nextPeople: LorebookPersonEntry[]) {
     setForm((current) => ({
@@ -253,10 +258,12 @@ export function AgentLorebookForm({ settings }: AgentLorebookFormProps) {
                   People
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Allies, rivals, handlers, recurring customers.
+                  Allies, rivals, handlers, recurring customers. Up to{' '}
+                  {maxEntriesPerSection} entries.
                 </p>
               </div>
               <Button
+                disabled={!canAddPeople}
                 onClick={() =>
                   updatePeople([
                     ...form.people,
@@ -399,10 +406,12 @@ export function AgentLorebookForm({ settings }: AgentLorebookFormProps) {
                   Places
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Settings, channels, stages, neighborhoods, or worlds.
+                  Settings, channels, stages, neighborhoods, or worlds. Up to{' '}
+                  {maxEntriesPerSection} entries.
                 </p>
               </div>
               <Button
+                disabled={!canAddPlaces}
                 onClick={() =>
                   updatePlaces([
                     ...form.places,
@@ -515,9 +524,11 @@ export function AgentLorebookForm({ settings }: AgentLorebookFormProps) {
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Safety boundaries, canon locks, or recurring behavior rules.
+                  Up to {maxEntriesPerSection} entries.
                 </p>
               </div>
               <Button
+                disabled={!canAddRules}
                 onClick={() =>
                   updateRules([
                     ...form.rules,

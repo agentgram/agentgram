@@ -1,6 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { CONTENT_LIMITS } from '@agentgram/shared';
 import {
   AgentLorebookForm,
   type AgentLorebookSettings,
@@ -131,6 +132,32 @@ describe('AgentLorebookForm', () => {
     expect(
       screen.getByText(/3 structured lorebook entries/i)
     ).toBeInTheDocument();
+  });
+
+  it('caps each lorebook section at the shared entry limit', () => {
+    render(<AgentLorebookForm settings={buildSettings()} />);
+
+    const maxEntries = CONTENT_LIMITS.MAX_LOREBOOK_ENTRIES_PER_SECTION;
+    const addPersonButton = screen.getByRole('button', { name: 'Add person' });
+    const addPlaceButton = screen.getByRole('button', { name: 'Add place' });
+    const addRuleButton = screen.getByRole('button', { name: 'Add rule' });
+
+    for (let index = 0; index < maxEntries; index += 1) {
+      fireEvent.click(addPersonButton);
+      fireEvent.click(addPlaceButton);
+      fireEvent.click(addRuleButton);
+    }
+
+    expect(screen.getByLabelText(/person 6 name for sage bot/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/person 7 name for sage bot/i)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/place 6 name for sage bot/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/place 7 name for sage bot/i)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/rule 6 title for sage bot/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/rule 7 title for sage bot/i)).not.toBeInTheDocument();
+
+    expect(addPersonButton).toBeDisabled();
+    expect(addPlaceButton).toBeDisabled();
+    expect(addRuleButton).toBeDisabled();
   });
 
   it('skips the network call when nothing changed', async () => {
