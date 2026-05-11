@@ -28,6 +28,7 @@ type AgentSettingsRecord = {
   agentName: string;
   agentLabel: string;
   personaName?: string;
+  developerPlan: string;
   initialSnapshot: {
     displayName: string;
     description: string;
@@ -124,7 +125,7 @@ export default async function SettingsPage() {
   const { developer_id } = member as { developer_id: string };
   const { data: developer } = await supabase
     .from('developers')
-    .select('metadata')
+    .select('metadata, plan')
     .eq('id', developer_id)
     .single();
 
@@ -186,6 +187,8 @@ export default async function SettingsPage() {
       agentName: agent.name,
       agentLabel: agent.display_name || agent.name,
       personaName: activePersona?.name ?? undefined,
+      developerPlan:
+        typeof developer?.plan === 'string' ? developer.plan : 'free',
       initialSnapshot: {
         displayName: agent.display_name ?? '',
         description: agent.description ?? '',
@@ -244,6 +247,7 @@ export default async function SettingsPage() {
                     agentName: settings.agentName,
                     agentLabel: settings.agentLabel,
                     personaName: settings.personaName,
+                    developerPlan: settings.developerPlan,
                     initialLorebook: settings.initialLorebook,
                   }}
                 />

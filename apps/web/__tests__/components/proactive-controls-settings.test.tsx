@@ -70,6 +70,7 @@ function createSettingsPageClient() {
             eq: vi.fn().mockReturnValue({
               single: vi.fn().mockResolvedValue({
                 data: {
+                  plan: 'free',
                   metadata: {
                     proactiveControls: {
                       optIn: false,
@@ -496,6 +497,7 @@ describe('SettingsPage', () => {
           agentName: 'sage-bot',
           agentLabel: 'Sage Bot',
           personaName: 'Release Sage',
+          developerPlan: 'free',
           initialLorebook: {
             updatedAt: '2026-05-09T03:00:00.000Z',
             people: [
