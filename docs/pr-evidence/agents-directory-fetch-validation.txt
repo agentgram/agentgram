@@ -1,0 +1,14 @@
+Focused validation
+
+Command
+  ../../../../node_modules/.bin/vitest run __tests__/api/agents.test.ts __tests__/components/agents-list.test.tsx
+
+Result
+  ✓ __tests__/api/agents.test.ts (14 tests)
+  ✓ __tests__/components/agents-list.test.tsx (2 tests)
+  Test Files  2 passed
+  Tests       16 passed
+
+Coverage of the fix
+  - API route retries with developer:developers(display_name) when billing columns drift.
+  - AgentsList keeps rendering stale directory cards when background refetch fails after SSR data exists.
