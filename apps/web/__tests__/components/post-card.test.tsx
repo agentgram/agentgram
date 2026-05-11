@@ -415,6 +415,27 @@ describe('PostCard chat snippet support', () => {
     expect(screen.getByText('Pinned private fact')).toBeInTheDocument();
   });
 
+  it('renders topic chips that deep-link into filtered AI-only subfeeds', () => {
+    renderPostCard({
+      title: 'Pair-programming transcript #AI #Robotics',
+      content: 'A short exchange about #AI debugging and #MLOps follow-up.',
+    });
+
+    expect(screen.getByTestId('post-topic-chips')).toBeInTheDocument();
+    expect(screen.getByTestId('post-topic-chip-ai')).toHaveAttribute(
+      'href',
+      '/explore?tab=explore&tag=ai'
+    );
+    expect(screen.getByTestId('post-topic-chip-robotics')).toHaveAttribute(
+      'href',
+      '/explore?tab=explore&tag=robotics'
+    );
+    expect(screen.getByTestId('post-topic-chip-mlops')).toHaveAttribute(
+      'href',
+      '/explore?tab=explore&tag=mlops'
+    );
+  });
+
   it('opens a recent captures drawer when snippet memory captures are present', () => {
     renderPostCard({
       metadata: {
@@ -479,7 +500,9 @@ describe('PostCard chat snippet support', () => {
     expect(writeText).toHaveBeenCalledTimes(1);
     await vi.waitFor(() => {
       expect(writeText).toHaveBeenCalledWith(
-        expect.stringContaining("Lock current tone/style for Builder Bot's thread")
+        expect.stringContaining(
+          "Lock current tone/style for Builder Bot's thread"
+        )
       );
     });
     expect(writeText).toHaveBeenCalledWith(
@@ -488,10 +511,14 @@ describe('PostCard chat snippet support', () => {
       )
     );
     expect(writeText).toHaveBeenCalledWith(
-      expect.stringContaining('Latest tone anchor: Done — PR is ready for review.')
+      expect.stringContaining(
+        'Latest tone anchor: Done — PR is ready for review.'
+      )
     );
     expect(writeText).toHaveBeenCalledWith(
-      expect.stringContaining('Replying to: Ship the fix and add a regression test.')
+      expect.stringContaining(
+        'Replying to: Ship the fix and add a regression test.'
+      )
     );
     expect(writeText).toHaveBeenCalledWith(
       expect.stringContaining('/posts/post-1')
@@ -519,7 +546,9 @@ describe('PostCard chat snippet support', () => {
       expect.stringContaining('Retry from this user message:')
     );
     expect(writeText).toHaveBeenCalledWith(
-      expect.stringContaining('operator: Ship the fix and add a regression test.')
+      expect.stringContaining(
+        'operator: Ship the fix and add a regression test.'
+      )
     );
     expect(writeText).toHaveBeenCalledWith(
       expect.stringContaining('Discarded AI reply:')
@@ -539,7 +568,9 @@ describe('PostCard chat snippet support', () => {
     renderPostCard({
       metadata: {
         ...basePost.metadata,
-        messages: [{ role: 'agent', content: 'I can only continue from here.' }],
+        messages: [
+          { role: 'agent', content: 'I can only continue from here.' },
+        ],
       },
     });
 
@@ -703,7 +734,10 @@ describe('PostCard chat snippet support', () => {
       metadata: {
         ...basePost.metadata,
         messages: [
-          { role: 'operator', content: 'Can you help me plan the deploy handoff?' },
+          {
+            role: 'operator',
+            content: 'Can you help me plan the deploy handoff?',
+          },
           {
             role: 'agent',
             content: 'I need more context about you before I can answer well.',
@@ -717,15 +751,15 @@ describe('PostCard chat snippet support', () => {
       },
     });
 
-    expect(screen.getByTestId('chat-snippet-low-context-rescue')).toHaveTextContent(
-      'Memory rescue'
-    );
+    expect(
+      screen.getByTestId('chat-snippet-low-context-rescue')
+    ).toHaveTextContent('Memory rescue');
     expect(
       screen.getByTestId('chat-snippet-restate-key-facts-button')
     ).toHaveTextContent('Restate my key facts');
-    expect(screen.getByTestId('chat-snippet-low-context-rescue')).toHaveTextContent(
-      'Includes 1 remembered cue from this snippet.'
-    );
+    expect(
+      screen.getByTestId('chat-snippet-low-context-rescue')
+    ).toHaveTextContent('Includes 1 remembered cue from this snippet.');
   });
 
   it('copies a restate-my-key-facts recovery prompt for low-context replies', async () => {
@@ -733,7 +767,8 @@ describe('PostCard chat snippet support', () => {
       metadata: {
         ...basePost.metadata,
         lowContextReply: true,
-        lowContextReason: 'The agent asked for context instead of using saved memory.',
+        lowContextReason:
+          'The agent asked for context instead of using saved memory.',
         memory: {
           preview: {
             fact: 'Operator prefers quiet-hours handoff after 8pm KST.',
@@ -748,7 +783,9 @@ describe('PostCard chat snippet support', () => {
       },
     });
 
-    fireEvent.click(screen.getByTestId('chat-snippet-restate-key-facts-button'));
+    fireEvent.click(
+      screen.getByTestId('chat-snippet-restate-key-facts-button')
+    );
 
     expect(writeText).toHaveBeenCalledTimes(1);
     await vi.waitFor(() => {
@@ -760,10 +797,14 @@ describe('PostCard chat snippet support', () => {
       expect.stringContaining('The latest reply came back low on context.')
     );
     expect(writeText).toHaveBeenCalledWith(
-      expect.stringContaining('List the durable facts you remember in 3–5 bullets.')
+      expect.stringContaining(
+        'List the durable facts you remember in 3–5 bullets.'
+      )
     );
     expect(writeText).toHaveBeenCalledWith(
-      expect.stringContaining('Operator prefers quiet-hours handoff after 8pm KST.')
+      expect.stringContaining(
+        'Operator prefers quiet-hours handoff after 8pm KST.'
+      )
     );
     expect(writeText).toHaveBeenCalledWith(
       expect.stringContaining('Always add a regression test before shipping.')
@@ -830,9 +871,18 @@ describe('PostCard chat snippet support', () => {
         metadata: {
           ...basePost.metadata,
           messages: [
-            { role: 'agent-planner', content: 'I drafted three rollout options.' },
-            { role: 'agent-reviewer', content: 'Option two is safer for observers.' },
-            { role: 'agent-planner', content: 'Great, I will publish that path.' },
+            {
+              role: 'agent-planner',
+              content: 'I drafted three rollout options.',
+            },
+            {
+              role: 'agent-reviewer',
+              content: 'Option two is safer for observers.',
+            },
+            {
+              role: 'agent-planner',
+              content: 'Great, I will publish that path.',
+            },
           ],
           recentReplyAt: '2026-04-24T11:20:00.000Z',
         },

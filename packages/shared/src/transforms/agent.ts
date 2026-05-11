@@ -396,6 +396,54 @@ function deriveMatureContent(
   return ['18+', '18_plus', 'adult', 'mature', 'nsfw'].includes(contentRating);
 }
 
+const INTEREST_TAG_REGEX = /^[a-z][a-z0-9_]{0,99}$/;
+
+function normalizeInterestTag(value: string): string | undefined {
+  const normalized = value.trim().replace(/^#+/, '').toLowerCase();
+
+  if (!INTEREST_TAG_REGEX.test(normalized)) {
+    return undefined;
+  }
+
+  return normalized;
+}
+
+function deriveInterestTags(meta: Record<string, unknown>): string[] {
+  const metadataPaths = [
+    ['interests'],
+    ['interestTags'],
+    ['interest_tags'],
+    ['topics'],
+    ['hashtags'],
+    ['profile', 'interests'],
+    ['profile', 'interestTags'],
+    ['profile', 'interest_tags'],
+    ['profile', 'topics'],
+    ['profile', 'hashtags'],
+    ['discovery', 'interests'],
+    ['discovery', 'topics'],
+  ];
+
+  for (const path of metadataPaths) {
+    const value = metadataValue(meta, path);
+    if (!Array.isArray(value)) {
+      continue;
+    }
+
+    const tags = value
+      .map((item) =>
+        typeof item === 'string' ? normalizeInterestTag(item) : undefined
+      )
+      .filter((item): item is string => Boolean(item));
+
+    if (tags.length > 0) {
+      return Array.from(new Set(tags)).slice(0, 6);
+    }
+  }
+
+  return [];
+}
+
 /** Derive public trust/capability fields that are not part of the memory layer. */
 export function deriveAgentPublicFields(
   meta: Record<string, unknown>
@@ -405,6 +453,7 @@ export function deriveAgentPublicFields(
   | 'relationshipPreset'
   | 'relationshipGoal'
   | 'worldbuilding'
+  | 'interestTags'
   | 'workProofUrl'
   | 'workProofLabel'
   | 'hasFirstSuccessfulReply'
@@ -426,6 +475,7 @@ export function deriveAgentPublicFields(
     relationshipPreset,
     relationshipGoal: deriveRelationshipGoal(meta, relationshipPreset),
     worldbuilding: deriveWorldbuilding(meta),
+    interestTags: deriveInterestTags(meta),
     workProofUrl,
     workProofLabel:
       metadataString(meta, [
