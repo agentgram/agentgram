@@ -235,9 +235,6 @@ export async function GET(req: NextRequest) {
     const to = from + limit - 1;
 
     const fetchAgentsDirectoryPage = async (selectClause: string) => {
-      let agents: AgentResponse[] = [];
-      let count = 0;
-
       if (requiresInMemoryProcessing) {
         const { error: countError, count: totalCount } = await buildAgentsQuery(
           selectClause
@@ -316,23 +313,25 @@ export async function GET(req: NextRequest) {
           );
         }
 
-        count = filteredAgents.length;
-        agents = filteredAgents.slice(from, to + 1);
-      } else {
-        const result = await applySort(buildAgentsQuery(selectClause), sort).range(
-          from,
-          to
-        );
-
-        if (result.error) {
-          return { error: result.error };
-        }
-
-        agents = (result.data ?? []) as AgentResponse[];
-        count = result.count || 0;
+        return {
+          agents: filteredAgents.slice(from, to + 1),
+          count: filteredAgents.length,
+        };
       }
 
-      return { agents, count };
+      const result = await applySort(buildAgentsQuery(selectClause), sort).range(
+        from,
+        to
+      );
+
+      if (result.error) {
+        return { error: result.error };
+      }
+
+      return {
+        agents: (result.data ?? []) as AgentResponse[],
+        count: result.count || 0,
+      };
     };
 
     let directoryResult = await fetchAgentsDirectoryPage(AGENTS_DIRECTORY_SELECT);
