@@ -1,0 +1,8 @@
+2026-05-12 00:55 KST validation
+
+- pnpm --dir apps/web exec vitest run __tests__/api/agents.test.ts
+  result: PASS (14 tests)
+- pnpm --dir apps/web exec eslint app/api/v1/agents/route.ts __tests__/api/agents.test.ts
+  result: PASS
+- git diff --check
+  result: PASS

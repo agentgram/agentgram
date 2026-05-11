@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { getSupabaseClient } from '@agentgram/db';
+import { getSupabaseClient, getSupabaseServiceClient } from '@agentgram/db';
 import {
   AGENT_CAPABILITY_KEYS,
   ErrorResponses,
@@ -7,8 +7,86 @@ import {
   createSuccessResponse,
   PAGINATION,
   transformAgent,
+  type AgentResponse,
 } from '@agentgram/shared';
 import { getRemixCountsBySourceNames } from '@/lib/agents/remix-counts';
+
+type AgentsSort = 'axp' | 'active' | 'discussed' | 'new';
+
+type SortableQuery<TQuery> = {
+  order(column: string, options: { ascending: boolean }): TQuery;
+};
+
+type DirectoryAgentResponse = AgentResponse & {
+  developer_id?: string | null;
+  email_verified: boolean | null;
+};
+
+type DirectoryDeveloperResponse = {
+  id: string;
+  display_name: string | null;
+  plan?: string | null;
+  subscription_status?: string | null;
+};
+
+const AGENTS_DIRECTORY_BASE_SELECT = `
+  id,
+  name,
+  display_name,
+  description,
+  developer_id,
+  public_key,
+  email,
+  email_verified,
+  axp,
+  status,
+  trust_score,
+  metadata,
+  avatar_url,
+  created_at,
+  updated_at,
+  last_active
+`;
+
+const AGENTS_DIRECTORY_MINIMAL_SELECT = `
+  id,
+  name,
+  display_name,
+  description,
+  public_key,
+  email,
+  email_verified,
+  axp,
+  status,
+  trust_score,
+  metadata,
+  avatar_url,
+  created_at,
+  updated_at,
+  last_active
+`;
+
+const AGENTS_DIRECTORY_SELECT = `
+  ${AGENTS_DIRECTORY_BASE_SELECT},
+  verification_state,
+  developer:developers(display_name, plan, subscription_status)
+`;
+
+const AGENTS_DIRECTORY_FALLBACK_SELECT = `
+  ${AGENTS_DIRECTORY_BASE_SELECT},
+  verification_state,
+  developer:developers(display_name)
+`;
+
+const AGENTS_DIRECTORY_COMPAT_SELECT = `
+  ${AGENTS_DIRECTORY_BASE_SELECT},
+  developer:developers(display_name)
+`;
+
+const AGENTS_DIRECTORY_LEGACY_SELECT = `
+  ${AGENTS_DIRECTORY_BASE_SELECT},
+  verification_state
+`;
 
 function isCapabilityFilterEnabled(value: string | null): boolean {
   if (value == null) {
@@ -24,23 +102,178 @@ function getTimestamp(value: string | null | undefined): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function applySort<TQuery extends SortableQuery<TQuery>>(
+  query: TQuery,
+  sort: AgentsSort
+): TQuery {
+  if (sort === 'axp') {
+    return query.order('axp', { ascending: false });
+  }
+
+  if (sort === 'active') {
+    return query.order('last_active', { ascending: false });
+  }
+
+  if (sort === 'new') {
+    return query.order('created_at', { ascending: false });
+  }
+
+  return query;
+}
+
+function getErrorMessage(error: unknown): string {
+  return error && typeof error === 'object' && 'message' in error
+    ? String(error.message).toLowerCase()
+    : '';
+}
+
+function shouldRetryWithoutDeveloperBilling(error: unknown) {
+  const message = getErrorMessage(error);
+  return message.includes('plan') || message.includes('subscription_status');
+}
+
+function shouldRetryWithCompatibilityDirectorySelect(error: unknown) {
+  return getErrorMessage(error).includes('verification_state');
+}
+
+function shouldRetryWithLegacyDirectorySelect(error: unknown) {
+  const message = getErrorMessage(error);
+  const mentionsDeveloperJoin = message.includes('developers');
+  const mentionsSchemaDrift =
+    message.includes('schema cache') ||
+    message.includes('relationship') ||
+    message.includes('does not exist') ||
+    message.includes('not exist');
+
+  return mentionsDeveloperJoin && mentionsSchemaDrift;
+}
+
+function shouldRetryWithMinimalDirectorySelect(error: unknown) {
+  return getErrorMessage(error).includes('developer_id');
+}
+
+function coerceDirectoryAgentRows(rows: unknown): DirectoryAgentResponse[] {
+  return Array.isArray(rows) ? (rows as DirectoryAgentResponse[]) : [];
+}
+
+function getDirectoryDeveloper(
+  agent: Pick<DirectoryAgentResponse, 'developer'>
+): DirectoryDeveloperResponse | null {
+  if (!agent.developer) {
+    return null;
+  }
+
+  return Array.isArray(agent.developer)
+    ? (agent.developer[0] ?? null)
+    : agent.developer;
+}
+
+function hasPublicOwnerDisplayName(agent: DirectoryAgentResponse) {
+  return Boolean(getDirectoryDeveloper(agent)?.display_name?.trim());
+}
+
+function normalizeLegacyVerificationState(
+  agent: DirectoryAgentResponse
+): DirectoryAgentResponse {
+  if (agent.verification_state) {
+    return agent;
+  }
+
+  return {
+    ...agent,
+    verification_state:
+      agent.email_verified && hasPublicOwnerDisplayName(agent)
+        ? 'verified'
+        : 'unverified',
+  };
+}
+
+async function hydrateDirectoryAgentsWithDevelopers(
+  agents: DirectoryAgentResponse[]
+): Promise<DirectoryAgentResponse[]> {
+  const developerIds = Array.from(
+    new Set(
+      agents
+        .filter((agent) => !agent.developer && agent.developer_id)
+        .map((agent) => agent.developer_id)
+        .filter((developerId): developerId is string => Boolean(developerId))
+    )
+  );
+
+  if (developerIds.length === 0) {
+    return agents;
+  }
+
+  try {
+    const serviceClient = getSupabaseServiceClient();
+    const { data, error } = await serviceClient
+      .from('developers')
+      .select('id, display_name, plan, subscription_status')
+      .in('id', developerIds);
+
+    if (error) {
+      console.warn(
+        'Agents directory developer hydration failed; continuing without owner labels.',
+        error
+      );
+      return agents;
+    }
+
+    const developersById = new Map<string, DirectoryDeveloperResponse>(
+      ((data ?? []) as DirectoryDeveloperResponse[]).map((developer) => [
+        developer.id,
+        developer,
+      ])
+    );
+
+    return agents.map((agent) => {
+      if (agent.developer || !agent.developer_id) {
+        return agent;
+      }
+
+      const developer = developersById.get(agent.developer_id);
+      if (!developer) {
+        return agent;
+      }
+
+      return {
+        ...agent,
+        developer: {
+          display_name: developer.display_name,
+          plan: developer.plan ?? null,
+          subscription_status: developer.subscription_status ?? null,
+        },
+      };
+    });
+  } catch (error) {
+    console.warn(
+      'Agents directory developer hydration threw; continuing without owner labels.',
+      error
+    );
+    return agents;
+  }
+}
+
 // GET /api/v1/agents - Fetch agent directory
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const requestedSort = searchParams.get('sort') || 'axp';
     const sort = ['axp', 'active', 'discussed', 'new'].includes(requestedSort)
-      ? requestedSort
+      ? (requestedSort as AgentsSort)
       : 'axp';
     const page = Math.max(
       1,
       Math.min(parseInt(searchParams.get('page') || '1', 10) || 1, 10000)
     );
     const limit = Math.min(
-      Math.max(1, parseInt(
-        searchParams.get('limit') || String(PAGINATION.AGENTS_PER_PAGE),
-        10
-      ) || PAGINATION.AGENTS_PER_PAGE),
+      Math.max(
+        1,
+        parseInt(
+          searchParams.get('limit') || String(PAGINATION.AGENTS_PER_PAGE),
+          10
+        ) || PAGINATION.AGENTS_PER_PAGE
+      ),
       PAGINATION.MAX_LIMIT
     );
     const search = searchParams.get('search') || undefined;
@@ -50,28 +283,10 @@ export async function GET(req: NextRequest) {
 
     const supabase = getSupabaseClient();
 
-    const buildAgentsQuery = () => {
-      let query = supabase.from('agents').select(
-        `
-          id,
-          name,
-          display_name,
-          description,
-          public_key,
-          email,
-          email_verified,
-          axp,
-          status,
-          trust_score,
-          metadata,
-          avatar_url,
-          created_at,
-          updated_at,
-          last_active,
-          developer:developers(display_name, plan, subscription_status)
-        `,
-        { count: 'exact' }
-      );
+    const buildAgentsQuery = (selectClause: string) => {
+      let query = supabase.from('agents').select(selectClause, {
+        count: 'exact',
+      });
 
       if (search) {
         const escaped = search.replace(/[%_\\]/g, '\\$&');
@@ -91,126 +306,188 @@ export async function GET(req: NextRequest) {
       return query;
     };
 
-    // Pagination
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
-    let agents;
-    let error;
-    let count;
+    const fetchAgentsDirectoryPage = async (selectClause: string) => {
+      if (sort === 'discussed') {
+        const { error: countError, count: totalCount } = await buildAgentsQuery(
+          selectClause
+        ).range(0, 0);
 
-    if (sort === 'discussed') {
-      const { error: countError, count: totalCount } = await buildAgentsQuery()
-        .range(0, 0);
+        if (countError) {
+          return { error: countError };
+        }
 
-      if (countError) {
-        console.error('Agents query error:', countError);
-        return jsonResponse(
-          ErrorResponses.databaseError('Failed to fetch agents'),
-          500
-        );
-      }
+        const baseCount = totalCount || 0;
+        const { data: fullFetchData, error: allAgentsError } =
+          baseCount === 0
+            ? { data: [], error: null }
+            : await applySort(buildAgentsQuery(selectClause), sort).range(
+                0,
+                Math.max(baseCount - 1, 0)
+              );
 
-      count = totalCount || 0;
-      const { data: fullFetchData, error: allAgentsError } =
-        count === 0
-          ? { data: [], error: null }
-          : await buildAgentsQuery().range(0, Math.max(count - 1, 0));
+        if (allAgentsError) {
+          return { error: allAgentsError };
+        }
 
-      if (allAgentsError) {
-        console.error('Agents query error:', allAgentsError);
-        return jsonResponse(
-          ErrorResponses.databaseError('Failed to fetch agents'),
-          500
-        );
-      }
-
-      const allAgents = fullFetchData ?? [];
-      error = null;
-
-      const discussionCounts = new Map<string, number>();
-
-      if (allAgents.length > 0) {
-        const { data: discussionRows, error: discussionError } = await supabase
-          .from('posts')
-          .select('author_id, comment_count')
-          .in(
-            'author_id',
-            allAgents.map((agent) => agent.id)
+        const allAgents = (
+          await hydrateDirectoryAgentsWithDevelopers(
+            coerceDirectoryAgentRows(fullFetchData)
           )
-          .is('original_post_id', null);
+        ).map(normalizeLegacyVerificationState);
+        const discussionCounts = new Map<string, number>();
 
-        if (discussionError) {
-          console.error('Agent discussion query error:', discussionError);
-          return jsonResponse(
-            ErrorResponses.databaseError('Failed to fetch agents'),
-            500
-          );
+        if (allAgents.length > 0) {
+          const { data: discussionRows, error: discussionError } = await supabase
+            .from('posts')
+            .select('author_id, comment_count')
+            .in(
+              'author_id',
+              allAgents.map((agent) => agent.id)
+            )
+            .is('original_post_id', null);
+
+          if (discussionError) {
+            return { error: discussionError };
+          }
+
+          for (const row of discussionRows || []) {
+            if (!row.author_id) continue;
+
+            discussionCounts.set(
+              row.author_id,
+              (discussionCounts.get(row.author_id) || 0) + (row.comment_count || 0)
+            );
+          }
         }
 
-        for (const row of discussionRows || []) {
-          if (!row.author_id) continue;
+        return {
+          agents: [...allAgents]
+            .sort((a, b) => {
+              const discussionDelta =
+                (discussionCounts.get(b.id) || 0) -
+                (discussionCounts.get(a.id) || 0);
+              if (discussionDelta !== 0) return discussionDelta;
 
-          discussionCounts.set(
-            row.author_id,
-            (discussionCounts.get(row.author_id) || 0) + (row.comment_count || 0)
-          );
-        }
+              const lastActiveDelta =
+                getTimestamp(b.last_active) - getTimestamp(a.last_active);
+              if (lastActiveDelta !== 0) return lastActiveDelta;
+
+              return (b.axp || 0) - (a.axp || 0);
+            })
+            .slice(from, to + 1),
+          count: allAgents.length,
+        };
       }
 
-      agents = [...allAgents]
-        .sort((a, b) => {
-          const discussionDelta =
-            (discussionCounts.get(b.id) || 0) - (discussionCounts.get(a.id) || 0);
-          if (discussionDelta !== 0) return discussionDelta;
+      const result = await applySort(buildAgentsQuery(selectClause), sort).range(
+        from,
+        to
+      );
 
-          const lastActiveDelta =
-            getTimestamp(b.last_active) - getTimestamp(a.last_active);
-          if (lastActiveDelta !== 0) return lastActiveDelta;
-
-          return (b.axp || 0) - (a.axp || 0);
-        })
-        .slice(from, to + 1);
-    } else {
-      let query = buildAgentsQuery();
-
-      if (sort === 'axp') {
-        query = query.order('axp', { ascending: false });
-      } else if (sort === 'active') {
-        query = query.order('last_active', { ascending: false });
-      } else if (sort === 'new') {
-        query = query.order('created_at', { ascending: false });
+      if (result.error) {
+        return { error: result.error };
       }
 
-      const result = await query.range(from, to);
-      agents = result.data;
-      error = result.error;
-      count = result.count;
+      return {
+        agents: (
+          await hydrateDirectoryAgentsWithDevelopers(
+            coerceDirectoryAgentRows(result.data)
+          )
+        ).map(normalizeLegacyVerificationState),
+        count: result.count || 0,
+      };
+    };
+
+    let directoryResult = await fetchAgentsDirectoryPage(AGENTS_DIRECTORY_SELECT);
+
+    if (
+      'error' in directoryResult &&
+      shouldRetryWithoutDeveloperBilling(directoryResult.error)
+    ) {
+      console.warn(
+        'Agents query failed with developer billing fields; retrying without plan metadata.',
+        directoryResult.error
+      );
+      directoryResult = await fetchAgentsDirectoryPage(
+        AGENTS_DIRECTORY_FALLBACK_SELECT
+      );
     }
 
-    if (error) {
-      console.error('Agents query error:', error);
+    if (
+      'error' in directoryResult &&
+      shouldRetryWithCompatibilityDirectorySelect(directoryResult.error)
+    ) {
+      console.warn(
+        'Agents query failed on verification_state; retrying with compatibility directory columns.',
+        directoryResult.error
+      );
+      directoryResult = await fetchAgentsDirectoryPage(
+        AGENTS_DIRECTORY_COMPAT_SELECT
+      );
+    }
+
+    if (
+      'error' in directoryResult &&
+      shouldRetryWithLegacyDirectorySelect(directoryResult.error)
+    ) {
+      console.warn(
+        'Agents query still depends on the developers join; retrying with legacy directory columns.',
+        directoryResult.error
+      );
+      directoryResult = await fetchAgentsDirectoryPage(
+        AGENTS_DIRECTORY_LEGACY_SELECT
+      );
+    }
+
+    if (
+      'error' in directoryResult &&
+      shouldRetryWithMinimalDirectorySelect(directoryResult.error)
+    ) {
+      console.warn(
+        'Agents query still failed on developer_id drift; retrying with minimal public directory columns.',
+        directoryResult.error
+      );
+      directoryResult = await fetchAgentsDirectoryPage(
+        AGENTS_DIRECTORY_MINIMAL_SELECT
+      );
+    }
+
+    if ('error' in directoryResult) {
+      console.error('Agents query error:', directoryResult.error);
       return jsonResponse(
         ErrorResponses.databaseError('Failed to fetch agents'),
         500
       );
     }
 
-    const remixCountsByName = await getRemixCountsBySourceNames(
-      supabase,
-      (agents || []).map((agent) => agent.name)
-    );
+    const { agents, count } = directoryResult;
+
+    let remixCountsByName: Record<string, number> = {};
+    try {
+      remixCountsByName = await getRemixCountsBySourceNames(
+        supabase,
+        agents.map((agent) => agent.name)
+      );
+    } catch (error) {
+      console.warn(
+        'Agents directory remix count enrichment failed; continuing with zero counts.',
+        error
+      );
+    }
 
     return jsonResponse(
       createSuccessResponse(
-        (agents || []).map((agent) => ({
+        agents.map((agent) => ({
           ...transformAgent(agent),
           remixCount: remixCountsByName[agent.name.toLowerCase()] ?? 0,
         })),
         {
           page,
           limit,
-          total: count || 0,
+          total: count,
         }
       ),
       200

@@ -15,6 +15,7 @@ const mockOr = vi.fn().mockReturnThis();
 const mockContains = vi.fn().mockReturnThis();
 const mockIn = vi.fn();
 const mockIs = vi.fn();
+const mockDeveloperIn = vi.fn();
 const mockRemixIlike = vi.fn();
 const mockSelect = vi.fn((columns: string) => {
   if (columns === 'description') {
@@ -26,6 +27,12 @@ const mockSelect = vi.fn((columns: string) => {
   if (columns === 'author_id, comment_count') {
     return {
       in: mockIn,
+    };
+  }
+
+  if (columns === 'id, display_name, plan, subscription_status') {
+    return {
+      in: mockDeveloperIn,
     };
   }
 
@@ -60,6 +67,10 @@ describe('GET /api/v1/agents', () => {
     mockOrder.mockReturnThis();
     mockContains.mockReturnThis();
     mockIn.mockReturnValue({ is: mockIs });
+    mockDeveloperIn.mockResolvedValue({
+      data: [],
+      error: null,
+    });
     mockIs.mockResolvedValue({
       data: [
         { author_id: 'agent-1', comment_count: 2 },
@@ -317,6 +328,170 @@ describe('GET /api/v1/agents', () => {
         roleplay: false,
       },
     });
+  });
+
+  it('falls back to compatibility directory columns when verification_state is unavailable but verified-owner proof still exists', async () => {
+    mockRange
+      .mockResolvedValueOnce({
+        data: null,
+        error: { message: 'column agents.verification_state does not exist' },
+        count: null,
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'agent-compat',
+            name: 'compat-agent',
+            display_name: 'Compat Agent',
+            description: 'Still renders when verification_state is missing',
+            public_key: null,
+            email: null,
+            email_verified: true,
+            avatar_url: null,
+            axp: 42,
+            status: 'active',
+            trust_score: 0.4,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: '2026-01-03T00:00:00Z',
+            developer: {
+              display_name: 'Ralph',
+            },
+          },
+        ],
+        error: null,
+        count: 1,
+      });
+
+    const { GET } = await import('../../app/api/v1/agents/route');
+    const request = new Request('http://localhost/api/v1/agents');
+    const response = await GET(request as unknown as Parameters<typeof GET>[0]);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.data[0]).toMatchObject({
+      name: 'compat-agent',
+      verificationState: 'verified',
+      publicOwnerLabel: 'Ralph',
+    });
+    expect(mockSelect.mock.calls[0][0]).toContain('verification_state');
+    expect(mockSelect.mock.calls[1][0]).not.toContain('verification_state');
+  });
+
+  it('hydrates developer owner proof after the public developers join drifts', async () => {
+    mockRange
+      .mockResolvedValueOnce({
+        data: null,
+        error: {
+          message:
+            "Could not find a relationship between 'agents' and 'developers' in the schema cache",
+        },
+        count: null,
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'agent-hydrated',
+            name: 'hydrated-agent',
+            display_name: 'Hydrated Agent',
+            description: 'Owner proof survives a join drift',
+            developer_id: 'dev-1',
+            public_key: null,
+            email: null,
+            email_verified: true,
+            avatar_url: null,
+            axp: 84,
+            status: 'active',
+            trust_score: 0.5,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: '2026-01-03T00:00:00Z',
+            verification_state: 'verified',
+          },
+        ],
+        error: null,
+        count: 1,
+      });
+    mockDeveloperIn.mockResolvedValueOnce({
+      data: [
+        {
+          id: 'dev-1',
+          display_name: 'Ralph',
+          plan: 'pro',
+          subscription_status: 'active',
+        },
+      ],
+      error: null,
+    });
+
+    const { GET } = await import('../../app/api/v1/agents/route');
+    const request = new Request('http://localhost/api/v1/agents');
+    const response = await GET(request as unknown as Parameters<typeof GET>[0]);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.data[0]).toMatchObject({
+      name: 'hydrated-agent',
+      verificationState: 'verified',
+      publicOwnerLabel: 'Ralph',
+      operatorTier: 'pro',
+    });
+    expect(mockSelect.mock.calls[1][0]).not.toContain('developer:developers');
+    expect(mockDeveloperIn).toHaveBeenCalledWith('id', ['dev-1']);
+  });
+
+  it('falls back to the minimal public directory columns when developer_id is unavailable too', async () => {
+    mockRange
+      .mockResolvedValueOnce({
+        data: null,
+        error: {
+          message:
+            "Could not find a relationship between 'agents' and 'developers' in the schema cache",
+        },
+        count: null,
+      })
+      .mockResolvedValueOnce({
+        data: null,
+        error: { message: 'column agents.developer_id does not exist' },
+        count: null,
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'agent-minimal',
+            name: 'minimal-agent',
+            display_name: 'Minimal Agent',
+            description: 'Directory still renders on the truly minimal select',
+            public_key: null,
+            email: null,
+            email_verified: false,
+            avatar_url: null,
+            axp: 9,
+            status: 'active',
+            trust_score: 0.1,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: '2026-01-03T00:00:00Z',
+          },
+        ],
+        error: null,
+        count: 1,
+      });
+
+    const { GET } = await import('../../app/api/v1/agents/route');
+    const request = new Request('http://localhost/api/v1/agents');
+    const response = await GET(request as unknown as Parameters<typeof GET>[0]);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.data[0]).toMatchObject({
+      name: 'minimal-agent',
+      verificationState: 'unverified',
+    });
+    expect(mockSelect.mock.calls[2][0]).not.toContain('developer_id');
   });
 
   it('should escape SQL wildcards in search parameter', async () => {
