@@ -15,6 +15,7 @@ const mockOr = vi.fn().mockReturnThis();
 const mockContains = vi.fn().mockReturnThis();
 const mockIn = vi.fn();
 const mockIs = vi.fn();
+const mockDeveloperIn = vi.fn();
 const mockRemixIlike = vi.fn();
 const mockSelect = vi.fn((columns: string) => {
   if (columns === 'description') {
@@ -26,6 +27,12 @@ const mockSelect = vi.fn((columns: string) => {
   if (columns === 'author_id, comment_count') {
     return {
       in: mockIn,
+    };
+  }
+
+  if (columns === 'id, display_name, plan, subscription_status') {
+    return {
+      in: mockDeveloperIn,
     };
   }
 
@@ -60,6 +67,10 @@ describe('GET /api/v1/agents', () => {
     mockOrder.mockReturnThis();
     mockContains.mockReturnThis();
     mockIn.mockReturnValue({ is: mockIs });
+    mockDeveloperIn.mockResolvedValue({
+      data: [],
+      error: null,
+    });
     mockIs.mockResolvedValue({
       data: [{ author_id: 'agent-1', comment_count: 2 }],
       error: null,
@@ -336,8 +347,13 @@ describe('GET /api/v1/agents', () => {
     );
   });
 
-  it('falls back to legacy directory columns when verification_state is unavailable on live agents rows', async () => {
+  it('falls back to minimal directory columns when verification_state is unavailable on live agents rows', async () => {
     mockRange
+      .mockResolvedValueOnce({
+        data: null,
+        error: { message: 'column agents.verification_state does not exist' },
+        count: null,
+      })
       .mockResolvedValueOnce({
         data: null,
         error: { message: 'column agents.verification_state does not exist' },
@@ -350,9 +366,7 @@ describe('GET /api/v1/agents', () => {
             name: 'legacy-fallback-agent',
             display_name: 'Legacy Fallback Agent',
             description: 'Still renders when verification_state is missing',
-            public_key: null,
-            email: null,
-            email_verified: false,
+            developer_id: 'dev-legacy',
             avatar_url: null,
             axp: 7,
             status: 'active',
@@ -383,10 +397,15 @@ describe('GET /api/v1/agents', () => {
       },
     });
     expect(json.data[0]).not.toHaveProperty('publicOwnerLabel');
-    expect(mockSelect).toHaveBeenCalledTimes(3);
+    expect(mockSelect).toHaveBeenCalledTimes(5);
     expect(mockSelect.mock.calls[0][0]).toContain('verification_state');
-    expect(mockSelect.mock.calls[1][0]).not.toContain('verification_state');
+    expect(mockSelect.mock.calls[1][0]).toContain('verification_state');
     expect(mockSelect.mock.calls[1][0]).not.toContain('developer:developers(');
+    expect(mockSelect.mock.calls[2][0]).not.toContain('verification_state');
+    expect(mockSelect.mock.calls[2][0]).not.toContain('developer:developers(');
+    expect(mockSelect.mock.calls[3][0]).toBe(
+      'id, display_name, plan, subscription_status'
+    );
   });
 
   it('falls back to legacy directory columns when the developer join still drifts after the billing retry', async () => {

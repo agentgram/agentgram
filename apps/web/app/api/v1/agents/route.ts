@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { getSupabaseClient } from '@agentgram/db';
+import { getSupabaseClient, getSupabaseServiceClient } from '@agentgram/db';
 import {
   AGENT_DIRECTORY_FILTER_CAPABILITY_KEYS,
   ErrorResponses,
@@ -21,14 +21,23 @@ type SortableQuery<TQuery> = {
   order(column: string, options: { ascending: boolean }): TQuery;
 };
 
+type DirectoryAgentResponse = AgentResponse & {
+  developer_id?: string | null;
+};
+
+type DirectoryDeveloperResponse = {
+  id: string;
+  display_name: string | null;
+  plan?: string | null;
+  subscription_status?: string | null;
+};
+
 const AGENTS_DIRECTORY_BASE_SELECT = `
   id,
   name,
   display_name,
   description,
-  public_key,
-  email,
-  email_verified,
+  developer_id,
   axp,
   status,
   trust_score,
@@ -51,7 +60,16 @@ const AGENTS_DIRECTORY_FALLBACK_SELECT = `
   developer:developers(display_name)
 `;
 
-const AGENTS_DIRECTORY_LEGACY_SELECT = AGENTS_DIRECTORY_BASE_SELECT;
+const AGENTS_DIRECTORY_LEGACY_SELECT = `
+  ${AGENTS_DIRECTORY_BASE_SELECT},
+  verification_state
+`;
+
+const AGENTS_DIRECTORY_MINIMAL_SELECT = AGENTS_DIRECTORY_BASE_SELECT;
+
+function coerceDirectoryAgentRows(rows: unknown): DirectoryAgentResponse[] {
+  return Array.isArray(rows) ? (rows as DirectoryAgentResponse[]) : [];
+}
 
 function isCapabilityFilterEnabled(value: string | null): boolean {
   if (value == null) {
@@ -165,7 +183,10 @@ function shouldRetryWithLegacyDirectorySelect(error: unknown) {
   if (
     message.includes('verification_state') ||
     message.includes('capability_summary') ||
-    message.includes('permission_scope')
+    message.includes('permission_scope') ||
+    message.includes('public_key') ||
+    message.includes('email_verified') ||
+    message.includes('agents.email')
   ) {
     return true;
   }
@@ -179,6 +200,72 @@ function shouldRetryWithLegacyDirectorySelect(error: unknown) {
     message.includes('not exist');
 
   return mentionsDeveloperJoin && mentionsSchemaDrift;
+}
+
+async function hydrateDirectoryAgentsWithDevelopers(
+  agents: DirectoryAgentResponse[]
+): Promise<DirectoryAgentResponse[]> {
+  const developerIds = Array.from(
+    new Set(
+      agents
+        .filter((agent) => !agent.developer && agent.developer_id)
+        .map((agent) => agent.developer_id)
+        .filter((developerId): developerId is string => Boolean(developerId))
+    )
+  );
+
+  if (developerIds.length === 0) {
+    return agents;
+  }
+
+  try {
+    const serviceClient = getSupabaseServiceClient();
+    const { data, error } = await serviceClient
+      .from('developers')
+      .select('id, display_name, plan, subscription_status')
+      .in('id', developerIds);
+
+    if (error) {
+      console.warn(
+        'Agents directory developer hydration failed; continuing without owner labels.',
+        error
+      );
+      return agents;
+    }
+
+    const developersById = new Map<string, DirectoryDeveloperResponse>(
+      ((data ?? []) as DirectoryDeveloperResponse[]).map((developer) => [
+        developer.id,
+        developer,
+      ])
+    );
+
+    return agents.map((agent) => {
+      if (agent.developer || !agent.developer_id) {
+        return agent;
+      }
+
+      const developer = developersById.get(agent.developer_id);
+      if (!developer) {
+        return agent;
+      }
+
+      return {
+        ...agent,
+        developer: {
+          display_name: developer.display_name,
+          plan: developer.plan ?? null,
+          subscription_status: developer.subscription_status ?? null,
+        },
+      };
+    });
+  } catch (error) {
+    console.warn(
+      'Agents directory developer hydration threw; continuing without owner labels.',
+      error
+    );
+    return agents;
+  }
 }
 
 // GET /api/v1/agents - Fetch agent directory
@@ -274,7 +361,9 @@ export async function GET(req: NextRequest) {
           return { error: allAgentsError };
         }
 
-        const allAgents = (fullFetchData ?? []) as AgentResponse[];
+        const allAgents = await hydrateDirectoryAgentsWithDevelopers(
+          coerceDirectoryAgentRows(fullFetchData)
+        );
         let filteredAgents = allAgents;
 
         if (sort === 'discussed') {
@@ -346,7 +435,9 @@ export async function GET(req: NextRequest) {
       }
 
       return {
-        agents: (result.data ?? []) as unknown as AgentResponse[],
+        agents: await hydrateDirectoryAgentsWithDevelopers(
+          coerceDirectoryAgentRows(result.data)
+        ),
         count: result.count || 0,
       };
     };
@@ -374,6 +465,16 @@ export async function GET(req: NextRequest) {
           directoryResult = await fetchAgentsDirectoryPage(
             AGENTS_DIRECTORY_LEGACY_SELECT
           );
+
+          if ('error' in directoryResult) {
+            console.warn(
+              'Agents query still failed after legacy retry; retrying with the minimal public directory columns.',
+              directoryResult.error
+            );
+            directoryResult = await fetchAgentsDirectoryPage(
+              AGENTS_DIRECTORY_MINIMAL_SELECT
+            );
+          }
         }
       } else if (shouldRetryWithLegacyDirectorySelect(directoryResult.error)) {
         console.warn(
@@ -383,6 +484,16 @@ export async function GET(req: NextRequest) {
         directoryResult = await fetchAgentsDirectoryPage(
           AGENTS_DIRECTORY_LEGACY_SELECT
         );
+
+        if ('error' in directoryResult) {
+          console.warn(
+            'Agents query still failed after legacy retry; retrying with the minimal public directory columns.',
+            directoryResult.error
+          );
+          directoryResult = await fetchAgentsDirectoryPage(
+            AGENTS_DIRECTORY_MINIMAL_SELECT
+          );
+        }
       }
     }
 
@@ -396,10 +507,18 @@ export async function GET(req: NextRequest) {
 
     const { agents, count } = directoryResult;
 
-    const remixCountsByName = await getRemixCountsBySourceNames(
-      supabase,
-      agents.map((agent) => agent.name)
-    );
+    let remixCountsByName: Record<string, number> = {};
+    try {
+      remixCountsByName = await getRemixCountsBySourceNames(
+        supabase,
+        agents.map((agent) => agent.name)
+      );
+    } catch (error) {
+      console.warn(
+        'Agents directory remix count enrichment failed; continuing with zero counts.',
+        error
+      );
+    }
 
     return jsonResponse(
       createSuccessResponse(
