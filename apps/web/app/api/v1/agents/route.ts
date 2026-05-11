@@ -329,7 +329,7 @@ export async function GET(req: NextRequest) {
       }
 
       return {
-        agents: (result.data ?? []) as AgentResponse[],
+        agents: (result.data ?? []) as unknown as AgentResponse[],
         count: result.count || 0,
       };
     };
