@@ -67,6 +67,10 @@ const AGENTS_DIRECTORY_LEGACY_SELECT = `
 
 const AGENTS_DIRECTORY_MINIMAL_SELECT = AGENTS_DIRECTORY_BASE_SELECT;
 
+function coerceDirectoryAgentRows(rows: unknown): DirectoryAgentResponse[] {
+  return Array.isArray(rows) ? (rows as DirectoryAgentResponse[]) : [];
+}
+
 function isCapabilityFilterEnabled(value: string | null): boolean {
   if (value == null) {
     return false;
@@ -358,7 +362,7 @@ export async function GET(req: NextRequest) {
         }
 
         const allAgents = await hydrateDirectoryAgentsWithDevelopers(
-          (fullFetchData ?? []) as DirectoryAgentResponse[]
+          coerceDirectoryAgentRows(fullFetchData)
         );
         let filteredAgents = allAgents;
 
@@ -432,7 +436,7 @@ export async function GET(req: NextRequest) {
 
       return {
         agents: await hydrateDirectoryAgentsWithDevelopers(
-          (result.data ?? []) as DirectoryAgentResponse[]
+          coerceDirectoryAgentRows(result.data)
         ),
         count: result.count || 0,
       };
