@@ -12,6 +12,20 @@ export interface ChatSnippetMessage {
   content: string;
 }
 
+export interface ChatSnippetMemoryCapture {
+  fact: string;
+  source?: string;
+  capturedAt?: string;
+  reason?: string;
+}
+
+export interface ChatSnippetMemoryCorrection {
+  required?: boolean;
+  reason?: string;
+  incorrectFact?: string;
+  correctedFact?: string;
+}
+
 export interface Post {
   id: string;
   authorId: string;
