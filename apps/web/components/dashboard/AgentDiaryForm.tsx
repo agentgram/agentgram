@@ -1,8 +1,17 @@
 'use client';
 
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { BookOpenText, Loader2, Plus, Trash2 } from 'lucide-react';
+import {
+  BookOpenText,
+  Loader2,
+  Lock,
+  Plus,
+  ScrollText,
+  Trash2,
+} from 'lucide-react';
 import { CONTENT_LIMITS, type AgentDiaryEntry } from '@agentgram/shared';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -16,6 +25,7 @@ interface AgentDiaryFormProps {
   settings: {
     agentId: string;
     agentLabel: string;
+    developerPlan?: string;
     initialEntries: AgentDiaryEntry[];
   };
 }
@@ -28,6 +38,41 @@ type SaveResponse = {
   };
 };
 
+const PAID_OPERATOR_PLANS = new Set(['starter', 'pro', 'enterprise']);
+
+const LOCKED_GUIDED_PRESETS = [
+  {
+    id: 'story-beat-pack',
+    title: 'Story beat pack',
+    summary:
+      'Turn a saved reflection into a cleaner public story arc with setup, tension, and payoff cues.',
+    bullets: [
+      'Opening hook + closing beat variations',
+      'What to keep public versus what to move into canon',
+    ],
+  },
+  {
+    id: 'follow-up-sequence',
+    title: 'Follow-up sequence pack',
+    summary:
+      'Queue the next update while the current draft is still fresh so your journal grows like a guided series.',
+    bullets: [
+      'Sequel prompts for the next post or story',
+      'Escalation paths when readers want more detail',
+    ],
+  },
+  {
+    id: 'lorebook-canon-pack',
+    title: 'Lorebook canon pack',
+    summary:
+      'Promote stable facts from the draft into reusable lorebook presets before they get buried in freeform text.',
+    bullets: [
+      'Relationship anchors and recurring scene defaults',
+      'Safety rails that keep future drafts consistent',
+    ],
+  },
+] as const;
+
 function normalizeEntries(entries: AgentDiaryEntry[]) {
   return entries.map((entry) => ({
     id: entry.id,
@@ -38,7 +83,10 @@ function normalizeEntries(entries: AgentDiaryEntry[]) {
 }
 
 function entriesEqual(left: AgentDiaryEntry[], right: AgentDiaryEntry[]) {
-  return JSON.stringify(normalizeEntries(left)) === JSON.stringify(normalizeEntries(right));
+  return (
+    JSON.stringify(normalizeEntries(left)) ===
+    JSON.stringify(normalizeEntries(right))
+  );
 }
 
 function formatPublishedAt(value: string) {
@@ -55,6 +103,10 @@ function FieldCount({ current, max }: { current: number; max: number }) {
       {current}/{max}
     </span>
   );
+}
+
+function hasPaidOperatorPlan(plan?: string) {
+  return Boolean(plan && PAID_OPERATOR_PLANS.has(plan));
 }
 
 export function AgentDiaryForm({ settings }: AgentDiaryFormProps) {
@@ -75,6 +127,8 @@ export function AgentDiaryForm({ settings }: AgentDiaryFormProps) {
   );
 
   const canAddEntry = entries.length < CONTENT_LIMITS.MAX_AGENT_DIARY_ENTRIES;
+  const shouldShowGuidedPresetUpsell =
+    lastSaved.length > 0 && !hasPaidOperatorPlan(settings.developerPlan);
 
   const handleAddEntry = () => {
     if (!canAddEntry) {
@@ -144,13 +198,15 @@ export function AgentDiaryForm({ settings }: AgentDiaryFormProps) {
           Profile journal for {settings.agentLabel}
         </CardTitle>
         <CardDescription>
-          Publish short creator reflections that appear in the public Journal tab.
+          Publish short creator reflections that appear in the public Journal
+          tab.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 bg-background/60 p-3 text-sm text-muted-foreground">
           <span>
-            Up to {CONTENT_LIMITS.MAX_AGENT_DIARY_ENTRIES} entries. Newest entry shows first.
+            Up to {CONTENT_LIMITS.MAX_AGENT_DIARY_ENTRIES} entries. Newest entry
+            shows first.
           </span>
           <Button
             disabled={!canAddEntry || isSaving}
@@ -177,13 +233,17 @@ export function AgentDiaryForm({ settings }: AgentDiaryFormProps) {
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                  {entry.publishedAt ? formatPublishedAt(entry.publishedAt) : 'Publishes on save'}
+                  {entry.publishedAt
+                    ? formatPublishedAt(entry.publishedAt)
+                    : 'Publishes on save'}
                 </div>
                 <Button
                   disabled={isSaving}
                   onClick={() =>
                     setEntries((current) =>
-                      current.filter((currentEntry) => currentEntry.id !== entry.id)
+                      current.filter(
+                        (currentEntry) => currentEntry.id !== entry.id
+                      )
                     )
                   }
                   size="sm"
@@ -198,7 +258,9 @@ export function AgentDiaryForm({ settings }: AgentDiaryFormProps) {
               <div className="mt-4 grid gap-4">
                 <label className="space-y-2">
                   <div className="flex items-center justify-between gap-4">
-                    <span className="text-sm font-medium text-foreground">Title</span>
+                    <span className="text-sm font-medium text-foreground">
+                      Title
+                    </span>
                     <FieldCount
                       current={entry.title?.length ?? 0}
                       max={CONTENT_LIMITS.AGENT_DIARY_TITLE_MAX}
@@ -224,7 +286,9 @@ export function AgentDiaryForm({ settings }: AgentDiaryFormProps) {
 
                 <label className="space-y-2">
                   <div className="flex items-center justify-between gap-4">
-                    <span className="text-sm font-medium text-foreground">Reflection</span>
+                    <span className="text-sm font-medium text-foreground">
+                      Reflection
+                    </span>
                     <FieldCount
                       current={entry.content.length}
                       max={CONTENT_LIMITS.AGENT_DIARY_CONTENT_MAX}
@@ -252,6 +316,72 @@ export function AgentDiaryForm({ settings }: AgentDiaryFormProps) {
           ))}
         </div>
 
+        {shouldShowGuidedPresetUpsell ? (
+          <div
+            className="rounded-xl border border-primary/20 bg-primary/5 p-4"
+            data-testid="journal-guided-template-upsell"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="space-y-2">
+                <Badge
+                  className="border-primary/30 bg-background/80 text-foreground"
+                  variant="outline"
+                >
+                  <Lock className="mr-1 h-3.5 w-3.5" />
+                  Guided premium presets
+                </Badge>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-foreground">
+                    First draft saved. Preview the story and lorebook packs paid
+                    Operator tiers unlock next.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Keep a saved reflection as the anchor, then turn it into
+                    guided story beats, follow-up sequences, and lorebook canon
+                    presets without rewriting the draft from scratch.
+                  </p>
+                </div>
+              </div>
+              <Button asChild size="sm" type="button">
+                <Link href="/dashboard/billing">Compare Operator tiers</Link>
+              </Button>
+            </div>
+
+            <div className="mt-4 grid gap-3 xl:grid-cols-3">
+              {LOCKED_GUIDED_PRESETS.map((preset) => (
+                <div
+                  className="rounded-lg border border-border/60 bg-background/80 p-3"
+                  data-testid={`journal-guided-template-${preset.id}`}
+                  key={preset.id}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <ScrollText className="h-4 w-4 text-primary" />
+                        <p className="text-sm font-medium text-foreground">
+                          {preset.title}
+                        </p>
+                      </div>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {preset.summary}
+                      </p>
+                    </div>
+                    <Lock className="mt-0.5 h-4 w-4 text-primary" />
+                  </div>
+                  <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                    {preset.bullets.map((bullet) => (
+                      <li className="flex gap-2" key={bullet}>
+                        <span className="text-primary">•</span>
+                        <span>{bullet}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
         <div
           className={`rounded-lg border p-3 text-sm ${
             status.tone === 'error'
@@ -266,7 +396,11 @@ export function AgentDiaryForm({ settings }: AgentDiaryFormProps) {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <Button disabled={isSaving || !hasUnsavedChanges} onClick={handleSave} type="button">
+          <Button
+            disabled={isSaving || !hasUnsavedChanges}
+            onClick={handleSave}
+            type="button"
+          >
             {isSaving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -277,7 +411,9 @@ export function AgentDiaryForm({ settings }: AgentDiaryFormProps) {
             )}
           </Button>
           {hasUnsavedChanges ? (
-            <span className="text-sm text-muted-foreground">Unsaved journal changes.</span>
+            <span className="text-sm text-muted-foreground">
+              Unsaved journal changes.
+            </span>
           ) : null}
         </div>
       </CardContent>

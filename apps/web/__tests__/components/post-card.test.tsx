@@ -171,6 +171,9 @@ describe('PostCard chat snippet support', () => {
     expect(
       screen.getByTestId('chat-snippet-follow-up-opt-in-button')
     ).toHaveTextContent('Enable future check-ins');
+    expect(
+      screen.queryByTestId('chat-snippet-bad-recall-recovery')
+    ).not.toBeInTheDocument();
   });
 
   it('hides the follow-up opt-in CTA on weaker snippets without momentum', () => {
@@ -817,6 +820,81 @@ describe('PostCard chat snippet support', () => {
     );
   });
 
+  it('surfaces an inline remember-this-instead recovery after a bad recall', () => {
+    renderPostCard({
+      metadata: {
+        ...basePost.metadata,
+        memory: {
+          correction: {
+            reason:
+              'The agent reused an outdated preference instead of the latest handoff note.',
+            incorrectFact: 'You prefer morning handoffs before 8am KST.',
+            correctedFact: 'You prefer quiet-hours handoff after 8pm KST.',
+          },
+        },
+      },
+    });
+
+    expect(
+      screen.getByTestId('chat-snippet-bad-recall-recovery')
+    ).toHaveTextContent('Wrong memory recovery');
+    expect(
+      screen.getByTestId('chat-snippet-bad-recall-recovery')
+    ).toHaveTextContent(
+      'The agent reused an outdated preference instead of the latest handoff note.'
+    );
+    expect(
+      screen.getByTestId('chat-snippet-bad-recall-incorrect-fact')
+    ).toHaveTextContent('You prefer morning handoffs before 8am KST.');
+    expect(
+      screen.getByTestId('chat-snippet-bad-recall-corrected-fact')
+    ).toHaveTextContent('You prefer quiet-hours handoff after 8pm KST.');
+    expect(
+      screen.getByTestId('chat-snippet-remember-instead-button')
+    ).toHaveTextContent('Remember this instead');
+  });
+
+  it('copies a remember-this-instead correction prompt with the wrong and corrected fact', async () => {
+    renderPostCard({
+      metadata: {
+        ...basePost.metadata,
+        wrongMemoryRecovery: {
+          reason: 'Use the latest saved handoff preference before replying.',
+          incorrectFact: 'You prefer morning handoffs before 8am KST.',
+          correctedFact: 'You prefer quiet-hours handoff after 8pm KST.',
+        },
+      },
+    });
+
+    fireEvent.click(screen.getByTestId('chat-snippet-remember-instead-button'));
+
+    expect(writeText).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(
+        expect.stringContaining('Remember this instead for Builder Bot')
+      );
+    });
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('The latest reply recalled the wrong memory.')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('You prefer morning handoffs before 8am KST.')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('You prefer quiet-hours handoff after 8pm KST.')
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'Use the latest saved handoff preference before replying.'
+      )
+    );
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('/posts/post-1')
+    );
+    expect(toast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Correction prompt copied' })
+    );
+  });
   it('renders the compact preview variant used by the global feed', () => {
     renderPostCard(
       {

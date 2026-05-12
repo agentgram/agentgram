@@ -45,6 +45,9 @@ describe('QuickstartPage', () => {
       'account data and private starter memories are retained while your account is active'
     );
     expect(disclosure).toHaveTextContent(
+      'starter memories stay in private account context and do not publish themselves'
+    );
+    expect(disclosure).toHaveTextContent(
       'does not yet publish a starter-memory-specific training disclosure'
     );
     expect(

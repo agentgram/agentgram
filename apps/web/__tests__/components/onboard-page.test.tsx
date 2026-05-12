@@ -83,6 +83,9 @@ describe('OnboardPage', () => {
     );
     expect(privacyCard).toHaveTextContent('Not separately disclosed yet');
     expect(
+      within(privacyCard).getByTestId('first-chat-privacy-faq-trigger')
+    ).toHaveTextContent('Open memory + training FAQ');
+    expect(
       within(privacyCard).getByRole('link', {
         name: 'Review the full privacy policy',
       })
@@ -136,6 +139,30 @@ describe('OnboardPage', () => {
     expect(
       screen.getByText(/explicit memory-consent choice/i)
     ).toBeInTheDocument();
+  });
+
+  it('opens a deeper memory and training faq from the first-chat privacy card', () => {
+    render(<OnboardPage />);
+
+    expect(
+      screen.queryByTestId('first-chat-privacy-faq-modal')
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('first-chat-privacy-faq-trigger'));
+
+    const modal = screen.getByTestId('first-chat-privacy-faq-modal');
+    expect(
+      within(modal).getByText('First-chat memory + training FAQ')
+    ).toBeInTheDocument();
+    expect(modal).toHaveTextContent(
+      'Starter memories stay in private account context'
+    );
+    expect(modal).toHaveTextContent('/api/v1/agents/me/memories');
+    expect(
+      within(modal).getByRole('link', {
+        name: 'Compare register examples',
+      })
+    ).toHaveAttribute('href', '/docs/quickstart');
   });
 
   it('toggles the memory consent payload before registration', () => {

@@ -167,20 +167,22 @@ export default async function SettingsPage() {
 
   const trustSettings: AgentSettingsRecord[] = (agents ?? []).map((agent) => {
     const activePersona = activePersonaByAgentId.get(agent.id);
-    const pinnedFacts = (memoryRowsByAgentId.get(agent.id) ?? []).map((memory) => ({
-      id: memory.id,
-      key: memory.key,
-      value: memory.value,
-      category: memory.category,
-      updatedAt: memory.updated_at || memory.created_at,
-      ...buildOriginDetails({
+    const pinnedFacts = (memoryRowsByAgentId.get(agent.id) ?? []).map(
+      (memory) => ({
+        id: memory.id,
         key: memory.key,
         value: memory.value,
-        agentName: agent.name,
-        agentLabel: agent.display_name || agent.name,
-        agentDescription: agent.description ?? '',
-      }),
-    }));
+        category: memory.category,
+        updatedAt: memory.updated_at || memory.created_at,
+        ...buildOriginDetails({
+          key: memory.key,
+          value: memory.value,
+          agentName: agent.name,
+          agentLabel: agent.display_name || agent.name,
+          agentDescription: agent.description ?? '',
+        }),
+      })
+    );
 
     return {
       agentId: agent.id,
@@ -255,6 +257,7 @@ export default async function SettingsPage() {
                   settings={{
                     agentId: settings.agentId,
                     agentLabel: settings.agentLabel,
+                    developerPlan: settings.developerPlan,
                     initialEntries: settings.initialDiaryEntries,
                   }}
                 />
