@@ -16,6 +16,7 @@ import {
 import { getRemixCountsBySourceNames } from '@/lib/agents/remix-counts';
 
 type AgentsSort = 'axp' | 'active' | 'verified_active' | 'discussed' | 'new';
+type AgentsBrowseSlice = 'live_now' | 'recently_posted';
 
 type SortableQuery<TQuery> = {
   order(column: string, options: { ascending: boolean }): TQuery;
@@ -72,6 +73,8 @@ const AGENTS_DIRECTORY_LEGACY_SELECT = `
 `;
 
 const AGENTS_DIRECTORY_MINIMAL_SELECT = AGENTS_DIRECTORY_BASE_SELECT;
+const LIVE_NOW_WINDOW_MS = 60 * 60 * 1000;
+const RECENTLY_POSTED_WINDOW_DAYS = 7;
 
 function coerceDirectoryAgentRows(rows: unknown): DirectoryAgentResponse[] {
   return Array.isArray(rows) ? (rows as DirectoryAgentResponse[]) : [];
@@ -94,6 +97,12 @@ function parseFacetValue<T extends string>(
   }
 
   return allowed.includes(value as T) ? (value as T) : undefined;
+}
+
+function parseBrowseSlice(value: string | null): AgentsBrowseSlice | undefined {
+  if (value === 'live_now') return 'live_now';
+  if (value === 'recently_posted') return 'recently_posted';
+  return undefined;
 }
 
 function getTimestamp(value: string | null | undefined): number {
@@ -171,6 +180,32 @@ function compareVerifiedActiveAgents(a: AgentResponse, b: AgentResponse) {
   }
 
   return getTimestamp(b.created_at) - getTimestamp(a.created_at);
+}
+
+function isLiveNow(lastActive?: string | null) {
+  const timestamp = getTimestamp(lastActive);
+  if (timestamp === 0) {
+    return false;
+  }
+
+  const elapsedMs = Date.now() - timestamp;
+  return elapsedMs >= 0 && elapsedMs <= LIVE_NOW_WINDOW_MS;
+}
+
+function matchesBrowseSlice(
+  agent: AgentResponse,
+  browse?: AgentsBrowseSlice,
+  recentlyPostedAuthorIds?: Set<string>
+) {
+  if (!browse) {
+    return true;
+  }
+
+  if (browse === 'live_now') {
+    return isLiveNow(agent.last_active);
+  }
+
+  return recentlyPostedAuthorIds?.has(agent.id) ?? false;
 }
 
 function matchesDiscoveryFacets(
@@ -329,6 +364,7 @@ export async function GET(req: NextRequest) {
     const enabledCapabilities = AGENT_DIRECTORY_FILTER_CAPABILITY_KEYS.filter(
       (key) => isCapabilityFilterEnabled(searchParams.get(key))
     );
+    const browse = parseBrowseSlice(searchParams.get('browse'));
     const relationshipGoal = parseFacetValue<RelationshipGoalFacet>(
       searchParams.get('relationship_goal'),
       RELATIONSHIP_GOAL_FACETS
@@ -340,6 +376,7 @@ export async function GET(req: NextRequest) {
     const requiresInMemoryProcessing =
       sort === 'discussed' ||
       sort === 'verified_active' ||
+      Boolean(browse) ||
       Boolean(relationshipGoal) ||
       Boolean(worldbuilding);
 
@@ -400,6 +437,32 @@ export async function GET(req: NextRequest) {
           )
         ).map(normalizeLegacyVerificationState);
         let filteredAgents = allAgents;
+        let recentlyPostedAuthorIds: Set<string> | undefined;
+
+        if (browse === 'recently_posted' && allAgents.length > 0) {
+          const recentWindowStart = new Date(
+            Date.now() - RECENTLY_POSTED_WINDOW_DAYS * 24 * 60 * 60 * 1000
+          ).toISOString();
+          const { data: recentPostRows, error: recentPostError } = await supabase
+            .from('posts')
+            .select('author_id')
+            .in(
+              'author_id',
+              allAgents.map((agent) => agent.id)
+            )
+            .gte('created_at', recentWindowStart)
+            .is('original_post_id', null);
+
+          if (recentPostError) {
+            return { error: recentPostError };
+          }
+
+          recentlyPostedAuthorIds = new Set(
+            (recentPostRows || [])
+              .map((row) => row.author_id)
+              .filter((authorId): authorId is string => Boolean(authorId))
+          );
+        }
 
         if (sort === 'discussed') {
           const discussionCounts = new Map<string, number>();
@@ -446,6 +509,12 @@ export async function GET(req: NextRequest) {
 
         if (sort === 'verified_active') {
           filteredAgents = [...filteredAgents].sort(compareVerifiedActiveAgents);
+        }
+
+        if (browse) {
+          filteredAgents = filteredAgents.filter((agent) =>
+            matchesBrowseSlice(agent, browse, recentlyPostedAuthorIds)
+          );
         }
 
         if (relationshipGoal || worldbuilding) {

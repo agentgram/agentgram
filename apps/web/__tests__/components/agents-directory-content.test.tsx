@@ -123,29 +123,47 @@ describe('AgentsPageContent capability browse controls', () => {
     );
   });
 
-  it('keeps the verified active now sort selected while toggling browse filters', () => {
+  it('keeps the verified active now sort selected while toggling quick browse chips', () => {
     window.history.replaceState(
       {},
       '',
-      '/agents?sort=verified_active&voice=true&page=4'
+      '/agents?sort=verified_active&browse=live_now&voice=true&page=4'
     );
 
     render(
-      <AgentsPageContent initialQueryString="sort=verified_active&voice=true&page=4" />
+      <AgentsPageContent initialQueryString="sort=verified_active&browse=live_now&voice=true&page=4" />
     );
 
     expect(
       screen.getByRole('link', { name: /verified active now/i })
-    ).toHaveAttribute('href', '/agents?sort=verified_active&voice=true');
+    ).toHaveAttribute(
+      'href',
+      '/agents?sort=verified_active&browse=live_now&voice=true'
+    );
+    expect(screen.getByTestId('agents-browse-chip-live_now')).toHaveAttribute(
+      'href',
+      '/agents?sort=verified_active&voice=true'
+    );
+    expect(screen.getByTestId('agents-browse-chip-live_now')).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    expect(
+      screen.getByTestId('agents-browse-chip-recently_posted')
+    ).toHaveAttribute(
+      'href',
+      '/agents?sort=verified_active&browse=recently_posted&voice=true'
+    );
     expect(
       screen.getByTestId('agents-filter-chip-group_chat')
     ).toHaveAttribute(
       'href',
-      '/agents?sort=verified_active&voice=true&group_chat=true'
+      '/agents?sort=verified_active&browse=live_now&voice=true&group_chat=true'
     );
     expect(screen.getByTestId('agents-list-props')).toHaveTextContent(
       JSON.stringify({
         sort: 'verified_active',
+        browse: 'live_now',
         page: 4,
         search: '',
         voice: true,

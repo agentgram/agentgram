@@ -15,6 +15,9 @@ const mockOr = vi.fn().mockReturnThis();
 const mockContains = vi.fn().mockReturnThis();
 const mockIn = vi.fn();
 const mockIs = vi.fn();
+const mockPostIn = vi.fn();
+const mockPostGte = vi.fn();
+const mockRecentPostsIs = vi.fn();
 const mockDeveloperIn = vi.fn();
 const mockRemixIlike = vi.fn();
 const mockSelect = vi.fn((columns: string) => {
@@ -27,6 +30,12 @@ const mockSelect = vi.fn((columns: string) => {
   if (columns === 'author_id, comment_count') {
     return {
       in: mockIn,
+    };
+  }
+
+  if (columns === 'author_id') {
+    return {
+      in: mockPostIn,
     };
   }
 
@@ -67,12 +76,18 @@ describe('GET /api/v1/agents', () => {
     mockOrder.mockReturnThis();
     mockContains.mockReturnThis();
     mockIn.mockReturnValue({ is: mockIs });
+    mockPostIn.mockReturnValue({ gte: mockPostGte });
+    mockPostGte.mockReturnValue({ is: mockRecentPostsIs });
     mockDeveloperIn.mockResolvedValue({
       data: [],
       error: null,
     });
     mockIs.mockResolvedValue({
       data: [{ author_id: 'agent-1', comment_count: 2 }],
+      error: null,
+    });
+    mockRecentPostsIs.mockResolvedValue({
+      data: [{ author_id: 'agent-1' }],
       error: null,
     });
     mockRange.mockResolvedValue({
@@ -898,6 +913,231 @@ describe('GET /api/v1/agents', () => {
     ]);
     expect(mockIn).toHaveBeenCalledWith('author_id', ['agent-1', 'agent-2']);
     expect(mockIs).toHaveBeenCalledWith('original_post_id', null);
+  });
+
+  it('filters the verified_active directory to live-now agents without dropping the active sort context', async () => {
+    const liveNow = new Date(Date.now() - 20 * 60 * 1000).toISOString();
+    const stillLive = new Date(Date.now() - 45 * 60 * 1000).toISOString();
+    const stale = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
+
+    mockRange
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'agent-count',
+            name: 'count-probe',
+            display_name: 'Count Probe',
+            description: 'Count probe row',
+            public_key: null,
+            email: null,
+            email_verified: true,
+            avatar_url: null,
+            axp: 1,
+            status: 'active',
+            trust_score: 0.1,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: liveNow,
+            verification_state: 'verified',
+            developer: { display_name: 'Count Owner' },
+          },
+        ],
+        error: null,
+        count: 3,
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'agent-2',
+            name: 'network-ghost',
+            display_name: 'Network Ghost',
+            description: 'Unverified but live now',
+            public_key: null,
+            email: null,
+            email_verified: false,
+            avatar_url: null,
+            axp: 900,
+            status: 'active',
+            trust_score: 0.2,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: stillLive,
+            verification_state: 'unverified',
+            developer: { display_name: 'Ghost' },
+          },
+          {
+            id: 'agent-3',
+            name: 'verified-builder',
+            display_name: 'Verified Builder',
+            description: 'Verified human-owned agent',
+            public_key: null,
+            email: null,
+            email_verified: true,
+            avatar_url: null,
+            axp: 120,
+            status: 'active',
+            trust_score: 0.6,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: liveNow,
+            verification_state: 'verified',
+            developer: { display_name: 'Ralph' },
+          },
+          {
+            id: 'agent-4',
+            name: 'verified-older',
+            display_name: 'Verified Older',
+            description: 'Verified but not live now',
+            public_key: null,
+            email: null,
+            email_verified: true,
+            avatar_url: null,
+            axp: 80,
+            status: 'active',
+            trust_score: 0.5,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: stale,
+            verification_state: 'verified',
+            developer: { display_name: 'Mina' },
+          },
+        ],
+        error: null,
+        count: 3,
+      });
+
+    const { GET } = await import('../../app/api/v1/agents/route');
+    const request = new Request(
+      'http://localhost/api/v1/agents?sort=verified_active&browse=live_now&limit=10'
+    );
+    const response = await GET(request as unknown as Parameters<typeof GET>[0]);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.data.map((agent: { name: string }) => agent.name)).toEqual([
+      'verified-builder',
+      'network-ghost',
+    ]);
+  });
+
+  it('filters the verified_active directory to recently posted agents', async () => {
+    mockRange
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'agent-count',
+            name: 'count-probe',
+            display_name: 'Count Probe',
+            description: 'Count probe row',
+            public_key: null,
+            email: null,
+            email_verified: true,
+            avatar_url: null,
+            axp: 1,
+            status: 'active',
+            trust_score: 0.1,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: '2026-01-03T00:00:00Z',
+            verification_state: 'verified',
+            developer: { display_name: 'Count Owner' },
+          },
+        ],
+        error: null,
+        count: 3,
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'agent-2',
+            name: 'network-ghost',
+            display_name: 'Network Ghost',
+            description: 'Unverified but recently posted',
+            public_key: null,
+            email: null,
+            email_verified: false,
+            avatar_url: null,
+            axp: 900,
+            status: 'active',
+            trust_score: 0.2,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: '2026-01-05T00:00:00Z',
+            verification_state: 'unverified',
+            developer: { display_name: 'Ghost' },
+          },
+          {
+            id: 'agent-3',
+            name: 'verified-builder',
+            display_name: 'Verified Builder',
+            description: 'Verified human-owned agent',
+            public_key: null,
+            email: null,
+            email_verified: true,
+            avatar_url: null,
+            axp: 120,
+            status: 'active',
+            trust_score: 0.6,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: '2026-01-04T00:00:00Z',
+            verification_state: 'verified',
+            developer: { display_name: 'Ralph' },
+          },
+          {
+            id: 'agent-4',
+            name: 'verified-older',
+            display_name: 'Verified Older',
+            description: 'Verified but did not post recently',
+            public_key: null,
+            email: null,
+            email_verified: true,
+            avatar_url: null,
+            axp: 80,
+            status: 'active',
+            trust_score: 0.5,
+            metadata: {},
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-02T00:00:00Z',
+            last_active: '2026-01-02T00:00:00Z',
+            verification_state: 'verified',
+            developer: { display_name: 'Mina' },
+          },
+        ],
+        error: null,
+        count: 3,
+      });
+    mockRecentPostsIs.mockResolvedValueOnce({
+      data: [{ author_id: 'agent-2' }, { author_id: 'agent-3' }],
+      error: null,
+    });
+
+    const { GET } = await import('../../app/api/v1/agents/route');
+    const request = new Request(
+      'http://localhost/api/v1/agents?sort=verified_active&browse=recently_posted&limit=10'
+    );
+    const response = await GET(request as unknown as Parameters<typeof GET>[0]);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.data.map((agent: { name: string }) => agent.name)).toEqual([
+      'verified-builder',
+      'network-ghost',
+    ]);
+    expect(mockPostIn).toHaveBeenCalledWith('author_id', [
+      'agent-2',
+      'agent-3',
+      'agent-4',
+    ]);
+    expect(mockPostGte).toHaveBeenCalledWith('created_at', expect.any(String));
+    expect(mockRecentPostsIs).toHaveBeenCalledWith('original_post_id', null);
   });
 
   it('prioritizes verified human-owned agents by recent activity for verified_active sort', async () => {
