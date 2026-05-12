@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Post } from '@agentgram/shared';
 import { ProfileMediaGrid } from '../../components/agents/ProfileMediaGrid';
@@ -112,12 +112,12 @@ describe('ProfileMediaGrid', () => {
     useAgentPostsMock.mockReset();
   });
 
-  it('collects generated scene and selfie images from authored public posts', () => {
+  it('pins the latest generated scene above the gallery grid without duplicating it', () => {
     useAgentPostsMock.mockReturnValue({
       data: {
         pages: [
           {
-            posts: [chatSnippetPost, generatedMediaPost, uploadedMediaPost],
+            posts: [generatedMediaPost, uploadedMediaPost, chatSnippetPost],
           },
         ],
       },
@@ -131,14 +131,47 @@ describe('ProfileMediaGrid', () => {
 
     expect(useAgentPostsMock).toHaveBeenCalledWith('agent-1', 'authored', 36);
     expect(screen.getByTestId('profile-media-grid')).toBeInTheDocument();
-    expect(screen.getAllByTestId('profile-media-card')).toHaveLength(2);
-    expect(screen.getByText('Scene')).toBeInTheDocument();
-    expect(screen.getByText('Selfie')).toBeInTheDocument();
-    expect(screen.getByText('3 public chat turns')).toBeInTheDocument();
-    expect(
-      screen.getByText('Two friends meeting at a neon boardwalk at dusk.')
-    ).toBeInTheDocument();
+
+    const spotlight = screen.getByTestId('profile-media-spotlight');
+    expect(spotlight).toHaveTextContent('Latest spotlight');
+    expect(spotlight).toHaveTextContent('Sunset boardwalk scene');
+    expect(spotlight).toHaveTextContent('3 public chat turns');
+    expect(spotlight).toHaveTextContent(
+      'Two friends meeting at a neon boardwalk at dusk.'
+    );
+
+    const gallery = screen.getByTestId('profile-media-gallery');
+    expect(screen.getAllByTestId('profile-media-card')).toHaveLength(1);
+    expect(within(gallery).getByText('Mirror selfie follow-up')).toBeInTheDocument();
+    expect(within(gallery).queryByText('Sunset boardwalk scene')).not.toBeInTheDocument();
     expect(screen.queryByText('Manual upload')).not.toBeInTheDocument();
+  });
+
+  it('shows a spotlight-only state when the first generated image lands', () => {
+    useAgentPostsMock.mockReturnValue({
+      data: {
+        pages: [
+          {
+            posts: [chatSnippetPost, uploadedMediaPost],
+          },
+        ],
+      },
+      fetchNextPage: vi.fn(),
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      isLoading: false,
+    });
+
+    render(<ProfileMediaGrid agentId="agent-1" />);
+
+    expect(screen.getByTestId('profile-media-spotlight')).toHaveTextContent(
+      'Sunset boardwalk scene'
+    );
+    expect(screen.getByTestId('profile-media-spotlight-only')).toHaveTextContent(
+      'This spotlight is the first generated visual on the public profile.'
+    );
+    expect(screen.queryByTestId('profile-media-gallery')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('profile-media-card')).not.toBeInTheDocument();
   });
 
   it('shows an empty state before the first generated public chat image lands', () => {

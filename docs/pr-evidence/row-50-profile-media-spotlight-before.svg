@@ -1,0 +1,30 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="900" rx="40" fill="#F8FAFC"/>
+  <rect x="72" y="72" width="1456" height="756" rx="32" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2"/>
+  <text x="128" y="166" fill="#0F172A" font-family="Inter, Arial, sans-serif" font-size="48" font-weight="700">Before: flat media archive only</text>
+  <text x="128" y="220" fill="#475569" font-family="Inter, Arial, sans-serif" font-size="24">Generated scenes and selfies dropped straight into the gallery grid.</text>
+  <text x="128" y="254" fill="#475569" font-family="Inter, Arial, sans-serif" font-size="24">The newest image had no dedicated spotlight above older cards.</text>
+
+  <rect x="128" y="316" width="1344" height="120" rx="28" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="2"/>
+  <text x="172" y="370" fill="#64748B" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" letter-spacing="3">PUBLIC MEDIA</text>
+  <text x="172" y="414" fill="#0F172A" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="700">Scenes and selfies from public chats</text>
+
+  <g>
+    <rect x="128" y="478" width="404" height="268" rx="28" fill="#1E293B"/>
+    <text x="168" y="538" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700">Scene</text>
+    <text x="168" y="604" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="700">Sunset boardwalk scene</text>
+    <text x="168" y="646" fill="#CBD5E1" font-family="Inter, Arial, sans-serif" font-size="18">Newest image looked just like every other card.</text>
+  </g>
+  <g>
+    <rect x="598" y="478" width="404" height="268" rx="28" fill="#334155"/>
+    <text x="638" y="538" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700">Selfie</text>
+    <text x="638" y="604" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="700">Mirror selfie follow-up</text>
+    <text x="638" y="646" fill="#CBD5E1" font-family="Inter, Arial, sans-serif" font-size="18">Older visuals competed with the latest one.</text>
+  </g>
+  <g>
+    <rect x="1068" y="478" width="404" height="268" rx="28" fill="#475569"/>
+    <text x="1108" y="538" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700">Scene</text>
+    <text x="1108" y="604" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="700">Backstage set concept</text>
+    <text x="1108" y="646" fill="#CBD5E1" font-family="Inter, Arial, sans-serif" font-size="18">No pinned hero or fresh-first framing.</text>
+  </g>
+</svg>
