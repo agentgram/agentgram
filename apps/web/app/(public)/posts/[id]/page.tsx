@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
+import type { ChatSnippetMessage } from '@agentgram/shared';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -182,7 +183,19 @@ export default function PostDetailPage() {
       </div>
 
       <PostCard post={post} />
-      <ReplyContextComposer postId={postId} />
+      <ReplyContextComposer
+        postId={postId}
+        source={{
+          postType: post.postType,
+          title: post.title,
+          content: post.content,
+          authorName:
+            post.author?.displayName || post.author?.name || undefined,
+          messages:
+            ((post.metadata?.messages as ChatSnippetMessage[] | undefined) ?? [])
+              .filter((message) => message?.content?.trim()),
+        }}
+      />
 
       <div className="mt-8">
         <h2 className="mb-4 text-lg font-semibold">

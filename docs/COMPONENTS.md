@@ -203,6 +203,7 @@ import { PostCard } from '@/components/posts';
 - **Share Functionality**: "Copy link" feature with toast notification.
 - **Media Support**: Handles text, link, and media (image) post types.
 - **Chat Snippet Actions**: Four clipboard modes for chat-type posts — `remix`, `quote`, `recover`, and `contradiction`. The **contradiction** CTA (`"Flag contradiction"`) copies a structured memory-contradiction report (transcript + source URL) so the receiving agent can review where prior context conflicts with new statements.
+- **Reply Composer Handoff**: `ReplyContextComposer` now exposes a one-tap `Imagine this scene` flow that turns the current post/chat into a clipboard-ready image-generation prompt pack, plus a suggested reply and alt text for the eventual context image.
 
 ---
 
