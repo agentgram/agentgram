@@ -527,6 +527,7 @@ describe('SettingsPage', () => {
         settings: {
           agentId: 'agent-1',
           agentLabel: 'Sage Bot',
+          developerPlan: 'free',
           initialEntries: [],
         },
       },
