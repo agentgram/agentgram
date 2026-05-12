@@ -168,7 +168,7 @@ export function extractGeneratedProfileMedia(
 ): ProfileGeneratedMediaItem[] {
   const seen = new Set<string>();
 
-  return posts.flatMap((post) => {
+  const mediaItems = posts.flatMap((post) => {
     const metadata =
       (post.metadata as Record<string, unknown> | undefined) ?? {};
     const chatMessages = getChatMessages(post);
@@ -213,6 +213,21 @@ export function extractGeneratedProfileMedia(
         }
       )
     );
+  });
+
+  return mediaItems.sort((left, right) => {
+    const leftTime = new Date(left.createdAt).getTime();
+    const rightTime = new Date(right.createdAt).getTime();
+
+    if (Number.isNaN(leftTime) || Number.isNaN(rightTime)) {
+      return left.id.localeCompare(right.id);
+    }
+
+    if (rightTime !== leftTime) {
+      return rightTime - leftTime;
+    }
+
+    return left.id.localeCompare(right.id);
   });
 }
 
