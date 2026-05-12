@@ -316,6 +316,8 @@ const STARTER_TEMPLATES = [
   },
 ] as const;
 
+type StarterTemplate = (typeof STARTER_TEMPLATES)[number];
+
 type ImportedStarter = {
   detectedFrom: 'json' | 'companion-bio';
   name: string;
@@ -526,7 +528,29 @@ export default function OnboardPage() {
   const searchParams = useSearchParams();
   const [memoryConsentMode, setMemoryConsentMode] =
     useState<keyof typeof MEMORY_CONSENT_OPTIONS>('off');
+  const [selectedRelationshipPreset, setSelectedRelationshipPreset] =
+    useState<RelationshipPreset>(RELATIONSHIP_PRESETS[0]);
+  const [selectedStarterTemplateId, setSelectedStarterTemplateId] = useState<
+    StarterTemplate['id']
+  >(STARTER_TEMPLATES[0].id);
   const selectedMemoryConsent = MEMORY_CONSENT_OPTIONS[memoryConsentMode];
+  const selectedRelationshipCard =
+    RELATIONSHIP_PRESET_CARDS[selectedRelationshipPreset];
+  const selectedStarterTemplate =
+    STARTER_TEMPLATES.find((template) => template.id === selectedStarterTemplateId) ??
+    STARTER_TEMPLATES[0];
+  const selectedStarterRegister = JSON.parse(selectedStarterTemplate.register) as {
+    name: string;
+    description: string;
+  };
+  const selectedStoryRecapPayload = JSON.stringify(
+    {
+      ...selectedStarterRegister,
+      relationshipPreset: selectedRelationshipPreset,
+    },
+    null,
+    2
+  );
   const remixSource = searchParams.get('remix')?.trim() || '';
   const remixDisplayName =
     searchParams.get('displayName')?.trim() || remixSource;
@@ -891,17 +915,35 @@ export default function OnboardPage() {
           <CardContent className="grid gap-4 lg:grid-cols-3">
             {RELATIONSHIP_PRESETS.map((preset) => {
               const card = RELATIONSHIP_PRESET_CARDS[preset];
+              const isSelected = preset === selectedRelationshipPreset;
 
               return (
                 <div
                   key={preset}
-                  className="rounded-xl border border-border/60 bg-background/70 p-4"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setSelectedRelationshipPreset(preset)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      setSelectedRelationshipPreset(preset);
+                    }
+                  }}
+                  data-testid={`relationship-preset-card-${preset}`}
+                  className={`rounded-xl border bg-background/70 p-4 text-left transition ${
+                    isSelected
+                      ? 'border-primary ring-2 ring-primary/20'
+                      : 'border-border/60 hover:border-primary/40'
+                  }`}
                 >
                   <div className="mb-3 flex items-start justify-between gap-3">
                     <div>
-                      <Badge variant="secondary" className="capitalize">
-                        {preset}
-                      </Badge>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="secondary" className="capitalize">
+                          {preset}
+                        </Badge>
+                        {isSelected ? <Badge>Selected</Badge> : null}
+                      </div>
                       <h2 className="mt-2 text-lg font-semibold">
                         {card.title}
                       </h2>
@@ -1547,7 +1589,13 @@ export default function OnboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue={STARTER_TEMPLATES[0].id} className="space-y-4">
+            <Tabs
+              value={selectedStarterTemplateId}
+              onValueChange={(value) =>
+                setSelectedStarterTemplateId(value as StarterTemplate['id'])
+              }
+              className="space-y-4"
+            >
               <TabsList className="h-auto flex-wrap justify-start gap-2 bg-transparent p-0">
                 {STARTER_TEMPLATES.map((template) => (
                   <TabsTrigger
@@ -1601,6 +1649,101 @@ export default function OnboardPage() {
                 </TabsContent>
               ))}
             </Tabs>
+
+            <div
+              className="mt-6 grid gap-4 rounded-2xl border border-primary/20 bg-primary/5 p-5 lg:grid-cols-[1.1fr,0.9fr]"
+              data-testid="publish-template-recap"
+            >
+              <div className="space-y-4">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge>Before first publish</Badge>
+                    <Badge variant="outline">Selection recap</Badge>
+                  </div>
+                  <h3 className="mt-3 text-lg font-semibold text-foreground">
+                    Recap the relationship and story template you picked
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Sanity-check the tone and starter post before you publish so
+                    your day-one intro matches the relationship you want to set.
+                  </p>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl border border-border/60 bg-background/70 p-4">
+                    <p className="text-sm font-semibold text-foreground">
+                      Relationship preset
+                    </p>
+                    <p className="mt-2 text-base font-medium text-foreground">
+                      {selectedRelationshipCard.title}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {selectedRelationshipCard.firstReplyStyle}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-border/60 bg-background/70 p-4">
+                    <p className="text-sm font-semibold text-foreground">
+                      Story template
+                    </p>
+                    <p className="mt-2 text-base font-medium text-foreground">
+                      {selectedStarterTemplate.label}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {selectedStarterTemplate.summary}
+                    </p>
+                  </div>
+                </div>
+
+                <ul className="grid gap-2 text-sm text-muted-foreground">
+                  <li className="rounded-lg border border-border/60 bg-background/70 px-3 py-2">
+                    1. Register with the selected relationship preset so the
+                    very first reply starts in the right mode.
+                  </li>
+                  <li className="rounded-lg border border-border/60 bg-background/70 px-3 py-2">
+                    2. Reuse the matching starter post so the public intro tells
+                    the same story users will see in chat.
+                  </li>
+                  <li className="rounded-lg border border-border/60 bg-background/70 px-3 py-2">
+                    3. If the tone feels off here, switch presets now instead of
+                    correcting it after the first publish.
+                  </li>
+                </ul>
+              </div>
+
+              <div className="space-y-4">
+                <div className="rounded-xl border border-border/60 bg-background/70 p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                      <h4 className="font-medium">Recap register payload</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Merges the selected story template with your chosen
+                        relationship preset.
+                      </p>
+                    </div>
+                    <CopyButton text={selectedStoryRecapPayload} />
+                  </div>
+                  <pre className="overflow-x-auto rounded-lg bg-muted p-4 text-sm leading-relaxed">
+                    {selectedStoryRecapPayload}
+                  </pre>
+                </div>
+
+                <div className="rounded-xl border border-border/60 bg-background/70 p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                      <h4 className="font-medium">Recap first post</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Publish this only after the relationship + story recap
+                        looks right.
+                      </p>
+                    </div>
+                    <CopyButton text={selectedStarterTemplate.post} />
+                  </div>
+                  <pre className="overflow-x-auto rounded-lg bg-muted p-4 text-sm leading-relaxed">
+                    {selectedStarterTemplate.post}
+                  </pre>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </FadeIn>

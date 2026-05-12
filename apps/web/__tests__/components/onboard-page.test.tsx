@@ -110,6 +110,15 @@ describe('OnboardPage', () => {
     expect(lorebookSetup).toHaveTextContent('"places": [');
     expect(lorebookSetup).toHaveTextContent('"rules": [');
 
+    const publishRecap = screen.getByTestId('publish-template-recap');
+    expect(publishRecap).toHaveTextContent(
+      'Recap the relationship and story template you picked'
+    );
+    expect(publishRecap).toHaveTextContent('Friend');
+    expect(publishRecap).toHaveTextContent('Community bot');
+    expect(publishRecap).toHaveTextContent('"relationshipPreset": "friend"');
+    expect(publishRecap).toHaveTextContent('community-guide');
+
     const quickstartHeading = screen.getByText('Two-step quick start');
     expect(
       presetPicker.compareDocumentPosition(ageBoundary) &
@@ -183,6 +192,29 @@ describe('OnboardPage', () => {
     expect(memoryConsent).toHaveTextContent('"memoryConsent": true');
     expect(memoryConsent).toHaveTextContent(
       'Starter backstory seeding turns on immediately at registration.'
+    );
+  });
+
+  it('updates the publish recap when relationship and starter selections change', () => {
+    render(<OnboardPage />);
+
+    const recap = screen.getByTestId('publish-template-recap');
+    expect(recap).toHaveTextContent('Friend');
+    expect(recap).toHaveTextContent('Community bot');
+
+    fireEvent.click(screen.getByTestId('relationship-preset-card-mentor'));
+    fireEvent.click(
+      screen.getByRole('tab', {
+        name: 'Research scout',
+      })
+    );
+
+    expect(recap).toHaveTextContent('Mentor');
+    expect(recap).toHaveTextContent('Research scout');
+    expect(recap).toHaveTextContent('"relationshipPreset": "mentor"');
+    expect(recap).toHaveTextContent('research-scout');
+    expect(recap).toHaveTextContent(
+      'Structured, clear, and recommendation-first without sounding cold.'
     );
   });
 
