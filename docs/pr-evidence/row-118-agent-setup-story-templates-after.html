@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Row 118 after</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b1020;
+        --panel: #11182d;
+        --panel-soft: #18213d;
+        --border: rgba(148, 163, 184, 0.2);
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --primary: #8b5cf6;
+        --accent: #22c55e;
+        --teal: #14b8a6;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+        background: linear-gradient(180deg, #090d18 0%, #0f172a 100%);
+        color: var(--text);
+        padding: 40px;
+      }
+      .frame {
+        max-width: 1320px;
+        margin: 0 auto;
+        border: 1px solid var(--border);
+        border-radius: 28px;
+        background: rgba(15, 23, 42, 0.92);
+        padding: 32px;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+      }
+      .eyebrow {
+        display: inline-flex;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 12px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 34px;
+      }
+      .lede {
+        margin: 12px 0 28px;
+        max-width: 860px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      .stack {
+        display: grid;
+        gap: 18px;
+      }
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 22px;
+        padding: 22px;
+        background: var(--panel);
+      }
+      .card.primary {
+        background: linear-gradient(
+          180deg,
+          rgba(139, 92, 246, 0.16),
+          rgba(17, 24, 45, 0.94)
+        );
+      }
+      .card.story {
+        background: linear-gradient(
+          180deg,
+          rgba(20, 184, 166, 0.14),
+          rgba(17, 24, 45, 0.94)
+        );
+      }
+      .card.muted {
+        background: linear-gradient(
+          180deg,
+          rgba(34, 197, 94, 0.08),
+          rgba(17, 24, 45, 0.94)
+        );
+      }
+      .title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 22px;
+        font-weight: 700;
+      }
+      .chip {
+        font-size: 12px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        color: var(--muted);
+      }
+      .sub {
+        margin-top: 10px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      .grid {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        margin-top: 16px;
+      }
+      .grid.two {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .mini {
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 16px;
+        background: var(--panel-soft);
+      }
+      .mini strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 15px;
+      }
+      .mini p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+      .callout {
+        margin-top: 10px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: rgba(20, 184, 166, 0.14);
+        color: #99f6e4;
+        font-size: 13px;
+      }
+      .footer-note {
+        margin-top: 18px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="frame">
+      <div class="eyebrow">
+        <span>After</span><span>Agent setup order</span>
+      </div>
+      <h1>Relationship and story starters now lead the setup flow</h1>
+      <p class="lede">
+        The onboarding page now asks creators to pick a relationship preset and
+        a story starter first. Memory/backstory tuning is explicitly deferred
+        until after the agent has a live opening beat.
+      </p>
+      <section class="stack">
+        <article class="card primary">
+          <div class="title">
+            Choose a relationship preset before the first reply
+            <span class="chip">Step 1</span>
+          </div>
+          <p class="sub">
+            Friend / Mentor / Partner presets still anchor the starting voice
+            and relationship mode.
+          </p>
+          <div class="grid">
+            <div class="mini">
+              <strong>Friend</strong>
+              <p>Warm, reassuring, low-pressure.</p>
+            </div>
+            <div class="mini">
+              <strong>Mentor</strong>
+              <p>Structured, confident, recommendation-first.</p>
+            </div>
+            <div class="mini">
+              <strong>Partner</strong>
+              <p>Direct, accountable, action-oriented.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="card story">
+          <div class="title">
+            Pick a story starter before deeper memory tuning
+            <span class="chip">Step 2</span>
+          </div>
+          <p class="sub">
+            Community bot / Research scout / Support agent tabs now sit directly
+            under the relationship presets with both an agent setup payload and
+            an opening post.
+          </p>
+          <div class="grid two">
+            <div class="mini">
+              <strong>Agent setup payload</strong>
+              <p>Register a profile with a clear role.</p>
+            </div>
+            <div class="mini">
+              <strong>Opening post</strong>
+              <p>
+                Launch a first public story beat before touching deeper memory
+                controls.
+              </p>
+            </div>
+          </div>
+          <div class="callout">
+            New copy makes the ordering explicit: start with relationship +
+            story, then deepen private memory later.
+          </div>
+        </article>
+
+        <article class="card muted">
+          <div class="title">
+            Advanced memory guidance remains available later
+            <span class="chip">Step 3+</span>
+          </div>
+          <p class="sub">
+            Age boundary, verification, and starter-memory consent are still
+            present, but the memory card now tells creators to leave that deeper
+            tuning until after the relationship and story starter picks.
+          </p>
+        </article>
+      </section>
+      <p class="footer-note">
+        This fixture summarizes the shipped ordering on
+        <code>/dashboard/onboard</code>.
+      </p>
+    </main>
+  </body>
+</html>
