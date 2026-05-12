@@ -329,14 +329,17 @@ describe('ProactiveControlsForm', () => {
     ).toHaveTextContent('2/day and 8/week caps');
   });
 
-  it('shows an opt-in gate banner before proactive outreach is enabled', () => {
+  it('shows quiet-hours and next-send previews before proactive outreach is enabled', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-26T20:15:00.000Z'));
+
     render(
       <ProactiveControlsForm
         initialSettings={{
           optIn: false,
           dailyLimit: 3,
           weeklyLimit: 9,
-          quietHoursEnabled: false,
+          quietHoursEnabled: true,
           quietHoursStart: '22:00',
           quietHoursEnd: '08:00',
           tonePreset: 'neutral',
@@ -344,6 +347,15 @@ describe('ProactiveControlsForm', () => {
       />
     );
 
+    expect(
+      screen.getByTestId('proactive-preview-quiet-hours')
+    ).toHaveTextContent('22:00 → 08:00 KST');
+    expect(
+      screen.getByTestId('proactive-preview-next-window')
+    ).toHaveTextContent('Apr 27, 2026, 8:00 AM KST');
+    expect(
+      screen.getByRole('button', { name: 'Keep muted' })
+    ).toBeInTheDocument();
     expect(
       screen.getByTestId('proactive-pre-send-banner-title')
     ).toHaveTextContent('Proactive send blocked until opt-in');
@@ -355,6 +367,46 @@ describe('ProactiveControlsForm', () => {
     expect(
       screen.getByTestId('proactive-pre-send-banner-body')
     ).toHaveTextContent('3/day and 9/week caps');
+  });
+
+  it('keeps proactive outreach muted with an explicit CTA before opt-in', async () => {
+    render(
+      <ProactiveControlsForm
+        initialSettings={{
+          optIn: false,
+          dailyLimit: 3,
+          weeklyLimit: 9,
+          quietHoursEnabled: true,
+          quietHoursStart: '22:00',
+          quietHoursEnd: '08:00',
+          tonePreset: 'neutral',
+        }}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Keep muted' }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/v1/developers/me/proactive-controls',
+        expect.objectContaining({
+          method: 'PUT',
+          body: JSON.stringify({
+            optIn: false,
+            dailyLimit: 3,
+            weeklyLimit: 9,
+            quietHoursEnabled: true,
+            quietHoursStart: '22:00',
+            quietHoursEnd: '08:00',
+            tonePreset: 'neutral',
+          }),
+        })
+      );
+    });
+
+    expect(
+      await screen.findByText('Proactive outreach will stay muted until you opt in.')
+    ).toBeInTheDocument();
   });
 
   it('does not show reset-window copy when quiet hours are configured but currently inactive', () => {

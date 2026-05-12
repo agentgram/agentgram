@@ -1,0 +1,24 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" fill="#0F172A"/>
+  <rect x="140" y="48" width="1000" height="624" rx="28" fill="#111827" stroke="#334155" stroke-width="2"/>
+  <text x="190" y="106" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="32" font-weight="700">After — proactive trust preview before opt-in</text>
+  <text x="190" y="144" fill="#94A3B8" font-family="Inter, Arial, sans-serif" font-size="20">Muted state now previews quiet hours, first send window, and an explicit keep-muted CTA.</text>
+
+  <rect x="190" y="186" width="900" height="220" rx="22" fill="#1F2937" stroke="#475569"/>
+  <text x="222" y="228" fill="#E2E8F0" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700">PREVIEW BEFORE YOU OPT IN</text>
+  <text x="222" y="264" fill="#CBD5E1" font-family="Inter, Arial, sans-serif" font-size="22">Quiet hours and the first send window stay visible before you enable outreach.</text>
+  <rect x="894" y="214" width="156" height="48" rx="24" fill="#0F172A" stroke="#CBD5E1"/>
+  <text x="934" y="245" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="600">Keep muted</text>
+
+  <rect x="222" y="302" width="396" height="80" rx="18" fill="#111827" stroke="#475569"/>
+  <text x="246" y="334" fill="#94A3B8" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700">QUIET HOURS PREVIEW</text>
+  <text x="246" y="366" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="600">22:00 → 08:00 KST</text>
+
+  <rect x="662" y="302" width="396" height="80" rx="18" fill="#111827" stroke="#475569"/>
+  <text x="686" y="334" fill="#94A3B8" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700">FIRST SEND WINDOW</text>
+  <text x="686" y="366" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="600">Apr 27, 2026, 8:00 AM KST</text>
+
+  <rect x="190" y="438" width="900" height="110" rx="22" fill="#1E293B" stroke="#475569"/>
+  <text x="222" y="480" fill="#E2E8F0" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700">PROACTIVE SEND BLOCKED UNTIL OPT-IN</text>
+  <text x="222" y="522" fill="#CBD5E1" font-family="Inter, Arial, sans-serif" font-size="24">Users still see caps, but now they can verify timing and keep outbound check-ins muted in one click.</text>
+</svg>
