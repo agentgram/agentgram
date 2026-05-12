@@ -157,7 +157,7 @@ describe('ProactiveControlsForm', () => {
     vi.useRealTimers();
   });
 
-  it('shows caps and quiet hours controls and saves through the API', async () => {
+  it('shows quiet-hours and schedule preview before enabling check-ins and saves through the API', async () => {
     render(
       <ProactiveControlsForm
         initialSettings={{
@@ -172,17 +172,25 @@ describe('ProactiveControlsForm', () => {
       />
     );
 
-    expect(
-      screen.getByRole('checkbox', { name: /enable proactive outreach/i })
-    ).not.toBeChecked();
+    const optInCheckbox = screen.getByRole('checkbox', {
+      name: /enable proactive outreach/i,
+    });
+    const quietHoursCheckbox = screen.getByRole('checkbox', {
+      name: /quiet hours/i,
+    });
+    const schedulePreview = screen.getByTestId('proactive-next-eligible-send');
+
+    expect(optInCheckbox).not.toBeChecked();
     expect(screen.getByLabelText('Daily outreach cap')).toHaveValue(2);
     expect(screen.getByLabelText('Weekly outreach cap')).toHaveValue(8);
-    expect(
-      screen.getByRole('checkbox', { name: /quiet hours/i })
-    ).not.toBeChecked();
+    expect(quietHoursCheckbox).not.toBeChecked();
+    expect(schedulePreview).toHaveTextContent('Waiting for opt-in');
     expect(screen.queryByLabelText('Quiet hours start')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Quiet hours end')).not.toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /neutral/i })).toBeChecked();
+    expect(
+      schedulePreview.compareDocumentPosition(optInCheckbox)
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
 
     fireEvent.change(screen.getByLabelText('Daily outreach cap'), {
       target: { value: '7' },
@@ -190,7 +198,8 @@ describe('ProactiveControlsForm', () => {
     fireEvent.change(screen.getByLabelText('Weekly outreach cap'), {
       target: { value: '21' },
     });
-    fireEvent.click(screen.getByRole('checkbox', { name: /quiet hours/i }));
+    fireEvent.click(quietHoursCheckbox);
+
     fireEvent.change(screen.getByLabelText('Quiet hours start'), {
       target: { value: '21:30' },
     });
@@ -230,6 +239,10 @@ describe('ProactiveControlsForm', () => {
     expect(screen.getByLabelText('Quiet hours start')).toHaveValue('21:30');
     expect(screen.getByLabelText('Quiet hours end')).toHaveValue('07:15');
     expect(screen.getByRole('radio', { name: /warm/i })).toBeChecked();
+    expect(screen.getByTestId('proactive-next-eligible-send')).toHaveTextContent(
+      'Waiting for opt-in'
+    );
+    expect(screen.getByText('Before you enable future check-ins')).toBeInTheDocument();
   });
 
   it('shows last send and next eligible window status', () => {
@@ -292,6 +305,14 @@ describe('ProactiveControlsForm', () => {
     expect(
       screen.getByTestId('proactive-pre-send-banner-body')
     ).toHaveTextContent('3/day and 9/week caps');
+    expect(screen.getByTestId('proactive-next-eligible-send')).toHaveTextContent(
+      'Waiting for opt-in'
+    );
+    expect(
+      screen.getByText(
+        'Preview shown before opt-in: this is the first future check-in window AgentGram would use after you enable it.'
+      )
+    ).toBeInTheDocument();
   });
 
   it('does not show reset-window copy when quiet hours are configured but currently inactive', () => {

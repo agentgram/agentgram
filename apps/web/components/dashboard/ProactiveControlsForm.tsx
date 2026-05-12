@@ -148,11 +148,124 @@ export function ProactiveControlsForm({
           Proactive outreach controls
         </CardTitle>
         <CardDescription>
-          Outreach stays off until you explicitly opt in. Caps stay visible here
-          so you can tune how often AgentGram may reach out on your behalf.
+          Preview quiet hours and the next check-in window before you opt in, so
+          AgentGram&apos;s schedule feels predictable before anything goes live.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        <div className="space-y-4 rounded-lg border border-primary/20 bg-primary/5 p-4">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+              Before you enable future check-ins
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Set the quiet-hours window first, then review when AgentGram would
+              be allowed to send the next proactive check-in.
+            </p>
+          </div>
+
+          <div className="space-y-4 rounded-lg border border-border/60 bg-background/80 p-4">
+            <label className="flex items-start gap-3">
+              <input
+                checked={settings.quietHoursEnabled}
+                className="mt-1 h-4 w-4 rounded border-input"
+                onChange={(event) =>
+                  updateSettings((current) => ({
+                    ...current,
+                    quietHoursEnabled: event.target.checked,
+                  }))
+                }
+                type="checkbox"
+              />
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 font-medium text-foreground">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  Quiet hours
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Pause proactive check-ins during a daily window. AgentGram
+                  resumes automatically once quiet hours end.
+                </p>
+              </div>
+            </label>
+
+            {settings.quietHoursEnabled && (
+              <div className="grid gap-4 pl-7 md:grid-cols-2">
+                <label className="space-y-2">
+                  <span className="text-sm font-medium text-foreground">
+                    Start time
+                  </span>
+                  <Input
+                    aria-label="Quiet hours start"
+                    onChange={(event) =>
+                      updateSettings((current) => ({
+                        ...current,
+                        quietHoursStart: event.target.value,
+                      }))
+                    }
+                    type="time"
+                    value={settings.quietHoursStart}
+                  />
+                </label>
+
+                <label className="space-y-2">
+                  <span className="text-sm font-medium text-foreground">
+                    End time
+                  </span>
+                  <Input
+                    aria-label="Quiet hours end"
+                    onChange={(event) =>
+                      updateSettings((current) => ({
+                        ...current,
+                        quietHoursEnd: event.target.value,
+                      }))
+                    }
+                    type="time"
+                    value={settings.quietHoursEnd}
+                  />
+                </label>
+              </div>
+            )}
+          </div>
+
+          <div
+            className="rounded-lg border border-primary/20 bg-background/80 p-4"
+            data-testid="proactive-pre-send-banner"
+          >
+            <p
+              className="text-xs font-semibold uppercase tracking-wide text-primary"
+              data-testid="proactive-pre-send-banner-title"
+            >
+              {preSendBannerTitle}
+            </p>
+            <p
+              className="mt-2 text-sm text-foreground"
+              data-testid="proactive-pre-send-banner-body"
+            >
+              {preSendBannerBody}
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-border/60 bg-background/80 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Schedule preview
+            </p>
+            <p
+              className="mt-2 text-sm font-medium text-foreground"
+              data-testid="proactive-next-eligible-send"
+            >
+              {nextEligibleLabel}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {!settings.optIn
+                ? 'Preview shown before opt-in: this is the first future check-in window AgentGram would use after you enable it.'
+                : settings.quietHoursEnabled
+                  ? 'Quiet hours still gate delivery; once they end, daily and weekly caps apply as usual.'
+                  : 'Outside quiet hours, the next slot is available as soon as your daily and weekly caps allow.'}
+            </p>
+          </div>
+        </div>
+
         <label className="flex items-start gap-3 rounded-lg border border-border/60 p-4">
           <input
             checked={settings.optIn}
@@ -171,8 +284,8 @@ export function ProactiveControlsForm({
             </div>
             <p className="text-sm text-muted-foreground">
               Leave this off to keep all proactive outreach disabled by default.
-              Turn it on only when you want AgentGram to initiate outreach for
-              you.
+              Turn it on only when the quiet-hours and schedule preview above
+              match the rhythm you want.
             </p>
           </div>
         </label>
@@ -225,70 +338,6 @@ export function ProactiveControlsForm({
           </label>
         </div>
 
-        <div className="space-y-4 rounded-lg border border-border/60 p-4">
-          <label className="flex items-start gap-3">
-            <input
-              checked={settings.quietHoursEnabled}
-              className="mt-1 h-4 w-4 rounded border-input"
-              onChange={(event) =>
-                updateSettings((current) => ({
-                  ...current,
-                  quietHoursEnabled: event.target.checked,
-                }))
-              }
-              type="checkbox"
-            />
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 font-medium text-foreground">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                Quiet hours
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Pause all proactive outreach during a daily window. Outreach
-                resumes automatically once quiet hours end.
-              </p>
-            </div>
-          </label>
-
-          {settings.quietHoursEnabled && (
-            <div className="grid gap-4 pl-7 md:grid-cols-2">
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">
-                  Start time
-                </span>
-                <Input
-                  aria-label="Quiet hours start"
-                  onChange={(event) =>
-                    updateSettings((current) => ({
-                      ...current,
-                      quietHoursStart: event.target.value,
-                    }))
-                  }
-                  type="time"
-                  value={settings.quietHoursStart}
-                />
-              </label>
-
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">
-                  End time
-                </span>
-                <Input
-                  aria-label="Quiet hours end"
-                  onChange={(event) =>
-                    updateSettings((current) => ({
-                      ...current,
-                      quietHoursEnd: event.target.value,
-                    }))
-                  }
-                  type="time"
-                  value={settings.quietHoursEnd}
-                />
-              </label>
-            </div>
-          )}
-        </div>
-
         <fieldset className="space-y-3 rounded-lg border border-border/60 p-4">
           <legend className="flex items-center gap-2 px-1 font-medium text-foreground">
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
@@ -333,64 +382,25 @@ export function ProactiveControlsForm({
           </div>
         </fieldset>
 
-        <div
-          className="rounded-lg border border-primary/20 bg-primary/5 p-4"
-          data-testid="proactive-pre-send-banner"
-        >
-          <p
-            className="text-xs font-semibold uppercase tracking-wide text-primary"
-            data-testid="proactive-pre-send-banner-title"
-          >
-            {preSendBannerTitle}
+        <div className="rounded-lg border border-border/60 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Last proactive send
           </p>
           <p
-            className="mt-2 text-sm text-foreground"
-            data-testid="proactive-pre-send-banner-body"
+            className="mt-2 text-sm font-medium text-foreground"
+            data-testid="proactive-last-auto-message"
           >
-            {preSendBannerBody}
+            {lastAutoMessageLabel}
           </p>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-lg border border-border/60 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Last proactive send
-            </p>
-            <p
-              className="mt-2 text-sm font-medium text-foreground"
-              data-testid="proactive-last-auto-message"
-            >
-              {lastAutoMessageLabel}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {settings.lastAutoMessageAt
-                ? 'Updated from the latest outbound proactive message metadata.'
-                : 'We will surface the most recent outbound proactive message here once one is delivered.'}
-            </p>
-          </div>
-
-          <div className="rounded-lg border border-border/60 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Next eligible send window
-            </p>
-            <p
-              className="mt-2 text-sm font-medium text-foreground"
-              data-testid="proactive-next-eligible-send"
-            >
-              {nextEligibleLabel}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {!settings.optIn
-                ? 'Enable proactive outreach before AgentGram schedules the next send window.'
-                : settings.quietHoursEnabled
-                  ? 'Quiet hours still gate delivery; once they end, daily and weekly caps apply as usual.'
-                  : 'Outside quiet hours, the next slot is available as soon as your daily and weekly caps allow.'}
-            </p>
-          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {settings.lastAutoMessageAt
+              ? 'Updated from the latest outbound proactive message metadata.'
+              : 'We will surface the most recent outbound proactive message here once one is delivered.'}
+          </p>
         </div>
 
         <div className="rounded-lg border border-dashed border-border/60 p-4 text-sm text-muted-foreground">
-          The caps, quiet hours, and tone preset are enforced after save. If
+          The caps, quiet hours, schedule preview, and tone preset are enforced after save. If
           values fall outside the allowed range, AgentGram will clamp them to
           safe limits and reflect the saved values back here.
         </div>
