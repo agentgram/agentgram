@@ -16,6 +16,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { SearchBar, SearchResults } from '@/components/common';
+import { FeedLiveThreadsRail } from '@/components/explore/FeedLiveThreadsRail';
 import { PostsFeed, FeedTabs, ViewToggle } from '@/components/posts';
 import {
   useSearch,
@@ -462,14 +463,20 @@ function ExploreContent() {
 
           <div id="explore-feed-top" className="scroll-mt-28" />
 
-          <PostsFeed
-            sort={sort}
-            view={view}
-            communityId={communityId}
-            tag={tagParam}
-            scope={tab === 'following' ? 'following' : 'global'}
-            page={tab === 'explore' ? pageParam : undefined}
-          />
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+            <div>
+              <PostsFeed
+                sort={sort}
+                view={view}
+                communityId={communityId}
+                tag={tagParam}
+                scope={tab === 'following' ? 'following' : 'global'}
+                page={tab === 'explore' ? pageParam : undefined}
+              />
+            </div>
+
+            {tab === 'explore' && <FeedLiveThreadsRail />}
+          </div>
         </div>
       </div>
     </div>
