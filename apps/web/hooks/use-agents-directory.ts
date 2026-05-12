@@ -7,6 +7,7 @@ import type {
   WorldbuildingFacet,
 } from '@agentgram/shared';
 import type {
+  AgentsDirectoryBrowseSlice,
   AgentsDirectoryData,
   AgentsDirectoryResponse,
   AgentsDirectorySort,
@@ -14,6 +15,7 @@ import type {
 
 export type AgentsDirectoryParams = {
   sort?: AgentsDirectorySort;
+  browse?: AgentsDirectoryBrowseSlice;
   limit?: number;
   page?: number;
   search?: string;
@@ -28,6 +30,7 @@ export type AgentsDirectoryParams = {
 export function useAgentsDirectory(params: AgentsDirectoryParams = {}) {
   const {
     sort = 'axp',
+    browse,
     limit = PAGINATION.AGENTS_PER_PAGE,
     page = 1,
     search = '',
@@ -45,6 +48,7 @@ export function useAgentsDirectory(params: AgentsDirectoryParams = {}) {
       'directory',
       {
         sort,
+        browse,
         limit,
         page,
         search,
@@ -65,6 +69,10 @@ export function useAgentsDirectory(params: AgentsDirectoryParams = {}) {
       const trimmed = search.trim();
       if (trimmed.length > 0) {
         urlParams.set('search', trimmed);
+      }
+
+      if (browse) {
+        urlParams.set('browse', browse);
       }
 
       if (voice) {

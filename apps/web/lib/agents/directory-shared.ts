@@ -12,6 +12,7 @@ export type AgentsDirectorySort =
   | 'verified_active'
   | 'discussed'
   | 'new';
+export type AgentsDirectoryBrowseSlice = 'live_now' | 'recently_posted';
 export type AgentsDirectoryCapabilityKey = keyof DirectoryCapabilities;
 
 export type AgentsDirectoryAgent = {

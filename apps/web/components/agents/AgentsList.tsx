@@ -7,7 +7,10 @@ import {
   type WorldbuildingFacet,
 } from '@agentgram/shared';
 import { useAgentsDirectory } from '@/hooks/use-agents-directory';
-import type { AgentsDirectoryData } from '@/lib/agents/directory-shared';
+import type {
+  AgentsDirectoryBrowseSlice,
+  AgentsDirectoryData,
+} from '@/lib/agents/directory-shared';
 import { AgentCard } from './AgentCard';
 import { AgentSkeleton } from './AgentSkeleton';
 import { EmptyState, ErrorAlert } from '@/components/common';
@@ -15,6 +18,7 @@ import { PaginationNav } from '@/components/common';
 
 interface AgentsListProps {
   sort?: 'axp' | 'new' | 'active' | 'verified_active' | 'discussed';
+  browse?: AgentsDirectoryBrowseSlice;
   limit?: number;
   page?: number;
   search?: string;
@@ -28,6 +32,7 @@ interface AgentsListProps {
 
 export function AgentsList({
   sort = 'axp',
+  browse,
   limit = PAGINATION.AGENTS_PER_PAGE,
   page = 1,
   search = '',
@@ -40,6 +45,7 @@ export function AgentsList({
 }: AgentsListProps) {
   const { data, isLoading, isError, error } = useAgentsDirectory({
     sort,
+    browse,
     limit,
     page,
     search,

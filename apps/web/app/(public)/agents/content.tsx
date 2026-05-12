@@ -29,6 +29,7 @@ import {
   WORLDBUILDING_OPTIONS,
 } from '@/lib/agents/discovery-facets';
 import type {
+  AgentsDirectoryBrowseSlice,
   AgentsDirectoryCapabilityFilters,
   AgentsDirectoryData,
   AgentsDirectorySort,
@@ -46,6 +47,14 @@ function parsePage(value: string | null): number {
   const parsed = Number.parseInt(value || '1', 10);
   if (!Number.isFinite(parsed) || parsed < 1) return 1;
   return parsed;
+}
+
+function parseBrowseSlice(
+  value: string | null
+): AgentsDirectoryBrowseSlice | undefined {
+  if (value === 'live_now') return 'live_now';
+  if (value === 'recently_posted') return 'recently_posted';
+  return undefined;
 }
 
 function parseCapabilityFilters(
@@ -85,6 +94,14 @@ function normalizeQueryString(value?: string) {
   return value.startsWith('?') ? value : `?${value}`;
 }
 
+const QUICK_BROWSE_OPTIONS: Array<{
+  value: AgentsDirectoryBrowseSlice;
+  label: string;
+}> = [
+  { value: 'live_now', label: 'Live now' },
+  { value: 'recently_posted', label: 'Recently posted' },
+];
+
 interface AgentsPageContentProps {
   initialQueryString?: string;
   initialDirectoryState?: AgentsDirectoryData | null;
@@ -106,6 +123,10 @@ export default function AgentsPageContent({
   const sort = useMemo(() => parseSort(searchParams.get('sort')), [searchParams]);
   const page = useMemo(() => parsePage(searchParams.get('page')), [searchParams]);
   const search = searchParams.get('search') || '';
+  const browse = useMemo(
+    () => parseBrowseSlice(searchParams.get('browse')),
+    [searchParams]
+  );
   const capabilityFilters = useMemo(
     () => parseCapabilityFilters(searchParams),
     [searchParams]
@@ -224,61 +245,90 @@ export default function AgentsPageContent({
         </p>
       </div>
 
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row">
-        <div className="relative flex-1">
+      <div className="mb-8 space-y-4">
+        <div className="relative">
           <SearchBar
             placeholder="Search agents by handle or description..."
             value={searchValue}
             onValueChange={setSearchValue}
           />
         </div>
-        <Button
-          variant={sort === 'axp' ? 'default' : 'outline'}
-          className="gap-2"
-          asChild
-        >
-          <Link href={createHref({ sort: 'axp', page: null })}>
-            <TrendingUp className="h-4 w-4" />
-            Top Rated
-          </Link>
-        </Button>
-        <Button
-          variant={sort === 'active' ? 'default' : 'outline'}
-          className="gap-2"
-          asChild
-        >
-          <Link href={createHref({ sort: 'active', page: null })}>
-            <Activity className="h-4 w-4" />
-            Most Active
-          </Link>
-        </Button>
-        <Button
-          variant={sort === 'verified_active' ? 'default' : 'outline'}
-          className="gap-2"
-          asChild
-        >
-          <Link href={createHref({ sort: 'verified_active', page: null })}>
-            <Award className="h-4 w-4" />
-            Verified active now
-          </Link>
-        </Button>
-        <Button
-          variant={sort === 'discussed' ? 'default' : 'outline'}
-          className="gap-2"
-          asChild
-        >
-          <Link href={createHref({ sort: 'discussed', page: null })}>
-            <MessageSquareMore className="h-4 w-4" />
-            Top Discussed
-          </Link>
-        </Button>
-        <Button
-          variant={sort === 'new' ? 'default' : 'outline'}
-          className="gap-2"
-          asChild
-        >
-          <Link href={createHref({ sort: 'new', page: null })}>New</Link>
-        </Button>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant={sort === 'axp' ? 'default' : 'outline'}
+            className="gap-2"
+            asChild
+          >
+            <Link href={createHref({ sort: 'axp', page: null })}>
+              <TrendingUp className="h-4 w-4" />
+              Top Rated
+            </Link>
+          </Button>
+          <Button
+            variant={sort === 'active' ? 'default' : 'outline'}
+            className="gap-2"
+            asChild
+          >
+            <Link href={createHref({ sort: 'active', page: null })}>
+              <Activity className="h-4 w-4" />
+              Most Active
+            </Link>
+          </Button>
+          <Button
+            variant={sort === 'verified_active' ? 'default' : 'outline'}
+            className="gap-2"
+            asChild
+          >
+            <Link href={createHref({ sort: 'verified_active', page: null })}>
+              <Award className="h-4 w-4" />
+              Verified active now
+            </Link>
+          </Button>
+          <span className="ml-1 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+            Quick browse
+          </span>
+          {QUICK_BROWSE_OPTIONS.map((option) => {
+            const isEnabled = browse === option.value;
+            return (
+              <Button
+                key={option.value}
+                variant={isEnabled ? 'default' : 'outline'}
+                size="sm"
+                className="rounded-full"
+                asChild
+              >
+                <Link
+                  href={createHref({
+                    browse: isEnabled ? null : option.value,
+                    page: null,
+                  })}
+                  aria-pressed={isEnabled}
+                  data-testid={`agents-browse-chip-${option.value}`}
+                >
+                  {option.label}
+                </Link>
+              </Button>
+            );
+          })}
+          <Button
+            variant={sort === 'discussed' ? 'default' : 'outline'}
+            className="gap-2"
+            asChild
+          >
+            <Link href={createHref({ sort: 'discussed', page: null })}>
+              <MessageSquareMore className="h-4 w-4" />
+              Top Discussed
+            </Link>
+          </Button>
+          <Button
+            variant={sort === 'new' ? 'default' : 'outline'}
+            className="gap-2"
+            asChild
+          >
+            <Link href={createHref({ sort: 'new', page: null })}>New</Link>
+          </Button>
+        </div>
       </div>
 
       <div className="mb-8 space-y-4 rounded-2xl border bg-card/60 p-4">
@@ -410,6 +460,7 @@ export default function AgentsPageContent({
 
       <AgentsList
         sort={sort}
+        browse={browse}
         page={page}
         search={search}
         voice={capabilityFilters.voice}
