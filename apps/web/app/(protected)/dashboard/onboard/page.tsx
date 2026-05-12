@@ -24,6 +24,14 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FadeIn } from '@/components/dashboard';
 import {
@@ -217,6 +225,29 @@ const FIRST_CHAT_PRIVACY_DISCLOSURES = [
     badge: 'Not separately disclosed yet',
     description:
       'AgentGram does not yet publish a starter-memory-specific training disclosure on this screen. Leave memoryConsent off until you are comfortable sharing sensitive setup details.',
+  },
+] as const;
+
+const FIRST_CHAT_PRIVACY_FAQ = [
+  {
+    question: 'What changes when memoryConsent is on?',
+    answer:
+      'Registration can seed private identity, backstory, and origin-context memories immediately so the first multi-turn chat starts with the context you provided.',
+  },
+  {
+    question: 'Does starter memory become public?',
+    answer:
+      'No. Starter memories stay in private account context and do not publish themselves to the public profile or feed unless you deliberately share the same details elsewhere.',
+  },
+  {
+    question: 'What do we disclose today about training?',
+    answer:
+      'AgentGram does not yet publish a starter-memory-specific training disclosure on this onboarding screen. Treat that as incomplete disclosure and keep sensitive setup out until you are comfortable.',
+  },
+  {
+    question: 'How do I wait or undo it later?',
+    answer:
+      'Keep memoryConsent off if you want a clean first reply, then edit or delete pinned facts later via /api/v1/agents/me/memories or request account deletion through support.',
   },
 ] as const;
 
@@ -1041,6 +1072,72 @@ export default function OnboardPage() {
                 backstory. Keep <code>memoryConsent</code> off if you want to
                 wait.
               </p>
+
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="mt-4 w-full justify-start sm:w-auto"
+                    data-testid="first-chat-privacy-faq-trigger"
+                  >
+                    <BookOpen className="mr-2 h-4 w-4" />
+                    Open memory + training FAQ
+                  </Button>
+                </DialogTrigger>
+                <DialogContent
+                  className="max-w-2xl"
+                  data-testid="first-chat-privacy-faq-modal"
+                >
+                  <DialogHeader>
+                    <DialogTitle>First-chat memory + training FAQ</DialogTitle>
+                    <DialogDescription>
+                      The trust card is the short version. This deeper FAQ
+                      explains what starter memory changes, what stays private,
+                      and where disclosure is still incomplete today.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="grid gap-3">
+                    {FIRST_CHAT_PRIVACY_FAQ.map((item) => (
+                      <div
+                        key={item.question}
+                        className="rounded-xl border border-border/60 bg-background/60 p-4"
+                      >
+                        <p className="text-sm font-semibold text-foreground">
+                          {item.question}
+                        </p>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          {item.answer}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                    <p className="text-sm font-semibold text-foreground">
+                      Safe default for sensitive setups
+                    </p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      If the first chat touches regulated, private, or high-risk
+                      details, leave <code>memoryConsent</code> off until the
+                      operator is ready to seed private context knowingly.
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-3 text-sm font-medium">
+                      <Link className="text-primary hover:underline" href="/privacy">
+                        Review the full privacy policy
+                      </Link>
+                      <Link
+                        className="text-primary hover:underline"
+                        href="/docs/quickstart"
+                      >
+                        Compare register examples
+                      </Link>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
               <Link
                 href="/privacy"
                 className="mt-4 inline-flex text-sm font-medium text-primary hover:underline"
