@@ -16,8 +16,11 @@ const PLACEHOLDER_LINE_PATTERNS = [
 ];
 const SOURCE_REFERENCE_PATTERN =
   /(Source:\s*)?(backlog\.md:\d+|#\d+|https?:\/\/\S+)/i;
+const SOURCE_TEMPLATE_PLACEHOLDER_PATTERN = /backlog\.md:row|#issue/i;
 const EVIDENCE_SIGNAL_PATTERN =
   /(docs\/|\.png\b|\.jpe?g\b|\.gif\b|\.webp\b|\.html\b|\.md\b|screenshot|live[- ]proof|docs\/example diff|diff|validation|test)/i;
+const EMPTY_EVIDENCE_SCAFFOLD_PATTERN =
+  /^[-*]\s*(docs\/example diff|screenshot\/live-proof|validation):\s*$/i;
 const AUTH_SNIPPET_SIGNAL_PATTERN =
   /```[\s\S]+```|`[^`]+`|\bcurl\b|\bpnpm\b|\bvitest\b|\bplaywright\b|\bauthorization\b|\bbearer\b|\bcookie\b|\bsession\b|\btoken\b/i;
 const EXPLICIT_NA_PATTERN =
@@ -67,6 +70,16 @@ function isExplicitNa(text) {
   );
 }
 
+function normalizeEvidenceContent(text) {
+  return stripComments(text)
+    .replace(/\r/g, '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line && !EMPTY_EVIDENCE_SCAFFOLD_PATTERN.test(line))
+    .join('\n')
+    .trim();
+}
+
 function parseSections(body) {
   const buckets = Object.fromEntries(
     REQUIRED_SECTION_TITLES.map((title) => [title, []])
@@ -97,7 +110,7 @@ function parseSections(body) {
 }
 
 function hasCheckedAuthArea(body) {
-  return /^- \[[xX]\].*`area: auth`/m.test(body);
+  return /^- \[[xX]\].*`area: auth`/m.test(stripComments(body));
 }
 
 function isAuthGated({
@@ -113,10 +126,11 @@ function isAuthGated({
   const normalizedLabels = labels.map((label) =>
     String(label).trim().toLowerCase()
   );
+  const bodyWithoutComments = stripComments(body);
   return (
     normalizedLabels.includes('area: auth') ||
-    hasCheckedAuthArea(body) ||
-    /\bauth[- ]gated\b/i.test(`${title}\n${body}`)
+    hasCheckedAuthArea(bodyWithoutComments) ||
+    /\bauth[- ]gated\b/i.test(`${title}\n${bodyWithoutComments}`)
   );
 }
 
@@ -151,10 +165,12 @@ export function validatePrArtifactPack({
   });
 
   const source = sections.Source;
+  const normalizedSource = normalizeSectionContent(source);
   if (
     !source ||
     isPlaceholderOnly(source) ||
-    !SOURCE_REFERENCE_PATTERN.test(source)
+    !SOURCE_REFERENCE_PATTERN.test(source) ||
+    SOURCE_TEMPLATE_PLACEHOLDER_PATTERN.test(normalizedSource)
   ) {
     errors.push(
       '## Source must cite a backlog row or issue (for example `Source: backlog.md:97` or `Source: #123`).'
@@ -162,11 +178,16 @@ export function validatePrArtifactPack({
   }
 
   const evidence = sections.Evidence;
-  if (!evidence || isPlaceholderOnly(evidence) || isExplicitNa(evidence)) {
+  const normalizedEvidence = normalizeEvidenceContent(evidence);
+  if (
+    !normalizedEvidence ||
+    isPlaceholderOnly(normalizedEvidence) ||
+    isExplicitNa(normalizedEvidence)
+  ) {
     errors.push(
       '## Evidence must be filled with screenshot/live-proof or docs/example diff details.'
     );
-  } else if (!EVIDENCE_SIGNAL_PATTERN.test(evidence)) {
+  } else if (!EVIDENCE_SIGNAL_PATTERN.test(normalizedEvidence)) {
     errors.push(
       '## Evidence must reference a concrete artifact such as a docs/example diff, screenshot, live-proof, or validation command.'
     );

@@ -1,7 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 import { validatePrArtifactPack } from '../validate-pr-body.mjs';
+
+const prTemplateBody = readFileSync(
+  resolve(process.cwd(), '.github/PULL_REQUEST_TEMPLATE.md'),
+  'utf8'
+);
 
 const nonAuthBody = `## Source
 Source: backlog.md:97
@@ -41,12 +48,41 @@ test('fails when source does not cite a backlog row or issue', () => {
   );
 });
 
+test('fails when source still contains template placeholder text', () => {
+  const result = validatePrArtifactPack({
+    title: 'refactor: require verification artifact pack in PRs',
+    body: nonAuthBody.replace(
+      'Source: backlog.md:97',
+      'Source: backlog.md:97 or #ISSUE'
+    ),
+  });
+
+  assert.equal(result.ok, false);
+  assert.match(
+    result.errors.join('\n'),
+    /## Source must cite a backlog row or issue/
+  );
+});
+
 test('fails when evidence is placeholder-only', () => {
   const result = validatePrArtifactPack({
     title: 'refactor: require verification artifact pack in PRs',
     body: nonAuthBody.replace(
       '- Docs/example diff: docs/pr-evidence/row-97-verification-artifact-pack.md\n- Validation: `node --test scripts/__tests__/validate-pr-body.test.mjs`',
       '-'
+    ),
+  });
+
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join('\n'), /## Evidence must be filled/);
+});
+
+test('fails when evidence only keeps the template scaffold labels', () => {
+  const result = validatePrArtifactPack({
+    title: 'refactor: require verification artifact pack in PRs',
+    body: nonAuthBody.replace(
+      '- Docs/example diff: docs/pr-evidence/row-97-verification-artifact-pack.md\n- Validation: `node --test scripts/__tests__/validate-pr-body.test.mjs`',
+      '- Docs/example diff:\n- Screenshot/live-proof:\n- Validation:'
     ),
   });
 
@@ -86,4 +122,20 @@ curl -H "Authorization: Bearer $SESSION_TOKEN" https://agentgram.local/api/priva
 
   assert.equal(result.ok, true);
   assert.equal(result.authGated, true);
+});
+
+test('passes a non-auth PR body derived from the template once source and evidence are filled', () => {
+  const result = validatePrArtifactPack({
+    title: 'refactor: unblock reviewable PRs',
+    labels: ['type: refactor'],
+    body: prTemplateBody
+      .replace('Source: backlog.md:ROW or #ISSUE', 'Source: backlog.md:97')
+      .replace(
+        '- Docs/example diff:\n- Screenshot/live-proof:\n- Validation:',
+        '- Docs/example diff: docs/pr-evidence/row-97-verification-artifact-pack.md\n- Validation: `node --test scripts/__tests__/validate-pr-body.test.mjs`'
+      ),
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.authGated, false);
 });
