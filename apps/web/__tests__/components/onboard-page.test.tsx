@@ -35,7 +35,7 @@ describe('OnboardPage', () => {
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
   });
 
-  it('shows relationship presets, age boundary, verification, privacy, memory consent, and lorebook guidance before the publish-focused quickstart', () => {
+  it('shows relationship presets, age boundary, verification, privacy, memory mode guidance, and lorebook guidance before the publish-focused quickstart', () => {
     render(<OnboardPage />);
 
     const presetPicker = screen.getByTestId('relationship-preset-picker');
@@ -91,14 +91,15 @@ describe('OnboardPage', () => {
       })
     ).toHaveAttribute('href', '/privacy');
 
-    const memoryConsent = screen.getByTestId('memory-consent-explainer');
+    const memoryMode = screen.getByTestId('memory-mode-picker');
     expect(
-      within(memoryConsent).getByText(
-        'Choose what can be remembered before the first chat'
+      within(memoryMode).getByText(
+        'Choose a memory mode before the first publish'
       )
     ).toBeInTheDocument();
-    expect(memoryConsent).toHaveTextContent('"memoryConsent": false');
-    expect(memoryConsent).toHaveTextContent('Memory off by default');
+    expect(memoryMode).toHaveTextContent('"memoryConsent": false');
+    expect(memoryMode).toHaveTextContent('Explicit canon');
+    expect(memoryMode).toHaveTextContent('Auto-remember');
 
     const lorebookSetup = screen.getByTestId('lorebook-structured-setup');
     expect(
@@ -124,11 +125,11 @@ describe('OnboardPage', () => {
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     expect(
-      privacyCard.compareDocumentPosition(memoryConsent) &
+      privacyCard.compareDocumentPosition(memoryMode) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     expect(
-      memoryConsent.compareDocumentPosition(lorebookSetup) &
+      memoryMode.compareDocumentPosition(lorebookSetup) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     expect(
@@ -137,7 +138,7 @@ describe('OnboardPage', () => {
     ).toBeTruthy();
 
     expect(
-      screen.getByText(/explicit memory-consent choice/i)
+      screen.getByText(/clear memory-mode choice/i)
     ).toBeInTheDocument();
   });
 
@@ -165,24 +166,24 @@ describe('OnboardPage', () => {
     ).toHaveAttribute('href', '/docs/quickstart');
   });
 
-  it('toggles the memory consent payload before registration', () => {
+  it('toggles the memory mode payload before registration', () => {
     render(<OnboardPage />);
 
-    const memoryConsent = screen.getByTestId('memory-consent-explainer');
-    expect(memoryConsent).toHaveTextContent('"memoryConsent": false');
-    expect(memoryConsent).toHaveTextContent(
-      'Starter backstory seeding stays off until you ask for it.'
+    const memoryMode = screen.getByTestId('memory-mode-picker');
+    expect(memoryMode).toHaveTextContent('"memoryConsent": false');
+    expect(memoryMode).toHaveTextContent(
+      'Registration keeps memoryConsent false, so starter memory stays empty until you add canon intentionally.'
     );
 
     fireEvent.click(
-      within(memoryConsent).getByRole('button', {
-        name: 'Opt in before the first chat',
+      within(memoryMode).getByRole('button', {
+        name: 'Auto-remember',
       })
     );
 
-    expect(memoryConsent).toHaveTextContent('"memoryConsent": true');
-    expect(memoryConsent).toHaveTextContent(
-      'Starter backstory seeding turns on immediately at registration.'
+    expect(memoryMode).toHaveTextContent('"memoryConsent": true');
+    expect(memoryMode).toHaveTextContent(
+      'Registration flips memoryConsent true and seeds starter memory immediately before the first follow-up chat.'
     );
   });
 

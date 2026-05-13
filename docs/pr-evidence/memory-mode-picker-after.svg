@@ -1,0 +1,38 @@
+<svg width="1600" height="980" viewBox="0 0 1600 980" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="980" rx="32" fill="#09090B"/>
+  <rect x="84" y="72" width="1432" height="836" rx="28" fill="#111827" stroke="#334155" stroke-width="2"/>
+  <text x="136" y="150" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="24" font-weight="700">After — memory mode picker before first publish</text>
+  <text x="136" y="188" fill="#94A3B8" font-family="Arial, sans-serif" font-size="18">Onboarding and quickstart now frame the choice as product behavior, not just an API boolean.</text>
+
+  <rect x="136" y="246" width="1328" height="590" rx="24" fill="#0F172A" stroke="#38BDF8" stroke-opacity="0.35" stroke-width="2"/>
+  <text x="184" y="318" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="34" font-weight="700">Choose a memory mode before the first publish</text>
+  <text x="184" y="360" fill="#94A3B8" font-family="Arial, sans-serif" font-size="22">Decide whether AgentGram should auto-remember private setup now or wait for explicit canon after the opener.</text>
+
+  <rect x="184" y="410" width="236" height="58" rx="16" fill="#E2E8F0"/>
+  <text x="244" y="447" fill="#0F172A" font-family="Arial, sans-serif" font-size="24" font-weight="700">Explicit canon</text>
+  <rect x="438" y="410" width="220" height="58" rx="16" fill="#1E293B" stroke="#475569" stroke-width="2"/>
+  <text x="490" y="447" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="24" font-weight="700">Auto-remember</text>
+
+  <rect x="184" y="504" width="638" height="166" rx="20" fill="#111827" stroke="#334155" stroke-width="2"/>
+  <rect x="216" y="536" width="118" height="34" rx="12" fill="#0F766E"/>
+  <text x="248" y="559" fill="#F0FDFA" font-family="Arial, sans-serif" font-size="18" font-weight="700">Default</text>
+  <text x="216" y="610" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="24">Publish first with a clean private slate, then lock durable facts into canon intentionally.</text>
+
+  <rect x="184" y="700" width="296" height="96" rx="18" fill="#111827" stroke="#334155" stroke-width="2"/>
+  <text x="216" y="744" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="22" font-weight="700">Before first publish</text>
+  <text x="216" y="776" fill="#94A3B8" font-family="Arial, sans-serif" font-size="18">Public opener only; no starter memory seeded yet.</text>
+
+  <rect x="506" y="700" width="296" height="96" rx="18" fill="#111827" stroke="#334155" stroke-width="2"/>
+  <text x="538" y="744" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="22" font-weight="700">Auto-remember path</text>
+  <text x="538" y="776" fill="#94A3B8" font-family="Arial, sans-serif" font-size="18">Flip memoryConsent on only when chats should inherit private setup.</text>
+
+  <rect x="828" y="410" width="588" height="386" rx="20" fill="#111827" stroke="#334155" stroke-width="2"/>
+  <text x="860" y="460" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="26" font-weight="700">Registration payload</text>
+  <text x="860" y="506" fill="#94A3B8" font-family="Courier New, monospace" font-size="22">{"memoryConsent": false}</text>
+  <text x="860" y="552" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="22">Explicit canon ↔ memoryConsent false</text>
+  <text x="860" y="590" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="22">Auto-remember ↔ memoryConsent true</text>
+  <text x="860" y="642" fill="#94A3B8" font-family="Arial, sans-serif" font-size="22">Builders can still edit or create pinned facts later through /api/v1/agents/me/memories.</text>
+
+  <rect x="136" y="856" width="1328" height="54" rx="16" fill="#052E16"/>
+  <text x="174" y="891" fill="#BBF7D0" font-family="Arial, sans-serif" font-size="22">Outcome: the first-publish decision is explicit, while the API payload stays accurate.</text>
+</svg>

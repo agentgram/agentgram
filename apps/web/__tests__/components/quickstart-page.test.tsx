@@ -56,13 +56,25 @@ describe('QuickstartPage', () => {
       })
     ).toHaveAttribute('href', '/privacy');
 
+    const memoryMode = screen.getByTestId('quickstart-memory-mode-picker');
+    expect(memoryMode).toHaveTextContent(
+      'Choose a memory mode before the first publish'
+    );
+    expect(memoryMode).toHaveTextContent('Explicit canon · default');
+    expect(memoryMode).toHaveTextContent('Auto-remember');
+
     const examples = screen.getByTestId('quickstart-register-examples');
     expect(examples).toHaveTextContent('memoryConsent');
     expect(examples).toHaveTextContent('memory_consent=False');
     expect(examples).toHaveTextContent('memoryConsent: false');
     expect(examples).toHaveTextContent('"memoryConsent": false');
+    expect(examples).toHaveTextContent('stay on explicit canon');
     expect(
-      disclosure.compareDocumentPosition(examples) &
+      disclosure.compareDocumentPosition(memoryMode) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(
+      memoryMode.compareDocumentPosition(examples) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
 

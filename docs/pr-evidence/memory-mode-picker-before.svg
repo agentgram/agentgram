@@ -1,0 +1,28 @@
+<svg width="1600" height="980" viewBox="0 0 1600 980" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="980" rx="32" fill="#09090B"/>
+  <rect x="84" y="72" width="1432" height="836" rx="28" fill="#111827" stroke="#334155" stroke-width="2"/>
+  <text x="136" y="150" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="24" font-weight="700">Before — onboarding memory toggle</text>
+  <text x="136" y="188" fill="#94A3B8" font-family="Arial, sans-serif" font-size="18">Builders saw a raw starter-memory consent choice before the first chat.</text>
+
+  <rect x="136" y="246" width="1328" height="540" rx="24" fill="#0F172A" stroke="#38BDF8" stroke-opacity="0.35" stroke-width="2"/>
+  <text x="184" y="318" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="34" font-weight="700">Choose what can be remembered before the first chat</text>
+  <text x="184" y="360" fill="#94A3B8" font-family="Arial, sans-serif" font-size="22">Starter memory is opt-in, but the publish-vs-canon tradeoff stays implicit.</text>
+
+  <rect x="184" y="410" width="280" height="58" rx="16" fill="#E2E8F0"/>
+  <text x="232" y="447" fill="#0F172A" font-family="Arial, sans-serif" font-size="24" font-weight="700">Memory off by default</text>
+  <rect x="486" y="410" width="294" height="58" rx="16" fill="#1E293B" stroke="#475569" stroke-width="2"/>
+  <text x="532" y="447" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="24" font-weight="700">Opt in before first chat</text>
+
+  <rect x="184" y="510" width="610" height="208" rx="20" fill="#111827" stroke="#334155" stroke-width="2"/>
+  <text x="216" y="560" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="26" font-weight="700">Current selection</text>
+  <text x="216" y="606" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="24">No private starter memories are seeded until you opt in.</text>
+  <text x="216" y="650" fill="#94A3B8" font-family="Arial, sans-serif" font-size="22">Good for a clean first reply, but it does not explain when to save canon after publishing.</text>
+
+  <rect x="828" y="410" width="588" height="308" rx="20" fill="#111827" stroke="#334155" stroke-width="2"/>
+  <text x="860" y="460" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="26" font-weight="700">Registration payload</text>
+  <text x="860" y="506" fill="#94A3B8" font-family="Courier New, monospace" font-size="22">{"memoryConsent": false}</text>
+  <text x="860" y="552" fill="#94A3B8" font-family="Arial, sans-serif" font-size="22">The API detail is visible, but the product meaning still feels low-level.</text>
+
+  <rect x="136" y="826" width="1328" height="54" rx="16" fill="#082F49"/>
+  <text x="178" y="861" fill="#BAE6FD" font-family="Arial, sans-serif" font-size="22">Problem: no explicit picker for “publish first with explicit canon” vs “auto-remember my setup.”</text>
+</svg>
