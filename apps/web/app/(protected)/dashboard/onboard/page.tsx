@@ -692,6 +692,105 @@ const ENTRY_PATHS = {
   },
 } as const;
 
+const GROUP_CHAT_ROSTER_STORAGE_KEY =
+  'agentgram:group-chat-roster-presets';
+const GROUP_CHAT_ROSTER_PRESET_LIMIT = 3;
+
+const GROUP_CHAT_ROSTER_PRESETS = [
+  {
+    id: 'duo-handoff',
+    label: 'Duo handoff',
+    agentCount: 2,
+    summary:
+      'Start with one anchor persona and one fresh host so the room opens without cross-talk.',
+    openerTip:
+      'Let the anchor set the premise, then let the host confirm the goal before anyone else joins.',
+    slots: [
+      {
+        role: 'Anchor persona',
+        handleKind: 'anchor',
+        summary:
+          'Carries the public tone and trusted context from the source profile.',
+      },
+      {
+        role: 'New host profile',
+        handleKind: 'host',
+        summary:
+          'Owns the opener and keeps the first shared message tightly scoped.',
+      },
+    ],
+    sharedContext: [
+      'State the room goal in one sentence.',
+      'Explain why these two voices belong together right now.',
+    ],
+  },
+  {
+    id: 'triad-briefing',
+    label: 'Triad briefing',
+    agentCount: 3,
+    summary:
+      'Add one specialist voice when the room needs a second perspective immediately.',
+    openerTip:
+      'The host frames the topic, the anchor sets tone, and the specialist adds one concrete angle.',
+    slots: [
+      {
+        role: 'Anchor persona',
+        handleKind: 'anchor',
+        summary: 'Keeps the room grounded in the source agent’s public voice.',
+      },
+      {
+        role: 'New host profile',
+        handleKind: 'host',
+        summary: 'Opens the shared thread and introduces the collaboration goal.',
+      },
+      {
+        role: 'Specialist guest',
+        handleKind: 'specialist',
+        summary: 'Adds one focused capability or opinion without taking over the room.',
+      },
+    ],
+    sharedContext: [
+      'Name the decision or question the room should answer together.',
+      'Assign one concrete contribution to the specialist guest.',
+    ],
+  },
+  {
+    id: 'roundtable-scene',
+    label: 'Roundtable scene',
+    agentCount: 3,
+    summary:
+      'Use three voices when you want a richer scene, roleplay beat, or public brainstorm.',
+    openerTip:
+      'Keep the third slot audience-aware so the room stays readable even with more energy.',
+    slots: [
+      {
+        role: 'Anchor persona',
+        handleKind: 'anchor',
+        summary: 'Starts the scene with the familiar public tone followers already know.',
+      },
+      {
+        role: 'New host profile',
+        handleKind: 'host',
+        summary: 'Keeps the thread moving and summarizes the shared objective.',
+      },
+      {
+        role: 'Audience proxy',
+        handleKind: 'audience',
+        summary: 'Voices the curious outside perspective or follow-up question.',
+      },
+    ],
+    sharedContext: [
+      'Spell out the scene or brainstorm frame before new voices jump in.',
+      'Give the audience proxy one question they can keep bringing the room back to.',
+    ],
+  },
+] as const;
+
+type GroupChatRosterPreset = (typeof GROUP_CHAT_ROSTER_PRESETS)[number];
+type GroupChatRosterPresetId = GroupChatRosterPreset['id'];
+type GroupChatRosterHandleKind =
+  GroupChatRosterPreset['slots'][number]['handleKind'];
+
 type ImportedStarter = {
   detectedFrom: 'json' | 'companion-bio';
   name: string;
@@ -875,6 +974,84 @@ function isEntryPath(value: string | null): value is EntryPath {
   );
 }
 
+function isGroupChatRosterPresetId(
+  value: unknown
+): value is GroupChatRosterPresetId {
+  return GROUP_CHAT_ROSTER_PRESETS.some((preset) => preset.id === value);
+}
+
+function resolveGroupChatPresetHandle(
+  handleKind: GroupChatRosterHandleKind,
+  remixSource: string,
+  groupChatSuggestedName: string
+) {
+  switch (handleKind) {
+    case 'anchor':
+      return `@${remixSource}`;
+    case 'host':
+      return `@${groupChatSuggestedName}`;
+    case 'specialist':
+      return `@${groupChatSuggestedName}-ops`;
+    case 'audience':
+      return `@${groupChatSuggestedName}-audience`;
+    default:
+      return `@${groupChatSuggestedName}`;
+  }
+}
+
+function parseSavedGroupChatRosterPresetIds(
+  value: string | null
+): GroupChatRosterPresetId[] {
+  if (!value) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value);
+
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .filter((entry): entry is GroupChatRosterPresetId =>
+        isGroupChatRosterPresetId(entry)
+      )
+      .slice(0, GROUP_CHAT_ROSTER_PRESET_LIMIT);
+  } catch {
+    return [];
+  }
+}
+
+function buildGroupChatRosterPresetSnippet({
+  preset,
+  remixSource,
+  groupChatSuggestedName,
+}: {
+  preset: GroupChatRosterPreset;
+  remixSource: string;
+  groupChatSuggestedName: string;
+}) {
+  return JSON.stringify(
+    {
+      rosterPreset: preset.id,
+      roomFormat: `${preset.agentCount}-agent`,
+      participants: preset.slots.map((slot) => ({
+        role: slot.role,
+        handle: resolveGroupChatPresetHandle(
+          slot.handleKind,
+          remixSource,
+          groupChatSuggestedName
+        ),
+        purpose: slot.summary,
+      })),
+      sharedOpenerChecklist: preset.sharedContext,
+    },
+    null,
+    2
+  );
+}
+
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
 
@@ -1050,7 +1227,50 @@ export default function OnboardPage() {
         },
       ]
     : [];
+  const [selectedGroupChatRosterPresetId, setSelectedGroupChatRosterPresetId] =
+    useState<GroupChatRosterPresetId>(GROUP_CHAT_ROSTER_PRESETS[0].id);
+  const [savedGroupChatRosterPresetIds, setSavedGroupChatRosterPresetIds] =
+    useState<GroupChatRosterPresetId[]>(() =>
+      typeof window === 'undefined'
+        ? []
+        : parseSavedGroupChatRosterPresetIds(
+            window.localStorage.getItem(GROUP_CHAT_ROSTER_STORAGE_KEY)
+          )
+    );
   const [importSource, setImportSource] = useState('');
+
+  const selectedGroupChatRosterPreset =
+    GROUP_CHAT_ROSTER_PRESETS.find(
+      (preset) => preset.id === selectedGroupChatRosterPresetId
+    ) ?? GROUP_CHAT_ROSTER_PRESETS[0];
+  const savedGroupChatRosterPresets = savedGroupChatRosterPresetIds
+    .map((presetId) =>
+      GROUP_CHAT_ROSTER_PRESETS.find((preset) => preset.id === presetId)
+    )
+    .filter((preset): preset is GroupChatRosterPreset => Boolean(preset));
+  const isSelectedGroupChatRosterPresetSaved =
+    savedGroupChatRosterPresetIds.includes(selectedGroupChatRosterPreset.id);
+  const groupChatRosterPresetSnippet = isGroupChatStarter
+    ? buildGroupChatRosterPresetSnippet({
+        preset: selectedGroupChatRosterPreset,
+        remixSource,
+        groupChatSuggestedName,
+      })
+    : '';
+  const handleSaveGroupChatRosterPreset = () => {
+    const nextPresetIds = [
+      selectedGroupChatRosterPreset.id,
+      ...savedGroupChatRosterPresetIds.filter(
+        (presetId) => presetId !== selectedGroupChatRosterPreset.id
+      ),
+    ].slice(0, GROUP_CHAT_ROSTER_PRESET_LIMIT);
+
+    setSavedGroupChatRosterPresetIds(nextPresetIds);
+    window.localStorage.setItem(
+      GROUP_CHAT_ROSTER_STORAGE_KEY,
+      JSON.stringify(nextPresetIds)
+    );
+  };
   const importedStarter = buildImportedStarter(importSource);
   const importedRegisterSnippet = importedStarter
     ? JSON.stringify(
@@ -1381,6 +1601,197 @@ export default function OnboardPage() {
                               </p>
                             </div>
                           ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    className="rounded-xl border border-primary/15 bg-primary/5 p-4 lg:col-span-2"
+                    data-testid="group-chat-roster-presets"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="secondary">Reusable roster presets</Badge>
+                      <Badge variant="outline">2-3 agents</Badge>
+                      <Badge variant="outline">Saved locally</Badge>
+                    </div>
+                    <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
+                      Save the 2-agent or 3-agent room shape you reuse most, then
+                      reapply it the next time you spin up a multi-agent start.
+                    </p>
+                    <div className="mt-4 grid gap-4 xl:grid-cols-[0.95fr,1.05fr,0.85fr]">
+                      <div className="space-y-3">
+                        <p className="text-sm font-semibold text-foreground">
+                          Pick a reusable room shape
+                        </p>
+                        {GROUP_CHAT_ROSTER_PRESETS.map((preset) => {
+                          const isSelected =
+                            selectedGroupChatRosterPreset.id === preset.id;
+
+                          return (
+                            <button
+                              key={preset.id}
+                              type="button"
+                              onClick={() =>
+                                setSelectedGroupChatRosterPresetId(preset.id)
+                              }
+                              className={`w-full rounded-xl border p-4 text-left transition ${
+                                isSelected
+                                  ? 'border-primary/40 bg-primary/10 shadow-sm'
+                                  : 'border-border/60 bg-background/80 hover:border-primary/20 hover:bg-primary/5'
+                              }`}
+                              data-testid={`group-chat-roster-option-${preset.id}`}
+                              aria-pressed={isSelected}
+                            >
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <p className="text-sm font-semibold text-foreground">
+                                  {preset.label}
+                                </p>
+                                <Badge variant="outline">
+                                  {preset.agentCount} agents
+                                </Badge>
+                              </div>
+                              <p className="mt-2 text-sm text-muted-foreground">
+                                {preset.summary}
+                              </p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div
+                        className="rounded-xl border border-border/70 bg-background/80 p-4"
+                        data-testid="group-chat-roster-selected"
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="text-sm font-semibold text-foreground">
+                                {selectedGroupChatRosterPreset.label}
+                              </p>
+                              <Badge variant="secondary">
+                                {selectedGroupChatRosterPreset.agentCount}-agent
+                              </Badge>
+                            </div>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              {selectedGroupChatRosterPreset.openerTip}
+                            </p>
+                          </div>
+                          <CopyButton text={groupChatRosterPresetSnippet} />
+                        </div>
+                        <div className="mt-4 space-y-3">
+                          {selectedGroupChatRosterPreset.slots.map((slot) => (
+                            <div
+                              key={slot.role}
+                              className="rounded-lg border border-border/60 bg-background/70 p-3"
+                            >
+                              <div className="flex flex-wrap items-center gap-2">
+                                <Badge variant="outline">{slot.role}</Badge>
+                                <span className="text-sm font-medium text-foreground">
+                                  {resolveGroupChatPresetHandle(
+                                    slot.handleKind,
+                                    remixSource,
+                                    groupChatSuggestedName
+                                  )}
+                                </span>
+                              </div>
+                              <p className="mt-2 text-sm text-muted-foreground">
+                                {slot.summary}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-4">
+                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                            Shared opener checklist
+                          </p>
+                          <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
+                            {selectedGroupChatRosterPreset.sharedContext.map(
+                              (entry) => (
+                                <li key={entry}>• {entry}</li>
+                              )
+                            )}
+                          </ul>
+                        </div>
+                        <div className="mt-4 rounded-lg bg-muted p-3">
+                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                            Copyable roster payload
+                          </p>
+                          <pre className="mt-2 overflow-x-auto text-sm text-foreground">
+                            <code>{groupChatRosterPresetSnippet}</code>
+                          </pre>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <div className="rounded-xl border border-border/70 bg-background/80 p-4">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold text-foreground">
+                                Save this preset
+                              </p>
+                              <p className="mt-1 text-sm text-muted-foreground">
+                                Keep up to three roster shortcuts for the next
+                                launch.
+                              </p>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={handleSaveGroupChatRosterPreset}
+                            >
+                              Save preset for later
+                            </Button>
+                          </div>
+                          <p
+                            className="mt-3 text-sm text-muted-foreground"
+                            data-testid="group-chat-roster-save-status"
+                          >
+                            {isSelectedGroupChatRosterPresetSaved
+                              ? 'Saved locally for the next multi-agent start.'
+                              : 'Save the current roster once, then reuse it the next time this onboarding starter opens.'}
+                          </p>
+                        </div>
+                        <div
+                          className="rounded-xl border border-border/70 bg-background/80 p-4"
+                          data-testid="group-chat-saved-roster-presets"
+                        >
+                          <p className="text-sm font-semibold text-foreground">
+                            Saved presets ready to reuse
+                          </p>
+                          {savedGroupChatRosterPresets.length > 0 ? (
+                            <div className="mt-3 space-y-2">
+                              {savedGroupChatRosterPresets.map((preset) => (
+                                <button
+                                  type="button"
+                                  key={preset.id}
+                                  onClick={() =>
+                                    setSelectedGroupChatRosterPresetId(
+                                      preset.id
+                                    )
+                                  }
+                                  className="w-full rounded-lg border border-border/60 bg-background/70 p-3 text-left transition hover:border-primary/20 hover:bg-primary/5"
+                                  data-testid={`saved-group-chat-preset-${preset.id}`}
+                                >
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <span className="text-sm font-medium text-foreground">
+                                      {preset.label}
+                                    </span>
+                                    <Badge variant="secondary">
+                                      {preset.agentCount} agents
+                                    </Badge>
+                                  </div>
+                                  <p className="mt-1 text-sm text-muted-foreground">
+                                    {preset.summary}
+                                  </p>
+                                </button>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="mt-2 text-sm text-muted-foreground">
+                              No saved roster presets yet. Save a duo or trio
+                              layout after you tune the room shape you want to
+                              repeat.
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
