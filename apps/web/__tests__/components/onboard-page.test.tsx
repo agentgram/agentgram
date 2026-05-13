@@ -35,7 +35,7 @@ describe('OnboardPage', () => {
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
   });
 
-  it('shows relationship presets, age boundary, verification, privacy, memory consent, lorebook guidance, and the companion ritual bundle before the publish-focused quickstart', () => {
+  it('shows relationship presets, age boundary, verification, privacy, memory mode guidance, monetization compare, and lorebook guidance, and the companion ritual bundle before the publish-focused quickstart', () => {
     render(<OnboardPage />);
 
     const presetPicker = screen.getByTestId('relationship-preset-picker');
@@ -101,16 +101,24 @@ describe('OnboardPage', () => {
     expect(setupFork).toHaveTextContent('Advanced lorebook + memory setup');
     expect(setupFork).toHaveTextContent('"memoryConsent": false');
 
-    const memoryConsent = screen.getByTestId('memory-consent-explainer');
+    const memoryMode = screen.getByTestId('memory-mode-picker');
     expect(
-      within(memoryConsent).getByText(
-        'Choose what can be remembered before the first chat'
+      within(memoryMode).getByText(
+        'Choose a memory mode before the first publish'
       )
     ).toBeInTheDocument();
-    expect(memoryConsent).toHaveTextContent('"memoryConsent": false');
-    expect(memoryConsent).toHaveTextContent('Memory off by default');
-    expect(memoryConsent).toHaveTextContent(
-      'Optional advanced step: leave this off for the shortest companion setup'
+    expect(memoryMode).toHaveTextContent('"memoryConsent": false');
+    expect(memoryMode).toHaveTextContent('Explicit canon');
+    expect(memoryMode).toHaveTextContent('Auto-remember');
+
+    const memoryCompare = screen.getByTestId('memory-mode-monetization-compare');
+    expect(memoryCompare).toHaveTextContent(
+      'Free vs paid after the first publish'
+    );
+    expect(memoryCompare).toHaveTextContent('6 journal saves · 18 lorebook slots');
+    expect(memoryCompare).toHaveTextContent('Guided packs unlock');
+    expect(memoryCompare).toHaveTextContent(
+      'public memory policy, permission scope, and work proof'
     );
 
     const lorebookSetup = screen.getByTestId('lorebook-structured-setup');
@@ -163,11 +171,11 @@ describe('OnboardPage', () => {
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     expect(
-      setupFork.compareDocumentPosition(memoryConsent) &
+      setupFork.compareDocumentPosition(memoryMode) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     expect(
-      memoryConsent.compareDocumentPosition(lorebookSetup) &
+      memoryMode.compareDocumentPosition(lorebookSetup) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     expect(
@@ -340,87 +348,87 @@ describe('OnboardPage', () => {
     expect(researchOpeners).toHaveTextContent('Joint research plan opener');
   });
 
-  it('shows playable public-domain story starters with role and mode choices', () => {
+  it(‘shows playable public-domain story starters with role and mode choices’, () => {
     render(<OnboardPage />);
 
-    const storyStarters = screen.getByTestId('public-domain-story-starters');
-    expect(storyStarters).toHaveTextContent('Playable story starters');
-    expect(storyStarters).toHaveTextContent('Public-domain worlds');
-    expect(storyStarters).toHaveTextContent('Wonderland garden mystery');
-    expect(storyStarters).toHaveTextContent('Alice’s Adventures in Wonderland');
-    expect(storyStarters).toHaveTextContent('"name": "wonderland-host"');
-    expect(storyStarters).toHaveTextContent('Choose a player role');
-    expect(storyStarters).toHaveTextContent('Curious guest');
-    expect(storyStarters).toHaveTextContent('Clock keeper');
-    expect(storyStarters).toHaveTextContent('Choose a scene mode');
-    expect(storyStarters).toHaveTextContent('Cozy puzzle');
-    expect(storyStarters).toHaveTextContent('Tea-table chaos');
+    const storyStarters = screen.getByTestId(‘public-domain-story-starters’);
+    expect(storyStarters).toHaveTextContent(‘Playable story starters’);
+    expect(storyStarters).toHaveTextContent(‘Public-domain worlds’);
+    expect(storyStarters).toHaveTextContent(‘Wonderland garden mystery’);
+    expect(storyStarters).toHaveTextContent(‘Alice’s Adventures in Wonderland’);
+    expect(storyStarters).toHaveTextContent(‘"name": "wonderland-host"’);
+    expect(storyStarters).toHaveTextContent(‘Choose a player role’);
+    expect(storyStarters).toHaveTextContent(‘Curious guest’);
+    expect(storyStarters).toHaveTextContent(‘Clock keeper’);
+    expect(storyStarters).toHaveTextContent(‘Choose a scene mode’);
+    expect(storyStarters).toHaveTextContent(‘Cozy puzzle’);
+    expect(storyStarters).toHaveTextContent(‘Tea-table chaos’);
 
     const wonderlandUpgrade = within(storyStarters).getByTestId(
-      'public-domain-story-upgrade-path-wonderland'
+      ‘public-domain-story-upgrade-path-wonderland’
     );
-    expect(wonderlandUpgrade).toHaveTextContent('First-session upgrade path');
+    expect(wonderlandUpgrade).toHaveTextContent(‘First-session upgrade path’);
     expect(wonderlandUpgrade).toHaveTextContent(
-      'Save the role, mode, and story outcome'
-    );
-    expect(wonderlandUpgrade).toHaveTextContent(
-      'Saved after session: player role, scene mode, last clue'
+      ‘Save the role, mode, and story outcome’
     );
     expect(wonderlandUpgrade).toHaveTextContent(
-      'Why this is the upgrade moment'
+      ‘Saved after session: player role, scene mode, last clue’
     );
     expect(wonderlandUpgrade).toHaveTextContent(
-      'paid onboarding audits the public-domain premise'
+      ‘Why this is the upgrade moment’
     );
-    expect(wonderlandUpgrade).toHaveTextContent('Next-day KPI readout');
-    expect(wonderlandUpgrade).toHaveTextContent('D1 story-mode upgrade rate');
+    expect(wonderlandUpgrade).toHaveTextContent(
+      ‘paid onboarding audits the public-domain premise’
+    );
+    expect(wonderlandUpgrade).toHaveTextContent(‘Next-day KPI readout’);
+    expect(wonderlandUpgrade).toHaveTextContent(‘D1 story-mode upgrade rate’);
     expect(
-      within(wonderlandUpgrade).getByRole('link', {
-        name: 'Open paid onboarding audit',
+      within(wonderlandUpgrade).getByRole(‘link’, {
+        name: ‘Open paid onboarding audit’,
       })
     ).toHaveAttribute(
-      'href',
-      '/pricing?source=public_domain_story&starter=wonderland'
+      ‘href’,
+      ‘/pricing?source=public_domain_story&starter=wonderland’
     );
 
     fireEvent.click(
-      within(storyStarters).getByRole('tab', {
-        name: 'Baker Street cold case',
+      within(storyStarters).getByRole(‘tab’, {
+        name: ‘Baker Street cold case’,
       })
     );
 
     const bakerStreet = within(storyStarters).getByTestId(
-      'public-domain-story-baker-street'
+      ‘public-domain-story-baker-street’
     );
-    expect(bakerStreet).toHaveTextContent('Sherlock Holmes canon');
-    expect(bakerStreet).toHaveTextContent('Junior detective');
-    expect(bakerStreet).toHaveTextContent('Deduction board');
-    expect(bakerStreet).toHaveTextContent('"name": "baker-street-analyst"');
+    expect(bakerStreet).toHaveTextContent(‘Sherlock Holmes canon’);
+    expect(bakerStreet).toHaveTextContent(‘Junior detective’);
+    expect(bakerStreet).toHaveTextContent(‘Deduction board’);
+    expect(bakerStreet).toHaveTextContent(‘"name": "baker-street-analyst"’);
     expect(
       within(bakerStreet).getByTestId(
-        'public-domain-story-upgrade-path-baker-street'
+        ‘public-domain-story-upgrade-path-baker-street’
       )
-    ).toHaveTextContent('public-domain source boundaries');
+    ).toHaveTextContent(‘public-domain source boundaries’);
   });
 
-  it('toggles the memory consent payload before registration', () => {
+  it(‘toggles the memory mode payload before registration’, () => {
     render(<OnboardPage />);
 
-    const memoryConsent = screen.getByTestId('memory-consent-explainer');
-    expect(memoryConsent).toHaveTextContent('"memoryConsent": false');
-    expect(memoryConsent).toHaveTextContent(
-      'Starter backstory seeding stays off until you ask for it.'
+    const memoryMode = screen.getByTestId('memory-mode-picker');
+    expect(memoryMode).toHaveTextContent('"memoryConsent": false');
+    expect(memoryMode).toHaveTextContent(
+      'Registration keeps memoryConsent false, so starter memory stays empty until you add canon intentionally.'
     );
 
     fireEvent.click(
-      within(memoryConsent).getByRole('button', {
-        name: 'Opt in before the first chat',
+      within(memoryMode).getByRole('button', {
+        name: 'Auto-remember',
       })
     );
 
-    expect(memoryConsent).toHaveTextContent('"memoryConsent": true');
-    expect(memoryConsent).toHaveTextContent(
-      'Starter backstory seeding turns on immediately at registration.'
+    expect(memoryMode).toHaveTextContent('"memoryConsent": true');
+    expect(memoryMode).toHaveTextContent(
+      'Registration flips memoryConsent true and seeds starter memory immediately before the first follow-up chat.'
     );
   });
 
