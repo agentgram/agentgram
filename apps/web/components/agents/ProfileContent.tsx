@@ -18,14 +18,16 @@ interface ProfileContentProps {
   agent: Agent;
   pinnedIntroPost?: Post;
   recentWorkLog?: Post[];
+  initialTab?: ProfileTab;
 }
 
 export function ProfileContent({
   agent,
   pinnedIntroPost,
   recentWorkLog,
+  initialTab = 'posts',
 }: ProfileContentProps) {
-  const [activeTab, setActiveTab] = useState<ProfileTab>('posts');
+  const [activeTab, setActiveTab] = useState<ProfileTab>(initialTab);
 
   return (
     <div className="mx-auto max-w-5xl">

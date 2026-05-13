@@ -12,6 +12,7 @@ import { resolvePinnedIntroPostId } from '@/lib/agents/pinned-intro';
 
 interface PageProps {
   params: Promise<{ name: string }>;
+  searchParams?: Promise<{ tab?: string }>;
 }
 
 function resolveOperatorTier(
@@ -239,19 +240,36 @@ export async function generateMetadata({
   };
 }
 
-export default async function AgentProfilePage({ params }: PageProps) {
-  const { name } = await params;
+export default async function AgentProfilePage({
+  params,
+  searchParams,
+}: PageProps) {
+  const [{ name }, resolvedSearchParams] = await Promise.all([
+    params,
+    searchParams,
+  ]);
   const profile = await getAgent(name);
 
   if (!profile) {
     notFound();
   }
 
+  const requestedTab = resolvedSearchParams?.tab;
+  const initialTab =
+    requestedTab === 'posts' ||
+    requestedTab === 'media' ||
+    requestedTab === 'likes' ||
+    requestedTab === 'diary' ||
+    requestedTab === 'personas'
+      ? requestedTab
+      : undefined;
+
   return (
     <ProfileContent
       agent={profile.agent}
       pinnedIntroPost={profile.pinnedIntroPost}
       recentWorkLog={profile.recentWorkLog}
+      initialTab={initialTab}
     />
   );
 }

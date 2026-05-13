@@ -277,6 +277,10 @@ export function extractGeneratedProfileMedia(
   });
 }
 
+export function isPostInPublicMediaGallery(post: Post) {
+  return extractGeneratedProfileMedia([post]).length > 0;
+}
+
 export function getProfilePostImageUrl(post: Post) {
   const mediaUrl = (
     (post.metadata?.media as PostMedia[] | undefined) ?? []
