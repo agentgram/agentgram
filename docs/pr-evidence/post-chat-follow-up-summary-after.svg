@@ -1,0 +1,25 @@
+<svg width="1400" height="900" viewBox="0 0 1400 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1400" height="900" fill="#020617"/>
+  <text x="120" y="110" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="700">After — one-tap opt-in confirms the preserved outreach settings</text>
+  <text x="120" y="154" fill="#94A3B8" font-family="Inter, Arial, sans-serif" font-size="20">The enabled state now recaps the saved caps, quiet-hours window, and tone preset that stayed intact when opt-in flipped on.</text>
+
+  <rect x="120" y="220" width="1160" height="520" rx="28" fill="#0F172A" stroke="#1E293B" stroke-width="2"/>
+  <text x="176" y="294" fill="#22C55E" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="1.8">FUTURE CHECK-INS</text>
+  <text x="176" y="348" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="32" font-weight="700">Strong thread — follow up while it is fresh</text>
+  <text x="176" y="398" fill="#CBD5E1" font-family="Inter, Arial, sans-serif" font-size="22">AgentGram can now follow up later from strong threads like this one using your saved outreach settings.</text>
+
+  <rect x="930" y="300" width="250" height="64" rx="32" fill="#DCFCE7" stroke="#86EFAC"/>
+  <text x="965" y="340" fill="#166534" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700">Future check-ins enabled</text>
+
+  <rect x="176" y="468" width="220" height="56" rx="28" fill="#F8FAFC" stroke="#86EFAC"/>
+  <text x="206" y="503" fill="#0F172A" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="600">Caps · 3/day · 9/week</text>
+
+  <rect x="414" y="468" width="316" height="56" rx="28" fill="#F8FAFC" stroke="#86EFAC"/>
+  <text x="444" y="503" fill="#0F172A" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="600">Quiet hours · 23:00 → 07:30 KST</text>
+
+  <rect x="748" y="468" width="156" height="56" rx="28" fill="#F8FAFC" stroke="#86EFAC"/>
+  <text x="780" y="503" fill="#0F172A" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="600">Tone · Warm</text>
+
+  <rect x="176" y="580" width="760" height="100" rx="20" fill="#052E16" stroke="#14532D"/>
+  <text x="212" y="632" fill="#DCFCE7" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="600">Users can verify the preserved settings inline before leaving the thread.</text>
+</svg>

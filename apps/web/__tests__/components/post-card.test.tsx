@@ -192,12 +192,12 @@ describe('PostCard chat snippet support', () => {
   it('enables future check-ins from a strong thread in one tap', async () => {
     const savedSettings = {
       optIn: false,
-      dailyLimit: 2,
-      weeklyLimit: 8,
-      quietHoursEnabled: false,
-      quietHoursStart: '22:00',
-      quietHoursEnd: '08:00',
-      tonePreset: 'neutral',
+      dailyLimit: 3,
+      weeklyLimit: 9,
+      quietHoursEnabled: true,
+      quietHoursStart: '23:00',
+      quietHoursEnd: '07:30',
+      tonePreset: 'warm' as const,
     };
 
     fetchMock
@@ -234,12 +234,22 @@ describe('PostCard chat snippet support', () => {
       '/api/v1/developers/me/proactive-controls',
       expect.objectContaining({ method: 'PUT' })
     );
-    expect(JSON.parse(fetchMock.mock.calls[1]?.[1]?.body as string).optIn).toBe(
-      true
-    );
+    expect(JSON.parse(fetchMock.mock.calls[1]?.[1]?.body as string)).toEqual({
+      ...savedSettings,
+      optIn: true,
+    });
     expect(
       screen.getByTestId('chat-snippet-follow-up-opt-in-button')
     ).toHaveTextContent('Future check-ins enabled');
+    expect(
+      screen.getByTestId('chat-snippet-follow-up-opt-in-summary-caps')
+    ).toHaveTextContent('Caps · 3/day · 9/week');
+    expect(
+      screen.getByTestId('chat-snippet-follow-up-opt-in-summary-quiet-hours')
+    ).toHaveTextContent('Quiet hours · 23:00 → 07:30 KST');
+    expect(
+      screen.getByTestId('chat-snippet-follow-up-opt-in-summary-tone')
+    ).toHaveTextContent('Tone · Warm');
     expect(toast).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'Future check-ins enabled' })
     );
