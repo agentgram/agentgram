@@ -428,6 +428,31 @@ type ProactiveControlsResponse = {
   };
 };
 
+const FOLLOW_UP_TONE_LABELS: Record<
+  ProactiveControlsSettings['tonePreset'],
+  string
+> = {
+  warm: 'Warm',
+  neutral: 'Neutral',
+  brief: 'Brief',
+};
+
+function getFollowUpQuietHoursSummary(
+  settings: ProactiveControlsSettings
+): string {
+  return settings.quietHoursEnabled
+    ? `${settings.quietHoursStart} → ${settings.quietHoursEnd} KST`
+    : 'Off';
+}
+
+function getFollowUpOptInSummary(settings: ProactiveControlsSettings) {
+  return {
+    caps: `${settings.dailyLimit}/day · ${settings.weeklyLimit}/week`,
+    quietHours: getFollowUpQuietHoursSummary(settings),
+    tone: FOLLOW_UP_TONE_LABELS[settings.tonePreset],
+  };
+}
+
 function normalizeMemoryCapture(
   value: unknown
 ): ChatSnippetMemoryCapture | null {
@@ -1029,6 +1054,11 @@ export function PostCard({
   const [followUpOptInStatus, setFollowUpOptInStatus] = useState<
     'idle' | 'saving' | 'enabled'
   >('idle');
+  const [followUpOptInSettings, setFollowUpOptInSettings] =
+    useState<ProactiveControlsSettings | null>(null);
+  const followUpOptInSummary = followUpOptInSettings
+    ? getFollowUpOptInSummary(followUpOptInSettings)
+    : null;
 
   const handleFollowUpOptIn = async () => {
     if (!followUpOptInSignal || followUpOptInStatus !== 'idle') {
@@ -1059,6 +1089,7 @@ export function PostCard({
       }
 
       if (currentPayload.data.optIn) {
+        setFollowUpOptInSettings(currentPayload.data);
         setFollowUpOptInStatus('enabled');
         toast({
           title: 'Future check-ins already on',
@@ -1094,6 +1125,7 @@ export function PostCard({
         );
       }
 
+      setFollowUpOptInSettings(updatePayload.data);
       setFollowUpOptInStatus('enabled');
       analytics.clickCta('chat_snippet_follow_up_opt_in');
       toast({
@@ -1761,7 +1793,7 @@ export function PostCard({
               className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-3"
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <span className="inline-flex items-center rounded-full border border-primary/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">
                     Future check-ins
                   </span>
@@ -1770,9 +1802,34 @@ export function PostCard({
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {followUpOptInStatus === 'enabled'
-                      ? 'AgentGram can now follow up later from strong threads like this one. Caps and quiet hours still apply.'
+                      ? 'AgentGram can now follow up later from strong threads like this one using your saved outreach settings.'
                       : followUpOptInSignal.description}
                   </p>
+                  {followUpOptInStatus === 'enabled' && followUpOptInSummary ? (
+                    <div
+                      data-testid="chat-snippet-follow-up-opt-in-summary"
+                      className="flex flex-wrap gap-2"
+                    >
+                      <span
+                        data-testid="chat-snippet-follow-up-opt-in-summary-caps"
+                        className="inline-flex items-center rounded-full border border-emerald-500/20 bg-background/80 px-2 py-1 text-[11px] font-medium text-foreground"
+                      >
+                        Caps · {followUpOptInSummary.caps}
+                      </span>
+                      <span
+                        data-testid="chat-snippet-follow-up-opt-in-summary-quiet-hours"
+                        className="inline-flex items-center rounded-full border border-emerald-500/20 bg-background/80 px-2 py-1 text-[11px] font-medium text-foreground"
+                      >
+                        Quiet hours · {followUpOptInSummary.quietHours}
+                      </span>
+                      <span
+                        data-testid="chat-snippet-follow-up-opt-in-summary-tone"
+                        className="inline-flex items-center rounded-full border border-emerald-500/20 bg-background/80 px-2 py-1 text-[11px] font-medium text-foreground"
+                      >
+                        Tone · {followUpOptInSummary.tone}
+                      </span>
+                    </div>
+                  ) : null}
                 </div>
                 <button
                   type="button"

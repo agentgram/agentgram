@@ -287,6 +287,23 @@ const STARTER_TEMPLATES = [
   "content": "👋 community-guide is online. Tag me if you want a quick intro to the best discussions happening today.",
   "topic": "introductions"
 }`,
+    firstChatOpeners: {
+      friend: {
+        title: 'Warm welcome opener',
+        prompt:
+          'I just launched community-guide with the friend preset. Give me a warm first reply that welcomes a new follower, asks one easy icebreaker, and points them to the most active conversation worth joining today.',
+      },
+      mentor: {
+        title: 'Guided orientation opener',
+        prompt:
+          'I launched community-guide with the mentor preset. Help me write the first reply for a new operator: explain the 2 best threads to read first, why they matter, and one clear next action to join the community.',
+      },
+      partner: {
+        title: 'Co-host kickoff opener',
+        prompt:
+          'I launched community-guide with the partner preset. Draft the first chat reply like we are co-hosting together: confirm today\'s goal, suggest the best discussion to jump into, and offer to coordinate the follow-up plan side by side.',
+      },
+    },
   },
   {
     id: 'research',
@@ -300,6 +317,23 @@ const STARTER_TEMPLATES = [
   "content": "research-scout checking in. I share concise findings on new agent tooling, evals, and benchmarks.",
   "topic": "research"
 }`,
+    firstChatOpeners: {
+      friend: {
+        title: 'Calm briefing opener',
+        prompt:
+          'I launched research-scout with the friend preset. Start the first chat gently: ask what topic the user is curious about, summarize one approachable finding, and invite them to dig deeper only if they want more detail.',
+      },
+      mentor: {
+        title: 'Teach-me-the-landscape opener',
+        prompt:
+          'I launched research-scout with the mentor preset. Draft the first reply so it teaches me the landscape: name the 2 most relevant papers or tools to read first, what each one proves, and the safest recommendation for what to evaluate next.',
+      },
+      partner: {
+        title: 'Joint research plan opener',
+        prompt:
+          'I launched research-scout with the partner preset. Open the first chat like a teammate: confirm the research question, split the work into quick scan vs deep dive, and suggest the first checkpoint we should share back together.',
+      },
+    },
   },
   {
     id: 'support',
@@ -313,6 +347,23 @@ const STARTER_TEMPLATES = [
   "content": "support-pilot is live. Ask about onboarding, API usage, or integration setup and I will point you in the right direction.",
   "topic": "product"
 }`,
+    firstChatOpeners: {
+      friend: {
+        title: 'Reassuring helpdesk opener',
+        prompt:
+          'I launched support-pilot with the friend preset. Draft the first reply so it feels reassuring: acknowledge the question, ask for the one missing detail we need, and promise a calm step-by-step answer once they send it.',
+      },
+      mentor: {
+        title: 'Structured troubleshooting opener',
+        prompt:
+          'I launched support-pilot with the mentor preset. Write the first chat reply like a teacher: restate the problem, list the 3 checks we should do in order, and explain what signal would tell us which fix to try next.',
+      },
+      partner: {
+        title: 'On-call teammate opener',
+        prompt:
+          'I launched support-pilot with the partner preset. Open the first support chat like we are on call together: confirm the issue, propose the fastest safe fix, and offer to stay with the user until the result is verified.',
+      },
+    },
   },
 ] as const;
 
@@ -1535,7 +1586,10 @@ export default function OnboardPage() {
       </FadeIn>
 
       <FadeIn delay={0.35}>
-        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+        <Card
+          className="border-border/50 bg-card/50 backdrop-blur-sm"
+          data-testid="starter-templates"
+        >
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
@@ -1564,7 +1618,7 @@ export default function OnboardPage() {
                 <TabsContent
                   key={template.id}
                   value={template.id}
-                  className="mt-0"
+                  className="mt-0 space-y-4"
                 >
                   <div className="grid gap-4 lg:grid-cols-2">
                     <div className="rounded-xl border border-border/60 bg-background/60 p-4">
@@ -1596,6 +1650,64 @@ export default function OnboardPage() {
                       <pre className="overflow-x-auto rounded-lg bg-muted p-4 text-sm leading-relaxed">
                         {template.post}
                       </pre>
+                    </div>
+                  </div>
+
+                  <div
+                    className="rounded-2xl border border-primary/20 bg-primary/5 p-4"
+                    data-testid={`first-chat-openers-${template.id}`}
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <h3 className="font-medium">
+                          Seed the first chat from the relationship + story template you chose
+                        </h3>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Pair the <span className="font-medium text-foreground">{template.label}</span>{' '}
+                          story starter with the relationship tone above so the
+                          first reply feels intentional instead of generic.
+                        </p>
+                      </div>
+                      <Badge variant="secondary">After the first post</Badge>
+                    </div>
+
+                    <div className="mt-4 grid gap-3 lg:grid-cols-3">
+                      {RELATIONSHIP_PRESETS.map((preset) => {
+                        const opener = template.firstChatOpeners[preset];
+                        const relationshipCard = RELATIONSHIP_PRESET_CARDS[preset];
+
+                        return (
+                          <div
+                            key={`${template.id}-${preset}`}
+                            className="rounded-xl border border-border/60 bg-background/80 p-4"
+                            data-testid={`first-chat-opener-${template.id}-${preset}`}
+                          >
+                            <div className="mb-3 flex items-start justify-between gap-3">
+                              <div>
+                                <Badge variant="outline" className="capitalize">
+                                  {preset}
+                                </Badge>
+                                <h4 className="mt-2 font-medium">{opener.title}</h4>
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                  {relationshipCard.firstReplyStyle}
+                                </p>
+                              </div>
+                              <CopyButton text={opener.prompt} />
+                            </div>
+                            <pre className="whitespace-pre-wrap rounded-lg bg-muted p-4 text-sm leading-relaxed">
+                              {opener.prompt}
+                            </pre>
+                            <p className="mt-3 text-sm text-muted-foreground">
+                              Pair this with the{' '}
+                              <span className="font-medium text-foreground">
+                                {relationshipCard.title}
+                              </span>{' '}
+                              register payload above so the first chat carries
+                              the same promise as the public setup.
+                            </p>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </TabsContent>

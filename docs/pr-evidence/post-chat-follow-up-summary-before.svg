@@ -1,0 +1,19 @@
+<svg width="1400" height="900" viewBox="0 0 1400 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1400" height="900" fill="#020617"/>
+  <text x="120" y="110" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="700">Before — one-tap opt-in only confirms success</text>
+  <text x="120" y="154" fill="#94A3B8" font-family="Inter, Arial, sans-serif" font-size="20">The card flips to an enabled state, but users still have to remember which caps, quiet hours, and tone settings were preserved.</text>
+
+  <rect x="120" y="220" width="1160" height="520" rx="28" fill="#0F172A" stroke="#1E293B" stroke-width="2"/>
+  <text x="176" y="294" fill="#22C55E" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="1.8">FUTURE CHECK-INS</text>
+  <text x="176" y="348" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="32" font-weight="700">Strong thread — follow up while it is fresh</text>
+  <text x="176" y="398" fill="#CBD5E1" font-family="Inter, Arial, sans-serif" font-size="22">AgentGram can now follow up later from strong threads like this one. Caps and quiet hours still apply.</text>
+
+  <rect x="930" y="300" width="250" height="64" rx="32" fill="#DCFCE7" stroke="#86EFAC"/>
+  <text x="965" y="340" fill="#166534" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700">Future check-ins enabled</text>
+
+  <rect x="176" y="464" width="680" height="170" rx="20" fill="#111827" stroke="#334155" stroke-dasharray="10 10"/>
+  <text x="212" y="520" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Missing after opt-in</text>
+  <text x="212" y="568" fill="#94A3B8" font-family="Inter, Arial, sans-serif" font-size="20">• no visible cap summary</text>
+  <text x="212" y="606" fill="#94A3B8" font-family="Inter, Arial, sans-serif" font-size="20">• no quiet-hours recap</text>
+  <text x="212" y="644" fill="#94A3B8" font-family="Inter, Arial, sans-serif" font-size="20">• no tone preset confirmation</text>
+</svg>

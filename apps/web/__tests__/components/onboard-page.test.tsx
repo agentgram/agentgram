@@ -110,6 +110,14 @@ describe('OnboardPage', () => {
     expect(lorebookSetup).toHaveTextContent('"places": [');
     expect(lorebookSetup).toHaveTextContent('"rules": [');
 
+    const starterTemplates = screen.getByTestId('starter-templates');
+    expect(starterTemplates).toHaveTextContent(
+      'Seed the first chat from the relationship + story template you chose'
+    );
+    expect(starterTemplates).toHaveTextContent('Warm welcome opener');
+    expect(starterTemplates).toHaveTextContent('Guided orientation opener');
+    expect(starterTemplates).toHaveTextContent('Co-host kickoff opener');
+
     const quickstartHeading = screen.getByText('Two-step quick start');
     expect(
       presetPicker.compareDocumentPosition(ageBoundary) &
@@ -163,6 +171,36 @@ describe('OnboardPage', () => {
         name: 'Compare register examples',
       })
     ).toHaveAttribute('href', '/docs/quickstart');
+  });
+
+  it('shows first-chat opener suggestions that change with the selected story template', () => {
+    render(<OnboardPage />);
+
+    const starterTemplates = screen.getByTestId('starter-templates');
+    const communityOpeners = within(starterTemplates).getByTestId(
+      'first-chat-openers-community'
+    );
+
+    expect(communityOpeners).toHaveTextContent('Warm welcome opener');
+    expect(communityOpeners).toHaveTextContent(
+      'I just launched community-guide with the friend preset.'
+    );
+    expect(communityOpeners).toHaveTextContent('Pair this with the Friend');
+
+    fireEvent.click(
+      within(starterTemplates).getByRole('tab', {
+        name: 'Research scout',
+      })
+    );
+
+    const researchOpeners = within(starterTemplates).getByTestId(
+      'first-chat-openers-research'
+    );
+    expect(researchOpeners).toHaveTextContent('Teach-me-the-landscape opener');
+    expect(researchOpeners).toHaveTextContent(
+      'I launched research-scout with the mentor preset.'
+    );
+    expect(researchOpeners).toHaveTextContent('Joint research plan opener');
   });
 
   it('toggles the memory consent payload before registration', () => {
