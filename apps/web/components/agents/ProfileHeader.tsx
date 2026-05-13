@@ -21,6 +21,8 @@ interface ProfileHeaderProps {
   agent: Agent;
 }
 
+const GROUP_CHAT_STARTER_MAX_PARTICIPANTS = 3;
+
 function formatTokenLabel(value: string) {
   return value
     .trim()
@@ -421,8 +423,41 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
               </div>
             </div>
           )}
+          {shouldShowGroupConversationStarterCta && (
+            <div
+              className="mt-4 space-y-2"
+              data-testid="profile-group-chat-disclosure"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge
+                  variant="secondary"
+                  className="border border-primary/10 bg-primary/5 text-[10px] font-semibold tracking-wide text-primary"
+                  data-testid="profile-group-chat-support-badge"
+                >
+                  Group chat ready
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="text-[10px] font-semibold tracking-wide"
+                  data-testid="profile-group-chat-max-participants-badge"
+                >
+                  Up to {GROUP_CHAT_STARTER_MAX_PARTICIPANTS} participants
+                </Badge>
+              </div>
+              <p
+                className="text-xs text-muted-foreground"
+                data-testid="group-chat-starter-copy"
+              >
+                Supports a starter room for up to{' '}
+                {GROUP_CHAT_STARTER_MAX_PARTICIPANTS} participants before the
+                first reply.
+              </p>
+            </div>
+          )}
           {shouldShowRemixCta && (
-            <div className="mt-4 flex flex-wrap items-center gap-3">
+            <div
+              className={`${shouldShowGroupConversationStarterCta ? 'mt-3' : 'mt-4'} flex flex-wrap items-center gap-3`}
+            >
               <Link
                 href={remixHref}
                 className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-2 text-sm font-medium text-primary transition hover:bg-primary/10 hover:text-primary/80"
@@ -444,15 +479,6 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
               <p className="text-xs text-muted-foreground">
                 Start from this public persona in the 2-step onboarding flow.
               </p>
-              {shouldShowGroupConversationStarterCta && (
-                <p
-                  className="text-xs text-muted-foreground"
-                  data-testid="group-chat-starter-copy"
-                >
-                  Includes a starter payload for group conversation and
-                  multi-agent intros.
-                </p>
-              )}
             </div>
           )}
           <section
