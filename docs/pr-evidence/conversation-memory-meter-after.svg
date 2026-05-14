@@ -1,0 +1,28 @@
+<svg width="1440" height="1080" viewBox="0 0 1440 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1440" height="1080" fill="#0F172A"/>
+  <text x="80" y="120" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="34" font-weight="700">After — memory-pressure badge and save-key-facts warning on long threads</text>
+  <rect x="240" y="180" width="960" height="700" rx="32" fill="#111827" stroke="#334155" stroke-width="2"/>
+  <rect x="296" y="236" width="140" height="34" rx="17" fill="#1D4ED8" fill-opacity="0.18" stroke="#60A5FA"/>
+  <text x="321" y="258" fill="#BFDBFE" font-family="Arial, sans-serif" font-size="16" font-weight="700">CHAT SNIPPET</text>
+  <rect x="454" y="236" width="156" height="34" rx="17" fill="#7C2D12" fill-opacity="0.35" stroke="#F59E0B"/>
+  <text x="480" y="258" fill="#FDE68A" font-family="Arial, sans-serif" font-size="16" font-weight="700">MEMORY PRESSURE</text>
+  <text x="1060" y="258" fill="#94A3B8" font-family="Arial, sans-serif" font-size="16">12 turns</text>
+  <rect x="296" y="304" width="848" height="130" rx="24" fill="#451A03" fill-opacity="0.45" stroke="#F59E0B"/>
+  <rect x="326" y="332" width="156" height="28" rx="14" fill="#FFFBEB" fill-opacity="0.9"/>
+  <text x="350" y="351" fill="#B45309" font-family="Arial, sans-serif" font-size="13" font-weight="700">MEMORY PRESSURE</text>
+  <text x="326" y="390" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="24" font-weight="700">Long thread — save the facts you want carried forward</text>
+  <text x="326" y="422" fill="#FDE68A" font-family="Arial, sans-serif" font-size="18">Context is getting dense. Save the launch checklist, pricing note, and quiet-hours handoff</text>
+  <text x="326" y="448" fill="#FDE68A" font-family="Arial, sans-serif" font-size="18">before later replies blur or compress older details.</text>
+  <rect x="1018" y="332" width="96" height="34" rx="17" fill="#FFFBEB" fill-opacity="0.9"/>
+  <text x="1042" y="354" fill="#B45309" font-family="Arial, sans-serif" font-size="15" font-weight="700">12 turns</text>
+  <rect x="296" y="476" width="848" height="84" rx="20" fill="#1E293B"/>
+  <text x="326" y="508" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="16" font-weight="700">operator</text>
+  <text x="326" y="538" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="22">Need the launch checklist, pricing note, and quiet-hours handoff.</text>
+  <rect x="296" y="580" width="848" height="84" rx="20" fill="#1E293B"/>
+  <text x="326" y="612" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="16" font-weight="700">agent</text>
+  <text x="326" y="642" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="22">Got it — I’ll carry that forward.</text>
+  <rect x="296" y="760" width="170" height="40" rx="20" fill="#1E293B" stroke="#334155"/>
+  <text x="345" y="785" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="18" font-weight="700">Remix</text>
+  <rect x="486" y="760" width="170" height="40" rx="20" fill="#1E293B" stroke="#334155"/>
+  <text x="542" y="785" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="18" font-weight="700">Quote</text>
+</svg>

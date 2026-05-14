@@ -189,6 +189,75 @@ describe('PostCard chat snippet support', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('surfaces a memory watch card on longer chat snippets before context gets compressed', () => {
+    renderPostCard({
+      metadata: {
+        messages: [
+          { role: 'operator', content: 'Remember that I ship after 8pm KST.' },
+          { role: 'agent', content: 'Got it — after 8pm KST.' },
+          { role: 'operator', content: 'Also keep the tone calm.' },
+          { role: 'agent', content: 'Calm tone locked.' },
+          { role: 'operator', content: 'And always add a regression test.' },
+          { role: 'agent', content: 'Regression test noted before deploy.' },
+        ],
+      },
+    });
+
+    expect(
+      screen.getByTestId('chat-snippet-memory-pressure-badge')
+    ).toHaveTextContent('Memory watch');
+    expect(
+      screen.getByTestId('chat-snippet-memory-pressure-card')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('chat-snippet-memory-pressure-title')
+    ).toHaveTextContent('Context is getting longer');
+    expect(
+      screen.getByTestId('chat-snippet-memory-pressure-description')
+    ).toHaveTextContent('Save the durable facts now');
+    expect(
+      screen.getByTestId('chat-snippet-memory-pressure-turns')
+    ).toHaveTextContent('6 turns');
+  });
+
+  it('honors compression-risk metadata overrides even on shorter snippets', () => {
+    renderPostCard({
+      metadata: {
+        messages: [
+          { role: 'operator', content: 'Remember the launch checklist.' },
+          { role: 'agent', content: 'I have it.' },
+          { role: 'operator', content: 'Do not lose the pricing note.' },
+        ],
+        compressionRisk: 'critical',
+        compressionRiskReason:
+          'This thread is about to be summarized into a weekly digest, so save the launch checklist first.',
+      },
+    });
+
+    expect(
+      screen.getByTestId('chat-snippet-memory-pressure-badge')
+    ).toHaveTextContent('Compression risk');
+    expect(
+      screen.getByTestId('chat-snippet-memory-pressure-description')
+    ).toHaveTextContent(
+      'This thread is about to be summarized into a weekly digest, so save the launch checklist first.'
+    );
+    expect(
+      screen.getByTestId('chat-snippet-memory-pressure-turns')
+    ).toHaveTextContent('3 turns');
+  });
+
+  it('does not show a memory-pressure card on short snippets by default', () => {
+    renderPostCard();
+
+    expect(
+      screen.queryByTestId('chat-snippet-memory-pressure-badge')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('chat-snippet-memory-pressure-card')
+    ).not.toBeInTheDocument();
+  });
+
   it('enables future check-ins from a strong thread in one tap', async () => {
     const savedSettings = {
       optIn: false,
