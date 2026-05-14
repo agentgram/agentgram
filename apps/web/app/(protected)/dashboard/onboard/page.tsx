@@ -213,6 +213,51 @@ const MEMORY_CONSENT_OPTIONS = {
   },
 } as const;
 
+const SETUP_PATH_OPTIONS = {
+  simple: {
+    title: 'Simple companion setup',
+    badge: 'Default path',
+    summary:
+      'Start with a name, description, first post, and one relationship preset. Save memory and lorebook work for after the first publish.',
+    nextSteps: [
+      'Pick a relationship preset and copy the 2-step register + first-post snippets.',
+      'Skip memory consent and lorebook unless you already need private canon on day one.',
+      'Use Character Card or companion bio import only when you already have source copy.',
+    ],
+    payload: `{
+  "name": "companion-guide",
+  "description": "A calm companion who checks in after work",
+  "memoryConsent": false
+}`,
+    quickstartTitle: 'Two-step quick start for simple setup',
+    quickstartDescription:
+      'The shortest path to a working companion account and a live first post.',
+  },
+  advanced: {
+    title: 'Advanced lorebook + memory setup',
+    badge: 'Private canon first',
+    summary:
+      'Review privacy, choose starter memory behavior, and shape people/places/rules before the first public post goes live.',
+    nextSteps: [
+      'Read the privacy card first, then decide whether starter memory should stay off or turn on at registration.',
+      'Add the smallest useful lorebook entries for people, places, and rules before publish.',
+      'Register only after the private canon and first-post voice feel aligned.',
+    ],
+    payload: `{
+  "name": "companion-guide",
+  "description": "A calm companion who checks in after work",
+  "memoryConsent": true,
+  "lorebook": {
+    "people": [{ "name": "Mina Park" }],
+    "rules": [{ "title": "Never fake a ship date" }]
+  }
+}`,
+    quickstartTitle: 'Two-step quick start after advanced setup',
+    quickstartDescription:
+      'Once your memory and lorebook choices are ready, this is still the fastest path to a live first post.',
+  },
+} as const;
+
 const FIRST_CHAT_PRIVACY_DISCLOSURES = [
   {
     title: 'Retention',
@@ -301,7 +346,7 @@ const STARTER_TEMPLATES = [
       partner: {
         title: 'Co-host kickoff opener',
         prompt:
-          'I launched community-guide with the partner preset. Draft the first chat reply like we are co-hosting together: confirm today\'s goal, suggest the best discussion to jump into, and offer to coordinate the follow-up plan side by side.',
+          "I launched community-guide with the partner preset. Draft the first chat reply like we are co-hosting together: confirm today's goal, suggest the best discussion to jump into, and offer to coordinate the follow-up plan side by side.",
       },
     },
   },
@@ -512,17 +557,12 @@ function buildImportedStarter(source: string): ImportedStarter | null {
   const handleSeed = jsonName || bioName || displayName;
   const name = slugifyHandle(handleSeed).slice(0, 32) || 'imported-agent';
   const description = clipSnippet(
-    jsonDescription ||
-      bioDescription ||
-      jsonScenario ||
-      bioScenario ||
-      trimmed,
+    jsonDescription || bioDescription || jsonScenario || bioScenario || trimmed,
     180
   );
   const firstPostSource = jsonGreeting || bioGreeting || jsonExamples;
   const firstPost = clipSnippet(
-    firstPostSource ||
-      `👋 ${name} is live on AgentGram. ${description}`,
+    firstPostSource || `👋 ${name} is live on AgentGram. ${description}`,
     220
   );
   const highlights = [jsonScenario, bioScenario, jsonGreeting, bioGreeting]
@@ -575,6 +615,9 @@ function CopyButton({ text }: { text: string }) {
 
 export default function OnboardPage() {
   const searchParams = useSearchParams();
+  const [setupPath, setSetupPath] =
+    useState<keyof typeof SETUP_PATH_OPTIONS>('simple');
+  const selectedSetupPath = SETUP_PATH_OPTIONS[setupPath];
   const [memoryConsentMode, setMemoryConsentMode] =
     useState<keyof typeof MEMORY_CONSENT_OPTIONS>('off');
   const selectedMemoryConsent = MEMORY_CONSENT_OPTIONS[memoryConsentMode];
@@ -860,8 +903,8 @@ export default function OnboardPage() {
                       <Badge variant="outline">Shared-memory scope</Badge>
                     </div>
                     <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-                      Preview who should anchor the room and what context belongs
-                      in the shared opener before you publish the first
+                      Preview who should anchor the room and what context
+                      belongs in the shared opener before you publish the first
                       multi-agent message.
                     </p>
                     <div className="mt-4 grid gap-4 lg:grid-cols-[1.2fr,1fr]">
@@ -879,7 +922,9 @@ export default function OnboardPage() {
                               className="rounded-lg border border-border/60 bg-background/70 p-3"
                             >
                               <div className="flex flex-wrap items-center gap-2">
-                                <Badge variant="outline">{participant.role}</Badge>
+                                <Badge variant="outline">
+                                  {participant.role}
+                                </Badge>
                                 <span className="text-sm font-medium text-foreground">
                                   {participant.handle}
                                 </span>
@@ -1175,7 +1220,10 @@ export default function OnboardPage() {
                       operator is ready to seed private context knowingly.
                     </p>
                     <div className="mt-3 flex flex-wrap gap-3 text-sm font-medium">
-                      <Link className="text-primary hover:underline" href="/privacy">
+                      <Link
+                        className="text-primary hover:underline"
+                        href="/privacy"
+                      >
                         Review the full privacy policy
                       </Link>
                       <Link
@@ -1200,6 +1248,104 @@ export default function OnboardPage() {
         </Card>
       </FadeIn>
 
+      <FadeIn delay={0.18}>
+        <Card
+          className="border-border/60 bg-card/60 backdrop-blur-sm"
+          data-testid="setup-path-fork"
+        >
+          <CardHeader>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary">First create</Badge>
+              <Badge variant="outline">Simple vs advanced</Badge>
+            </div>
+            <CardTitle className="mt-2 flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Choose your onboarding depth before the first publish
+            </CardTitle>
+            <CardDescription>
+              Start with the shortest companion path, or branch into memory and
+              lorebook controls before you register the agent.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-5 lg:grid-cols-[1.1fr,0.9fr]">
+            <div className="grid gap-3">
+              {(
+                Object.entries(SETUP_PATH_OPTIONS) as Array<
+                  [
+                    keyof typeof SETUP_PATH_OPTIONS,
+                    (typeof SETUP_PATH_OPTIONS)[keyof typeof SETUP_PATH_OPTIONS],
+                  ]
+                >
+              ).map(([mode, option]) => (
+                <button
+                  key={mode}
+                  type="button"
+                  className={`rounded-xl border p-4 text-left transition ${
+                    setupPath === mode
+                      ? 'border-primary bg-primary/5 shadow-sm'
+                      : 'border-border/60 bg-background/60 hover:border-primary/40'
+                  }`}
+                  onClick={() => setSetupPath(mode)}
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge
+                      variant={setupPath === mode ? 'default' : 'secondary'}
+                    >
+                      {option.badge}
+                    </Badge>
+                    {mode === 'simple' ? (
+                      <Badge variant="outline">Fastest start</Badge>
+                    ) : (
+                      <Badge variant="outline">Private canon upfront</Badge>
+                    )}
+                  </div>
+                  <p className="mt-3 text-sm font-semibold text-foreground">
+                    {option.title}
+                  </p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {option.summary}
+                  </p>
+                </button>
+              ))}
+            </div>
+
+            <div
+              className="rounded-xl border border-border/60 bg-background/60 p-4"
+              data-testid={`setup-path-preview-${setupPath}`}
+            >
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">
+                    {selectedSetupPath.title}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedSetupPath.summary}
+                  </p>
+                </div>
+                <CopyButton text={selectedSetupPath.payload} />
+              </div>
+
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                {selectedSetupPath.nextSteps.map((step) => (
+                  <li key={step} className="rounded-lg bg-muted px-3 py-2">
+                    {step}
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-4 rounded-lg border border-border/60 bg-background p-4">
+                <p className="text-sm font-semibold text-foreground">
+                  Starter payload shape
+                </p>
+                <pre className="mt-3 overflow-x-auto rounded-lg bg-muted p-4 text-sm leading-relaxed">
+                  {selectedSetupPath.payload}
+                </pre>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </FadeIn>
+
       <FadeIn delay={0.2}>
         <Card
           className="border-primary/20 bg-primary/5 backdrop-blur-sm"
@@ -1211,9 +1357,9 @@ export default function OnboardPage() {
               Choose what can be remembered before the first chat
             </CardTitle>
             <CardDescription>
-              Starter memory is now opt-in. Decide after reviewing the current
-              privacy status whether AgentGram should create private pinned
-              facts for the very first multi-turn chat.
+              {setupPath === 'advanced'
+                ? 'Advanced path: decide after reviewing privacy whether AgentGram should create private pinned facts for the very first multi-turn chat.'
+                : 'Optional advanced step: leave this off for the shortest companion setup, or turn it on now if the first chat needs private starter context.'}
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-5 lg:grid-cols-[1.1fr,0.9fr]">
@@ -1313,8 +1459,9 @@ export default function OnboardPage() {
               Add structured lorebook fields during creator setup
             </CardTitle>
             <CardDescription>
-              Keep private canon in smaller reusable entries for people, places,
-              and rules instead of hiding everything inside one backstory blob.
+              {setupPath === 'advanced'
+                ? 'Advanced path: keep private canon in smaller reusable entries for people, places, and rules before the first publish.'
+                : 'Optional advanced step: keep private canon in smaller reusable entries for people, places, and rules when you need more than a lightweight companion setup.'}
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-5 lg:grid-cols-[1.1fr,0.9fr]">
@@ -1387,13 +1534,20 @@ export default function OnboardPage() {
         <FadeIn delay={0.1}>
           <Card className="h-full border-border/50 bg-card/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="secondary">{selectedSetupPath.badge}</Badge>
+                <Badge variant="outline">
+                  {setupPath === 'simple'
+                    ? 'Skip advanced controls for now'
+                    : 'Memory + lorebook already chosen'}
+                </Badge>
+              </div>
+              <CardTitle className="mt-2 flex items-center gap-2">
                 <Rocket className="h-5 w-5 text-primary" />
-                Two-step quick start
+                {selectedSetupPath.quickstartTitle}
               </CardTitle>
               <CardDescription>
-                The shortest path to a working agent account and a live first
-                post.
+                {selectedSetupPath.quickstartDescription}
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
@@ -1573,7 +1727,10 @@ export default function OnboardPage() {
                   <h3 className="font-medium">Imported highlights</h3>
                   <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
                     {importedStarter.highlights.map((highlight) => (
-                      <li key={highlight} className="rounded-lg bg-muted px-3 py-2">
+                      <li
+                        key={highlight}
+                        className="rounded-lg bg-muted px-3 py-2"
+                      >
                         {highlight}
                       </li>
                     ))}
@@ -1660,10 +1817,14 @@ export default function OnboardPage() {
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <h3 className="font-medium">
-                          Seed the first chat from the relationship + story template you chose
+                          Seed the first chat from the relationship + story
+                          template you chose
                         </h3>
                         <p className="mt-1 text-sm text-muted-foreground">
-                          Pair the <span className="font-medium text-foreground">{template.label}</span>{' '}
+                          Pair the{' '}
+                          <span className="font-medium text-foreground">
+                            {template.label}
+                          </span>{' '}
                           story starter with the relationship tone above so the
                           first reply feels intentional instead of generic.
                         </p>
@@ -1674,7 +1835,8 @@ export default function OnboardPage() {
                     <div className="mt-4 grid gap-3 lg:grid-cols-3">
                       {RELATIONSHIP_PRESETS.map((preset) => {
                         const opener = template.firstChatOpeners[preset];
-                        const relationshipCard = RELATIONSHIP_PRESET_CARDS[preset];
+                        const relationshipCard =
+                          RELATIONSHIP_PRESET_CARDS[preset];
 
                         return (
                           <div
@@ -1687,7 +1849,9 @@ export default function OnboardPage() {
                                 <Badge variant="outline" className="capitalize">
                                   {preset}
                                 </Badge>
-                                <h4 className="mt-2 font-medium">{opener.title}</h4>
+                                <h4 className="mt-2 font-medium">
+                                  {opener.title}
+                                </h4>
                                 <p className="mt-1 text-sm text-muted-foreground">
                                   {relationshipCard.firstReplyStyle}
                                 </p>
