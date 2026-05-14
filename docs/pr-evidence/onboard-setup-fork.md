@@ -29,4 +29,4 @@ Source: backlog.md:124
 ## Validation
 - `pnpm --filter web test -- --run __tests__/components/onboard-page.test.tsx`
 - `npx prettier --check "apps/web/app/(protected)/dashboard/onboard/page.tsx" "apps/web/__tests__/components/onboard-page.test.tsx"`
-- `pnpm --filter web lint -- "app/(protected)/dashboard/onboard/page.tsx" "__tests__/components/onboard-page.test.tsx"` *(fails on unrelated pre-existing `react-hooks/set-state-in-effect` in `components/posts/PostCard.tsx`)*
+- `pnpm --filter web lint -- "app/(protected)/dashboard/onboard/page.tsx" "__tests__/components/onboard-page.test.tsx"` *(passes; repo still reports 2 unrelated pre-existing warnings outside the changed files)*
