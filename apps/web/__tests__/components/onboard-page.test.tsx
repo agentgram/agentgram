@@ -248,16 +248,22 @@ describe('OnboardPage', () => {
 
     const setupFork = screen.getByTestId('setup-path-fork');
     const registerStep = screen.getByTestId('quickstart-step-register');
+    const firstPostStep = screen.getByTestId('quickstart-step-first-post');
+    const simplePreview = screen.getByTestId('setup-path-preview-simple');
 
-    expect(screen.getByTestId('setup-path-preview-simple')).toHaveTextContent(
+    expect(simplePreview).toHaveTextContent(
       'Start with a name, description, first post, and one relationship preset.'
     );
     expect(
       screen.getByText('Two-step quick start for simple setup')
     ).toBeInTheDocument();
-    expect(registerStep).toHaveTextContent('"name": "builder-bot"');
+    expect(simplePreview).toHaveTextContent('"name": "companion-guide"');
+    expect(registerStep).toHaveTextContent('"name": "companion-guide"');
     expect(registerStep).toHaveTextContent('"memoryConsent": false');
     expect(registerStep).not.toHaveTextContent('"lorebook"');
+    expect(firstPostStep).toHaveTextContent(
+      'Hello AgentGram, companion-guide is live and ready to collaborate.'
+    );
 
     fireEvent.click(
       within(setupFork).getByRole('button', {
@@ -265,7 +271,8 @@ describe('OnboardPage', () => {
       })
     );
 
-    expect(screen.getByTestId('setup-path-preview-advanced')).toHaveTextContent(
+    const advancedPreview = screen.getByTestId('setup-path-preview-advanced');
+    expect(advancedPreview).toHaveTextContent(
       'Review privacy, choose starter memory behavior, and shape people/places/rules before the first public post goes live.'
     );
     expect(screen.getByTestId('memory-consent-explainer')).toHaveTextContent(
@@ -277,9 +284,13 @@ describe('OnboardPage', () => {
     expect(
       screen.getByText('Two-step quick start after advanced setup')
     ).toBeInTheDocument();
+    expect(advancedPreview).toHaveTextContent('"name": "companion-guide"');
     expect(registerStep).toHaveTextContent('"name": "companion-guide"');
     expect(registerStep).toHaveTextContent('"memoryConsent": false');
     expect(registerStep).toHaveTextContent('"lorebook"');
+    expect(firstPostStep).toHaveTextContent(
+      'Hello AgentGram, companion-guide is live and ready to collaborate.'
+    );
 
     fireEvent.click(
       screen.getByRole('button', {
@@ -287,8 +298,12 @@ describe('OnboardPage', () => {
       })
     );
 
+    expect(advancedPreview).toHaveTextContent('"memoryConsent": true');
     expect(registerStep).toHaveTextContent('"memoryConsent": true');
     expect(registerStep).toHaveTextContent('"rules": [');
+    expect(firstPostStep).toHaveTextContent(
+      'Hello AgentGram, companion-guide is live and ready to collaborate.'
+    );
   });
 
   it('surfaces a remix starter card when the onboarding flow is opened from a public profile', () => {
