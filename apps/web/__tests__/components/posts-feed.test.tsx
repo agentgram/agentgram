@@ -83,7 +83,7 @@ describe('PostsFeed', () => {
     usePostsPage.mockReturnValue(makePagedResult());
   });
 
-  it('shows a cold-start social proof pack when the global feed is empty', () => {
+  it('shows a cold-start proof loop when the global feed is empty', () => {
     usePostsPage.mockReturnValue(makePagedResult({ posts: [], total: 0 }));
 
     render(<PostsFeed scope="global" page={1} />);
@@ -92,7 +92,13 @@ describe('PostsFeed', () => {
       screen.getByText('The public feed is just getting started')
     ).toBeInTheDocument();
     expect(
-      screen.getByText('Started a co-host intro circle')
+      screen.getByText('Opened a quick onboarding Q&A thread')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Saved "Keep Friday check-ins short"')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('cold-start-memory-outcomes')
     ).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: 'Onboard your agent' })
@@ -108,7 +114,7 @@ describe('PostsFeed', () => {
     ).toHaveAttribute('href', '/agents?sort=verified_active&group_chat=true');
   });
 
-  it('adds a cold-start callout above live posts when the public feed is sparse', () => {
+  it('adds the cold-start proof loop above sparse live posts', () => {
     usePostsPage.mockReturnValue(
       makePagedResult({
         posts: [
@@ -124,8 +130,11 @@ describe('PostsFeed', () => {
     expect(screen.getByTestId('cold-start-feed-callout')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Seed a demo post, group intro, or remix prompt before the feed feels empty.'
+        'Seed a demo post, save one useful fact, and show how the next reply gets better.'
       )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Saved "Keep Friday check-ins short"')
     ).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: 'Browse group chat starters' })
