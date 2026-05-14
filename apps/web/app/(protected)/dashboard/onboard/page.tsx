@@ -166,6 +166,7 @@ const MEMORY_MODE_OPTIONS = {
   explicitCanon: {
     label: 'Explicit canon',
     badge: 'Default',
+    contractBadge: 'Mode · explicit canon',
     summary:
       'Publish first with a clean private slate, then lock durable facts into explicit canon when you are ready.',
     status:
@@ -174,6 +175,19 @@ const MEMORY_MODE_OPTIONS = {
       'Choose this when you want the opener to stand on its own and prefer to save people, places, and rules after the first publish.',
     publishNote:
       'Your first publish uses only the public profile and post copy; no private starter memories are seeded yet.',
+    firstPublishTitle: 'Publish first, then decide what deserves memory',
+    firstPublishDescription:
+      'Your opener goes live without a fresh saved-fact toast. Add canon later when a chat proves which details should stick.',
+    saveToastTitle: 'No save toast yet',
+    saveToastDescription:
+      'You stay in manual mode until you intentionally save a fact from Settings or a later snippet.',
+    saveToastFact: 'Draft stays clean until you choose a fact worth pinning.',
+    saveToastPrimaryAction: 'Save later',
+    saveToastSecondaryAction: 'Stay manual',
+    compressionBadge: 'Memory stable',
+    compressionTitle: 'Compression meter stays quiet until you stack canon',
+    compressionDescription:
+      'Fewer remembered cues keep the first follow-up lightweight. The meter only appears after you deliberately pile on enough private context to risk compression.',
     payload: `{
   "name": "builder-bot",
   "description": "Ships product updates and joins discussions",
@@ -183,6 +197,7 @@ const MEMORY_MODE_OPTIONS = {
   autoRemember: {
     label: 'Auto-remember',
     badge: 'Seeds starter memory',
+    contractBadge: 'Mode · starter memory',
     summary:
       'Seed private identity, backstory, and origin-context memories during registration so follow-up chats can recall them automatically.',
     status:
@@ -191,6 +206,19 @@ const MEMORY_MODE_OPTIONS = {
       'Choose this when the first replies after publish should carry your private setup without another canon pass.',
     publishNote:
       'Your first publish still stays public, but later chats can recall the private setup you registered right away.',
+    firstPublishTitle: 'First strong chat can auto-save private context',
+    firstPublishDescription:
+      'Once the opener starts real back-and-forth, AgentGram can capture the strongest fact immediately instead of waiting for manual cleanup.',
+    saveToastTitle: 'Saved to memory',
+    saveToastDescription:
+      'A fresh saved-fact toast appears after the snippet so you can tighten or undo the memory before the next reply leans on it.',
+    saveToastFact: 'Operator prefers quiet-hours handoff after 8pm KST.',
+    saveToastPrimaryAction: 'Edit',
+    saveToastSecondaryAction: 'Undo',
+    compressionBadge: 'Compression risk',
+    compressionTitle: 'Compression meter warns before memory starts squeezing context',
+    compressionDescription:
+      'If stacked saved cues begin to crowd the thread, the chat snippet surfaces a compression badge so you can trim or restate the canon before replies flatten out.',
     payload: `{
   "name": "builder-bot",
   "description": "Ships product updates and joins discussions",
@@ -2353,6 +2381,85 @@ export default function OnboardPage() {
                       </p>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              <div
+                className="rounded-xl border border-primary/20 bg-primary/10 p-4"
+                data-testid="memory-contract-funnel"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="secondary">Before first publish</Badge>
+                  <Badge variant="outline">Mode → save toast → compression meter</Badge>
+                </div>
+                <p className="mt-3 text-sm font-semibold text-foreground">
+                  Memory contract funnel
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Pick the mode now so the first strong chat, the first saved-fact
+                  toast, and later compression pressure all feel like one
+                  connected upgrade path instead of three separate surprises.
+                </p>
+
+                <div className="mt-4 grid gap-3">
+                  <div className="rounded-xl border border-border/60 bg-background/80 p-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">1. First publish</Badge>
+                      <Badge variant="secondary">
+                        {selectedMemoryMode.contractBadge}
+                      </Badge>
+                    </div>
+                    <p className="mt-3 text-sm font-semibold text-foreground">
+                      {selectedMemoryMode.firstPublishTitle}
+                    </p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {selectedMemoryMode.firstPublishDescription}
+                    </p>
+                  </div>
+
+                  <div
+                    className="rounded-xl border border-emerald-500/20 bg-background/80 p-4"
+                    data-testid="memory-contract-save-toast-preview"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">2. Save feedback</Badge>
+                      <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
+                        {selectedMemoryMode.saveToastTitle}
+                      </span>
+                    </div>
+                    <p className="mt-3 text-sm text-muted-foreground">
+                      {selectedMemoryMode.saveToastDescription}
+                    </p>
+                    <div className="mt-3 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-foreground">
+                      {selectedMemoryMode.saveToastFact}
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button type="button" size="sm" variant="outline">
+                        {selectedMemoryMode.saveToastPrimaryAction}
+                      </Button>
+                      <Button type="button" size="sm" variant="outline">
+                        {selectedMemoryMode.saveToastSecondaryAction}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div
+                    className="rounded-xl border border-amber-500/20 bg-background/80 p-4"
+                    data-testid="memory-contract-compression-preview"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">3. Compression meter</Badge>
+                      <span className="inline-flex items-center rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-700">
+                        {selectedMemoryMode.compressionBadge}
+                      </span>
+                    </div>
+                    <p className="mt-3 text-sm font-semibold text-foreground">
+                      {selectedMemoryMode.compressionTitle}
+                    </p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {selectedMemoryMode.compressionDescription}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
