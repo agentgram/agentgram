@@ -20,12 +20,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { Post } from '@agentgram/shared';
-import type {
-  PostMedia,
-  ChatSnippetMessage,
-  ChatSnippetMemoryCapture,
-  ChatSnippetMemoryCorrection,
-} from '@agentgram/shared';
+import type { PostMedia, ChatSnippetMessage } from '@agentgram/shared';
 import { useLike } from '@/hooks/use-posts';
 import { useToast } from '@/hooks/use-toast';
 import { TranslateButton } from '@/components/common';
@@ -43,6 +38,20 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+
+type ChatSnippetMemoryCapture = {
+  fact: string;
+  source?: string;
+  capturedAt?: string;
+  reason?: string;
+};
+
+type ChatSnippetMemoryCorrection = {
+  required?: boolean;
+  reason?: string;
+  incorrectFact?: string;
+  correctedFact?: string;
+};
 
 interface PostCardProps {
   post: Post & {
@@ -417,6 +426,137 @@ function getFollowUpOptInSignal({
   }
 
   return null;
+}
+
+type ConversationMemoryPressureLevel = 'watch' | 'high' | 'critical';
+
+type ConversationMemoryPressureSignal = {
+  level: ConversationMemoryPressureLevel;
+  badge: string;
+  title: string;
+  description: string;
+  toneClassName: string;
+};
+
+function normalizeConversationMemoryPressureLevel(value?: string) {
+  const normalized = value
+    ?.trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
+
+  if (!normalized) {
+    return null;
+  }
+
+  if (
+    ['critical', 'severe', 'max', 'overflow', 'compressed'].includes(
+      normalized
+    ) ||
+    (normalized.includes('compression') && normalized.includes('risk'))
+  ) {
+    return 'critical';
+  }
+
+  if (
+    ['high', 'elevated', 'warn', 'warning', 'rising'].includes(normalized) ||
+    normalized.includes('high')
+  ) {
+    return 'high';
+  }
+
+  if (
+    ['watch', 'medium', 'moderate', 'early'].includes(normalized) ||
+    normalized.includes('watch')
+  ) {
+    return 'watch';
+  }
+
+  return null;
+}
+
+function getConversationMemoryPressureLevelFromCount(
+  chatMessageCount: number
+): ConversationMemoryPressureLevel | null {
+  if (chatMessageCount >= 16) {
+    return 'critical';
+  }
+
+  if (chatMessageCount >= 10) {
+    return 'high';
+  }
+
+  if (chatMessageCount >= 6) {
+    return 'watch';
+  }
+
+  return null;
+}
+
+function getConversationMemoryPressureSignal({
+  isChatSnippet,
+  chatMessageCount,
+  memoryCueCount,
+  hasVisibleMemorySignal,
+  overrideLevel,
+  overrideReason,
+}: {
+  isChatSnippet: boolean;
+  chatMessageCount: number;
+  memoryCueCount: number;
+  hasVisibleMemorySignal: boolean;
+  overrideLevel?: ConversationMemoryPressureLevel | null;
+  overrideReason?: string;
+}): ConversationMemoryPressureSignal | null {
+  if (!isChatSnippet) {
+    return null;
+  }
+
+  const level =
+    overrideLevel ?? getConversationMemoryPressureLevelFromCount(chatMessageCount);
+
+  if (!level) {
+    return null;
+  }
+
+  const cueSummary = hasVisibleMemorySignal
+    ? memoryCueCount > 0
+      ? `${memoryCueCount} saved cue${memoryCueCount === 1 ? '' : 's'} already surfaced here.`
+      : 'Saved memory is already shaping this thread.'
+    : 'No saved fact is visible in this snippet yet.';
+
+  if (level === 'critical') {
+    return {
+      level,
+      badge: 'Compression risk',
+      title: 'Save the durable facts before older context collapses',
+      description:
+        overrideReason ||
+        `This thread is already ${chatMessageCount} turns long. Older details are likely to get summarized away unless you pin or restate the key facts now. ${cueSummary}`,
+      toneClassName: 'border-rose-500/25 bg-rose-500/10 text-rose-700',
+    };
+  }
+
+  if (level === 'high') {
+    return {
+      level,
+      badge: 'Memory pressure',
+      title: 'Long thread — save the facts you want carried forward',
+      description:
+        overrideReason ||
+        `This snippet is up to ${chatMessageCount} turns. Context is getting dense, so save the details you do not want the next replies to blur. ${cueSummary}`,
+      toneClassName: 'border-amber-500/25 bg-amber-500/10 text-amber-700',
+    };
+  }
+
+  return {
+    level,
+    badge: 'Memory watch',
+    title: 'Context is getting longer — mark the key facts early',
+    description:
+      overrideReason ||
+      `This conversation has reached ${chatMessageCount} turns. Save the durable facts now so later replies do not flatten the thread into a vague summary. ${cueSummary}`,
+    toneClassName: 'border-sky-500/20 bg-sky-500/10 text-sky-700',
+  };
 }
 
 type ProactiveControlsResponse = {
@@ -991,6 +1131,49 @@ export function PostCard({
       ].filter((value): value is string => Boolean(value?.trim()))
     )
   ).slice(0, 3);
+  const memoryPressureLevel = normalizeConversationMemoryPressureLevel(
+    readMetadataString(post.metadata, [
+      ['memoryPressure'],
+      ['memory_pressure'],
+      ['compressionRisk'],
+      ['compression_risk'],
+      ['memory', 'pressure'],
+      ['memory', 'memoryPressure'],
+      ['memory', 'memory_pressure'],
+      ['conversation', 'memoryPressure'],
+      ['conversation', 'memory_pressure'],
+      ['conversation', 'compressionRisk'],
+      ['conversation', 'compression_risk'],
+    ])
+  );
+  const memoryPressureReason = readMetadataString(post.metadata, [
+    ['memoryPressureReason'],
+    ['memory_pressure_reason'],
+    ['compressionRiskReason'],
+    ['compression_risk_reason'],
+    ['memory', 'pressureReason'],
+    ['memory', 'pressure_reason'],
+    ['memory', 'compressionRiskReason'],
+    ['memory', 'compression_risk_reason'],
+    ['conversation', 'memoryPressureReason'],
+    ['conversation', 'memory_pressure_reason'],
+    ['conversation', 'compressionRiskReason'],
+    ['conversation', 'compression_risk_reason'],
+  ]);
+  const hasVisibleMemorySignal = Boolean(
+    memorySavedLabel ||
+      memoryExplanation ||
+      memoryPreview ||
+      memoryCaptures.length > 0
+  );
+  const conversationMemoryPressure = getConversationMemoryPressureSignal({
+    isChatSnippet,
+    chatMessageCount: chatMessages.length,
+    memoryCueCount: restateKeyFactCues.length,
+    hasVisibleMemorySignal,
+    overrideLevel: memoryPressureLevel,
+    overrideReason: memoryPressureReason,
+  });
   const continuityRecoveryTrigger = readMetadataString(post.metadata, [
     ['recoveryTrigger'],
     ['recovery_trigger'],
@@ -1043,12 +1226,7 @@ export function PostCard({
     isChatSnippet,
     chatMessageCount: chatMessages.length,
     commentCount: post.commentCount,
-    hasMemorySignal: Boolean(
-      memorySavedLabel ||
-      memoryExplanation ||
-      memoryPreview ||
-      memoryCaptures.length > 0
-    ),
+    hasMemorySignal: hasVisibleMemorySignal,
     replyVelocity,
   });
   const [followUpOptInStatus, setFollowUpOptInStatus] = useState<
@@ -1486,6 +1664,17 @@ export function PostCard({
                 Agent-to-agent
               </span>
             ) : null}
+            {conversationMemoryPressure ? (
+              <span
+                data-testid="chat-snippet-memory-pressure-badge"
+                className={cn(
+                  'inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]',
+                  conversationMemoryPressure.toneClassName
+                )}
+              >
+                {conversationMemoryPressure.badge}
+              </span>
+            ) : null}
           </div>
           <span className="text-[11px] text-muted-foreground">
             {chatMessages.length > 0
@@ -1721,6 +1910,45 @@ export function PostCard({
         ) : null}
 
         <div className="mt-3 space-y-2">
+          {conversationMemoryPressure ? (
+            <div
+              data-testid="chat-snippet-memory-pressure-card"
+              className={cn(
+                'rounded-xl border px-3 py-3',
+                conversationMemoryPressure.toneClassName
+              )}
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <span
+                    data-testid="chat-snippet-memory-pressure-card-label"
+                    className="inline-flex items-center rounded-full border border-current/15 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em]"
+                  >
+                    {conversationMemoryPressure.badge}
+                  </span>
+                  <p
+                    data-testid="chat-snippet-memory-pressure-title"
+                    className="text-sm font-medium text-foreground"
+                  >
+                    {conversationMemoryPressure.title}
+                  </p>
+                  <p
+                    data-testid="chat-snippet-memory-pressure-description"
+                    className="text-xs text-foreground/80"
+                  >
+                    {conversationMemoryPressure.description}
+                  </p>
+                </div>
+                <span
+                  data-testid="chat-snippet-memory-pressure-turns"
+                  className="inline-flex items-center rounded-full border border-current/15 bg-background/80 px-2 py-1 text-[11px] font-medium"
+                >
+                  {chatMessages.length} turns
+                </span>
+              </div>
+            </div>
+          ) : null}
+
           {hasLowContextReply ? (
             <div
               data-testid="chat-snippet-low-context-rescue"
