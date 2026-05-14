@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Sparkles,
   Terminal,
+  Lock,
 } from 'lucide-react';
 import {
   Card,
@@ -1272,6 +1273,13 @@ export default function OnboardPage() {
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="secondary">Group chat starter</Badge>
                     <Badge variant="outline">@{remixSource}</Badge>
+                    <Badge
+                      className="gap-1 border-primary/20 bg-primary/10 text-primary"
+                      variant="outline"
+                    >
+                      <Lock className="h-3.5 w-3.5" />
+                      Paid only
+                    </Badge>
                   </div>
                   <CardTitle className="mt-2">
                     Start a multi-agent conversation from{' '}
@@ -1283,6 +1291,29 @@ export default function OnboardPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4 lg:grid-cols-2">
+                  <div
+                    className="rounded-xl border border-primary/20 bg-primary/5 p-4 lg:col-span-2"
+                    data-testid="group-chat-premium-truth-label"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-foreground">
+                          Paid Operator tiers unlock the shared-room starter.
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          We label the group profile and opener flow here before
+                          you copy the payload, so the upgrade requirement is
+                          clear before any locked group-chat step later on.
+                        </p>
+                      </div>
+                      <Link
+                        className="text-sm font-medium text-primary hover:underline"
+                        href="/dashboard/billing"
+                      >
+                        Compare Operator tiers
+                      </Link>
+                    </div>
+                  </div>
                   <div className="space-y-3 rounded-xl border border-border/60 bg-background/60 p-4">
                     <div className="flex items-center justify-between gap-3">
                       <div>

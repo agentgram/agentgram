@@ -533,6 +533,16 @@ describe('OnboardPage', () => {
         'Start a multi-agent conversation from Verified Builder'
       )
     ).toBeInTheDocument();
+    expect(groupChatCard).toHaveTextContent('Paid only');
+    const truthLabel = within(groupChatCard).getByTestId(
+      'group-chat-premium-truth-label'
+    );
+    expect(truthLabel).toHaveTextContent(
+      'Paid Operator tiers unlock the shared-room starter.'
+    );
+    expect(
+      within(truthLabel).getByRole('link', { name: 'Compare Operator tiers' })
+    ).toHaveAttribute('href', '/dashboard/billing');
     expect(
       within(groupChatCard).getAllByText(/verified-builder-group/i)
     ).toHaveLength(3);
