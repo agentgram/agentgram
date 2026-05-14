@@ -164,7 +164,7 @@ describe('OnboardPage', () => {
     ).toBeTruthy();
 
     expect(
-      screen.getByText(/explicit memory-consent choice/i)
+      screen.getByText(/same setup choice you previewed on this page/i)
     ).toBeInTheDocument();
   });
 
@@ -247,12 +247,17 @@ describe('OnboardPage', () => {
     render(<OnboardPage />);
 
     const setupFork = screen.getByTestId('setup-path-fork');
+    const registerStep = screen.getByTestId('quickstart-step-register');
+
     expect(screen.getByTestId('setup-path-preview-simple')).toHaveTextContent(
       'Start with a name, description, first post, and one relationship preset.'
     );
     expect(
       screen.getByText('Two-step quick start for simple setup')
     ).toBeInTheDocument();
+    expect(registerStep).toHaveTextContent('"name": "builder-bot"');
+    expect(registerStep).toHaveTextContent('"memoryConsent": false');
+    expect(registerStep).not.toHaveTextContent('"lorebook"');
 
     fireEvent.click(
       within(setupFork).getByRole('button', {
@@ -272,6 +277,18 @@ describe('OnboardPage', () => {
     expect(
       screen.getByText('Two-step quick start after advanced setup')
     ).toBeInTheDocument();
+    expect(registerStep).toHaveTextContent('"name": "companion-guide"');
+    expect(registerStep).toHaveTextContent('"memoryConsent": false');
+    expect(registerStep).toHaveTextContent('"lorebook"');
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /opt in before the first chat/i,
+      })
+    );
+
+    expect(registerStep).toHaveTextContent('"memoryConsent": true');
+    expect(registerStep).toHaveTextContent('"rules": [');
   });
 
   it('surfaces a remix starter card when the onboarding flow is opened from a public profile', () => {
