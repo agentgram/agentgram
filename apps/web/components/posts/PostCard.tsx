@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -481,6 +481,11 @@ function normalizeMemoryCapture(
     return null;
   }
 
+  const idCandidates = [record.id, record.memoryId, record.memory_id];
+  const id = idCandidates.find(
+    (candidate): candidate is string =>
+      typeof candidate === 'string' && candidate.trim().length > 0
+  );
   const sourceCandidates = [record.source, record.savedFrom, record.from];
   const source = sourceCandidates.find(
     (candidate): candidate is string =>
@@ -506,6 +511,7 @@ function normalizeMemoryCapture(
   );
 
   return {
+    id: id?.trim(),
     fact: fact.trim(),
     source: source?.trim(),
     capturedAt: capturedAt?.trim(),
@@ -633,6 +639,170 @@ function formatMemoryTimestamp(value: string) {
     hour: 'numeric',
     minute: '2-digit',
   }).format(date);
+}
+
+function isSameMemoryCapture(
+  left?: ChatSnippetMemoryCapture | null,
+  right?: ChatSnippetMemoryCapture | null
+) {
+  if (!left || !right) {
+    return false;
+  }
+
+  if (left.id && right.id) {
+    return left.id === right.id;
+  }
+
+  return (
+    left.fact === right.fact &&
+    (left.capturedAt || '') === (right.capturedAt || '')
+  );
+}
+
+function isFreshMemoryCapture(value?: string, nowMs = Date.now()) {
+  if (!value) {
+    return false;
+  }
+
+  const timestamp = new Date(value).getTime();
+
+  if (!Number.isFinite(timestamp)) {
+    return false;
+  }
+
+  return nowMs - timestamp >= 0 && nowMs - timestamp <= 10 * 60 * 1000;
+}
+
+const shownMemoryCaptureToastKeys = new Set<string>();
+
+type MemoryCaptureToastBodyProps = {
+  capture: ChatSnippetMemoryCapture;
+  canInlineEdit: boolean;
+  isUndoEnabled: boolean;
+  onEditInline: (nextFact: string) => Promise<void>;
+  onUndo: () => Promise<void>;
+  onOpenSettings: () => void;
+};
+
+function MemoryCaptureToastBody({
+  capture,
+  canInlineEdit,
+  isUndoEnabled,
+  onEditInline,
+  onUndo,
+  onOpenSettings,
+}: MemoryCaptureToastBodyProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(capture.fact);
+  const [status, setStatus] = useState<'idle' | 'saving' | 'undoing'>('idle');
+
+  return (
+    <div
+      className="mt-2 space-y-3"
+      data-testid="memory-capture-toast-description"
+    >
+      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-foreground">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
+          Saved fact
+        </div>
+        {isEditing ? (
+          <div className="mt-2 space-y-2">
+            <textarea
+              data-testid="memory-capture-toast-edit-input"
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              className="min-h-[88px] w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            />
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                data-testid="memory-capture-toast-save-button"
+                disabled={status !== 'idle' || !draft.trim()}
+                onClick={async () => {
+                  setStatus('saving');
+                  try {
+                    await onEditInline(draft.trim());
+                    setIsEditing(false);
+                  } catch {
+                    // Parent toast handler surfaces the error state.
+                  } finally {
+                    setStatus('idle');
+                  }
+                }}
+                className="inline-flex items-center rounded-full bg-foreground px-3 py-1.5 text-xs font-semibold text-background transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {status === 'saving' ? 'Saving…' : 'Save'}
+              </button>
+              <button
+                type="button"
+                data-testid="memory-capture-toast-cancel-button"
+                disabled={status !== 'idle'}
+                onClick={() => {
+                  setDraft(capture.fact);
+                  setIsEditing(false);
+                }}
+                className="inline-flex items-center rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <p className="mt-2 whitespace-pre-line text-sm text-foreground">
+              {capture.fact}
+            </p>
+            {capture.source || capture.capturedAt ? (
+              <p className="mt-2 text-xs text-muted-foreground">
+                {[capture.source, capture.capturedAt]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </p>
+            ) : null}
+          </>
+        )}
+      </div>
+
+      {!isEditing ? (
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            data-testid="memory-capture-toast-edit-button"
+            onClick={() => {
+              if (canInlineEdit) {
+                setDraft(capture.fact);
+                setIsEditing(true);
+                return;
+              }
+
+              onOpenSettings();
+            }}
+            className="inline-flex items-center rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted"
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            data-testid="memory-capture-toast-undo-button"
+            disabled={!isUndoEnabled || status !== 'idle'}
+            onClick={async () => {
+              setStatus('undoing');
+              try {
+                await onUndo();
+              } catch {
+                // Parent toast handler surfaces the error state.
+              } finally {
+                setStatus('idle');
+              }
+            }}
+            className="inline-flex items-center rounded-full border border-rose-500/20 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {status === 'undoing' ? 'Undoing…' : 'Undo'}
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 type SnippetActionMode =
@@ -858,6 +1028,66 @@ export function PostCard({
       ['memory', 'previewLabel'],
       ['memory', 'preview_label'],
     ]) || 'Saved fact shaping this reply';
+  const [memoryPreviewFactOverride, setMemoryPreviewFactOverride] = useState<
+    string | null
+  >(null);
+  const [isMemorySignalHidden, setIsMemorySignalHidden] = useState(false);
+  const visibleMemoryPreview = isMemorySignalHidden
+    ? null
+    : memoryPreview
+      ? {
+          ...memoryPreview,
+          fact: memoryPreviewFactOverride ?? memoryPreview.fact,
+        }
+      : null;
+  const visibleMemoryCaptures = isMemorySignalHidden
+    ? []
+    : memoryCaptures.map((capture) =>
+        isSameMemoryCapture(capture, memoryPreview) && memoryPreviewFactOverride
+          ? {
+              ...capture,
+              fact: memoryPreviewFactOverride,
+            }
+          : capture
+      );
+  const visibleMemorySavedLabel = isMemorySignalHidden
+    ? undefined
+    : memorySavedLabel;
+  const visibleMemoryExplanation = isMemorySignalHidden
+    ? undefined
+    : memoryExplanation;
+  const memoryCaptureToastEnabled = readMetadataBoolean(post.metadata, [
+    ['memoryCaptureToast'],
+    ['memory_capture_toast'],
+    ['showMemoryCaptureToast'],
+    ['show_memory_capture_toast'],
+    ['memory', 'captureToast'],
+    ['memory', 'capture_toast'],
+    ['memory', 'justCaptured'],
+    ['memory', 'just_captured'],
+    ['memory', 'autoCaptured'],
+    ['memory', 'auto_captured'],
+  ]);
+  const memoryCaptureToastSource =
+    visibleMemoryPreview || visibleMemoryCaptures[0] || null;
+  const memoryCaptureToastKey = memoryCaptureToastSource
+    ? [
+        post.id,
+        memoryCaptureToastSource.id ||
+          memoryCaptureToastSource.capturedAt ||
+          post.updatedAt ||
+          memoryCaptureToastSource.fact,
+      ]
+        .filter(Boolean)
+        .join(':')
+    : null;
+  const shouldShowMemoryCaptureToast =
+    isChatSnippet &&
+    Boolean(visibleMemorySavedLabel && memoryCaptureToastSource?.fact) &&
+    (memoryCaptureToastEnabled ??
+      isFreshMemoryCapture(
+        memorySavedAt || memoryCaptureToastSource?.capturedAt || post.updatedAt
+      ));
   const memoryCorrection = readMetadataCorrection(post.metadata, [
     ['memoryCorrection'],
     ['memory_correction'],
@@ -986,8 +1216,8 @@ export function PostCard({
   const restateKeyFactCues = Array.from(
     new Set(
       [
-        memoryPreview?.fact,
-        ...memoryCaptures.map((capture) => capture.fact),
+        visibleMemoryPreview?.fact,
+        ...visibleMemoryCaptures.map((capture) => capture.fact),
       ].filter((value): value is string => Boolean(value?.trim()))
     )
   ).slice(0, 3);
@@ -1044,10 +1274,10 @@ export function PostCard({
     chatMessageCount: chatMessages.length,
     commentCount: post.commentCount,
     hasMemorySignal: Boolean(
-      memorySavedLabel ||
-      memoryExplanation ||
-      memoryPreview ||
-      memoryCaptures.length > 0
+      visibleMemorySavedLabel ||
+      visibleMemoryExplanation ||
+      visibleMemoryPreview ||
+      visibleMemoryCaptures.length > 0
     ),
     replyVelocity,
   });
@@ -1059,6 +1289,159 @@ export function PostCard({
   const followUpOptInSummary = followUpOptInSettings
     ? getFollowUpOptInSummary(followUpOptInSettings)
     : null;
+
+  useEffect(() => {
+    setMemoryPreviewFactOverride(null);
+    setIsMemorySignalHidden(false);
+  }, [post.id, memoryPreview?.id, memoryPreview?.capturedAt, memoryPreview?.fact]);
+
+  const openMemorySettings = () => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.location.assign('/dashboard/settings');
+  };
+
+  const handleMemoryCaptureEdit = async (nextFact: string) => {
+    if (!memoryCaptureToastSource?.id) {
+      openMemorySettings();
+      return;
+    }
+
+    const response = await fetch(
+      `/api/v1/agents/me/memories/${memoryCaptureToastSource.id}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ value: nextFact }),
+      }
+    );
+
+    if (!response.ok) {
+      let message = 'Could not update this saved fact.';
+
+      try {
+        const payload = (await response.json()) as {
+          error?: { message?: string };
+        };
+        message = payload.error?.message || message;
+      } catch {
+        // Ignore JSON parse failures.
+      }
+
+      throw new Error(message);
+    }
+
+    setMemoryPreviewFactOverride(nextFact);
+    analytics.clickCta('chat_snippet_memory_capture_edit');
+    toast({
+      title: 'Saved fact updated',
+      description: 'Future replies will use your edited memory snippet.',
+    });
+  };
+
+  const handleMemoryCaptureUndo = async () => {
+    if (!memoryCaptureToastSource?.id) {
+      openMemorySettings();
+      return;
+    }
+
+    const response = await fetch(
+      `/api/v1/agents/me/memories/${memoryCaptureToastSource.id}`,
+      {
+        method: 'DELETE',
+      }
+    );
+
+    if (!response.ok) {
+      let message = 'Could not remove this saved fact.';
+
+      try {
+        const payload = (await response.json()) as {
+          error?: { message?: string };
+        };
+        message = payload.error?.message || message;
+      } catch {
+        // Ignore JSON parse failures.
+      }
+
+      throw new Error(message);
+    }
+
+    setIsMemorySignalHidden(true);
+    analytics.clickCta('chat_snippet_memory_capture_undo');
+    toast({
+      title: 'Saved fact removed',
+      description: 'This auto-saved memory will not shape future replies.',
+    });
+  };
+
+  useEffect(() => {
+    if (
+      !shouldShowMemoryCaptureToast ||
+      !memoryCaptureToastSource ||
+      !memoryCaptureToastKey ||
+      shownMemoryCaptureToastKeys.has(memoryCaptureToastKey)
+    ) {
+      return;
+    }
+
+    shownMemoryCaptureToastKeys.add(memoryCaptureToastKey);
+
+    toast({
+      title: visibleMemorySavedLabel,
+      description: (
+        <MemoryCaptureToastBody
+          capture={memoryCaptureToastSource}
+          canInlineEdit={Boolean(memoryCaptureToastSource.id)}
+          isUndoEnabled
+          onEditInline={async (nextFact) => {
+            try {
+              await handleMemoryCaptureEdit(nextFact);
+            } catch (error) {
+              const message =
+                error instanceof Error
+                  ? error.message
+                  : 'Could not update this saved fact.';
+              toast({
+                title: 'Could not update saved fact',
+                description: message,
+              });
+              throw error;
+            }
+          }}
+          onUndo={async () => {
+            try {
+              await handleMemoryCaptureUndo();
+            } catch (error) {
+              const message =
+                error instanceof Error
+                  ? error.message
+                  : 'Could not remove this saved fact.';
+              toast({
+                title: 'Could not undo saved fact',
+                description: message,
+              });
+              throw error;
+            }
+          }}
+          onOpenSettings={openMemorySettings}
+        />
+      ),
+    });
+  }, [
+    handleMemoryCaptureEdit,
+    handleMemoryCaptureUndo,
+    memoryCaptureToastKey,
+    memoryCaptureToastSource,
+    openMemorySettings,
+    shouldShowMemoryCaptureToast,
+    toast,
+    visibleMemorySavedLabel,
+  ]);
 
   const handleFollowUpOptIn = async () => {
     if (!followUpOptInSignal || followUpOptInStatus !== 'idle') {
@@ -1494,7 +1877,7 @@ export function PostCard({
           </span>
         </div>
 
-        {memorySavedLabel ? (
+        {visibleMemorySavedLabel ? (
           <div className="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-3">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="space-y-1">
@@ -1502,7 +1885,7 @@ export function PostCard({
                   data-testid="chat-snippet-memory-event"
                   className="inline-flex items-center rounded-full border border-emerald-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700"
                 >
-                  {memorySavedLabel}
+                  {visibleMemorySavedLabel}
                 </span>
                 <p className="text-xs text-emerald-900/80">
                   {memorySavedAt
@@ -1511,7 +1894,7 @@ export function PostCard({
                 </p>
               </div>
 
-              {memoryCaptures.length > 0 ? (
+              {visibleMemoryCaptures.length > 0 ? (
                 <Dialog
                   open={isMemoryCapturesOpen}
                   onOpenChange={setIsMemoryCapturesOpen}
@@ -1521,7 +1904,7 @@ export function PostCard({
                     data-testid="chat-snippet-memory-drawer-trigger"
                   >
                     <History className="h-3.5 w-3.5" aria-hidden="true" />
-                    Recent captures ({memoryCaptures.length})
+                    Recent captures ({visibleMemoryCaptures.length})
                   </DialogTrigger>
                   <DialogContent data-testid="chat-snippet-memory-drawer">
                     <DialogHeader>
@@ -1533,7 +1916,7 @@ export function PostCard({
                     </DialogHeader>
 
                     <div className="space-y-3">
-                      {memoryCaptures.map((capture, index) => (
+                      {visibleMemoryCaptures.map((capture, index) => (
                         <div
                           key={`${capture.fact}-${index}`}
                           data-testid="chat-snippet-memory-capture"
@@ -1567,7 +1950,7 @@ export function PostCard({
               ) : null}
             </div>
 
-            {memoryPreview ? (
+            {visibleMemoryPreview ? (
               <div
                 data-testid="chat-snippet-memory-preview"
                 className="mt-3 rounded-xl border border-emerald-500/20 bg-background/70 px-3 py-2"
@@ -1576,14 +1959,14 @@ export function PostCard({
                   {memoryPreviewLabel}
                 </span>
                 <p className="mt-2 text-sm text-foreground/90 whitespace-pre-line">
-                  {memoryPreview.fact}
+                  {visibleMemoryPreview.fact}
                 </p>
-                {memoryPreview.source || memoryPreview.capturedAt ? (
+                {visibleMemoryPreview.source || visibleMemoryPreview.capturedAt ? (
                   <p className="mt-2 text-xs text-muted-foreground">
                     {[
-                      memoryPreview.source,
-                      memoryPreview.capturedAt
-                        ? `Saved ${formatMemoryTimestamp(memoryPreview.capturedAt)}`
+                      visibleMemoryPreview.source,
+                      visibleMemoryPreview.capturedAt
+                        ? `Saved ${formatMemoryTimestamp(visibleMemoryPreview.capturedAt)}`
                         : undefined,
                     ]
                       .filter(Boolean)
@@ -1593,7 +1976,7 @@ export function PostCard({
               </div>
             ) : null}
 
-            {memoryExplanation ? (
+            {visibleMemoryExplanation ? (
               <div
                 data-testid="chat-snippet-memory-reason"
                 className="mt-3 rounded-xl border border-emerald-500/20 bg-background/70 px-3 py-2"
@@ -1602,7 +1985,7 @@ export function PostCard({
                   Why I remembered this
                 </span>
                 <p className="mt-2 text-sm text-foreground/90 whitespace-pre-line">
-                  {memoryExplanation}
+                  {visibleMemoryExplanation}
                 </p>
               </div>
             ) : null}

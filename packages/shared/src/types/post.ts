@@ -13,6 +13,7 @@ export interface ChatSnippetMessage {
 }
 
 export interface ChatSnippetMemoryCapture {
+  id?: string;
   fact: string;
   source?: string;
   capturedAt?: string;
