@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -16,6 +16,7 @@ import {
   ShieldAlert,
   AlertTriangle,
   BadgeCheck,
+  BookmarkPlus,
   History,
   Loader2,
 } from 'lucide-react';
@@ -40,6 +41,7 @@ import {
 } from '@/components/ui/dialog';
 
 type ChatSnippetMemoryCapture = {
+  id?: string;
   fact: string;
   source?: string;
   capturedAt?: string;
@@ -880,6 +882,73 @@ function getChatRewindContext(messages: ChatSnippetMessage[]) {
   return null;
 }
 
+function normalizeRememberedFact(value: string | undefined, maxLength = 180) {
+  const normalized = value?.replace(/\s+/g, ' ').trim();
+
+  if (!normalized) {
+    return undefined;
+  }
+
+  return normalized.length <= maxLength
+    ? normalized
+    : normalized.slice(0, maxLength - 1).trimEnd() + '…';
+}
+
+type ManualMemoryDraft = {
+  key: string;
+  value: string;
+  category: 'profile_fact' | 'relationship_context';
+  preview: ChatSnippetMemoryCapture;
+};
+
+function buildManualMemoryDraft(
+  postId: string,
+  messages: ChatSnippetMessage[],
+  fallbackText?: string,
+  fallbackTitle?: string
+): ManualMemoryDraft | null {
+  const latestHumanMessage = [...messages]
+    .reverse()
+    .find((message) => isHumanSnippetRole(message.role))?.content;
+  const latestAgentMessage = [...messages]
+    .reverse()
+    .find((message) => isAgentSnippetRole(message.role))?.content;
+
+  const relationshipValue = normalizeRememberedFact(latestHumanMessage);
+
+  if (relationshipValue) {
+    return {
+      key: 'chat-' + postId + '-relationship-context',
+      value: relationshipValue,
+      category: 'relationship_context',
+      preview: {
+        fact: relationshipValue,
+        source: 'Saved from this snippet',
+        reason: 'Saved manually from a standout chat moment.',
+      },
+    };
+  }
+
+  const profileValue = normalizeRememberedFact(
+    latestAgentMessage || fallbackText || fallbackTitle
+  );
+
+  if (!profileValue) {
+    return null;
+  }
+
+  return {
+    key: 'chat-' + postId + '-profile-fact',
+    value: profileValue,
+    category: 'profile_fact',
+    preview: {
+      fact: profileValue,
+      source: 'Saved from this snippet',
+      reason: 'Saved manually from a standout chat moment.',
+    },
+  };
+}
+
 export function PostCard({
   post,
   className = '',
@@ -893,6 +962,11 @@ export function PostCard({
   const [isLiked, setIsLiked] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMemoryCapturesOpen, setIsMemoryCapturesOpen] = useState(false);
+  const [manualMemoryCapture, setManualMemoryCapture] =
+    useState<ChatSnippetMemoryCapture | null>(null);
+  const [manualRememberStatus, setManualRememberStatus] = useState<
+    'idle' | 'saving'
+  >('idle');
 
   const mediaUrl = (post.metadata?.media as PostMedia[] | undefined)?.[0]?.url;
   const chatMessages = (
@@ -909,6 +983,12 @@ export function PostCard({
   const chatSnippetSummary = chatMessages
     .map((message) => `${message.role}: ${message.content}`)
     .join('\n');
+  const manualMemoryDraft = buildManualMemoryDraft(
+    post.id,
+    chatMessages,
+    post.content,
+    post.title
+  );
   const translationContent = [post.title, post.content, chatSnippetSummary]
     .filter(Boolean)
     .join('\n');
@@ -946,7 +1026,7 @@ export function PostCard({
     ['remembered_because'],
     ['memory', 'reason'],
   ]);
-  const memoryCaptures = readMetadataArray(post.metadata, [
+  const baseMemoryCaptures = readMetadataArray(post.metadata, [
     ['memoryCaptures'],
     ['memory_captures'],
     ['capturedMemories'],
@@ -955,7 +1035,10 @@ export function PostCard({
   ])
     .map((entry) => normalizeMemoryCapture(entry))
     .filter((entry): entry is ChatSnippetMemoryCapture => entry != null);
-  const memoryPreview =
+  const memoryCaptures = manualMemoryCapture
+    ? [manualMemoryCapture, ...baseMemoryCaptures]
+    : baseMemoryCaptures;
+  const baseMemoryPreview =
     readMetadataCapture(post.metadata, [
       ['memoryPreview'],
       ['memory_preview'],
@@ -968,27 +1051,32 @@ export function PostCard({
       ['memory', 'fact_preview'],
       ['memory', 'savedFactPreview'],
       ['memory', 'saved_fact_preview'],
-    ]) || memoryCaptures[0];
+    ]) || baseMemoryCaptures[0];
+  const memoryPreview = manualMemoryCapture || baseMemoryPreview;
   const memorySavedLabel =
-    readMetadataString(post.metadata, [
-      ['memorySavedEvent'],
-      ['memory_saved_event'],
-      ['memoryStatus'],
-      ['memory_status'],
-      ['memory', 'event'],
-      ['memory', 'status'],
-    ]) ||
-    (memoryExplanation || memoryCaptures.length > 0 || memoryPreview
+    manualMemoryCapture
       ? 'Saved to memory'
-      : undefined);
-  const memorySavedAt = readMetadataString(post.metadata, [
-    ['memorySavedAt'],
-    ['memory_saved_at'],
-    ['memoryRecordedAt'],
-    ['memory_recorded_at'],
-    ['memory', 'savedAt'],
-    ['memory', 'recordedAt'],
-  ]);
+      : readMetadataString(post.metadata, [
+          ['memorySavedEvent'],
+          ['memory_saved_event'],
+          ['memoryStatus'],
+          ['memory_status'],
+          ['memory', 'event'],
+          ['memory', 'status'],
+        ]) ||
+        (memoryExplanation || baseMemoryCaptures.length > 0 || baseMemoryPreview
+          ? 'Saved to memory'
+          : undefined);
+  const memorySavedAt =
+    manualMemoryCapture?.capturedAt ||
+    readMetadataString(post.metadata, [
+      ['memorySavedAt'],
+      ['memory_saved_at'],
+      ['memoryRecordedAt'],
+      ['memory_recorded_at'],
+      ['memory', 'savedAt'],
+      ['memory', 'recordedAt'],
+    ]);
   const memoryPreviewLabel =
     readMetadataString(post.metadata, [
       ['memoryPreviewLabel'],
@@ -1238,6 +1326,11 @@ export function PostCard({
     ? getFollowUpOptInSummary(followUpOptInSettings)
     : null;
 
+  useEffect(() => {
+    setManualMemoryCapture(null);
+    setManualRememberStatus('idle');
+  }, [post.id]);
+
   const handleFollowUpOptIn = async () => {
     if (!followUpOptInSignal || followUpOptInStatus !== 'idle') {
       return;
@@ -1320,6 +1413,82 @@ export function PostCard({
         description: /not authenticated/i.test(message)
           ? 'Log in to save follow-up preferences first.'
           : 'Please try again from Settings if this keeps failing.',
+      });
+    }
+  };
+
+  const handleRememberThis = async () => {
+    if (!manualMemoryDraft || manualRememberStatus !== 'idle') {
+      return;
+    }
+
+    setManualRememberStatus('saving');
+
+    try {
+      const response = await fetch('/api/v1/agents/me/memories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          key: manualMemoryDraft.key,
+          value: manualMemoryDraft.value,
+          category: manualMemoryDraft.category,
+          isPublic: false,
+        }),
+      });
+      const payload = (await response.json().catch(() => null)) as {
+        success?: boolean;
+        data?: {
+          id?: string;
+          value?: string;
+          created_at?: string;
+        };
+        error?: {
+          message?: string;
+        };
+      } | null;
+
+      if (response.status === 409) {
+        setManualMemoryCapture(manualMemoryDraft.preview);
+        setManualRememberStatus('idle');
+        toast({
+          title: 'Already saved to memory',
+          description:
+            'This standout chat moment is already in your saved memory list.',
+        });
+        return;
+      }
+
+      if (!response.ok || !payload?.success) {
+        throw new Error(
+          payload?.error?.message || 'Could not save this chat moment.'
+        );
+      }
+
+      const capturedAt = payload.data?.created_at || new Date().toISOString();
+
+      setManualMemoryCapture({
+        ...manualMemoryDraft.preview,
+        id: payload.data?.id,
+        fact: payload.data?.value?.trim() || manualMemoryDraft.value,
+        capturedAt,
+      });
+      setManualRememberStatus('idle');
+      analytics.clickCta('chat_snippet_remember_this');
+      toast({
+        title: 'Saved to memory',
+        description: 'This standout chat moment is now pinned for future replies.',
+      });
+    } catch (error) {
+      console.error('Error saving standout chat moment to memory:', error);
+      setManualRememberStatus('idle');
+      const message = error instanceof Error ? error.message : '';
+      toast({
+        title: 'Could not save to memory',
+        description: /not authenticated/i.test(message)
+          ? 'Log in to save standout chat moments first.'
+          : message || 'Please try again from Settings if this keeps failing.',
       });
     }
   };
@@ -2091,6 +2260,29 @@ export function PostCard({
           ) : null}
 
           <div className="flex flex-wrap gap-2">
+            {manualMemoryDraft && !memorySavedLabel ? (
+              <button
+                type="button"
+                data-testid="chat-snippet-remember-this-button"
+                onClick={() => {
+                  void handleRememberThis();
+                }}
+                disabled={manualRememberStatus !== 'idle'}
+                className={cn(
+                  'inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',
+                  manualRememberStatus === 'saving'
+                    ? 'cursor-wait border-emerald-500/25 bg-emerald-500/10 text-emerald-700 opacity-80'
+                    : 'border-emerald-500/25 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15'
+                )}
+              >
+                {manualRememberStatus === 'saving' ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                ) : (
+                  <BookmarkPlus className="h-3.5 w-3.5" aria-hidden="true" />
+                )}
+                {manualRememberStatus === 'saving' ? 'Saving…' : 'Remember this'}
+              </button>
+            ) : null}
             <button
               type="button"
               data-testid="chat-snippet-remix-button"

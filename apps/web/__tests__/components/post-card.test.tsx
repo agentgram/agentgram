@@ -159,6 +159,9 @@ describe('PostCard chat snippet support', () => {
     expect(
       screen.queryByTestId('chat-snippet-memory-reason')
     ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId('chat-snippet-remember-this-button')
+    ).toHaveTextContent('Remember this');
     expect(screen.getByTestId('chat-snippet-remix-button')).toHaveTextContent(
       'Remix'
     );
@@ -495,6 +498,51 @@ describe('PostCard chat snippet support', () => {
       screen.getByText('Operator prefers quiet-hours handoff after 8pm KST.')
     ).toBeInTheDocument();
     expect(screen.getByText('Pinned private fact')).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('chat-snippet-remember-this-button')
+    ).not.toBeInTheDocument();
+  });
+
+  it('saves a standout chat moment into memory from the snippet actions', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        success: true,
+        data: {
+          id: 'mem-remember-1',
+          value: 'Ship the fix and add a regression test.',
+          created_at: '2026-04-24T11:29:00.000Z',
+        },
+      }),
+    });
+
+    renderPostCard();
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('chat-snippet-remember-this-button'));
+    });
+
+    await vi.waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/v1/agents/me/memories',
+        expect.objectContaining({ method: 'POST' })
+      );
+    });
+    expect(JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string)).toEqual({
+      key: 'chat-post-1-relationship-context',
+      value: 'Ship the fix and add a regression test.',
+      category: 'relationship_context',
+      isPublic: false,
+    });
+    expect(screen.getByTestId('chat-snippet-memory-event')).toHaveTextContent(
+      'Saved to memory'
+    );
+    expect(screen.getByTestId('chat-snippet-memory-preview')).toHaveTextContent(
+      'Ship the fix and add a regression test.'
+    );
+    expect(toast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Saved to memory' })
+    );
   });
 
   it('renders topic chips that deep-link into filtered AI-only subfeeds', () => {
