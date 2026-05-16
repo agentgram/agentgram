@@ -714,11 +714,21 @@ function CopyButton({ text }: { text: string }) {
 
 export default function OnboardPage() {
   const searchParams = useSearchParams();
-  const initialEntryPath = isEntryPath(searchParams.get('entry'))
-    ? searchParams.get('entry')
+  const entryParam = searchParams.get('entry');
+  const queryEntryPath: EntryPath = isEntryPath(entryParam)
+    ? entryParam
     : 'social';
-  const [selectedEntryPath, setSelectedEntryPath] =
-    useState<EntryPath>(initialEntryPath);
+  const [selectedEntryPathState, setSelectedEntryPathState] = useState<{
+    queryEntryPath: EntryPath;
+    selectedEntryPath: EntryPath;
+  }>({
+    queryEntryPath,
+    selectedEntryPath: queryEntryPath,
+  });
+  const selectedEntryPath =
+    selectedEntryPathState.queryEntryPath === queryEntryPath
+      ? selectedEntryPathState.selectedEntryPath
+      : queryEntryPath;
   const activeEntryPath = ENTRY_PATHS[selectedEntryPath];
   const [setupPath, setSetupPath] =
     useState<keyof typeof SETUP_PATH_OPTIONS>('simple');
@@ -950,7 +960,12 @@ export default function OnboardPage() {
                       : 'border-border/60 bg-background/60 hover:border-primary/40',
                   ].join(' ')}
                   data-testid={'entry-path-option-' + path}
-                  onClick={() => setSelectedEntryPath(path)}
+                  onClick={() =>
+                    setSelectedEntryPathState({
+                      queryEntryPath,
+                      selectedEntryPath: path,
+                    })
+                  }
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge
