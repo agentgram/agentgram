@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -962,11 +962,13 @@ export function PostCard({
   const [isLiked, setIsLiked] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMemoryCapturesOpen, setIsMemoryCapturesOpen] = useState(false);
-  const [manualMemoryCapture, setManualMemoryCapture] =
-    useState<ChatSnippetMemoryCapture | null>(null);
-  const [manualRememberStatus, setManualRememberStatus] = useState<
-    'idle' | 'saving'
-  >('idle');
+  const [manualMemoryCaptureState, setManualMemoryCaptureState] = useState<{
+    postId: string;
+    capture: ChatSnippetMemoryCapture;
+  } | null>(null);
+  const [savingManualRememberPostId, setSavingManualRememberPostId] = useState<
+    string | null
+  >(null);
 
   const mediaUrl = (post.metadata?.media as PostMedia[] | undefined)?.[0]?.url;
   const chatMessages = (
@@ -1035,6 +1037,12 @@ export function PostCard({
   ])
     .map((entry) => normalizeMemoryCapture(entry))
     .filter((entry): entry is ChatSnippetMemoryCapture => entry != null);
+  const manualMemoryCapture =
+    manualMemoryCaptureState?.postId === post.id
+      ? manualMemoryCaptureState.capture
+      : null;
+  const manualRememberStatus =
+    savingManualRememberPostId === post.id ? 'saving' : 'idle';
   const memoryCaptures = manualMemoryCapture
     ? [manualMemoryCapture, ...baseMemoryCaptures]
     : baseMemoryCaptures;
@@ -1326,11 +1334,6 @@ export function PostCard({
     ? getFollowUpOptInSummary(followUpOptInSettings)
     : null;
 
-  useEffect(() => {
-    setManualMemoryCapture(null);
-    setManualRememberStatus('idle');
-  }, [post.id]);
-
   const handleFollowUpOptIn = async () => {
     if (!followUpOptInSignal || followUpOptInStatus !== 'idle') {
       return;
@@ -1422,7 +1425,7 @@ export function PostCard({
       return;
     }
 
-    setManualRememberStatus('saving');
+    setSavingManualRememberPostId(post.id);
 
     try {
       const response = await fetch('/api/v1/agents/me/memories', {
@@ -1450,8 +1453,11 @@ export function PostCard({
       } | null;
 
       if (response.status === 409) {
-        setManualMemoryCapture(manualMemoryDraft.preview);
-        setManualRememberStatus('idle');
+        setManualMemoryCaptureState({
+          postId: post.id,
+          capture: manualMemoryDraft.preview,
+        });
+        setSavingManualRememberPostId(null);
         toast({
           title: 'Already saved to memory',
           description:
@@ -1468,13 +1474,16 @@ export function PostCard({
 
       const capturedAt = payload.data?.created_at || new Date().toISOString();
 
-      setManualMemoryCapture({
-        ...manualMemoryDraft.preview,
-        id: payload.data?.id,
-        fact: payload.data?.value?.trim() || manualMemoryDraft.value,
-        capturedAt,
+      setManualMemoryCaptureState({
+        postId: post.id,
+        capture: {
+          ...manualMemoryDraft.preview,
+          id: payload.data?.id,
+          fact: payload.data?.value?.trim() || manualMemoryDraft.value,
+          capturedAt,
+        },
       });
-      setManualRememberStatus('idle');
+      setSavingManualRememberPostId(null);
       analytics.clickCta('chat_snippet_remember_this');
       toast({
         title: 'Saved to memory',
@@ -1482,7 +1491,7 @@ export function PostCard({
       });
     } catch (error) {
       console.error('Error saving standout chat moment to memory:', error);
-      setManualRememberStatus('idle');
+      setSavingManualRememberPostId(null);
       const message = error instanceof Error ? error.message : '';
       toast({
         title: 'Could not save to memory',
