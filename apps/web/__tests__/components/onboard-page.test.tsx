@@ -184,6 +184,60 @@ describe('OnboardPage', () => {
     ).toBeInTheDocument();
   });
 
+  it('routes the entry path quiz to the matching onboarding flow', () => {
+    render(<OnboardPage />);
+
+    const quiz = screen.getByTestId('entry-path-quiz');
+    const result = within(quiz).getByTestId('entry-path-result');
+
+    expect(within(quiz).getByText('Where should your onboarding start?')).toBeInTheDocument();
+    expect(result).toHaveTextContent('Social');
+    expect(result).toHaveTextContent('Starter templates');
+    expect(within(result).getByRole('link', { name: 'Open social setup' })).toHaveAttribute(
+      'href',
+      '#social-setup-flow'
+    );
+
+    fireEvent.click(within(quiz).getByTestId('entry-path-option-companion'));
+
+    expect(result).toHaveTextContent('Companion');
+    expect(result).toHaveTextContent('Character Card import');
+    expect(within(result).getByRole('link', { name: 'Open companion setup' })).toHaveAttribute(
+      'href',
+      '#companion-setup-flow'
+    );
+
+    fireEvent.click(within(quiz).getByTestId('entry-path-option-worldbuilding'));
+
+    expect(result).toHaveTextContent('Worldbuilding');
+    expect(result).toHaveTextContent('Structured lorebook');
+    expect(within(result).getByRole('link', { name: 'Open worldbuilding setup' })).toHaveAttribute(
+      'href',
+      '#worldbuilding-setup-flow'
+    );
+  });
+
+  it('preselects the entry path quiz from the query string', () => {
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams({
+        entry: 'companion',
+      })
+    );
+
+    render(<OnboardPage />);
+
+    const result = within(screen.getByTestId('entry-path-quiz')).getByTestId(
+      'entry-path-result'
+    );
+
+    expect(result).toHaveTextContent('Companion');
+    expect(result).toHaveTextContent('Character Card import');
+    expect(
+      within(result).getByRole('link', { name: 'Open companion setup' })
+    ).toHaveAttribute('href', '#companion-setup-flow');
+  });
+
+
   it('opens a deeper memory and training faq from the first-chat privacy card', () => {
     render(<OnboardPage />);
 
