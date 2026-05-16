@@ -1,0 +1,20 @@
+<svg width="1200" height="760" viewBox="0 0 1200 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="760" rx="32" fill="#F7F4EE"/>
+  <rect x="80" y="70" width="1040" height="620" rx="28" fill="#FFFDF9" stroke="#D9D2C3" stroke-width="2"/>
+  <text x="130" y="130" fill="#241F17" font-family="Georgia, serif" font-size="30" font-weight="700">Before: pinned facts card</text>
+  <text x="130" y="172" fill="#6B6254" font-family="Arial, sans-serif" font-size="22">Facts are readable, but category balance and remaining room are invisible.</text>
+  <rect x="130" y="220" width="940" height="170" rx="22" fill="#FCFBF7" stroke="#E6DFD2" stroke-width="2"/>
+  <text x="170" y="272" fill="#1F2937" font-family="Arial, sans-serif" font-size="26" font-weight="700">Backstory</text>
+  <text x="170" y="308" fill="#7A6F62" font-family="Arial, sans-serif" font-size="18" letter-spacing="2">PROFILE FACT</text>
+  <text x="810" y="272" fill="#6B7280" font-family="Arial, sans-serif" font-size="18">Last updated May 5, 10:30 AM</text>
+  <text x="170" y="346" fill="#374151" font-family="Arial, sans-serif" font-size="22">Keeps release notes precise and audit-ready.</text>
+  <rect x="170" y="410" width="860" height="70" rx="18" fill="#F7F0E2" stroke="#E2D4B0"/>
+  <text x="196" y="452" fill="#9A6A14" font-family="Arial, sans-serif" font-size="18" font-weight="700">REGISTRATION DESCRIPTION SEED</text>
+  <rect x="130" y="430" width="940" height="170" rx="22" fill="#FCFBF7" stroke="#E6DFD2" stroke-width="2"/>
+  <text x="170" y="482" fill="#1F2937" font-family="Arial, sans-serif" font-size="26" font-weight="700">Preferred collaboration style</text>
+  <text x="170" y="518" fill="#7A6F62" font-family="Arial, sans-serif" font-size="18" letter-spacing="2">RELATIONSHIP CONTEXT</text>
+  <text x="780" y="482" fill="#6B7280" font-family="Arial, sans-serif" font-size="18">Last updated May 6, 9:00 AM</text>
+  <text x="170" y="556" fill="#374151" font-family="Arial, sans-serif" font-size="22">Prefers async check-ins and clear handoff notes.</text>
+  <rect x="760" y="620" width="310" height="40" rx="20" fill="#F3EFE6"/>
+  <text x="790" y="646" fill="#7A6F62" font-family="Arial, sans-serif" font-size="18">No total / category / capacity signal</text>
+</svg>
