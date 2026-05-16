@@ -17,10 +17,21 @@ export interface AgentPinnedFactRecord {
   originSnippet: string;
 }
 
+export interface AgentPinnedFactsLedger {
+  capacity: number;
+  savedCount: number;
+  remainingCount: number;
+  categoryCounts: {
+    profileFact: number;
+    relationshipContext: number;
+  };
+}
+
 export interface AgentPinnedFactsSettings {
   agentId: string;
   agentLabel: string;
   facts: AgentPinnedFactRecord[];
+  ledger: AgentPinnedFactsLedger;
 }
 
 interface AgentPinnedFactsCardProps {
@@ -54,7 +65,17 @@ function formatCategoryLabel(category: string) {
     .join(' ');
 }
 
+function formatCapacityCopy(count: number) {
+  return count === 1 ? '1 slot left' : `${count} slots left`;
+}
+
 export function AgentPinnedFactsCard({ settings }: AgentPinnedFactsCardProps) {
+  const { ledger } = settings;
+  const usagePercent =
+    ledger.capacity === 0
+      ? 0
+      : Math.min(100, Math.round((ledger.savedCount / ledger.capacity) * 100));
+
   return (
     <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
       <CardHeader>
@@ -63,15 +84,78 @@ export function AgentPinnedFactsCard({ settings }: AgentPinnedFactsCardProps) {
           Pinned facts for {settings.agentLabel}
         </CardTitle>
         <CardDescription>
-          Review the private facts this agent keeps handy, plus when each one last
-          changed and what originally seeded it.
+          Visible, controllable private memory. Review what this agent saved,
+          which category it belongs to, and how much room remains in the ledger.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div
+          className="rounded-xl border border-primary/20 bg-primary/5 p-4"
+          data-testid="pinned-facts-ledger-summary"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="space-y-1">
+              <div className="text-sm font-medium text-foreground">
+                {ledger.savedCount === 1
+                  ? '1 saved memory'
+                  : `${ledger.savedCount} saved memories`}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {formatCapacityCopy(ledger.remainingCount)} before this panel
+                reaches its current {ledger.capacity}-memory capacity.
+              </p>
+            </div>
+            <div className="rounded-full border border-primary/20 bg-background/90 px-3 py-1 text-xs font-medium text-primary">
+              {usagePercent}% used
+            </div>
+          </div>
+
+          <div className="mt-4 h-2 overflow-hidden rounded-full bg-primary/10">
+            <div
+              aria-hidden="true"
+              className="h-full rounded-full bg-primary transition-[width]"
+              style={{ width: `${usagePercent}%` }}
+            />
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div
+              className="rounded-lg border border-border/60 bg-background/80 p-3"
+              data-testid="ledger-category-profile-fact"
+            >
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                Profile fact
+              </div>
+              <div className="mt-1 text-2xl font-semibold text-foreground">
+                {ledger.categoryCounts.profileFact}
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Identity, backstory, and other durable self facts.
+              </p>
+            </div>
+
+            <div
+              className="rounded-lg border border-border/60 bg-background/80 p-3"
+              data-testid="ledger-category-relationship-context"
+            >
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                Relationship context
+              </div>
+              <div className="mt-1 text-2xl font-semibold text-foreground">
+                {ledger.categoryCounts.relationshipContext}
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Repeated cues about how this agent should relate to specific
+                people.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {settings.facts.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border/70 p-6 text-sm text-muted-foreground">
-            No pinned facts yet. Seed one through registration or save a private
-            fact to start building provenance here.
+            No pinned facts yet. Starter memories and future saves will show up
+            here so you can inspect what is being kept.
           </div>
         ) : (
           settings.facts.map((fact) => (
