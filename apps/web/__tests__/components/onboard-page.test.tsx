@@ -35,7 +35,7 @@ describe('OnboardPage', () => {
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
   });
 
-  it('shows relationship presets, age boundary, verification, privacy, memory consent, and lorebook guidance before the publish-focused quickstart', () => {
+  it('shows relationship presets, age boundary, verification, privacy, memory consent, lorebook guidance, and the companion ritual bundle before the publish-focused quickstart', () => {
     render(<OnboardPage />);
 
     const presetPicker = screen.getByTestId('relationship-preset-picker');
@@ -131,6 +131,18 @@ describe('OnboardPage', () => {
     expect(starterTemplates).toHaveTextContent('Guided orientation opener');
     expect(starterTemplates).toHaveTextContent('Co-host kickoff opener');
 
+    const ritualStarter = screen.getByTestId('companion-ritual-starter');
+    expect(ritualStarter).toHaveTextContent(
+      'Preview the diary, follow-up check-in, and short video loop rhythm'
+    );
+    expect(ritualStarter).toHaveTextContent('Publish one diary checkpoint');
+    expect(ritualStarter).toHaveTextContent(
+      'Turn one strong reply into a future check-in'
+    );
+    expect(ritualStarter).toHaveTextContent(
+      'Tease a short video loop for repeat rituals'
+    );
+
     const quickstartHeading = screen.getByText(
       'Two-step quick start for simple setup'
     );
@@ -159,7 +171,11 @@ describe('OnboardPage', () => {
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     expect(
-      lorebookSetup.compareDocumentPosition(quickstartHeading) &
+      quickstartHeading.compareDocumentPosition(starterTemplates) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(
+      starterTemplates.compareDocumentPosition(ritualStarter) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
 
@@ -167,6 +183,108 @@ describe('OnboardPage', () => {
       screen.getByText(/same setup choice you previewed on this page/i)
     ).toBeInTheDocument();
   });
+
+  it('routes the entry path quiz to the matching onboarding flow', () => {
+    render(<OnboardPage />);
+
+    const quiz = screen.getByTestId('entry-path-quiz');
+    const result = within(quiz).getByTestId('entry-path-result');
+
+    expect(within(quiz).getByText('Where should your onboarding start?')).toBeInTheDocument();
+    expect(result).toHaveTextContent('Social');
+    expect(result).toHaveTextContent('Starter templates');
+    expect(within(result).getByRole('link', { name: 'Open social setup' })).toHaveAttribute(
+      'href',
+      '#social-setup-flow'
+    );
+
+    fireEvent.click(within(quiz).getByTestId('entry-path-option-companion'));
+
+    expect(result).toHaveTextContent('Companion');
+    expect(result).toHaveTextContent('Character Card import');
+    expect(within(result).getByRole('link', { name: 'Open companion setup' })).toHaveAttribute(
+      'href',
+      '#companion-setup-flow'
+    );
+
+    fireEvent.click(within(quiz).getByTestId('entry-path-option-worldbuilding'));
+
+    expect(result).toHaveTextContent('Worldbuilding');
+    expect(result).toHaveTextContent('Structured lorebook');
+    expect(within(result).getByRole('link', { name: 'Open worldbuilding setup' })).toHaveAttribute(
+      'href',
+      '#worldbuilding-setup-flow'
+    );
+  });
+
+  it('preselects the entry path quiz from the query string', () => {
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams({
+        entry: 'companion',
+      })
+    );
+
+    render(<OnboardPage />);
+
+    const result = within(screen.getByTestId('entry-path-quiz')).getByTestId(
+      'entry-path-result'
+    );
+
+    expect(result).toHaveTextContent('Companion');
+    expect(result).toHaveTextContent('Character Card import');
+    expect(
+      within(result).getByRole('link', { name: 'Open companion setup' })
+    ).toHaveAttribute('href', '#companion-setup-flow');
+  });
+
+  it('syncs the entry path quiz when the query string changes on client navigation', () => {
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams({
+        entry: 'companion',
+      })
+    );
+
+    const view = render(<OnboardPage />);
+
+    let result = within(screen.getByTestId('entry-path-quiz')).getByTestId(
+      'entry-path-result'
+    );
+    expect(result).toHaveTextContent('Companion');
+    expect(
+      within(result).getByRole('link', { name: 'Open companion setup' })
+    ).toHaveAttribute('href', '#companion-setup-flow');
+
+    fireEvent.click(
+      within(screen.getByTestId('entry-path-quiz')).getByTestId(
+        'entry-path-option-worldbuilding'
+      )
+    );
+
+    result = within(screen.getByTestId('entry-path-quiz')).getByTestId(
+      'entry-path-result'
+    );
+    expect(result).toHaveTextContent('Worldbuilding');
+    expect(
+      within(result).getByRole('link', { name: 'Open worldbuilding setup' })
+    ).toHaveAttribute('href', '#worldbuilding-setup-flow');
+
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams({
+        entry: 'social',
+      })
+    );
+
+    view.rerender(<OnboardPage />);
+
+    result = within(screen.getByTestId('entry-path-quiz')).getByTestId(
+      'entry-path-result'
+    );
+    expect(result).toHaveTextContent('Social');
+    expect(
+      within(result).getByRole('link', { name: 'Open social setup' })
+    ).toHaveAttribute('href', '#social-setup-flow');
+  });
+
 
   it('opens a deeper memory and training faq from the first-chat privacy card', () => {
     render(<OnboardPage />);

@@ -37,6 +37,15 @@ type AgentSettingsRecord = {
   initialLorebook: ReturnType<typeof readAgentLorebookFromMetadata>;
   initialDiaryEntries: ReturnType<typeof readAgentDiaryFromMetadata>;
   pinnedFacts: AgentPinnedFactRecord[];
+  pinnedFactsLedger: {
+    capacity: number;
+    savedCount: number;
+    remainingCount: number;
+    categoryCounts: {
+      profileFact: number;
+      relationshipContext: number;
+    };
+  };
 };
 
 type AgentMemoryRecord = {
@@ -48,6 +57,8 @@ type AgentMemoryRecord = {
   created_at: string;
   updated_at: string;
 };
+
+const PINNED_FACTS_LEDGER_CAPACITY = 12;
 
 function truncateSnippet(value: string, max = 140) {
   const normalized = value.replace(/\s+/g, ' ').trim();
@@ -167,22 +178,39 @@ export default async function SettingsPage() {
 
   const trustSettings: AgentSettingsRecord[] = (agents ?? []).map((agent) => {
     const activePersona = activePersonaByAgentId.get(agent.id);
-    const pinnedFacts = (memoryRowsByAgentId.get(agent.id) ?? []).map(
-      (memory) => ({
-        id: memory.id,
+    const agentMemoryRows = memoryRowsByAgentId.get(agent.id) ?? [];
+    const pinnedFacts = agentMemoryRows.map((memory) => ({
+      id: memory.id,
+      key: memory.key,
+      value: memory.value,
+      category: memory.category,
+      updatedAt: memory.updated_at || memory.created_at,
+      ...buildOriginDetails({
         key: memory.key,
         value: memory.value,
-        category: memory.category,
-        updatedAt: memory.updated_at || memory.created_at,
-        ...buildOriginDetails({
-          key: memory.key,
-          value: memory.value,
-          agentName: agent.name,
-          agentLabel: agent.display_name || agent.name,
-          agentDescription: agent.description ?? '',
-        }),
-      })
-    );
+        agentName: agent.name,
+        agentLabel: agent.display_name || agent.name,
+        agentDescription: agent.description ?? '',
+      }),
+    }));
+    const profileFactCount = agentMemoryRows.filter(
+      (memory) => memory.category === 'profile_fact'
+    ).length;
+    const relationshipContextCount = agentMemoryRows.filter(
+      (memory) => memory.category === 'relationship_context'
+    ).length;
+    const pinnedFactsLedger = {
+      capacity: PINNED_FACTS_LEDGER_CAPACITY,
+      savedCount: agentMemoryRows.length,
+      remainingCount: Math.max(
+        PINNED_FACTS_LEDGER_CAPACITY - agentMemoryRows.length,
+        0
+      ),
+      categoryCounts: {
+        profileFact: profileFactCount,
+        relationshipContext: relationshipContextCount,
+      },
+    };
 
     return {
       agentId: agent.id,
@@ -199,6 +227,7 @@ export default async function SettingsPage() {
       initialLorebook: readAgentLorebookFromMetadata(agent.metadata),
       initialDiaryEntries: readAgentDiaryFromMetadata(agent.metadata),
       pinnedFacts,
+      pinnedFactsLedger,
     };
   });
 
@@ -241,6 +270,7 @@ export default async function SettingsPage() {
                     agentId: settings.agentId,
                     agentLabel: settings.agentLabel,
                     facts: settings.pinnedFacts,
+                    ledger: settings.pinnedFactsLedger,
                   }}
                 />
                 <AgentLorebookForm
