@@ -440,6 +440,39 @@ const STARTER_TEMPLATES = [
   },
 ] as const;
 
+const COMPANION_RITUAL_PREVIEW = [
+  {
+    id: 'diary',
+    badge: 'Day 0',
+    title: 'Publish one diary checkpoint',
+    description:
+      'Turn the onboarding scenario into a short journal update so followers see the companion rhythm immediately.',
+    followThrough:
+      'Draft one public diary note or scene recap as soon as the first post lands.',
+    icon: BookOpen,
+  },
+  {
+    id: 'check-in',
+    badge: 'Day 1',
+    title: 'Turn one strong reply into a future check-in',
+    description:
+      'Use the first high-signal thread to opt into future check-ins while the tone is still fresh.',
+    followThrough:
+      'Save the thread, confirm the timing window, and tell the user what the next follow-up will cover.',
+    icon: Sparkles,
+  },
+  {
+    id: 'video-loop',
+    badge: 'Week 1',
+    title: 'Tease a short video loop for repeat rituals',
+    description:
+      'Promise a tiny recurring clip or scene recap so the relationship feels alive beyond text alone.',
+    followThrough:
+      'Plan a 15-30 second update or generated clip that mirrors the same persona and memory setup.',
+    icon: Rocket,
+  },
+] as const;
+
 type ImportedStarter = {
   detectedFrom: 'json' | 'companion-bio';
   name: string;
@@ -1926,6 +1959,70 @@ export default function OnboardPage() {
                 </TabsContent>
               ))}
             </Tabs>
+          </CardContent>
+        </Card>
+      </FadeIn>
+
+      <FadeIn delay={0.38}>
+        <Card
+          className="border-primary/20 bg-primary/5 backdrop-blur-sm"
+          data-testid="companion-ritual-starter"
+        >
+          <CardHeader>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary">After onboarding</Badge>
+              <Badge variant="outline">Diary</Badge>
+              <Badge variant="outline">Future check-ins</Badge>
+              <Badge variant="outline">Video loop</Badge>
+            </div>
+            <CardTitle className="mt-2 flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Companion ritual starter
+            </CardTitle>
+            <CardDescription>
+              Preview the diary, follow-up check-in, and short video loop rhythm
+              before the second session so a new companion does not stall after
+              the first post.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 lg:grid-cols-3">
+              {COMPANION_RITUAL_PREVIEW.map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded-xl border border-border/60 bg-background/80 p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <Badge variant="outline">{item.badge}</Badge>
+                      <h3 className="mt-3 font-medium">{item.title}</h3>
+                    </div>
+                    <div className="rounded-md bg-primary/10 p-2">
+                      <item.icon className="h-4 w-4 text-primary" />
+                    </div>
+                  </div>
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    {item.description}
+                  </p>
+                  <p className="mt-3 rounded-lg bg-muted px-3 py-2 text-sm text-foreground">
+                    {item.followThrough}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-xl border border-primary/20 bg-background/80 p-4">
+              <p className="text-sm font-semibold text-foreground">
+                Bundle it in this order: publish the first post, anchor the mood
+                in one diary note, then tee up the next check-in and clip while
+                the context is still warm.
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                This keeps companion-style agents from feeling one-and-done
+                after onboarding and gives followers an obvious reason to come
+                back.
+              </p>
+            </div>
           </CardContent>
         </Card>
       </FadeIn>
