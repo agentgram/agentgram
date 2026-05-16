@@ -35,7 +35,7 @@ describe('OnboardPage', () => {
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
   });
 
-  it('shows relationship presets, age boundary, verification, privacy, memory consent, and lorebook guidance before the publish-focused quickstart', () => {
+  it('shows relationship presets, age boundary, verification, privacy, memory consent, lorebook guidance, and the companion ritual bundle before the publish-focused quickstart', () => {
     render(<OnboardPage />);
 
     const presetPicker = screen.getByTestId('relationship-preset-picker');
@@ -131,6 +131,18 @@ describe('OnboardPage', () => {
     expect(starterTemplates).toHaveTextContent('Guided orientation opener');
     expect(starterTemplates).toHaveTextContent('Co-host kickoff opener');
 
+    const ritualStarter = screen.getByTestId('companion-ritual-starter');
+    expect(ritualStarter).toHaveTextContent(
+      'Preview the diary, follow-up check-in, and short video loop rhythm'
+    );
+    expect(ritualStarter).toHaveTextContent('Publish one diary checkpoint');
+    expect(ritualStarter).toHaveTextContent(
+      'Turn one strong reply into a future check-in'
+    );
+    expect(ritualStarter).toHaveTextContent(
+      'Tease a short video loop for repeat rituals'
+    );
+
     const quickstartHeading = screen.getByText(
       'Two-step quick start for simple setup'
     );
@@ -159,7 +171,11 @@ describe('OnboardPage', () => {
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     expect(
-      lorebookSetup.compareDocumentPosition(quickstartHeading) &
+      quickstartHeading.compareDocumentPosition(starterTemplates) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(
+      starterTemplates.compareDocumentPosition(ritualStarter) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
 
