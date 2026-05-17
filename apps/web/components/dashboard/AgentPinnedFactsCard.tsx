@@ -71,6 +71,7 @@ function formatCapacityCopy(count: number) {
 
 export function AgentPinnedFactsCard({ settings }: AgentPinnedFactsCardProps) {
   const { ledger } = settings;
+  const recentFacts = settings.facts.slice(0, 3);
   const usagePercent =
     ledger.capacity === 0
       ? 0
@@ -85,7 +86,8 @@ export function AgentPinnedFactsCard({ settings }: AgentPinnedFactsCardProps) {
         </CardTitle>
         <CardDescription>
           Visible, controllable private memory. Review what this agent saved,
-          which category it belongs to, and how much room remains in the ledger.
+          which category it belongs to, how much room remains in the ledger, and
+          the latest memory receipts.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -158,47 +160,114 @@ export function AgentPinnedFactsCard({ settings }: AgentPinnedFactsCardProps) {
             here so you can inspect what is being kept.
           </div>
         ) : (
-          settings.facts.map((fact) => (
+          <>
             <div
-              className="rounded-xl border border-border/60 bg-background/80 p-4"
-              data-testid={`pinned-fact-${fact.id}`}
-              key={fact.id}
+              className="rounded-xl border border-primary/20 bg-primary/5 p-4"
+              data-testid="pinned-facts-receipts"
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="space-y-1">
+                <div>
                   <div className="font-medium text-foreground">
-                    {formatFactLabel(fact.key)}
+                    Latest memory receipts
                   </div>
-                  <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                    {formatCategoryLabel(fact.category)}
-                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    The newest saved facts stay visible here so you can confirm
+                    what changed before digging into the full ledger.
+                  </p>
                 </div>
-                <div
-                  className="flex items-center gap-2 text-xs text-muted-foreground"
-                  data-testid={`pinned-fact-updated-${fact.id}`}
-                >
-                  <Clock3 className="h-3.5 w-3.5" />
-                  Last updated {formatTimestamp(fact.updatedAt)}
+                <div className="rounded-full border border-primary/20 bg-background/90 px-3 py-1 text-xs font-medium text-primary">
+                  Showing {recentFacts.length} of {settings.facts.length}
                 </div>
               </div>
 
-              <p className="mt-3 whitespace-pre-wrap text-sm text-foreground">
-                {fact.value}
-              </p>
-
-              <div
-                className="mt-4 rounded-lg border border-primary/15 bg-primary/5 p-3"
-                data-testid={`pinned-fact-origin-${fact.id}`}
-              >
-                <div className="text-xs font-medium uppercase tracking-wide text-primary">
-                  {fact.originLabel}
-                </div>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {fact.originSnippet}
-                </p>
+              <div className="mt-4 grid gap-3">
+                {recentFacts.map((fact) => (
+                  <div
+                    className="rounded-lg border border-border/60 bg-background/85 p-3"
+                    data-testid={`memory-receipt-${fact.id}`}
+                    key={fact.id}
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium text-foreground">
+                        {formatFactLabel(fact.key)}
+                      </span>
+                      <span
+                        className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"
+                        data-testid={`memory-receipt-category-${fact.id}`}
+                      >
+                        {formatCategoryLabel(fact.category)}
+                      </span>
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs text-muted-foreground"
+                        data-testid={`memory-receipt-timestamp-${fact.id}`}
+                      >
+                        <Clock3 className="h-3.5 w-3.5" />
+                        Saved {formatTimestamp(fact.updatedAt)}
+                      </span>
+                    </div>
+                    <p
+                      className="mt-3 whitespace-pre-wrap text-sm text-foreground"
+                      data-testid={`memory-receipt-value-${fact.id}`}
+                    >
+                      {fact.value}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
-          ))
+
+            <div className="space-y-3">
+              <div>
+                <div className="font-medium text-foreground">Full memory ledger</div>
+                <p className="text-sm text-muted-foreground">
+                  Every saved fact keeps its original seed note so you can audit
+                  why it exists, not just when it was last updated.
+                </p>
+              </div>
+
+              {settings.facts.map((fact) => (
+                <div
+                  className="rounded-xl border border-border/60 bg-background/80 p-4"
+                  data-testid={`pinned-fact-${fact.id}`}
+                  key={fact.id}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="font-medium text-foreground">
+                        {formatFactLabel(fact.key)}
+                      </div>
+                      <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                        {formatCategoryLabel(fact.category)}
+                      </div>
+                    </div>
+                    <div
+                      className="flex items-center gap-2 text-xs text-muted-foreground"
+                      data-testid={`pinned-fact-updated-${fact.id}`}
+                    >
+                      <Clock3 className="h-3.5 w-3.5" />
+                      Last updated {formatTimestamp(fact.updatedAt)}
+                    </div>
+                  </div>
+
+                  <p className="mt-3 whitespace-pre-wrap text-sm text-foreground">
+                    {fact.value}
+                  </p>
+
+                  <div
+                    className="mt-4 rounded-lg border border-primary/15 bg-primary/5 p-3"
+                    data-testid={`pinned-fact-origin-${fact.id}`}
+                  >
+                    <div className="text-xs font-medium uppercase tracking-wide text-primary">
+                      {fact.originLabel}
+                    </div>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {fact.originSnippet}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </CardContent>
     </Card>
