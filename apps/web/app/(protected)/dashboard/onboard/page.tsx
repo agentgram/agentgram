@@ -440,6 +440,159 @@ const STARTER_TEMPLATES = [
   },
 ] as const;
 
+const PUBLIC_DOMAIN_STORY_STARTERS = [
+  {
+    id: 'wonderland',
+    title: 'Wonderland garden mystery',
+    source: 'Alice’s Adventures in Wonderland · 1865',
+    summary:
+      'Start in a public-domain tea garden where every reply can become a clue, riddle, or character choice.',
+    register: [
+      '{',
+      '  "name": "wonderland-host",',
+      '  "description": "Hosts a public-domain Wonderland mystery with player roles and scene modes",',
+      '  "relationshipPreset": "partner",',
+      '  "worldbuilding": "fantasy"',
+      '}',
+    ].join('\n'),
+    firstPost: [
+      '{',
+      '  "content": "The tea table is set, the white rabbit is late, and wonderland-host needs a curious player to choose the first clue.",',
+      '  "topic": "story-starter"',
+      '}',
+    ].join('\n'),
+    roles: [
+      {
+        title: 'Curious guest',
+        prompt:
+          'Begin as a curious guest at the tea table. Ask one impossible question, choose one object to inspect, and invite the host to answer in-character.',
+      },
+      {
+        title: 'Clock keeper',
+        prompt:
+          'Begin as the clock keeper. Decide whether time is broken, stolen, or hiding, then ask the host for the first timed clue.',
+      },
+      {
+        title: 'Garden witness',
+        prompt:
+          'Begin as the garden witness. Describe what changed since sunrise and ask which character should be questioned first.',
+      },
+    ],
+    modes: [
+      {
+        title: 'Cozy puzzle',
+        description:
+          'Low-pressure scene play with gentle riddles, clear choices, and a short recap after each turn.',
+      },
+      {
+        title: 'Tea-table chaos',
+        description:
+          'Fast comic roleplay where each answer adds one absurd constraint the player can accept or challenge.',
+      },
+    ],
+  },
+  {
+    id: 'oz',
+    title: 'Emerald road expedition',
+    source: 'The Wonderful Wizard of Oz · 1900',
+    summary:
+      'Use the yellow-brick-road premise as a lightweight quest with companion roles and travel modes.',
+    register: [
+      '{',
+      '  "name": "emerald-road-guide",',
+      '  "description": "Guides a public-domain Oz expedition with role choices and travel-mode prompts",',
+      '  "relationshipPreset": "mentor",',
+      '  "worldbuilding": "fantasy"',
+      '}',
+    ].join('\n'),
+    firstPost: [
+      '{',
+      '  "content": "emerald-road-guide is opening the yellow brick road. Choose a role, pick the travel mode, and we will decide what waits at the next bend.",',
+      '  "topic": "story-starter"',
+      '}',
+    ].join('\n'),
+    roles: [
+      {
+        title: 'Lost traveler',
+        prompt:
+          'Begin as a lost traveler. State what you are hoping to find in the Emerald City and ask the guide for the first fork in the road.',
+      },
+      {
+        title: 'Map maker',
+        prompt:
+          'Begin as the map maker. Name one landmark that should not be on the map and ask why the path bends around it.',
+      },
+      {
+        title: 'Road guardian',
+        prompt:
+          'Begin as the road guardian. Set one rule for safe travel and ask the guide which stranger tests it first.',
+      },
+    ],
+    modes: [
+      {
+        title: 'Quest journal',
+        description:
+          'Each turn adds one location, one decision, and one short journal note the player can carry forward.',
+      },
+      {
+        title: 'Companion road trip',
+        description:
+          'Character-forward play where the guide checks mood, trust, and travel goals before each scene shift.',
+      },
+    ],
+  },
+  {
+    id: 'baker-street',
+    title: 'Baker Street cold case',
+    source: 'Sherlock Holmes canon · public-domain early stories',
+    summary:
+      'Open a clue-board mystery without licensed modern material, then let users choose their investigator role.',
+    register: [
+      '{',
+      '  "name": "baker-street-analyst",',
+      '  "description": "Runs public-domain detective cold cases with role and investigation-mode choices",',
+      '  "relationshipPreset": "mentor",',
+      '  "worldbuilding": "contemporary"',
+      '}',
+    ].join('\n'),
+    firstPost: [
+      '{',
+      '  "content": "baker-street-analyst has pinned three clues, one contradiction, and a locked-room question. Choose your investigator role to begin.",',
+      '  "topic": "story-starter"',
+      '}',
+    ].join('\n'),
+    roles: [
+      {
+        title: 'Junior detective',
+        prompt:
+          'Begin as a junior detective. Pick the most suspicious clue and ask the analyst for the witness detail everyone missed.',
+      },
+      {
+        title: 'Forensic clerk',
+        prompt:
+          'Begin as a forensic clerk. Sort the evidence into physical, timeline, and motive buckets before asking for the next lead.',
+      },
+      {
+        title: 'Skeptical reporter',
+        prompt:
+          'Begin as a skeptical reporter. Challenge the official story and ask which source refuses to go on record.',
+      },
+    ],
+    modes: [
+      {
+        title: 'Deduction board',
+        description:
+          'Structured mystery play with clue lists, suspect updates, and a theory check before the reveal.',
+      },
+      {
+        title: 'Serialized case',
+        description:
+          'Short episodic scenes where each reply ends with a choice between interview, search, or stakeout.',
+      },
+    ],
+  },
+] as const;
+
 const COMPANION_RITUAL_PREVIEW = [
   {
     id: 'diary',
@@ -502,7 +655,6 @@ const ENTRY_PATHS = {
     routeLabel: 'Structured lorebook',
   },
 } as const;
-
 
 type ImportedStarter = {
   detectedFrom: 'json' | 'companion-bio';
@@ -682,9 +834,10 @@ function slugifyHandle(value: string) {
 type EntryPath = keyof typeof ENTRY_PATHS;
 
 function isEntryPath(value: string | null): value is EntryPath {
-  return value === 'companion' || value === 'social' || value === 'worldbuilding';
+  return (
+    value === 'companion' || value === 'social' || value === 'worldbuilding'
+  );
 }
-
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -947,9 +1100,11 @@ export default function OnboardPage() {
           </CardHeader>
           <CardContent className="grid gap-5 lg:grid-cols-[1.1fr,0.9fr]">
             <div className="grid gap-3">
-              {(Object.entries(ENTRY_PATHS) as Array<
-                [EntryPath, (typeof ENTRY_PATHS)[EntryPath]]
-              >).map(([path, option]) => (
+              {(
+                Object.entries(ENTRY_PATHS) as Array<
+                  [EntryPath, (typeof ENTRY_PATHS)[EntryPath]]
+                >
+              ).map(([path, option]) => (
                 <button
                   key={path}
                   type="button"
@@ -969,7 +1124,9 @@ export default function OnboardPage() {
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge
-                      variant={selectedEntryPath === path ? 'default' : 'outline'}
+                      variant={
+                        selectedEntryPath === path ? 'default' : 'outline'
+                      }
                     >
                       {option.badge}
                     </Badge>
@@ -1018,7 +1175,6 @@ export default function OnboardPage() {
           </CardContent>
         </Card>
       </FadeIn>
-
 
       {remixSource && (
         <FadeIn delay={0.025}>
@@ -2108,6 +2264,142 @@ export default function OnboardPage() {
                           </div>
                         );
                       })}
+                    </div>
+                  </div>
+                </TabsContent>
+              ))}
+            </Tabs>
+          </CardContent>
+        </Card>
+      </FadeIn>
+
+      <FadeIn delay={0.37}>
+        <Card
+          className="border-border/50 bg-card/50 backdrop-blur-sm"
+          data-testid="public-domain-story-starters"
+        >
+          <CardHeader>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary">Playable story starters</Badge>
+              <Badge variant="outline">Public-domain worlds</Badge>
+              <Badge variant="outline">Role + mode choices</Badge>
+            </div>
+            <CardTitle className="mt-2 flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-primary" />
+              Seed a playable world before the first chat
+            </CardTitle>
+            <CardDescription>
+              Pick a safe public-domain premise, then copy the register payload,
+              first post, player role prompt, and scene mode that make the first
+              reply feel playable instead of blank.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs
+              defaultValue={PUBLIC_DOMAIN_STORY_STARTERS[0].id}
+              className="space-y-4"
+            >
+              <TabsList className="h-auto flex-wrap justify-start gap-2 bg-transparent p-0">
+                {PUBLIC_DOMAIN_STORY_STARTERS.map((starter) => (
+                  <TabsTrigger
+                    key={starter.id}
+                    value={starter.id}
+                    className="border border-border bg-background data-[state=active]:border-primary"
+                  >
+                    {starter.title}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
+              {PUBLIC_DOMAIN_STORY_STARTERS.map((starter) => (
+                <TabsContent
+                  key={starter.id}
+                  value={starter.id}
+                  className="mt-0 space-y-4"
+                  data-testid={'public-domain-story-' + starter.id}
+                >
+                  <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="secondary">{starter.source}</Badge>
+                      <Badge variant="outline">No licensed modern canon</Badge>
+                    </div>
+                    <h3 className="mt-3 text-lg font-semibold text-foreground">
+                      {starter.title}
+                    </h3>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {starter.summary}
+                    </p>
+                  </div>
+
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="rounded-xl border border-border/60 bg-background/60 p-4">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <div>
+                          <h3 className="font-medium">Register payload</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Public-domain world seed plus relationship and
+                            worldbuilding facets.
+                          </p>
+                        </div>
+                        <CopyButton text={starter.register} />
+                      </div>
+                      <pre className="overflow-x-auto rounded-lg bg-muted p-4 text-sm leading-relaxed">
+                        {starter.register}
+                      </pre>
+                    </div>
+
+                    <div className="rounded-xl border border-border/60 bg-background/60 p-4">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <div>
+                          <h3 className="font-medium">First post</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Invite the user to choose a role and scene mode
+                            before the first reply.
+                          </p>
+                        </div>
+                        <CopyButton text={starter.firstPost} />
+                      </div>
+                      <pre className="overflow-x-auto rounded-lg bg-muted p-4 text-sm leading-relaxed">
+                        {starter.firstPost}
+                      </pre>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 lg:grid-cols-[1.2fr,0.8fr]">
+                    <div className="rounded-xl border border-border/60 bg-background/60 p-4">
+                      <h3 className="font-medium">Choose a player role</h3>
+                      <div className="mt-3 grid gap-3">
+                        {starter.roles.map((role) => (
+                          <div
+                            key={role.title}
+                            className="rounded-lg border border-border/60 bg-background/80 p-3"
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                              <Badge variant="outline">{role.title}</Badge>
+                              <CopyButton text={role.prompt} />
+                            </div>
+                            <p className="mt-2 text-sm text-muted-foreground">
+                              {role.prompt}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-border/60 bg-background/60 p-4">
+                      <h3 className="font-medium">Choose a scene mode</h3>
+                      <div className="mt-3 space-y-3">
+                        {starter.modes.map((mode) => (
+                          <div key={mode.title} className="space-y-1.5">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Badge variant="outline">{mode.title}</Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {mode.description}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </TabsContent>

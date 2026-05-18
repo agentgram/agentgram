@@ -190,31 +190,32 @@ describe('OnboardPage', () => {
     const quiz = screen.getByTestId('entry-path-quiz');
     const result = within(quiz).getByTestId('entry-path-result');
 
-    expect(within(quiz).getByText('Where should your onboarding start?')).toBeInTheDocument();
+    expect(
+      within(quiz).getByText('Where should your onboarding start?')
+    ).toBeInTheDocument();
     expect(result).toHaveTextContent('Social');
     expect(result).toHaveTextContent('Starter templates');
-    expect(within(result).getByRole('link', { name: 'Open social setup' })).toHaveAttribute(
-      'href',
-      '#social-setup-flow'
-    );
+    expect(
+      within(result).getByRole('link', { name: 'Open social setup' })
+    ).toHaveAttribute('href', '#social-setup-flow');
 
     fireEvent.click(within(quiz).getByTestId('entry-path-option-companion'));
 
     expect(result).toHaveTextContent('Companion');
     expect(result).toHaveTextContent('Character Card import');
-    expect(within(result).getByRole('link', { name: 'Open companion setup' })).toHaveAttribute(
-      'href',
-      '#companion-setup-flow'
-    );
+    expect(
+      within(result).getByRole('link', { name: 'Open companion setup' })
+    ).toHaveAttribute('href', '#companion-setup-flow');
 
-    fireEvent.click(within(quiz).getByTestId('entry-path-option-worldbuilding'));
+    fireEvent.click(
+      within(quiz).getByTestId('entry-path-option-worldbuilding')
+    );
 
     expect(result).toHaveTextContent('Worldbuilding');
     expect(result).toHaveTextContent('Structured lorebook');
-    expect(within(result).getByRole('link', { name: 'Open worldbuilding setup' })).toHaveAttribute(
-      'href',
-      '#worldbuilding-setup-flow'
-    );
+    expect(
+      within(result).getByRole('link', { name: 'Open worldbuilding setup' })
+    ).toHaveAttribute('href', '#worldbuilding-setup-flow');
   });
 
   it('preselects the entry path quiz from the query string', () => {
@@ -285,7 +286,6 @@ describe('OnboardPage', () => {
     ).toHaveAttribute('href', '#social-setup-flow');
   });
 
-
   it('opens a deeper memory and training faq from the first-chat privacy card', () => {
     render(<OnboardPage />);
 
@@ -338,6 +338,37 @@ describe('OnboardPage', () => {
       'I launched research-scout with the mentor preset.'
     );
     expect(researchOpeners).toHaveTextContent('Joint research plan opener');
+  });
+
+  it('shows playable public-domain story starters with role and mode choices', () => {
+    render(<OnboardPage />);
+
+    const storyStarters = screen.getByTestId('public-domain-story-starters');
+    expect(storyStarters).toHaveTextContent('Playable story starters');
+    expect(storyStarters).toHaveTextContent('Public-domain worlds');
+    expect(storyStarters).toHaveTextContent('Wonderland garden mystery');
+    expect(storyStarters).toHaveTextContent('Alice’s Adventures in Wonderland');
+    expect(storyStarters).toHaveTextContent('"name": "wonderland-host"');
+    expect(storyStarters).toHaveTextContent('Choose a player role');
+    expect(storyStarters).toHaveTextContent('Curious guest');
+    expect(storyStarters).toHaveTextContent('Clock keeper');
+    expect(storyStarters).toHaveTextContent('Choose a scene mode');
+    expect(storyStarters).toHaveTextContent('Cozy puzzle');
+    expect(storyStarters).toHaveTextContent('Tea-table chaos');
+
+    fireEvent.click(
+      within(storyStarters).getByRole('tab', {
+        name: 'Baker Street cold case',
+      })
+    );
+
+    const bakerStreet = within(storyStarters).getByTestId(
+      'public-domain-story-baker-street'
+    );
+    expect(bakerStreet).toHaveTextContent('Sherlock Holmes canon');
+    expect(bakerStreet).toHaveTextContent('Junior detective');
+    expect(bakerStreet).toHaveTextContent('Deduction board');
+    expect(bakerStreet).toHaveTextContent('"name": "baker-street-analyst"');
   });
 
   it('toggles the memory consent payload before registration', () => {
