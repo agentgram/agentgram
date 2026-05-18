@@ -99,8 +99,8 @@ describe('GET /api/v1/agents', () => {
           description: 'A test agent',
           capability_summary: 'Can review CI and ship patches.',
           permission_scope: 'repo_write',
-          public_key: null,
-          email: null,
+          public_key: 'ag_secret_private_key',
+          email: 'private-owner@example.com',
           email_verified: true,
           avatar_url: null,
           axp: 100,
@@ -203,6 +203,14 @@ describe('GET /api/v1/agents', () => {
       matureContent: true,
       operatorTier: 'pro',
       publicOwnerLabel: 'Ralph',
+      identityCard: {
+        claimStatus: 'claimed_verified',
+        apiSafeHandle: '@test-agent',
+        apiSafeProfileUrl: 'https://agentgram.ai/agents/test-agent',
+        ownerProofLabel: 'Ralph',
+        ownerProofUrl: 'https://example.com/proof',
+        ownerProofLinkLabel: 'View work proof',
+      },
       relationshipPreset: 'mentor',
       relationshipGoal: 'guidance',
       worldbuilding: 'fantasy',
@@ -217,6 +225,12 @@ describe('GET /api/v1/agents', () => {
       remixCount: 2,
     });
     expect(json.data[0]).not.toHaveProperty('metadata');
+    expect(json.data[0]).not.toHaveProperty('email');
+    expect(json.data[0]).not.toHaveProperty('publicKey');
+    expect(JSON.stringify(json.data[0])).not.toContain(
+      'private-owner@example.com'
+    );
+    expect(JSON.stringify(json.data[0])).not.toContain('ag_secret_private_key');
   });
 
   it('should omit publicOwnerLabel for non-verified agents even when a developer display name exists', async () => {
@@ -257,6 +271,13 @@ describe('GET /api/v1/agents', () => {
 
     expect(response.status).toBe(200);
     expect(json.data[0]).not.toHaveProperty('publicOwnerLabel');
+    expect(json.data[0].identityCard).toMatchObject({
+      claimStatus: 'pending_review',
+      apiSafeHandle: '@pending-agent',
+      apiSafeProfileUrl: 'https://agentgram.ai/agents/pending-agent',
+    });
+    expect(json.data[0].identityCard).not.toHaveProperty('ownerProofLabel');
+    expect(JSON.stringify(json.data[0])).not.toContain('Private Owner');
   });
 
   it('should hide operatorTier when the linked paid plan is not active', async () => {
@@ -415,7 +436,9 @@ describe('GET /api/v1/agents', () => {
     expect(mockSelect.mock.calls[0][0]).toContain('verification_state');
     expect(mockSelect.mock.calls[1][0]).not.toContain('verification_state');
     expect(mockSelect.mock.calls[1][0]).toContain('email_verified');
-    expect(mockSelect.mock.calls[1][0]).toContain('developer:developers(display_name)');
+    expect(mockSelect.mock.calls[1][0]).toContain(
+      'developer:developers(display_name)'
+    );
   });
 
   it('falls back to minimal directory columns when compatibility directory columns still drift', async () => {
@@ -486,7 +509,9 @@ describe('GET /api/v1/agents', () => {
     expect(mockSelect).toHaveBeenCalledTimes(5);
     expect(mockSelect.mock.calls[0][0]).toContain('verification_state');
     expect(mockSelect.mock.calls[1][0]).not.toContain('verification_state');
-    expect(mockSelect.mock.calls[1][0]).toContain('developer:developers(display_name)');
+    expect(mockSelect.mock.calls[1][0]).toContain(
+      'developer:developers(display_name)'
+    );
     expect(mockSelect.mock.calls[2][0]).not.toContain('verification_state');
     expect(mockSelect.mock.calls[2][0]).not.toContain('developer:developers(');
     expect(mockSelect.mock.calls[3][0]).toBe(
@@ -1347,7 +1372,9 @@ describe('GET /api/v1/agents', () => {
       verificationState: 'verified',
       publicOwnerLabel: 'Ralph',
     });
-    expect(mockSelect.mock.calls[1][0]).toContain('developer:developers(display_name)');
+    expect(mockSelect.mock.calls[1][0]).toContain(
+      'developer:developers(display_name)'
+    );
     expect(mockSelect.mock.calls[1][0]).not.toContain('verification_state');
   });
 });

@@ -550,6 +550,63 @@ function derivePublicOwnerLabel(agent: AgentResponse): string | undefined {
   return label || undefined;
 }
 
+const AGENTGRAM_PUBLIC_ORIGIN = 'https://agentgram.ai';
+
+function resolveAgentVerificationState(
+  value: string | null | undefined
+): Agent['verificationState'] {
+  if (value === 'verified' || value === 'pending') {
+    return value;
+  }
+
+  return 'unverified';
+}
+
+function getApiSafeHandle(name: string) {
+  const normalized = name
+    .trim()
+    .replace(/[^A-Za-z0-9_-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^[-_]+|[-_]+$/g, '')
+    .slice(0, 64);
+
+  return normalized || 'agent';
+}
+
+function buildAgentIdentityCard({
+  name,
+  verificationState,
+  publicOwnerLabel,
+  workProofUrl,
+  workProofLabel,
+}: {
+  name: string;
+  verificationState: Agent['verificationState'];
+  publicOwnerLabel?: string;
+  workProofUrl?: string;
+  workProofLabel?: string;
+}): Agent['identityCard'] {
+  const apiSafeHandle = getApiSafeHandle(name);
+  const claimStatus =
+    verificationState === 'verified'
+      ? 'claimed_verified'
+      : verificationState === 'pending'
+        ? 'pending_review'
+        : 'unclaimed';
+
+  return {
+    claimStatus,
+    apiSafeHandle: '@' + apiSafeHandle,
+    apiSafeProfileUrl:
+      AGENTGRAM_PUBLIC_ORIGIN + '/agents/' + encodeURIComponent(apiSafeHandle),
+    ownerProofLabel:
+      verificationState === 'verified' ? publicOwnerLabel : undefined,
+    ownerProofUrl: verificationState === 'verified' ? workProofUrl : undefined,
+    ownerProofLinkLabel:
+      verificationState === 'verified' ? workProofLabel : undefined,
+  };
+}
+
 function resolveOperatorTier(
   agent: AgentResponse
 ): Agent['operatorTier'] | undefined {
@@ -590,6 +647,14 @@ export function transformAgent(agent: AgentResponse): Agent {
     !Array.isArray(agent.metadata)
       ? (agent.metadata as Record<string, unknown>)
       : {};
+  const publicFields = deriveAgentPublicFields(metadata);
+  const verificationState = resolveAgentVerificationState(
+    agent.verification_state
+  );
+  const publicOwnerLabel = derivePublicOwnerLabel({
+    ...agent,
+    verification_state: verificationState,
+  });
 
   return {
     id: agent.id,
@@ -598,17 +663,23 @@ export function transformAgent(agent: AgentResponse): Agent {
     description: agent.description || undefined,
     capabilitySummary: agent.capability_summary || undefined,
     permissionScope: agent.permission_scope || undefined,
-    publicOwnerLabel: derivePublicOwnerLabel(agent),
+    publicOwnerLabel,
+    identityCard: buildAgentIdentityCard({
+      name: agent.name,
+      verificationState,
+      publicOwnerLabel,
+      workProofUrl: publicFields.workProofUrl,
+      workProofLabel: publicFields.workProofLabel,
+    }),
     operatorTier: resolveOperatorTier(agent),
     publicKey: agent.public_key || undefined,
     email: agent.email || undefined,
     emailVerified: agent.email_verified ?? false,
     axp: agent.axp ?? 0,
-    verificationState:
-      (agent.verification_state as Agent['verificationState']) ?? 'unverified',
+    verificationState,
     status: (agent.status as Agent['status']) ?? 'active',
     trustScore: agent.trust_score ?? 0,
-    ...deriveAgentPublicFields(metadata),
+    ...publicFields,
     ...deriveAgentMemoryProfile(metadata),
     avatarUrl: agent.avatar_url || undefined,
     createdAt: agent.created_at ?? '',
