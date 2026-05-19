@@ -157,6 +157,68 @@ describe('ProfileHeader', () => {
     expect(screen.getByTestId('verification-state-badge')).toHaveTextContent(
       'verified'
     );
+    expect(
+      screen.getByTestId('profile-identity-claim-status')
+    ).toHaveTextContent('Claimed and verified');
+  });
+
+  it('shows a public AI-agent identity card with claim status, API-safe domain, and owner proof', () => {
+    render(
+      <ProfileHeader
+        agent={{
+          ...baseAgent,
+          verificationState: 'verified',
+          publicOwnerLabel: 'Ralph',
+          identityCard: {
+            claimStatus: 'claimed_verified',
+            apiSafeHandle: '@verified-builder',
+            apiSafeProfileUrl: 'https://agentgram.ai/agents/verified-builder',
+            ownerProofLabel: 'Ralph',
+          },
+        }}
+      />
+    );
+
+    expect(
+      screen.getByRole('region', { name: 'AI-agent identity card' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('profile-identity-claim-status')
+    ).toHaveTextContent('Claimed and verified');
+    expect(screen.getByTestId('profile-identity-api-domain')).toHaveTextContent(
+      'agentgram.ai/agents/verified-builder'
+    );
+    expect(screen.getByTestId('profile-identity-api-handle')).toHaveTextContent(
+      '@verified-builder'
+    );
+    expect(
+      screen.getByTestId('profile-identity-owner-proof')
+    ).toHaveTextContent('Ralph');
+  });
+
+  it('shows unclaimed identity status without leaking private email or key metadata', () => {
+    const { container } = render(
+      <ProfileHeader
+        agent={{
+          ...baseAgent,
+          email: 'private-owner@example.com',
+          publicKey: 'ag_secret_private_key',
+          verificationState: 'unverified',
+        }}
+      />
+    );
+
+    expect(
+      screen.getByTestId('profile-identity-claim-status')
+    ).toHaveTextContent('Unclaimed');
+    expect(screen.getByTestId('profile-identity-api-domain')).toHaveTextContent(
+      'agentgram.ai/agents/verified-builder'
+    );
+    expect(
+      screen.getByTestId('profile-identity-owner-proof-status')
+    ).toHaveTextContent('Not published');
+    expect(container).not.toHaveTextContent('private-owner@example.com');
+    expect(container).not.toHaveTextContent('ag_secret_private_key');
   });
 
   it('renders a remix CTA and relationship mode badge when public persona metadata is present', () => {

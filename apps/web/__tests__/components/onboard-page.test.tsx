@@ -35,7 +35,7 @@ describe('OnboardPage', () => {
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
   });
 
-  it('shows relationship presets, age boundary, verification, privacy, memory consent, and lorebook guidance before the publish-focused quickstart', () => {
+  it('shows relationship presets, age boundary, verification, privacy, memory consent, lorebook guidance, and the companion ritual bundle before the publish-focused quickstart', () => {
     render(<OnboardPage />);
 
     const presetPicker = screen.getByTestId('relationship-preset-picker');
@@ -91,6 +91,16 @@ describe('OnboardPage', () => {
       })
     ).toHaveAttribute('href', '/privacy');
 
+    const setupFork = screen.getByTestId('setup-path-fork');
+    expect(
+      within(setupFork).getByText(
+        'Choose your onboarding depth before the first publish'
+      )
+    ).toBeInTheDocument();
+    expect(setupFork).toHaveTextContent('Simple companion setup');
+    expect(setupFork).toHaveTextContent('Advanced lorebook + memory setup');
+    expect(setupFork).toHaveTextContent('"memoryConsent": false');
+
     const memoryConsent = screen.getByTestId('memory-consent-explainer');
     expect(
       within(memoryConsent).getByText(
@@ -99,6 +109,9 @@ describe('OnboardPage', () => {
     ).toBeInTheDocument();
     expect(memoryConsent).toHaveTextContent('"memoryConsent": false');
     expect(memoryConsent).toHaveTextContent('Memory off by default');
+    expect(memoryConsent).toHaveTextContent(
+      'Optional advanced step: leave this off for the shortest companion setup'
+    );
 
     const lorebookSetup = screen.getByTestId('lorebook-structured-setup');
     expect(
@@ -118,7 +131,21 @@ describe('OnboardPage', () => {
     expect(starterTemplates).toHaveTextContent('Guided orientation opener');
     expect(starterTemplates).toHaveTextContent('Co-host kickoff opener');
 
-    const quickstartHeading = screen.getByText('Two-step quick start');
+    const ritualStarter = screen.getByTestId('companion-ritual-starter');
+    expect(ritualStarter).toHaveTextContent(
+      'Preview the diary, follow-up check-in, and short video loop rhythm'
+    );
+    expect(ritualStarter).toHaveTextContent('Publish one diary checkpoint');
+    expect(ritualStarter).toHaveTextContent(
+      'Turn one strong reply into a future check-in'
+    );
+    expect(ritualStarter).toHaveTextContent(
+      'Tease a short video loop for repeat rituals'
+    );
+
+    const quickstartHeading = screen.getByText(
+      'Two-step quick start for simple setup'
+    );
     expect(
       presetPicker.compareDocumentPosition(ageBoundary) &
         Node.DOCUMENT_POSITION_FOLLOWING
@@ -132,7 +159,11 @@ describe('OnboardPage', () => {
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     expect(
-      privacyCard.compareDocumentPosition(memoryConsent) &
+      privacyCard.compareDocumentPosition(setupFork) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(
+      setupFork.compareDocumentPosition(memoryConsent) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     expect(
@@ -140,13 +171,119 @@ describe('OnboardPage', () => {
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     expect(
-      lorebookSetup.compareDocumentPosition(quickstartHeading) &
+      quickstartHeading.compareDocumentPosition(starterTemplates) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(
+      starterTemplates.compareDocumentPosition(ritualStarter) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
 
     expect(
-      screen.getByText(/explicit memory-consent choice/i)
+      screen.getByText(/same setup choice you previewed on this page/i)
     ).toBeInTheDocument();
+  });
+
+  it('routes the entry path quiz to the matching onboarding flow', () => {
+    render(<OnboardPage />);
+
+    const quiz = screen.getByTestId('entry-path-quiz');
+    const result = within(quiz).getByTestId('entry-path-result');
+
+    expect(
+      within(quiz).getByText('Where should your onboarding start?')
+    ).toBeInTheDocument();
+    expect(result).toHaveTextContent('Social');
+    expect(result).toHaveTextContent('Starter templates');
+    expect(
+      within(result).getByRole('link', { name: 'Open social setup' })
+    ).toHaveAttribute('href', '#social-setup-flow');
+
+    fireEvent.click(within(quiz).getByTestId('entry-path-option-companion'));
+
+    expect(result).toHaveTextContent('Companion');
+    expect(result).toHaveTextContent('Character Card import');
+    expect(
+      within(result).getByRole('link', { name: 'Open companion setup' })
+    ).toHaveAttribute('href', '#companion-setup-flow');
+
+    fireEvent.click(
+      within(quiz).getByTestId('entry-path-option-worldbuilding')
+    );
+
+    expect(result).toHaveTextContent('Worldbuilding');
+    expect(result).toHaveTextContent('Structured lorebook');
+    expect(
+      within(result).getByRole('link', { name: 'Open worldbuilding setup' })
+    ).toHaveAttribute('href', '#worldbuilding-setup-flow');
+  });
+
+  it('preselects the entry path quiz from the query string', () => {
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams({
+        entry: 'companion',
+      })
+    );
+
+    render(<OnboardPage />);
+
+    const result = within(screen.getByTestId('entry-path-quiz')).getByTestId(
+      'entry-path-result'
+    );
+
+    expect(result).toHaveTextContent('Companion');
+    expect(result).toHaveTextContent('Character Card import');
+    expect(
+      within(result).getByRole('link', { name: 'Open companion setup' })
+    ).toHaveAttribute('href', '#companion-setup-flow');
+  });
+
+  it('syncs the entry path quiz when the query string changes on client navigation', () => {
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams({
+        entry: 'companion',
+      })
+    );
+
+    const view = render(<OnboardPage />);
+
+    let result = within(screen.getByTestId('entry-path-quiz')).getByTestId(
+      'entry-path-result'
+    );
+    expect(result).toHaveTextContent('Companion');
+    expect(
+      within(result).getByRole('link', { name: 'Open companion setup' })
+    ).toHaveAttribute('href', '#companion-setup-flow');
+
+    fireEvent.click(
+      within(screen.getByTestId('entry-path-quiz')).getByTestId(
+        'entry-path-option-worldbuilding'
+      )
+    );
+
+    result = within(screen.getByTestId('entry-path-quiz')).getByTestId(
+      'entry-path-result'
+    );
+    expect(result).toHaveTextContent('Worldbuilding');
+    expect(
+      within(result).getByRole('link', { name: 'Open worldbuilding setup' })
+    ).toHaveAttribute('href', '#worldbuilding-setup-flow');
+
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams({
+        entry: 'social',
+      })
+    );
+
+    view.rerender(<OnboardPage />);
+
+    result = within(screen.getByTestId('entry-path-quiz')).getByTestId(
+      'entry-path-result'
+    );
+    expect(result).toHaveTextContent('Social');
+    expect(
+      within(result).getByRole('link', { name: 'Open social setup' })
+    ).toHaveAttribute('href', '#social-setup-flow');
   });
 
   it('opens a deeper memory and training faq from the first-chat privacy card', () => {
@@ -203,6 +340,37 @@ describe('OnboardPage', () => {
     expect(researchOpeners).toHaveTextContent('Joint research plan opener');
   });
 
+  it('shows playable public-domain story starters with role and mode choices', () => {
+    render(<OnboardPage />);
+
+    const storyStarters = screen.getByTestId('public-domain-story-starters');
+    expect(storyStarters).toHaveTextContent('Playable story starters');
+    expect(storyStarters).toHaveTextContent('Public-domain worlds');
+    expect(storyStarters).toHaveTextContent('Wonderland garden mystery');
+    expect(storyStarters).toHaveTextContent('Alice’s Adventures in Wonderland');
+    expect(storyStarters).toHaveTextContent('"name": "wonderland-host"');
+    expect(storyStarters).toHaveTextContent('Choose a player role');
+    expect(storyStarters).toHaveTextContent('Curious guest');
+    expect(storyStarters).toHaveTextContent('Clock keeper');
+    expect(storyStarters).toHaveTextContent('Choose a scene mode');
+    expect(storyStarters).toHaveTextContent('Cozy puzzle');
+    expect(storyStarters).toHaveTextContent('Tea-table chaos');
+
+    fireEvent.click(
+      within(storyStarters).getByRole('tab', {
+        name: 'Baker Street cold case',
+      })
+    );
+
+    const bakerStreet = within(storyStarters).getByTestId(
+      'public-domain-story-baker-street'
+    );
+    expect(bakerStreet).toHaveTextContent('Sherlock Holmes canon');
+    expect(bakerStreet).toHaveTextContent('Junior detective');
+    expect(bakerStreet).toHaveTextContent('Deduction board');
+    expect(bakerStreet).toHaveTextContent('"name": "baker-street-analyst"');
+  });
+
   it('toggles the memory consent payload before registration', () => {
     render(<OnboardPage />);
 
@@ -221,6 +389,69 @@ describe('OnboardPage', () => {
     expect(memoryConsent).toHaveTextContent('"memoryConsent": true');
     expect(memoryConsent).toHaveTextContent(
       'Starter backstory seeding turns on immediately at registration.'
+    );
+  });
+
+  it('switches between simple and advanced first-create paths', () => {
+    render(<OnboardPage />);
+
+    const setupFork = screen.getByTestId('setup-path-fork');
+    const registerStep = screen.getByTestId('quickstart-step-register');
+    const firstPostStep = screen.getByTestId('quickstart-step-first-post');
+    const simplePreview = screen.getByTestId('setup-path-preview-simple');
+
+    expect(simplePreview).toHaveTextContent(
+      'Start with a name, description, first post, and one relationship preset.'
+    );
+    expect(
+      screen.getByText('Two-step quick start for simple setup')
+    ).toBeInTheDocument();
+    expect(simplePreview).toHaveTextContent('"name": "companion-guide"');
+    expect(registerStep).toHaveTextContent('"name": "companion-guide"');
+    expect(registerStep).toHaveTextContent('"memoryConsent": false');
+    expect(registerStep).not.toHaveTextContent('"lorebook"');
+    expect(firstPostStep).toHaveTextContent(
+      'Hello AgentGram, companion-guide is live and ready to collaborate.'
+    );
+
+    fireEvent.click(
+      within(setupFork).getByRole('button', {
+        name: /advanced lorebook \+ memory setup/i,
+      })
+    );
+
+    const advancedPreview = screen.getByTestId('setup-path-preview-advanced');
+    expect(advancedPreview).toHaveTextContent(
+      'Review privacy, choose starter memory behavior, and shape people/places/rules before the first public post goes live.'
+    );
+    expect(screen.getByTestId('memory-consent-explainer')).toHaveTextContent(
+      'Advanced path: decide after reviewing privacy whether AgentGram should create private pinned facts for the very first multi-turn chat.'
+    );
+    expect(screen.getByTestId('lorebook-structured-setup')).toHaveTextContent(
+      'Advanced path: keep private canon in smaller reusable entries for people, places, and rules before the first publish.'
+    );
+    expect(
+      screen.getByText('Two-step quick start after advanced setup')
+    ).toBeInTheDocument();
+    expect(advancedPreview).toHaveTextContent('"name": "companion-guide"');
+    expect(registerStep).toHaveTextContent('"name": "companion-guide"');
+    expect(registerStep).toHaveTextContent('"memoryConsent": false');
+    expect(registerStep).toHaveTextContent('"lorebook"');
+    expect(firstPostStep).toHaveTextContent(
+      'Hello AgentGram, companion-guide is live and ready to collaborate.'
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /opt in before the first chat/i,
+      })
+    );
+
+    expect(advancedPreview).toHaveTextContent('"memoryConsent": true');
+    expect(registerStep).toHaveTextContent('"memoryConsent": true');
+    expect(registerStep).toHaveTextContent('"rules": [');
+    expect(firstPostStep).toHaveTextContent(
+      'Hello AgentGram, companion-guide is live and ready to collaborate.'
     );
   });
 
@@ -273,7 +504,9 @@ describe('OnboardPage', () => {
     expect(
       within(groupChatCard).getAllByText(/verified-builder-group/i)
     ).toHaveLength(3);
-    expect(within(groupChatCard).getByText(/topic": "group-chat"/i)).toBeInTheDocument();
+    expect(
+      within(groupChatCard).getByText(/topic": "group-chat"/i)
+    ).toBeInTheDocument();
 
     const previewPanel = within(groupChatCard).getByTestId(
       'group-chat-preview-panel'

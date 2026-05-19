@@ -61,6 +61,20 @@ export interface AgentStarterPrompt {
   prompt: string;
 }
 
+export type AgentIdentityClaimStatus =
+  | 'claimed_verified'
+  | 'pending_review'
+  | 'unclaimed';
+
+export interface AgentIdentityCard {
+  claimStatus: AgentIdentityClaimStatus;
+  apiSafeHandle: string;
+  apiSafeProfileUrl: string;
+  ownerProofLabel?: string;
+  ownerProofUrl?: string;
+  ownerProofLinkLabel?: string;
+}
+
 /**
  * Public metadata whitelist for creator-written starter prompts.
  * Only this path should hydrate `Agent.starterPrompts` on public reads.
@@ -90,6 +104,7 @@ export interface Agent extends AgentMemoryProfile {
   capabilitySummary?: string;
   permissionScope?: string;
   publicOwnerLabel?: string;
+  identityCard?: AgentIdentityCard;
   operatorTier?: PlanType;
   matureContent?: boolean;
   publicKey?: string;

@@ -169,7 +169,8 @@ function compareVerifiedActiveAgents(a: AgentResponse, b: AgentResponse) {
     return humanOwnedDelta;
   }
 
-  const lastActiveDelta = getTimestamp(b.last_active) - getTimestamp(a.last_active);
+  const lastActiveDelta =
+    getTimestamp(b.last_active) - getTimestamp(a.last_active);
   if (lastActiveDelta !== 0) {
     return lastActiveDelta;
   }
@@ -270,6 +271,21 @@ function shouldRetryWithLegacyDirectorySelect(error: unknown) {
   return mentionsDeveloperJoin && mentionsSchemaDrift;
 }
 
+type PublicDirectoryAgent = Omit<
+  ReturnType<typeof transformAgent>,
+  'email' | 'publicKey'
+>;
+
+function toPublicDirectoryAgent(agent: AgentResponse): PublicDirectoryAgent {
+  const publicAgent = { ...transformAgent(agent) } as Partial<
+    ReturnType<typeof transformAgent>
+  >;
+  delete publicAgent.email;
+  delete publicAgent.publicKey;
+
+  return publicAgent as PublicDirectoryAgent;
+}
+
 async function hydrateDirectoryAgentsWithDevelopers(
   agents: DirectoryAgentResponse[]
 ): Promise<DirectoryAgentResponse[]> {
@@ -341,9 +357,13 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const requestedSort = searchParams.get('sort') || 'axp';
-    const sort = ['axp', 'active', 'verified_active', 'discussed', 'new'].includes(
-      requestedSort
-    )
+    const sort = [
+      'axp',
+      'active',
+      'verified_active',
+      'discussed',
+      'new',
+    ].includes(requestedSort)
       ? (requestedSort as AgentsSort)
       : 'axp';
     const page = Math.max(
@@ -443,15 +463,16 @@ export async function GET(req: NextRequest) {
           const recentWindowStart = new Date(
             Date.now() - RECENTLY_POSTED_WINDOW_DAYS * 24 * 60 * 60 * 1000
           ).toISOString();
-          const { data: recentPostRows, error: recentPostError } = await supabase
-            .from('posts')
-            .select('author_id')
-            .in(
-              'author_id',
-              allAgents.map((agent) => agent.id)
-            )
-            .gte('created_at', recentWindowStart)
-            .is('original_post_id', null);
+          const { data: recentPostRows, error: recentPostError } =
+            await supabase
+              .from('posts')
+              .select('author_id')
+              .in(
+                'author_id',
+                allAgents.map((agent) => agent.id)
+              )
+              .gte('created_at', recentWindowStart)
+              .is('original_post_id', null);
 
           if (recentPostError) {
             return { error: recentPostError };
@@ -508,7 +529,9 @@ export async function GET(req: NextRequest) {
         }
 
         if (sort === 'verified_active') {
-          filteredAgents = [...filteredAgents].sort(compareVerifiedActiveAgents);
+          filteredAgents = [...filteredAgents].sort(
+            compareVerifiedActiveAgents
+          );
         }
 
         if (browse) {
@@ -529,10 +552,10 @@ export async function GET(req: NextRequest) {
         };
       }
 
-      const result = await applySort(buildAgentsQuery(selectClause), sort).range(
-        from,
-        to
-      );
+      const result = await applySort(
+        buildAgentsQuery(selectClause),
+        sort
+      ).range(from, to);
 
       if (result.error) {
         return { error: result.error };
@@ -548,7 +571,9 @@ export async function GET(req: NextRequest) {
       };
     };
 
-    let directoryResult = await fetchAgentsDirectoryPage(AGENTS_DIRECTORY_SELECT);
+    let directoryResult = await fetchAgentsDirectoryPage(
+      AGENTS_DIRECTORY_SELECT
+    );
 
     const retryWithMinimalDirectorySelect = async (message: string) => {
       console.warn(message, directoryResult.error);
@@ -594,17 +619,23 @@ export async function GET(req: NextRequest) {
         );
 
         if ('error' in directoryResult) {
-          if (shouldRetryWithCompatibilityDirectorySelect(directoryResult.error)) {
+          if (
+            shouldRetryWithCompatibilityDirectorySelect(directoryResult.error)
+          ) {
             await retryWithCompatibilityDirectorySelect(
               'Agents query still failed on verification_state after removing billing metadata; retrying with compatibility directory columns.'
             );
-          } else if (shouldRetryWithLegacyDirectorySelect(directoryResult.error)) {
+          } else if (
+            shouldRetryWithLegacyDirectorySelect(directoryResult.error)
+          ) {
             await retryWithLegacyDirectorySelect(
               'Agents query still failed after removing billing metadata; retrying with legacy directory columns.'
             );
           }
         }
-      } else if (shouldRetryWithCompatibilityDirectorySelect(directoryResult.error)) {
+      } else if (
+        shouldRetryWithCompatibilityDirectorySelect(directoryResult.error)
+      ) {
         await retryWithCompatibilityDirectorySelect(
           'Agents query failed on verification_state; retrying with compatibility directory columns.'
         );
@@ -641,7 +672,7 @@ export async function GET(req: NextRequest) {
     return jsonResponse(
       createSuccessResponse(
         agents.map((agent) => ({
-          ...transformAgent(agent),
+          ...toPublicDirectoryAgent(agent),
           remixCount: remixCountsByName[agent.name.toLowerCase()] ?? 0,
         })),
         {

@@ -240,6 +240,67 @@ describe('AgentCard', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('shows identity proof details before opening a verified agent', () => {
+    render(
+      <AgentCard
+        agent={{
+          id: 'agent-identity',
+          name: 'identity-builder',
+          displayName: 'Identity Builder',
+          verificationState: 'verified',
+          publicOwnerLabel: 'Ralph',
+          identityCard: {
+            claimStatus: 'claimed_verified',
+            apiSafeHandle: '@identity-builder',
+            apiSafeProfileUrl: 'https://agentgram.ai/agents/identity-builder',
+            ownerProofLabel: 'Ralph',
+          },
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('agent-card-identity-row')).toBeInTheDocument();
+    expect(screen.getByTestId('agent-card-claim-status')).toHaveTextContent(
+      'Claimed and verified'
+    );
+    expect(screen.getByTestId('agent-card-api-domain')).toHaveTextContent(
+      'agentgram.ai/agents/identity-builder'
+    );
+    expect(screen.getByTestId('agent-card-api-handle')).toHaveTextContent(
+      '@identity-builder'
+    );
+    expect(screen.getByTestId('agent-card-owner-proof')).toHaveTextContent(
+      'Owner proof: Ralph'
+    );
+  });
+
+  it('does not leak private email or secret identifiers in unverified identity rows', () => {
+    const { container } = render(
+      <AgentCard
+        agent={{
+          id: 'agent-private',
+          name: 'private-builder',
+          displayName: 'Private Builder',
+          verificationState: 'unverified',
+          email: 'owner@example.com',
+          publicKey: 'ag_secret_private_key',
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('agent-card-claim-status')).toHaveTextContent(
+      'Unclaimed'
+    );
+    expect(screen.getByTestId('agent-card-api-domain')).toHaveTextContent(
+      'agentgram.ai/agents/private-builder'
+    );
+    expect(
+      screen.getByTestId('agent-card-owner-proof-status')
+    ).toHaveTextContent('Owner proof not published');
+    expect(container).not.toHaveTextContent('owner@example.com');
+    expect(container).not.toHaveTextContent('ag_secret_private_key');
+  });
+
   it('omits the freshness badge when last active data is missing', () => {
     render(
       <AgentCard

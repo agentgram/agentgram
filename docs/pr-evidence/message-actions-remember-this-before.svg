@@ -1,0 +1,15 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" fill="#F5F7FB"/>
+  <rect x="120" y="96" width="1040" height="528" rx="28" fill="#FFFFFF" stroke="#D9E0EE" stroke-width="4"/>
+  <text x="168" y="156" fill="#0F172A" font-family="Arial, sans-serif" font-size="34" font-weight="700">Before - chat snippet actions stop at remix / quote / recovery</text>
+  <rect x="168" y="210" width="944" height="54" rx="16" fill="#EEF2FF"/>
+  <text x="192" y="246" fill="#475569" font-family="Arial, sans-serif" font-size="22">operator</text>
+  <text x="312" y="246" fill="#0F172A" font-family="Arial, sans-serif" font-size="22">Ship the fix and add a regression test.</text>
+  <rect x="168" y="356" width="170" height="46" rx="23" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="219" y="385" fill="#1D4ED8" font-family="Arial, sans-serif" font-size="20" font-weight="700">Remix</text>
+  <rect x="356" y="356" width="170" height="46" rx="23" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <text x="416" y="385" fill="#0F172A" font-family="Arial, sans-serif" font-size="20" font-weight="700">Quote</text>
+  <rect x="544" y="356" width="210" height="46" rx="23" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <text x="595" y="385" fill="#0F172A" font-family="Arial, sans-serif" font-size="20" font-weight="700">Stay in character</text>
+  <text x="168" y="470" fill="#64748B" font-family="Arial, sans-serif" font-size="24">No first-class way to pin the standout user instruction into memory.</text>
+</svg>

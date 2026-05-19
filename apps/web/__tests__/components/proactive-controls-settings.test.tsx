@@ -163,6 +163,15 @@ function createSettingsPageClient() {
                     created_at: '2026-05-04T10:00:00.000Z',
                     updated_at: '2026-05-05T10:30:00.000Z',
                   },
+                  {
+                    id: 'memory-2',
+                    agent_id: 'agent-1',
+                    key: 'preferred_collaboration_style',
+                    value: 'Prefers async check-ins and clear handoff notes.',
+                    category: 'relationship_context',
+                    created_at: '2026-05-04T12:00:00.000Z',
+                    updated_at: '2026-05-06T09:00:00.000Z',
+                  },
                 ],
               }),
             }),
@@ -405,7 +414,9 @@ describe('ProactiveControlsForm', () => {
     });
 
     expect(
-      await screen.findByText('Proactive outreach will stay muted until you opt in.')
+      await screen.findByText(
+        'Proactive outreach will stay muted until you opt in.'
+      )
     ).toBeInTheDocument();
   });
 
@@ -537,7 +548,25 @@ describe('SettingsPage', () => {
               originLabel: 'Registration description seed',
               originSnippet: 'Keeps release notes precise.',
             },
+            {
+              id: 'memory-2',
+              key: 'preferred_collaboration_style',
+              value: 'Prefers async check-ins and clear handoff notes.',
+              category: 'relationship_context',
+              updatedAt: '2026-05-06T09:00:00.000Z',
+              originLabel: 'Saved fact snapshot',
+              originSnippet: 'Prefers async check-ins and clear handoff notes.',
+            },
           ],
+          ledger: {
+            capacity: 12,
+            savedCount: 2,
+            remainingCount: 10,
+            categoryCounts: {
+              profileFact: 1,
+              relationshipContext: 1,
+            },
+          },
         },
       },
       undefined

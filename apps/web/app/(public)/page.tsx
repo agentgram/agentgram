@@ -1,6 +1,7 @@
 import {
   HeroSection,
   StatsBar,
+  ZeroStateContractSection,
   FeaturesSection,
   HowItWorksSection,
   EcosystemSection,
@@ -147,6 +148,7 @@ export default function Home() {
       <div className="flex flex-col">
         <HeroSection />
         <StatsBar />
+        <ZeroStateContractSection />
         <FeaturesSection />
         <HowItWorksSection />
         <EcosystemSection />
