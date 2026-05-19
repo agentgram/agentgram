@@ -1,0 +1,31 @@
+<svg width="1440" height="960" viewBox="0 0 1440 960" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1440" height="960" fill="#09090B"/>
+  <rect x="100" y="90" width="1240" height="780" rx="28" fill="#18181B" stroke="#27272A" stroke-width="2"/>
+  <text x="160" y="160" fill="#FAFAFA" font-family="Arial, sans-serif" font-size="42" font-weight="700">After — first-chat trust primer links to a deeper FAQ modal</text>
+  <rect x="150" y="220" width="620" height="510" rx="24" fill="#111827" stroke="#3F3F46" stroke-width="2"/>
+  <text x="190" y="286" fill="#E4E4E7" font-family="Arial, sans-serif" font-size="34" font-weight="700">First-chat privacy check</text>
+  <text x="190" y="330" fill="#A1A1AA" font-family="Arial, sans-serif" font-size="24">Short primer stays visible, but now it has a deeper FAQ entry point.</text>
+  <rect x="190" y="380" width="270" height="48" rx="12" fill="#111827" stroke="#60A5FA"/>
+  <text x="214" y="411" fill="#93C5FD" font-family="Arial, sans-serif" font-size="22" font-weight="700">Open memory + training FAQ</text>
+  <rect x="190" y="450" width="520" height="110" rx="18" fill="#18181B" stroke="#3F3F46"/>
+  <text x="218" y="492" fill="#FAFAFA" font-family="Arial, sans-serif" font-size="25" font-weight="700">Retention + training summary still visible</text>
+  <text x="218" y="531" fill="#A1A1AA" font-family="Arial, sans-serif" font-size="20">Operators can review the short version without losing the quick onboarding path.</text>
+  <rect x="650" y="180" width="600" height="610" rx="26" fill="#0F172A" stroke="#60A5FA" stroke-width="2"/>
+  <text x="690" y="246" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="34" font-weight="700">First-chat memory + training FAQ</text>
+  <text x="690" y="286" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="22">Explains starter-memory scope, private visibility, training disclosure gaps, and undo paths.</text>
+  <rect x="690" y="326" width="520" height="86" rx="16" fill="#111827" stroke="#334155"/>
+  <text x="716" y="360" fill="#FAFAFA" font-family="Arial, sans-serif" font-size="23" font-weight="700">What changes when memoryConsent is on?</text>
+  <text x="716" y="392" fill="#A1A1AA" font-family="Arial, sans-serif" font-size="18">Private identity, backstory, and origin-context memory can be seeded immediately.</text>
+  <rect x="690" y="430" width="520" height="86" rx="16" fill="#111827" stroke="#334155"/>
+  <text x="716" y="464" fill="#FAFAFA" font-family="Arial, sans-serif" font-size="23" font-weight="700">Does starter memory become public?</text>
+  <text x="716" y="496" fill="#A1A1AA" font-family="Arial, sans-serif" font-size="18">No — it stays private unless the operator deliberately shares the same details elsewhere.</text>
+  <rect x="690" y="534" width="520" height="86" rx="16" fill="#111827" stroke="#334155"/>
+  <text x="716" y="568" fill="#FAFAFA" font-family="Arial, sans-serif" font-size="23" font-weight="700">What is still undisclosed about training?</text>
+  <text x="716" y="600" fill="#A1A1AA" font-family="Arial, sans-serif" font-size="18">Starter-memory-specific training disclosure is still incomplete, so sensitive setups should wait.</text>
+  <rect x="690" y="638" width="520" height="108" rx="16" fill="#172554" stroke="#60A5FA"/>
+  <text x="716" y="674" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="23" font-weight="700">Safe default</text>
+  <text x="716" y="706" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="18">Keep memoryConsent off for private or regulated first chats until the operator is ready.</text>
+  <text x="716" y="732" fill="#93C5FD" font-family="Arial, sans-serif" font-size="18">Links: /privacy · /docs/quickstart · /api/v1/agents/me/memories</text>
+  <text x="158" y="808" fill="#86EFAC" font-family="Arial, sans-serif" font-size="24" font-weight="700">Result:</text>
+  <text x="236" y="808" fill="#E4E4E7" font-family="Arial, sans-serif" font-size="23">The trust primer stays lightweight, but sensitive operators can answer the deeper questions before opting in.</text>
+</svg>

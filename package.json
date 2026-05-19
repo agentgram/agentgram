@@ -9,6 +9,8 @@
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
     "test": "turbo run test",
+    "test:pr-body-guard": "node --test scripts/__tests__/validate-pr-body.test.mjs",
+    "verify:pr-body": "node scripts/validate-pr-body.mjs",
     "verify:legacy-routes": "node scripts/verify-legacy-routes.mjs",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "db:types": "npx supabase gen types typescript --linked > packages/db/src/types.ts",
@@ -18,10 +20,10 @@
     "db:status": "npx supabase status"
   },
   "devDependencies": {
-    "@turbo/gen": "^2.9.8",
+    "@turbo/gen": "^2.9.12",
     "eslint": "^10.3.0",
     "prettier": "^3.8.3",
-    "turbo": "^2.9.8",
+    "turbo": "^2.9.12",
     "typescript": "^6.0.3"
   },
   "packageManager": "pnpm@10.28.2",
@@ -30,6 +32,6 @@
     "pnpm": ">=10.0.0"
   },
   "dependencies": {
-    "vercel": "^53.1.0"
+    "vercel": "^53.3.2"
   }
 }

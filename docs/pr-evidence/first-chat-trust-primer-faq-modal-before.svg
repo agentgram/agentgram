@@ -1,0 +1,26 @@
+<svg width="1440" height="960" viewBox="0 0 1440 960" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1440" height="960" fill="#09090B"/>
+  <rect x="120" y="120" width="1200" height="720" rx="28" fill="#18181B" stroke="#27272A" stroke-width="2"/>
+  <text x="180" y="190" fill="#FAFAFA" font-family="Arial, sans-serif" font-size="42" font-weight="700">Before — first-chat privacy card stops at the short primer</text>
+  <rect x="180" y="250" width="1080" height="470" rx="24" fill="#111827" stroke="#3F3F46" stroke-width="2"/>
+  <text x="220" y="315" fill="#E4E4E7" font-family="Arial, sans-serif" font-size="34" font-weight="700">First-chat privacy check</text>
+  <text x="220" y="360" fill="#A1A1AA" font-family="Arial, sans-serif" font-size="24">Review retention and training disclosures before you seed private backstory.</text>
+  <rect x="220" y="408" width="520" height="118" rx="18" fill="#18181B" stroke="#3F3F46"/>
+  <text x="248" y="452" fill="#FAFAFA" font-family="Arial, sans-serif" font-size="26" font-weight="700">Retention</text>
+  <rect x="418" y="426" width="270" height="34" rx="17" fill="#27272A"/>
+  <text x="438" y="449" fill="#E4E4E7" font-family="Arial, sans-serif" font-size="18">Retained while your account is active</text>
+  <text x="248" y="492" fill="#A1A1AA" font-family="Arial, sans-serif" font-size="21">Private starter memories remain stored while the account is active.</text>
+  <rect x="220" y="548" width="520" height="118" rx="18" fill="#18181B" stroke="#3F3F46"/>
+  <text x="248" y="592" fill="#FAFAFA" font-family="Arial, sans-serif" font-size="26" font-weight="700">Training</text>
+  <rect x="390" y="566" width="238" height="34" rx="17" fill="#27272A"/>
+  <text x="410" y="589" fill="#E4E4E7" font-family="Arial, sans-serif" font-size="18">Not separately disclosed yet</text>
+  <text x="248" y="632" fill="#A1A1AA" font-family="Arial, sans-serif" font-size="21">Leave memoryConsent off if the setup is sensitive.</text>
+  <rect x="790" y="408" width="430" height="258" rx="18" fill="#18181B" stroke="#3F3F46"/>
+  <text x="820" y="452" fill="#FAFAFA" font-family="Arial, sans-serif" font-size="26" font-weight="700">Why this shows up before the first chat</text>
+  <text x="820" y="497" fill="#A1A1AA" font-family="Arial, sans-serif" font-size="21">Privacy-sensitive builders should see the current policy</text>
+  <text x="820" y="527" fill="#A1A1AA" font-family="Arial, sans-serif" font-size="21">before they opt into starter memory or share backstory.</text>
+  <rect x="820" y="581" width="248" height="46" rx="12" fill="#111827" stroke="#60A5FA"/>
+  <text x="844" y="611" fill="#93C5FD" font-family="Arial, sans-serif" font-size="20" font-weight="700">Review the full privacy policy</text>
+  <text x="182" y="785" fill="#FBBF24" font-family="Arial, sans-serif" font-size="26" font-weight="700">Gap:</text>
+  <text x="248" y="785" fill="#E4E4E7" font-family="Arial, sans-serif" font-size="24">No direct path to deeper FAQ answers about starter-memory scope, visibility, or later undo.</text>
+</svg>

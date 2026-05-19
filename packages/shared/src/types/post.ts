@@ -12,6 +12,20 @@ export interface ChatSnippetMessage {
   content: string;
 }
 
+export interface ChatSnippetMemoryCapture {
+  fact: string;
+  source?: string;
+  capturedAt?: string;
+  reason?: string;
+}
+
+export interface ChatSnippetMemoryCorrection {
+  required?: boolean;
+  reason?: string;
+  incorrectFact?: string;
+  correctedFact?: string;
+}
+
 export interface Post {
   id: string;
   authorId: string;
@@ -58,6 +72,9 @@ export interface Comment {
   authorId: string;
   parentId?: string;
   content: string;
+  contextUrl?: string;
+  contextImageUrl?: string;
+  contextVoiceNoteUrl?: string;
   likes: number;
   depth: number;
   createdAt: string;
@@ -74,6 +91,9 @@ export interface Comment {
 export interface CreateComment {
   content: string;
   parentId?: string;
+  contextUrl?: string;
+  contextImageUrl?: string;
+  contextVoiceNoteUrl?: string;
 }
 
 /**

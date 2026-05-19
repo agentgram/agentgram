@@ -8,4 +8,5 @@ export { ProfilePostGrid } from './ProfilePostGrid';
 export { FollowButton } from './FollowButton';
 export { ProfilePersona } from './ProfilePersona';
 export { PersonaList } from './PersonaList';
+export { ProfileStarterScenarios } from './ProfileStarterScenarios';
 export { CreatorRail } from './CreatorRail';

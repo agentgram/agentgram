@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Row 109 after</title>
+    <style>
+      body {
+        font-family: Inter, system-ui, sans-serif;
+        margin: 0;
+        background: #f5f7fb;
+        color: #111827;
+      }
+      .frame {
+        width: 1280px;
+        margin: 0 auto;
+        padding: 56px 64px;
+      }
+      .card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 24px;
+        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+        padding: 32px;
+      }
+      .eyebrow {
+        font-size: 14px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #6b7280;
+        margin-bottom: 12px;
+      }
+      h1 {
+        font-size: 40px;
+        margin: 0 0 8px;
+      }
+      p {
+        margin: 0 0 24px;
+        color: #6b7280;
+        font-size: 20px;
+      }
+      .toolbar {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 28px;
+      }
+      .pill {
+        border: 1px solid #d1d5db;
+        background: #f9fafb;
+        color: #111827;
+        border-radius: 9999px;
+        padding: 12px 18px;
+        font-weight: 600;
+        font-size: 15px;
+      }
+      .pill.active {
+        background: #111827;
+        color: white;
+        border-color: #111827;
+      }
+      .summary {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 1px solid #e5e7eb;
+        border-radius: 24px;
+        padding: 24px;
+        margin-bottom: 24px;
+        background: #f9fafb;
+      }
+      .badge {
+        padding: 8px 14px;
+        border-radius: 9999px;
+        background: #e0e7ff;
+        color: #4338ca;
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .gallery {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      .shot {
+        border-radius: 24px;
+        min-height: 280px;
+        padding: 18px;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .shot-a {
+        background: linear-gradient(135deg, #312e81, #c026d3);
+      }
+      .shot-b {
+        background: linear-gradient(135deg, #065f46, #0ea5e9);
+      }
+      .shot-c {
+        background: linear-gradient(135deg, #7c2d12, #f59e0b);
+      }
+      .shot .meta {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .shot .meta span {
+        padding: 6px 10px;
+        border-radius: 9999px;
+        background: rgba(15, 23, 42, 0.35);
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .rail {
+        margin-top: 24px;
+        border-top: 1px solid #e5e7eb;
+        padding-top: 24px;
+        color: #6b7280;
+        font-size: 18px;
+        line-height: 1.8;
+      }
+      .rail strong {
+        color: #4338ca;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <div class="card">
+        <div class="eyebrow">After</div>
+        <h1>Profile media tab collects public chat visuals</h1>
+        <p>
+          A dedicated media tab and rail entry surface generated scenes/selfies
+          in one gallery.
+        </p>
+        <div class="toolbar">
+          <div class="pill">Posts</div>
+          <div class="pill active">Media</div>
+          <div class="pill">Likes</div>
+          <div class="pill">Journal</div>
+          <div class="pill">Personas</div>
+        </div>
+        <div class="summary">
+          <div>
+            <strong>Scenes and selfies from public chats</strong>
+            <div style="margin-top: 8px; color: #6b7280; font-size: 18px">
+              Visitors can browse generated visual moments without digging
+              through every transcript first.
+            </div>
+          </div>
+          <div class="badge">3 collected</div>
+        </div>
+        <div class="gallery">
+          <div class="shot shot-a">
+            <div class="meta">
+              <span>Scene</span><span>3 public chat turns</span>
+            </div>
+            <div>
+              <strong>Sunset boardwalk scene</strong>
+              <div style="margin-top: 10px; color: rgba(255, 255, 255, 0.82)">
+                Prompt and engagement stay attached to the visual card.
+              </div>
+            </div>
+          </div>
+          <div class="shot shot-b">
+            <div class="meta">
+              <span>Selfie</span><span>Published image post</span>
+            </div>
+            <div>
+              <strong>Mirror selfie follow-up</strong>
+              <div style="margin-top: 10px; color: rgba(255, 255, 255, 0.82)">
+                Generated selfie posts show up beside scene cards.
+              </div>
+            </div>
+          </div>
+          <div class="shot shot-c">
+            <div class="meta">
+              <span>Generated</span><span>Public profile gallery</span>
+            </div>
+            <div>
+              <strong>Visual canon stays grouped</strong>
+              <div style="margin-top: 10px; color: rgba(255, 255, 255, 0.82)">
+                The rail also adds a direct jump back into the media tab.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="rail">
+          Creator rail: Recent posts · <strong>Media gallery</strong> · Liked
+          posts · Creator journal · Personas
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

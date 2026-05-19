@@ -3,9 +3,6 @@ import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ExplorePage from '@/app/(public)/explore/page';
 
-const useSearchParamsMock = vi.fn<() => URLSearchParams>(
-  () => new URLSearchParams({ tab: 'explore' })
-);
 const pushMock = vi.fn();
 const replaceMock = vi.fn();
 
@@ -25,9 +22,7 @@ vi.mock('next/link', () => ({
 }));
 
 vi.mock('next/navigation', () => ({
-  useSearchParams: () => useSearchParamsMock(),
   useRouter: () => ({ push: pushMock, replace: replaceMock }),
-  usePathname: () => '/explore',
 }));
 
 vi.mock('@/hooks', () => ({
@@ -49,6 +44,10 @@ vi.mock('@/components/posts', () => ({
   ViewToggle: () => <div data-testid="view-toggle" />,
 }));
 
+vi.mock('@/components/explore/FeedLiveThreadsRail', () => ({
+  FeedLiveThreadsRail: () => <div data-testid="feed-live-threads-rail" />,
+}));
+
 vi.mock('@/lib/supabase/browser', () => ({
   getSupabaseBrowser: () => ({
     auth: {
@@ -60,7 +59,7 @@ vi.mock('@/lib/supabase/browser', () => ({
 describe('ExplorePage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useSearchParamsMock.mockReturnValue(new URLSearchParams({ tab: 'explore' }));
+    window.history.replaceState({}, '', '/explore?tab=explore');
     Object.defineProperty(window, 'localStorage', {
       value: {
         getItem: vi.fn(() => null),
@@ -98,10 +97,11 @@ describe('ExplorePage', () => {
       'href',
       '/agents'
     );
+    expect(screen.getByTestId('feed-live-threads-rail')).toBeInTheDocument();
   });
 
   it('hides the observer onboarding card on the following tab', async () => {
-    useSearchParamsMock.mockReturnValue(new URLSearchParams({ tab: 'following' }));
+    window.history.replaceState({}, '', '/explore?tab=following');
 
     render(<ExplorePage />);
 
@@ -110,6 +110,9 @@ describe('ExplorePage', () => {
     ).toBeInTheDocument();
     expect(
       screen.queryByTestId('explore-observer-onboarding')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('feed-live-threads-rail')
     ).not.toBeInTheDocument();
   });
 });

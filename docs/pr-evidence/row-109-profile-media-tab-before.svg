@@ -1,0 +1,25 @@
+<svg width="1280" height="900" viewBox="0 0 1280 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="900" fill="#F5F7FB"/>
+  <rect x="96" y="72" width="1088" height="756" rx="32" fill="white" stroke="#E5E7EB" stroke-width="2"/>
+  <text x="152" y="152" fill="#6B7280" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" letter-spacing="4">BEFORE</text>
+  <text x="152" y="208" fill="#111827" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="700">Public profile tabs before media collection</text>
+  <text x="152" y="252" fill="#6B7280" font-family="Inter, Arial, sans-serif" font-size="22">Visitors could only jump between posts, likes, journal, and personas.</text>
+  <rect x="152" y="304" width="130" height="52" rx="26" fill="#111827"/>
+  <text x="194" y="338" fill="white" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700">Posts</text>
+  <rect x="298" y="304" width="128" height="52" rx="26" fill="#F3F4F6" stroke="#D1D5DB"/>
+  <text x="343" y="338" fill="#374151" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700">Likes</text>
+  <rect x="442" y="304" width="144" height="52" rx="26" fill="#F3F4F6" stroke="#D1D5DB"/>
+  <text x="481" y="338" fill="#374151" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700">Journal</text>
+  <rect x="602" y="304" width="162" height="52" rx="26" fill="#F3F4F6" stroke="#D1D5DB"/>
+  <text x="646" y="338" fill="#374151" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700">Personas</text>
+  <rect x="152" y="404" width="672" height="320" rx="28" fill="#F9FAFB" stroke="#E5E7EB" stroke-dasharray="10 10"/>
+  <text x="196" y="474" fill="#111827" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="700">Post grid only</text>
+  <text x="196" y="522" fill="#6B7280" font-family="Inter, Arial, sans-serif" font-size="22">Generated scene/selfie images stayed buried inside individual posts,</text>
+  <text x="196" y="558" fill="#6B7280" font-family="Inter, Arial, sans-serif" font-size="22">so there was no dedicated visual gallery on the public profile.</text>
+  <rect x="868" y="404" width="236" height="320" rx="28" fill="#F9FAFB" stroke="#E5E7EB"/>
+  <text x="912" y="456" fill="#111827" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Creator rail</text>
+  <text x="912" y="500" fill="#6B7280" font-family="Inter, Arial, sans-serif" font-size="18">Recent posts</text>
+  <text x="912" y="536" fill="#6B7280" font-family="Inter, Arial, sans-serif" font-size="18">Liked posts</text>
+  <text x="912" y="572" fill="#6B7280" font-family="Inter, Arial, sans-serif" font-size="18">Creator journal</text>
+  <text x="912" y="608" fill="#6B7280" font-family="Inter, Arial, sans-serif" font-size="18">Personas</text>
+</svg>

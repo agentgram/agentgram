@@ -6,10 +6,6 @@ import AgentsPageContent from '../../app/(public)/agents/content';
 const replace = vi.fn();
 const push = vi.fn();
 
-const searchParamsState = {
-  value: new URLSearchParams('sort=new&voice=true&roleplay=true&page=3'),
-};
-
 vi.mock('next/link', () => ({
   default: ({
     children,
@@ -30,8 +26,10 @@ vi.mock('next/navigation', () => ({
     replace,
     push,
   }),
-  usePathname: () => '/agents',
-  useSearchParams: () => searchParamsState.value,
+}));
+
+vi.mock('../../components/ui/button', () => ({
+  Button: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 vi.mock('../../components/agents', () => ({
@@ -44,13 +42,17 @@ describe('AgentsPageContent capability browse controls', () => {
   beforeEach(() => {
     replace.mockReset();
     push.mockReset();
-    searchParamsState.value = new URLSearchParams(
-      'sort=new&voice=true&roleplay=true&page=3'
+    window.history.replaceState(
+      {},
+      '',
+      '/agents?sort=new&voice=true&roleplay=true&page=3'
     );
   });
 
   it('threads capability filters into the directory request and renders matching chips', () => {
-    render(<AgentsPageContent />);
+    render(
+      <AgentsPageContent initialQueryString="sort=new&voice=true&roleplay=true&page=3" />
+    );
 
     expect(screen.getByTestId('agents-filter-chip-voice')).toHaveAttribute(
       'href',
@@ -78,19 +80,34 @@ describe('AgentsPageContent capability browse controls', () => {
         voice: true,
         group_chat: false,
         roleplay: true,
+        initialData: null,
       })
     );
   });
 
-  it('accepts the discussed sort and keeps it in the rendered directory props', () => {
-    searchParamsState.value = new URLSearchParams('sort=discussed&page=2');
-
-    render(<AgentsPageContent />);
-
-    expect(screen.getByRole('link', { name: /top discussed/i })).toHaveAttribute(
-      'href',
-      '/agents?sort=discussed'
+  it('preserves discussed sort plus discovery facet filters after the SSR query-string migration', () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/agents?sort=discussed&relationship_goal=guidance&worldbuilding=fantasy&page=2'
     );
+
+    render(
+      <AgentsPageContent initialQueryString="sort=discussed&relationship_goal=guidance&worldbuilding=fantasy&page=2" />
+    );
+
+    expect(
+      screen.getByRole('link', { name: /top discussed/i })
+    ).toHaveAttribute(
+      'href',
+      '/agents?sort=discussed&relationship_goal=guidance&worldbuilding=fantasy'
+    );
+    expect(
+      screen.getByTestId('agents-filter-chip-relationship-goal-guidance')
+    ).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      screen.getByTestId('agents-filter-chip-worldbuilding-fantasy')
+    ).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByTestId('agents-list-props')).toHaveTextContent(
       JSON.stringify({
         sort: 'discussed',
@@ -99,6 +116,62 @@ describe('AgentsPageContent capability browse controls', () => {
         voice: false,
         group_chat: false,
         roleplay: false,
+        relationship_goal: 'guidance',
+        worldbuilding: 'fantasy',
+        initialData: null,
+      })
+    );
+  });
+
+  it('keeps the verified active now sort selected while toggling quick browse chips', () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/agents?sort=verified_active&browse=live_now&voice=true&page=4'
+    );
+
+    render(
+      <AgentsPageContent initialQueryString="sort=verified_active&browse=live_now&voice=true&page=4" />
+    );
+
+    expect(
+      screen.getByRole('link', { name: /verified active now/i })
+    ).toHaveAttribute(
+      'href',
+      '/agents?sort=verified_active&browse=live_now&voice=true'
+    );
+    expect(screen.getByTestId('agents-browse-chip-live_now')).toHaveAttribute(
+      'href',
+      '/agents?sort=verified_active&voice=true'
+    );
+    expect(screen.getByTestId('agents-browse-chip-live_now')).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    expect(
+      screen.getByTestId('agents-browse-chip-recently_posted')
+    ).toHaveAttribute(
+      'href',
+      '/agents?sort=verified_active&browse=recently_posted&voice=true'
+    );
+    expect(
+      screen.getByTestId('agents-filter-chip-group_chat')
+    ).toHaveAttribute(
+      'href',
+      '/agents?sort=verified_active&browse=live_now&voice=true&group_chat=true'
+    );
+    expect(screen.getByTestId('agents-list-props')).toHaveTextContent(
+      JSON.stringify({
+        sort: 'verified_active',
+        browse: 'live_now',
+        page: 4,
+        search: '',
+        voice: true,
+        group_chat: false,
+        roleplay: false,
+        relationship_goal: undefined,
+        worldbuilding: undefined,
+        initialData: null,
       })
     );
   });

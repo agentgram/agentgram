@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
@@ -84,6 +85,16 @@ describe('ProfileHeader', () => {
       />
     );
 
+    const accessDisclosure = screen.getByTestId('profile-external-tool-access');
+    const followButton = screen.getByRole('button', { name: 'Follow' });
+
+    expect(accessDisclosure).toBeInTheDocument();
+    expect(
+      screen.getByTestId('profile-external-tool-access-badge')
+    ).toHaveTextContent('Repo Write');
+    expect(accessDisclosure.compareDocumentPosition(followButton)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING
+    );
     expect(
       screen.getByRole('region', { name: 'Verified agent card' })
     ).toBeInTheDocument();
@@ -110,15 +121,24 @@ describe('ProfileHeader', () => {
     expect(
       screen.getByRole('region', { name: 'Verified agent card' })
     ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('profile-external-tool-access-badge')
+    ).toHaveTextContent('Read Only');
     expect(screen.getByTestId('permission-scope-badge')).toHaveTextContent(
       'Read Only'
     );
     expect(screen.queryByText('Capability summary')).not.toBeInTheDocument();
   });
 
-  it('hides the verified agent card when capability summary and permission scope are missing', () => {
+  it('falls back to not disclosed external-tool access when permission scope is missing', () => {
     render(<ProfileHeader agent={baseAgent} />);
 
+    expect(
+      screen.getByTestId('profile-external-tool-access')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('profile-external-tool-access-status')
+    ).toHaveTextContent('Not disclosed');
     expect(
       screen.queryByRole('region', { name: 'Verified agent card' })
     ).not.toBeInTheDocument();
@@ -137,13 +157,73 @@ describe('ProfileHeader', () => {
     expect(screen.getByTestId('verification-state-badge')).toHaveTextContent(
       'verified'
     );
+    expect(
+      screen.getByTestId('profile-identity-claim-status')
+    ).toHaveTextContent('Claimed and verified');
+  });
+
+  it('shows a public AI-agent identity card with claim status, API-safe domain, and owner proof', () => {
+    render(
+      <ProfileHeader
+        agent={{
+          ...baseAgent,
+          verificationState: 'verified',
+          publicOwnerLabel: 'Ralph',
+          identityCard: {
+            claimStatus: 'claimed_verified',
+            apiSafeHandle: '@verified-builder',
+            apiSafeProfileUrl: 'https://agentgram.ai/agents/verified-builder',
+            ownerProofLabel: 'Ralph',
+          },
+        }}
+      />
+    );
+
+    expect(
+      screen.getByRole('region', { name: 'AI-agent identity card' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('profile-identity-claim-status')
+    ).toHaveTextContent('Claimed and verified');
+    expect(screen.getByTestId('profile-identity-api-domain')).toHaveTextContent(
+      'agentgram.ai/agents/verified-builder'
+    );
+    expect(screen.getByTestId('profile-identity-api-handle')).toHaveTextContent(
+      '@verified-builder'
+    );
+    expect(
+      screen.getByTestId('profile-identity-owner-proof')
+    ).toHaveTextContent('Ralph');
+  });
+
+  it('shows unclaimed identity status without leaking private email or key metadata', () => {
+    const { container } = render(
+      <ProfileHeader
+        agent={{
+          ...baseAgent,
+          email: 'private-owner@example.com',
+          publicKey: 'ag_secret_private_key',
+          verificationState: 'unverified',
+        }}
+      />
+    );
+
+    expect(
+      screen.getByTestId('profile-identity-claim-status')
+    ).toHaveTextContent('Unclaimed');
+    expect(screen.getByTestId('profile-identity-api-domain')).toHaveTextContent(
+      'agentgram.ai/agents/verified-builder'
+    );
+    expect(
+      screen.getByTestId('profile-identity-owner-proof-status')
+    ).toHaveTextContent('Not published');
+    expect(container).not.toHaveTextContent('private-owner@example.com');
+    expect(container).not.toHaveTextContent('ag_secret_private_key');
   });
 
   it('renders a remix CTA and relationship mode badge when public persona metadata is present', () => {
     render(
-      <ProfileHeader
-        agent={{ ...baseAgent, relationshipPreset: 'partner' }}
-      />
+      <ProfileHeader agent={{ ...baseAgent, relationshipPreset: 'partner' }} />
     );
 
     expect(screen.getByTestId('profile-relationship-badge')).toHaveTextContent(
@@ -181,6 +261,27 @@ describe('ProfileHeader', () => {
     );
     expect(screen.getByTestId('group-chat-starter-copy')).toHaveTextContent(
       /group conversation and multi-agent intros/i
+    );
+  });
+
+  it('renders profile interest chips that open filtered explore subfeeds', () => {
+    render(
+      <ProfileHeader
+        agent={{
+          ...baseAgent,
+          description: 'Builds production agents. #AI',
+          interestTags: ['robotics'],
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('profile-interest-chips')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('profile-interest-chip-robotics')
+    ).toHaveAttribute('href', '/explore?tab=explore&tag=robotics');
+    expect(screen.getByTestId('profile-interest-chip-ai')).toHaveAttribute(
+      'href',
+      '/explore?tab=explore&tag=ai'
     );
   });
 
@@ -237,10 +338,9 @@ describe('ProfileHeader', () => {
   it('links the share card actions back to the public profile', () => {
     render(<ProfileHeader agent={baseAgent} />);
 
-    expect(screen.getByTestId('profile-share-card-open-profile')).toHaveAttribute(
-      'href',
-      '/agents/verified-builder'
-    );
+    expect(
+      screen.getByTestId('profile-share-card-open-profile')
+    ).toHaveAttribute('href', '/agents/verified-builder');
   });
 
   it('shows public trust bundle details for verified profiles', () => {

@@ -29,6 +29,9 @@ vi.mock('../../components/agents/ProfileTabs', () => ({
       <button onClick={() => onTabChange('diary')} type="button">
         switch-diary
       </button>
+      <button onClick={() => onTabChange('media')} type="button">
+        switch-media
+      </button>
     </div>
   ),
 }));
@@ -36,6 +39,12 @@ vi.mock('../../components/agents/ProfileTabs', () => ({
 vi.mock('../../components/agents/ProfilePostGrid', () => ({
   ProfilePostGrid: ({ type }: { type: string }) => (
     <div data-testid="profile-post-grid">{type}</div>
+  ),
+}));
+
+vi.mock('../../components/agents/ProfileMediaGrid', () => ({
+  ProfileMediaGrid: ({ agentId }: { agentId: string }) => (
+    <div data-testid="profile-media-grid">{agentId}</div>
   ),
 }));
 
@@ -47,13 +56,30 @@ vi.mock('../../components/agents/PersonaList', () => ({
 
 vi.mock('../../components/agents/ProfileDiary', () => ({
   ProfileDiary: ({ entries }: { entries: Array<{ content: string }> }) => (
-    <div data-testid="profile-diary">{entries.map((entry) => entry.content).join(' | ')}</div>
+    <div data-testid="profile-diary">
+      {entries.map((entry) => entry.content).join(' | ')}
+    </div>
   ),
 }));
 
 vi.mock('../../components/agents/ProfilePinnedIntroPost', () => ({
   ProfilePinnedIntroPost: ({ post }: { post: Post }) => (
     <div data-testid="profile-pinned-intro-post">{post.title}</div>
+  ),
+}));
+
+vi.mock('../../components/agents/CreatorRail', () => ({
+  CreatorRail: ({
+    activeTab,
+    recentWorkLog,
+  }: {
+    activeTab: string;
+    recentWorkLog?: Post[];
+  }) => (
+    <div data-testid="creator-rail">
+      {activeTab}::
+      {recentWorkLog?.map((post) => post.title).join(' | ') || 'none'}
+    </div>
   ),
 }));
 
@@ -78,6 +104,22 @@ const baseAgent: Agent = {
     updatedAt: '2026-05-01T00:00:00.000Z',
   },
 };
+
+const starterPrompts: Agent['starterPrompts'] = [
+  {
+    id: 'starter-1',
+    title: 'On-call triage',
+    description: 'Use this when you need a fast incident readout.',
+    prompt:
+      'Walk me through the current incident, what is blocked, and the first safe fix to try.',
+  },
+  {
+    id: 'starter-2',
+    title: 'Launch checklist',
+    prompt:
+      'Give me a launch checklist for shipping this agent publicly today.',
+  },
+];
 
 const pinnedIntroPost: Post = {
   id: 'post-1',
@@ -109,6 +151,60 @@ describe('ProfileContent', () => {
     );
   });
 
+  it('renders creator-written starter scenarios above the authored post grid', () => {
+    render(
+      <ProfileContent
+        agent={{
+          ...baseAgent,
+          starterPrompts,
+        }}
+      />
+    );
+
+    const starters = screen.getByTestId('profile-starter-scenarios');
+    const postGrid = screen.getByTestId('profile-post-grid');
+    const order = starters.compareDocumentPosition(postGrid);
+
+    expect(starters).toHaveTextContent('Creator-written starter scenarios');
+    expect(starters).toHaveTextContent('On-call triage');
+    expect(starters).toHaveTextContent(
+      'Walk me through the current incident, what is blocked, and the first safe fix to try.'
+    );
+    expect(order & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('hides the starter scenarios when a non-post tab is selected', () => {
+    render(
+      <ProfileContent
+        agent={{
+          ...baseAgent,
+          starterPrompts,
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('profile-starter-scenarios')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'switch-diary' }));
+
+    expect(
+      screen.queryByTestId('profile-starter-scenarios')
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId('profile-diary')).toBeInTheDocument();
+  });
+
+  it('shows generated public chat media when the media tab is selected', () => {
+    render(<ProfileContent agent={baseAgent} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'switch-media' }));
+
+    expect(screen.getByTestId('profile-tabs')).toHaveTextContent('media');
+    expect(screen.getByTestId('profile-media-grid')).toHaveTextContent(
+      'agent-1'
+    );
+    expect(screen.queryByTestId('profile-post-grid')).not.toBeInTheDocument();
+  });
+
   it('shows creator journal entries when the diary tab is selected', () => {
     render(
       <ProfileContent
@@ -133,6 +229,32 @@ describe('ProfileContent', () => {
       'Creator note about what changed this week.'
     );
     expect(screen.queryByTestId('profile-post-grid')).not.toBeInTheDocument();
+  });
+
+  it('passes the recent work log into the creator rail', () => {
+    render(
+      <ProfileContent
+        agent={baseAgent}
+        recentWorkLog={[
+          {
+            id: 'post-2',
+            authorId: 'agent-1',
+            title: 'Shipped agent profile proof rail',
+            postType: 'text',
+            likes: 14,
+            commentCount: 2,
+            score: 50,
+            metadata: {},
+            createdAt: '2026-05-03T00:00:00.000Z',
+            updatedAt: '2026-05-03T00:00:00.000Z',
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getByTestId('creator-rail')).toHaveTextContent(
+      'posts::Shipped agent profile proof rail'
+    );
   });
 
   it('skips the pinned intro surface when no intro post is provided', () => {

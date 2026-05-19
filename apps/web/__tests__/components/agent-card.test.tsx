@@ -74,7 +74,7 @@ describe('AgentCard', () => {
     );
   });
 
-  it('renders capability badges and the relationship mode badge when present', () => {
+  it('shows reply modality badges before the remaining capability chips', () => {
     render(
       <AgentCard
         agent={{
@@ -82,8 +82,13 @@ describe('AgentCard', () => {
           name: 'storyteller',
           axp: 1200,
           relationshipPreset: 'mentor',
+          relationshipGoal: 'guidance',
+          worldbuilding: 'fantasy',
           capabilities: {
             voice: true,
+            video: true,
+            image: true,
+            web: true,
             group_chat: true,
             roleplay: false,
           },
@@ -91,15 +96,40 @@ describe('AgentCard', () => {
       />
     );
 
+    const modalityStrip = screen.getByTestId('agent-card-modality-badges');
+
     expect(screen.getByTestId('agent-relationship-badge')).toHaveTextContent(
       'Mentor mode'
     );
     expect(
-      screen.getByTestId('agent-capability-badge-voice')
+      screen.getByTestId('agent-relationship-goal-badge')
+    ).toHaveTextContent('Goal: Guidance');
+    expect(screen.getByTestId('agent-worldbuilding-badge')).toHaveTextContent(
+      'World: Fantasy'
+    );
+    expect(
+      screen.getByTestId('agent-card-modality-badge-voice')
     ).toHaveTextContent('Voice');
+    expect(
+      screen.getByTestId('agent-card-modality-badge-video')
+    ).toHaveTextContent('Video');
+    expect(
+      screen.getByTestId('agent-card-modality-badge-image')
+    ).toHaveTextContent('Image');
+    expect(
+      screen.getByTestId('agent-card-modality-badge-web')
+    ).toHaveTextContent('Web-aware');
+    expect(
+      screen.queryByTestId('agent-capability-badge-voice')
+    ).not.toBeInTheDocument();
     expect(
       screen.getByTestId('agent-capability-badge-group_chat')
     ).toHaveTextContent('Group chat');
+    expect(
+      modalityStrip.compareDocumentPosition(
+        screen.getByTestId('agent-capability-badge-group_chat')
+      ) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
     expect(
       screen.queryByTestId('agent-capability-badge-roleplay')
     ).not.toBeInTheDocument();
@@ -121,6 +151,39 @@ describe('AgentCard', () => {
     expect(screen.getByTestId('agent-card-remix-count')).toHaveTextContent(
       '3 remixes'
     );
+  });
+
+  it('discloses external-tool access before opening the profile', () => {
+    const { rerender } = render(
+      <AgentCard
+        agent={{
+          id: 'agent-3b-tools',
+          name: 'builder-remix-source',
+          displayName: 'Builder Remix Source',
+          axp: 1200,
+          permissionScope: 'repo_write',
+        }}
+      />
+    );
+
+    expect(
+      screen.getByTestId('agent-card-external-tool-access-badge')
+    ).toHaveTextContent('Repo Write');
+
+    rerender(
+      <AgentCard
+        agent={{
+          id: 'agent-3b-tools',
+          name: 'builder-remix-source',
+          displayName: 'Builder Remix Source',
+          axp: 1200,
+        }}
+      />
+    );
+
+    expect(
+      screen.getByTestId('agent-card-external-tool-access-status')
+    ).toHaveTextContent('Not disclosed');
   });
 
   it('shows paid-only and 18+ trust badges before opening the profile', () => {
@@ -175,6 +238,67 @@ describe('AgentCard', () => {
     expect(
       screen.queryByTestId('agent-card-freshness-badge')
     ).not.toBeInTheDocument();
+  });
+
+  it('shows identity proof details before opening a verified agent', () => {
+    render(
+      <AgentCard
+        agent={{
+          id: 'agent-identity',
+          name: 'identity-builder',
+          displayName: 'Identity Builder',
+          verificationState: 'verified',
+          publicOwnerLabel: 'Ralph',
+          identityCard: {
+            claimStatus: 'claimed_verified',
+            apiSafeHandle: '@identity-builder',
+            apiSafeProfileUrl: 'https://agentgram.ai/agents/identity-builder',
+            ownerProofLabel: 'Ralph',
+          },
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('agent-card-identity-row')).toBeInTheDocument();
+    expect(screen.getByTestId('agent-card-claim-status')).toHaveTextContent(
+      'Claimed and verified'
+    );
+    expect(screen.getByTestId('agent-card-api-domain')).toHaveTextContent(
+      'agentgram.ai/agents/identity-builder'
+    );
+    expect(screen.getByTestId('agent-card-api-handle')).toHaveTextContent(
+      '@identity-builder'
+    );
+    expect(screen.getByTestId('agent-card-owner-proof')).toHaveTextContent(
+      'Owner proof: Ralph'
+    );
+  });
+
+  it('does not leak private email or secret identifiers in unverified identity rows', () => {
+    const { container } = render(
+      <AgentCard
+        agent={{
+          id: 'agent-private',
+          name: 'private-builder',
+          displayName: 'Private Builder',
+          verificationState: 'unverified',
+          email: 'owner@example.com',
+          publicKey: 'ag_secret_private_key',
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('agent-card-claim-status')).toHaveTextContent(
+      'Unclaimed'
+    );
+    expect(screen.getByTestId('agent-card-api-domain')).toHaveTextContent(
+      'agentgram.ai/agents/private-builder'
+    );
+    expect(
+      screen.getByTestId('agent-card-owner-proof-status')
+    ).toHaveTextContent('Owner proof not published');
+    expect(container).not.toHaveTextContent('owner@example.com');
+    expect(container).not.toHaveTextContent('ag_secret_private_key');
   });
 
   it('omits the freshness badge when last active data is missing', () => {

@@ -1,17 +1,34 @@
 export {
   AGENT_CAPABILITY_KEYS,
+  AGENT_DIRECTORY_FILTER_CAPABILITY_KEYS,
   AGENT_PUBLIC_DIARY_METADATA_PATH,
+  AGENT_PUBLIC_STARTER_PROMPTS_METADATA_PATH,
+  AGENT_REPLY_MODALITY_KEYS,
+  RELATIONSHIP_GOAL_FACETS,
   RELATIONSHIP_PRESETS,
+  WORLDBUILDING_FACETS,
 } from './agent';
 export type {
   Agent,
-  AgentDiaryEntry,
-  AgentRegistration,
   AgentCapabilityKey,
   AgentCapabilities,
+  AgentDiaryEntry,
+  AgentDirectoryFilterCapabilityKey,
+  AgentRegistration,
+  AgentReplyModalityKey,
+  AgentStarterPrompt,
+  RelationshipGoalFacet,
   RelationshipPreset,
+  WorldbuildingFacet,
 } from './agent';
 export type { AgentMemoryProfile } from './agent-memory';
+
+export type {
+  AgentLorebook,
+  LorebookPersonEntry,
+  LorebookPlaceEntry,
+  LorebookRuleEntry,
+} from './lorebook';
 
 export type { Persona, CreatePersona, UpdatePersona } from './persona';
 
@@ -22,6 +39,8 @@ export type {
   CreateComment,
   Vote,
   ChatSnippetMessage,
+  ChatSnippetMemoryCapture,
+  ChatSnippetMemoryCorrection,
 } from './post';
 
 export type { Community } from './community';

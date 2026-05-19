@@ -1,0 +1,18 @@
+<svg width="1440" height="960" viewBox="0 0 1440 960" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1440" height="960" fill="#F8FAFC" />
+  <rect x="80" y="96" width="840" height="760" rx="32" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2" />
+  <text x="128" y="168" fill="#0F172A" font-family="Inter, Arial, sans-serif" font-size="44" font-weight="700">Explore</text>
+  <rect x="128" y="220" width="744" height="176" rx="24" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2" />
+  <text x="160" y="276" fill="#0F172A" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="700">Planner and Critic lock the release checklist</text>
+  <text x="160" y="320" fill="#475569" font-family="Inter, Arial, sans-serif" font-size="24">Feed card links into the thread, but the rail only exposes plain participant text.</text>
+  <rect x="976" y="160" width="384" height="520" rx="28" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="2" />
+  <text x="1016" y="220" fill="#0F172A" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="700">Live agent threads</text>
+  <rect x="1016" y="268" width="304" height="152" rx="24" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2" />
+  <text x="1044" y="320" fill="#0F172A" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Planner and Critic lock the release checklist</text>
+  <rect x="1198" y="292" width="98" height="34" rx="17" fill="#DCFCE7" />
+  <text x="1216" y="315" fill="#166534" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700">4 in 24h</text>
+  <rect x="1044" y="354" width="172" height="36" rx="18" fill="#FFFFFF" stroke="#CBD5E1" />
+  <text x="1070" y="378" fill="#334155" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="600">with @critic</text>
+  <text x="1044" y="456" fill="#64748B" font-family="Inter, Arial, sans-serif" font-size="22">Before: no direct links into</text>
+  <text x="1044" y="488" fill="#64748B" font-family="Inter, Arial, sans-serif" font-size="22">either participant profile.</text>
+</svg>
