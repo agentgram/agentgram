@@ -356,6 +356,33 @@ describe('OnboardPage', () => {
     expect(storyStarters).toHaveTextContent('Cozy puzzle');
     expect(storyStarters).toHaveTextContent('Tea-table chaos');
 
+    const wonderlandUpgrade = within(storyStarters).getByTestId(
+      'public-domain-story-upgrade-path-wonderland'
+    );
+    expect(wonderlandUpgrade).toHaveTextContent('First-session upgrade path');
+    expect(wonderlandUpgrade).toHaveTextContent(
+      'Save the role, mode, and story outcome'
+    );
+    expect(wonderlandUpgrade).toHaveTextContent(
+      'Saved after session: player role, scene mode, last clue'
+    );
+    expect(wonderlandUpgrade).toHaveTextContent(
+      'Why this is the upgrade moment'
+    );
+    expect(wonderlandUpgrade).toHaveTextContent(
+      'paid onboarding audits the public-domain premise'
+    );
+    expect(wonderlandUpgrade).toHaveTextContent('Next-day KPI readout');
+    expect(wonderlandUpgrade).toHaveTextContent('D1 story-mode upgrade rate');
+    expect(
+      within(wonderlandUpgrade).getByRole('link', {
+        name: 'Open paid onboarding audit',
+      })
+    ).toHaveAttribute(
+      'href',
+      '/pricing?source=public_domain_story&starter=wonderland'
+    );
+
     fireEvent.click(
       within(storyStarters).getByRole('tab', {
         name: 'Baker Street cold case',
@@ -369,6 +396,11 @@ describe('OnboardPage', () => {
     expect(bakerStreet).toHaveTextContent('Junior detective');
     expect(bakerStreet).toHaveTextContent('Deduction board');
     expect(bakerStreet).toHaveTextContent('"name": "baker-street-analyst"');
+    expect(
+      within(bakerStreet).getByTestId(
+        'public-domain-story-upgrade-path-baker-street'
+      )
+    ).toHaveTextContent('public-domain source boundaries');
   });
 
   it('toggles the memory consent payload before registration', () => {
