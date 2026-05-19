@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -623,6 +623,11 @@ function normalizeMemoryCapture(
     return null;
   }
 
+  const idCandidates = [record.id, record.memoryId, record.memory_id];
+  const id = idCandidates.find(
+    (candidate): candidate is string =>
+      typeof candidate === 'string' && candidate.trim().length > 0
+  );
   const sourceCandidates = [record.source, record.savedFrom, record.from];
   const source = sourceCandidates.find(
     (candidate): candidate is string =>
@@ -648,6 +653,7 @@ function normalizeMemoryCapture(
   );
 
   return {
+    id: id?.trim(),
     fact: fact.trim(),
     source: source?.trim(),
     capturedAt: capturedAt?.trim(),
@@ -775,6 +781,222 @@ function formatMemoryTimestamp(value: string) {
     hour: 'numeric',
     minute: '2-digit',
   }).format(date);
+}
+
+function isSameMemoryCapture(
+  left?: ChatSnippetMemoryCapture | null,
+  right?: ChatSnippetMemoryCapture | null
+) {
+  if (!left || !right) {
+    return false;
+  }
+
+  if (left.id && right.id) {
+    return left.id === right.id;
+  }
+
+  return (
+    left.fact === right.fact &&
+    (left.capturedAt || '') === (right.capturedAt || '')
+  );
+}
+
+function isFreshMemoryCapture(value?: string, nowMs = Date.now()) {
+  if (!value) {
+    return false;
+  }
+
+  const timestamp = new Date(value).getTime();
+
+  if (!Number.isFinite(timestamp)) {
+    return false;
+  }
+
+  return nowMs - timestamp >= 0 && nowMs - timestamp <= 10 * 60 * 1000;
+}
+
+const shownMemoryCaptureToastKeys = new Set<string>();
+
+type MemoryCaptureToastBodyProps = {
+  capture: ChatSnippetMemoryCapture;
+  canInlineEdit: boolean;
+  isUndoEnabled: boolean;
+  onEditInline: (nextFact: string) => Promise<void>;
+  onUndo: () => Promise<void>;
+  onOpenSettings: () => void;
+};
+
+function MemoryCaptureToastBody({
+  capture,
+  canInlineEdit,
+  isUndoEnabled,
+  onEditInline,
+  onUndo,
+  onOpenSettings,
+}: MemoryCaptureToastBodyProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(capture.fact);
+  const [status, setStatus] = useState<'idle' | 'saving' | 'undoing'>('idle');
+
+  return (
+    <div
+      className="mt-2 space-y-3"
+      data-testid="memory-capture-toast-description"
+    >
+      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-foreground">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
+          Saved fact
+        </div>
+        {isEditing ? (
+          <div className="mt-2 space-y-2">
+            <textarea
+              data-testid="memory-capture-toast-edit-input"
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              className="min-h-[88px] w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            />
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                data-testid="memory-capture-toast-save-button"
+                disabled={status !== 'idle' || !draft.trim()}
+                onClick={async () => {
+                  setStatus('saving');
+                  try {
+                    await onEditInline(draft.trim());
+                    setIsEditing(false);
+                  } catch {
+                    // Parent toast handler surfaces the error state.
+                  } finally {
+                    setStatus('idle');
+                  }
+                }}
+                className="inline-flex items-center rounded-full bg-foreground px-3 py-1.5 text-xs font-semibold text-background transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {status === 'saving' ? 'Saving…' : 'Save'}
+              </button>
+              <button
+                type="button"
+                data-testid="memory-capture-toast-cancel-button"
+                disabled={status !== 'idle'}
+                onClick={() => {
+                  setDraft(capture.fact);
+                  setIsEditing(false);
+                }}
+                className="inline-flex items-center rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <p className="mt-2 whitespace-pre-line text-sm text-foreground">
+              {capture.fact}
+            </p>
+            {capture.source || capture.capturedAt ? (
+              <p className="mt-2 text-xs text-muted-foreground">
+                {[capture.source, capture.capturedAt]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </p>
+            ) : null}
+          </>
+        )}
+      </div>
+
+      {!isEditing ? (
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            data-testid="memory-capture-toast-edit-button"
+            onClick={() => {
+              if (canInlineEdit) {
+                setDraft(capture.fact);
+                setIsEditing(true);
+                return;
+              }
+
+              onOpenSettings();
+            }}
+            className="inline-flex items-center rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted"
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            data-testid="memory-capture-toast-undo-button"
+            disabled={!isUndoEnabled || status !== 'idle'}
+            onClick={async () => {
+              setStatus('undoing');
+              try {
+                await onUndo();
+              } catch {
+                // Parent toast handler surfaces the error state.
+              } finally {
+                setStatus('idle');
+              }
+            }}
+            className="inline-flex items-center rounded-full border border-rose-500/20 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {status === 'undoing' ? 'Undoing…' : 'Undo'}
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function normalizeRecapFact(value: unknown): string | null {
+  if (typeof value === 'string' && value.trim()) {
+    return value.trim();
+  }
+
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const factCandidates = [
+    record.fact,
+    record.summary,
+    record.text,
+    record.value,
+    record.memory,
+  ];
+  const fact = factCandidates.find(
+    (candidate): candidate is string =>
+      typeof candidate === 'string' && candidate.trim().length > 0
+  );
+
+  return fact?.trim() ?? null;
+}
+
+function formatIdleGapDuration(totalMinutes: number) {
+  const roundedMinutes = Math.max(0, Math.round(totalMinutes));
+
+  if (roundedMinutes < 60) {
+    return `${roundedMinutes}m`;
+  }
+
+  const days = Math.floor(roundedMinutes / (60 * 24));
+  const hours = Math.floor((roundedMinutes % (60 * 24)) / 60);
+  const minutes = roundedMinutes % 60;
+  const parts: string[] = [];
+
+  if (days > 0) {
+    parts.push(`${days}d`);
+  }
+
+  if (hours > 0) {
+    parts.push(`${hours}h`);
+  }
+
+  if (days === 0 && minutes > 0) {
+    parts.push(`${minutes}m`);
+  }
+
+  return parts.join(' ') || '0m';
 }
 
 type SnippetActionMode =
@@ -1094,6 +1316,173 @@ export function PostCard({
       ['memory', 'previewLabel'],
       ['memory', 'preview_label'],
     ]) || 'Saved fact shaping this reply';
+  const memorySignalResetKey = [
+    post.id,
+    memoryPreview?.id,
+    memoryPreview?.capturedAt,
+    memoryPreview?.fact,
+  ]
+    .filter(Boolean)
+    .join(':');
+  const [memorySignalState, setMemorySignalState] = useState<{
+    key: string;
+    factOverride: string | null;
+    isHidden: boolean;
+  }>({
+    key: memorySignalResetKey,
+    factOverride: null,
+    isHidden: false,
+  });
+  const activeMemorySignalState =
+    memorySignalState.key === memorySignalResetKey
+      ? memorySignalState
+      : {
+          key: memorySignalResetKey,
+          factOverride: null,
+          isHidden: false,
+        };
+  const memoryPreviewFactOverride = activeMemorySignalState.factOverride;
+  const isMemorySignalHidden = activeMemorySignalState.isHidden;
+  const visibleMemoryPreview = isMemorySignalHidden
+    ? null
+    : memoryPreview
+      ? {
+          ...memoryPreview,
+          fact: memoryPreviewFactOverride ?? memoryPreview.fact,
+        }
+      : null;
+  const visibleMemoryCaptures = isMemorySignalHidden
+    ? []
+    : memoryCaptures.map((capture) =>
+        isSameMemoryCapture(capture, memoryPreview) && memoryPreviewFactOverride
+          ? {
+              ...capture,
+              fact: memoryPreviewFactOverride,
+            }
+          : capture
+      );
+  const visibleMemorySavedLabel = isMemorySignalHidden
+    ? undefined
+    : memorySavedLabel;
+  const visibleMemoryExplanation = isMemorySignalHidden
+    ? undefined
+    : memoryExplanation;
+  const memoryCaptureToastEnabled = readMetadataBoolean(post.metadata, [
+    ['memoryCaptureToast'],
+    ['memory_capture_toast'],
+    ['showMemoryCaptureToast'],
+    ['show_memory_capture_toast'],
+    ['memory', 'captureToast'],
+    ['memory', 'capture_toast'],
+    ['memory', 'justCaptured'],
+    ['memory', 'just_captured'],
+    ['memory', 'autoCaptured'],
+    ['memory', 'auto_captured'],
+  ]);
+  const memoryCaptureToastSource =
+    visibleMemoryPreview || visibleMemoryCaptures[0] || null;
+  const memoryCaptureToastSourceId = memoryCaptureToastSource?.id;
+  const memoryCaptureToastKey = memoryCaptureToastSource
+    ? [
+        post.id,
+        memoryCaptureToastSource.id ||
+          memoryCaptureToastSource.capturedAt ||
+          post.updatedAt ||
+          memoryCaptureToastSource.fact,
+      ]
+        .filter(Boolean)
+        .join(':')
+    : null;
+  const shouldShowMemoryCaptureToast =
+    isChatSnippet &&
+    Boolean(visibleMemorySavedLabel && memoryCaptureToastSource?.fact) &&
+    (memoryCaptureToastEnabled ??
+      isFreshMemoryCapture(
+        memorySavedAt || memoryCaptureToastSource?.capturedAt || post.updatedAt
+      ));
+  const explicitReturnToChatFacts = readMetadataArray(post.metadata, [
+    ['savedFacts'],
+    ['saved_facts'],
+    ['returnToChatRecap', 'savedFacts'],
+    ['return_to_chat_recap', 'saved_facts'],
+    ['returnToChat', 'savedFacts'],
+    ['return_to_chat', 'saved_facts'],
+    ['resumeRecap', 'savedFacts'],
+    ['resume_recap', 'saved_facts'],
+  ])
+    .map((entry) => normalizeRecapFact(entry))
+    .filter((entry): entry is string => entry != null);
+  const fallbackReturnToChatFacts = [
+    ...visibleMemoryCaptures
+      .map((capture) => capture.fact.trim())
+      .filter(Boolean),
+    visibleMemoryPreview?.fact?.trim(),
+  ].filter((entry): entry is string => Boolean(entry));
+  const returnToChatFacts = Array.from(
+    new Set(
+      (explicitReturnToChatFacts.length > 0
+        ? explicitReturnToChatFacts
+        : fallbackReturnToChatFacts
+      ).filter(Boolean)
+    )
+  );
+  const returnToChatLastGoal = readMetadataString(post.metadata, [
+    ['lastGoal'],
+    ['last_goal'],
+    ['goalRecap'],
+    ['goal_recap'],
+    ['returnToChatRecap', 'lastGoal'],
+    ['return_to_chat_recap', 'last_goal'],
+    ['returnToChat', 'lastGoal'],
+    ['return_to_chat', 'last_goal'],
+    ['resumeRecap', 'lastGoal'],
+    ['resume_recap', 'last_goal'],
+  ]);
+  const returnToChatGapLabel = readMetadataString(post.metadata, [
+    ['idleGapLabel'],
+    ['idle_gap_label'],
+    ['returnToChatRecap', 'idleGapLabel'],
+    ['return_to_chat_recap', 'idle_gap_label'],
+    ['returnToChat', 'idleGapLabel'],
+    ['return_to_chat', 'idle_gap_label'],
+    ['resumeRecap', 'idleGapLabel'],
+    ['resume_recap', 'idle_gap_label'],
+  ]);
+  const returnToChatGapMinutes =
+    readMetadataNumber(post.metadata, [
+      ['idleGapMinutes'],
+      ['idle_gap_minutes'],
+      ['returnToChatRecap', 'idleGapMinutes'],
+      ['return_to_chat_recap', 'idle_gap_minutes'],
+      ['returnToChat', 'idleGapMinutes'],
+      ['return_to_chat', 'idle_gap_minutes'],
+      ['resumeRecap', 'idleGapMinutes'],
+      ['resume_recap', 'idle_gap_minutes'],
+    ]) ??
+    (() => {
+      const idleGapHours = readMetadataNumber(post.metadata, [
+        ['idleGapHours'],
+        ['idle_gap_hours'],
+        ['returnToChatRecap', 'idleGapHours'],
+        ['return_to_chat_recap', 'idle_gap_hours'],
+        ['returnToChat', 'idleGapHours'],
+        ['return_to_chat', 'idle_gap_hours'],
+        ['resumeRecap', 'idleGapHours'],
+        ['resume_recap', 'idle_gap_hours'],
+      ]);
+
+      return idleGapHours !== undefined ? idleGapHours * 60 : undefined;
+    })();
+  const resolvedReturnToChatGapLabel =
+    returnToChatGapLabel ||
+    (returnToChatGapMinutes !== undefined
+      ? formatIdleGapDuration(returnToChatGapMinutes)
+      : undefined);
+  const hasReturnToChatRecap = Boolean(
+    resolvedReturnToChatGapLabel &&
+    (returnToChatFacts.length > 0 || returnToChatLastGoal)
+  );
+
   const memoryCorrection = readMetadataCorrection(post.metadata, [
     ['memoryCorrection'],
     ['memory_correction'],
@@ -1138,6 +1527,7 @@ export function PostCard({
   const hasWrongMemoryRecovery =
     memoryCorrection.required ??
     Boolean(wrongMemoryReason || incorrectMemoryFact || correctedMemoryFact);
+
   const blockedMessage = readMetadataString(post.metadata, [
     ['blockedMessage'],
     ['blocked_message'],
@@ -1197,6 +1587,7 @@ export function PostCard({
     ['toneLock', 'style'],
     ['tone_lock', 'style'],
   ]);
+
   const saferRewriteSource =
     blockedMessage || latestUserMessage || post.content || post.title;
   const hasSafetyRewriteContext = Boolean(
@@ -1222,8 +1613,8 @@ export function PostCard({
   const restateKeyFactCues = Array.from(
     new Set(
       [
-        memoryPreview?.fact,
-        ...memoryCaptures.map((capture) => capture.fact),
+        visibleMemoryPreview?.fact,
+        ...visibleMemoryCaptures.map((capture) => capture.fact),
       ].filter((value): value is string => Boolean(value?.trim()))
     )
   ).slice(0, 3);
@@ -1322,7 +1713,13 @@ export function PostCard({
     isChatSnippet,
     chatMessageCount: chatMessages.length,
     commentCount: post.commentCount,
-    hasMemorySignal: hasVisibleMemorySignal,
+    hasMemorySignal: Boolean(
+      visibleMemorySavedLabel ||
+      visibleMemoryExplanation ||
+      visibleMemoryPreview ||
+      visibleMemoryCaptures.length > 0
+    ),
+
     replyVelocity,
   });
   const [followUpOptInStatus, setFollowUpOptInStatus] = useState<
@@ -1333,6 +1730,161 @@ export function PostCard({
   const followUpOptInSummary = followUpOptInSettings
     ? getFollowUpOptInSummary(followUpOptInSettings)
     : null;
+
+  useEffect(() => {
+    if (
+      !shouldShowMemoryCaptureToast ||
+      !memoryCaptureToastSource ||
+      !memoryCaptureToastKey ||
+      shownMemoryCaptureToastKeys.has(memoryCaptureToastKey)
+    ) {
+      return;
+    }
+
+    const openSettings = () => {
+      if (typeof window === 'undefined') {
+        return;
+      }
+
+      window.location.assign('/dashboard/settings');
+    };
+
+    const editMemoryCapture = async (nextFact: string) => {
+      if (!memoryCaptureToastSourceId) {
+        openSettings();
+        return;
+      }
+
+      const response = await fetch(
+        `/api/v1/agents/me/memories/${memoryCaptureToastSourceId}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ value: nextFact }),
+        }
+      );
+
+      if (!response.ok) {
+        let message = 'Could not update this saved fact.';
+
+        try {
+          const payload = (await response.json()) as {
+            error?: { message?: string };
+          };
+          message = payload.error?.message || message;
+        } catch {
+          // Ignore JSON parse failures.
+        }
+
+        throw new Error(message);
+      }
+
+      setMemorySignalState({
+        key: memorySignalResetKey,
+        factOverride: nextFact,
+        isHidden: false,
+      });
+      analytics.clickCta('chat_snippet_memory_capture_edit');
+      toast({
+        title: 'Saved fact updated',
+        description: 'Future replies will use your edited memory snippet.',
+      });
+    };
+
+    const undoMemoryCapture = async () => {
+      if (!memoryCaptureToastSourceId) {
+        openSettings();
+        return;
+      }
+
+      const response = await fetch(
+        `/api/v1/agents/me/memories/${memoryCaptureToastSourceId}`,
+        {
+          method: 'DELETE',
+        }
+      );
+
+      if (!response.ok) {
+        let message = 'Could not remove this saved fact.';
+
+        try {
+          const payload = (await response.json()) as {
+            error?: { message?: string };
+          };
+          message = payload.error?.message || message;
+        } catch {
+          // Ignore JSON parse failures.
+        }
+
+        throw new Error(message);
+      }
+
+      setMemorySignalState({
+        key: memorySignalResetKey,
+        factOverride: null,
+        isHidden: true,
+      });
+      analytics.clickCta('chat_snippet_memory_capture_undo');
+      toast({
+        title: 'Saved fact removed',
+        description: 'This auto-saved memory will not shape future replies.',
+      });
+    };
+
+    shownMemoryCaptureToastKeys.add(memoryCaptureToastKey);
+
+    toast({
+      title: visibleMemorySavedLabel,
+      description: (
+        <MemoryCaptureToastBody
+          capture={memoryCaptureToastSource}
+          canInlineEdit={Boolean(memoryCaptureToastSourceId)}
+          isUndoEnabled
+          onEditInline={async (nextFact) => {
+            try {
+              await editMemoryCapture(nextFact);
+            } catch (error) {
+              const message =
+                error instanceof Error
+                  ? error.message
+                  : 'Could not update this saved fact.';
+              toast({
+                title: 'Could not update saved fact',
+                description: message,
+              });
+              throw error;
+            }
+          }}
+          onUndo={async () => {
+            try {
+              await undoMemoryCapture();
+            } catch (error) {
+              const message =
+                error instanceof Error
+                  ? error.message
+                  : 'Could not remove this saved fact.';
+              toast({
+                title: 'Could not undo saved fact',
+                description: message,
+              });
+              throw error;
+            }
+          }}
+          onOpenSettings={openSettings}
+        />
+      ),
+    });
+  }, [
+    memoryCaptureToastKey,
+    memoryCaptureToastSource,
+    memoryCaptureToastSourceId,
+    memorySignalResetKey,
+    shouldShowMemoryCaptureToast,
+    toast,
+    visibleMemorySavedLabel,
+  ]);
 
   const handleFollowUpOptIn = async () => {
     if (!followUpOptInSignal || followUpOptInStatus !== 'idle') {
@@ -1861,7 +2413,69 @@ export function PostCard({
           </span>
         </div>
 
-        {memorySavedLabel ? (
+        {hasReturnToChatRecap ? (
+          <div
+            data-testid="chat-snippet-return-recap"
+            className="mt-3 rounded-xl border border-sky-500/20 bg-sky-500/10 px-3 py-3"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="space-y-1">
+                <span className="inline-flex items-center rounded-full border border-sky-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
+                  Return to chat recap
+                </span>
+                <p className="text-xs text-sky-900/80">
+                  Reload the saved facts and last goal before the first reply
+                  after an idle gap.
+                </p>
+              </div>
+
+              <span
+                data-testid="chat-snippet-return-gap"
+                className="inline-flex items-center rounded-full border border-sky-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700"
+              >
+                {resolvedReturnToChatGapLabel} idle gap
+              </span>
+            </div>
+
+            {returnToChatFacts.length > 0 ? (
+              <div
+                data-testid="chat-snippet-return-facts"
+                className="mt-3 rounded-xl border border-sky-500/20 bg-background/70 px-3 py-2"
+              >
+                <span className="inline-flex items-center rounded-full border border-sky-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
+                  Saved facts
+                </span>
+                <ul className="mt-2 space-y-1.5 text-sm text-foreground/90">
+                  {returnToChatFacts.map((fact, index) => (
+                    <li
+                      key={`${fact}-${index}`}
+                      data-testid="chat-snippet-return-fact"
+                      className="list-none"
+                    >
+                      • {fact}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {returnToChatLastGoal ? (
+              <div
+                data-testid="chat-snippet-return-goal"
+                className="mt-3 rounded-xl border border-sky-500/20 bg-background/70 px-3 py-2"
+              >
+                <span className="inline-flex items-center rounded-full border border-sky-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
+                  Last goal
+                </span>
+                <p className="mt-2 text-sm text-foreground/90 whitespace-pre-line">
+                  {returnToChatLastGoal}
+                </p>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        {visibleMemorySavedLabel ? (
           <div className="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-3">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="space-y-1">
@@ -1869,7 +2483,7 @@ export function PostCard({
                   data-testid="chat-snippet-memory-event"
                   className="inline-flex items-center rounded-full border border-emerald-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700"
                 >
-                  {memorySavedLabel}
+                  {visibleMemorySavedLabel}
                 </span>
                 <p className="text-xs text-emerald-900/80">
                   {memorySavedAt
@@ -1878,7 +2492,7 @@ export function PostCard({
                 </p>
               </div>
 
-              {memoryCaptures.length > 0 ? (
+              {visibleMemoryCaptures.length > 0 ? (
                 <Dialog
                   open={isMemoryCapturesOpen}
                   onOpenChange={setIsMemoryCapturesOpen}
@@ -1888,7 +2502,7 @@ export function PostCard({
                     data-testid="chat-snippet-memory-drawer-trigger"
                   >
                     <History className="h-3.5 w-3.5" aria-hidden="true" />
-                    Recent captures ({memoryCaptures.length})
+                    Recent captures ({visibleMemoryCaptures.length})
                   </DialogTrigger>
                   <DialogContent data-testid="chat-snippet-memory-drawer">
                     <DialogHeader>
@@ -1900,7 +2514,7 @@ export function PostCard({
                     </DialogHeader>
 
                     <div className="space-y-3">
-                      {memoryCaptures.map((capture, index) => (
+                      {visibleMemoryCaptures.map((capture, index) => (
                         <div
                           key={`${capture.fact}-${index}`}
                           data-testid="chat-snippet-memory-capture"
@@ -1934,7 +2548,7 @@ export function PostCard({
               ) : null}
             </div>
 
-            {memoryPreview ? (
+            {visibleMemoryPreview ? (
               <div
                 data-testid="chat-snippet-memory-preview"
                 className="mt-3 rounded-xl border border-emerald-500/20 bg-background/70 px-3 py-2"
@@ -1943,14 +2557,14 @@ export function PostCard({
                   {memoryPreviewLabel}
                 </span>
                 <p className="mt-2 text-sm text-foreground/90 whitespace-pre-line">
-                  {memoryPreview.fact}
+                  {visibleMemoryPreview.fact}
                 </p>
-                {memoryPreview.source || memoryPreview.capturedAt ? (
+                {visibleMemoryPreview.source || visibleMemoryPreview.capturedAt ? (
                   <p className="mt-2 text-xs text-muted-foreground">
                     {[
-                      memoryPreview.source,
-                      memoryPreview.capturedAt
-                        ? `Saved ${formatMemoryTimestamp(memoryPreview.capturedAt)}`
+                      visibleMemoryPreview.source,
+                      visibleMemoryPreview.capturedAt
+                        ? `Saved ${formatMemoryTimestamp(visibleMemoryPreview.capturedAt)}`
                         : undefined,
                     ]
                       .filter(Boolean)
@@ -1960,7 +2574,7 @@ export function PostCard({
               </div>
             ) : null}
 
-            {memoryExplanation ? (
+            {visibleMemoryExplanation ? (
               <div
                 data-testid="chat-snippet-memory-reason"
                 className="mt-3 rounded-xl border border-emerald-500/20 bg-background/70 px-3 py-2"
@@ -1969,7 +2583,7 @@ export function PostCard({
                   Why I remembered this
                 </span>
                 <p className="mt-2 text-sm text-foreground/90 whitespace-pre-line">
-                  {memoryExplanation}
+                  {visibleMemoryExplanation}
                 </p>
               </div>
             ) : null}

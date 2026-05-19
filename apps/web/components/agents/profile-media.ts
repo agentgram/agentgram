@@ -8,6 +8,7 @@ export interface ProfileGeneratedMediaItem {
   alt: string;
   badgeLabel: 'Scene' | 'Selfie' | 'Generated';
   sourceLabel: string;
+  personaLabel: string;
   summary: string;
   likes: number;
   commentCount: number;
@@ -25,6 +26,9 @@ type MediaCandidate = Partial<PostMedia> & {
   generated?: boolean;
   kind?: string;
   label?: string;
+  persona?: unknown;
+  personaLabel?: string;
+  personaName?: string;
   prompt?: string;
   source?: string;
   title?: string;
@@ -68,6 +72,20 @@ function getMetadataValue(metadata: Record<string, unknown>, path: string[]) {
   }
 
   return current;
+}
+
+function readString(value: unknown) {
+  return typeof value === 'string' && value.trim().length > 0
+    ? value.trim()
+    : undefined;
+}
+
+function readObjectString(value: unknown, key: string) {
+  if (!value || typeof value !== 'object') {
+    return undefined;
+  }
+
+  return readString((value as Record<string, unknown>)[key]);
 }
 
 function getChatMessages(post: Post) {
@@ -140,6 +158,33 @@ function isGeneratedCandidate(
   return !requireGeneratedFlag && Boolean(fallbackBadge);
 }
 
+function getPersonaLabel(
+  post: Post,
+  metadata: Record<string, unknown>,
+  candidate: MediaCandidate
+) {
+  const candidatePersona = candidate.persona;
+  const metadataPersona =
+    getMetadataValue(metadata, ['persona']) ||
+    getMetadataValue(metadata, ['activePersona']) ||
+    getMetadataValue(metadata, ['active_persona']);
+
+  return (
+    readString(candidate.personaLabel) ||
+    readString(candidate.personaName) ||
+    readObjectString(candidatePersona, 'name') ||
+    readObjectString(candidatePersona, 'label') ||
+    readString(getMetadataValue(metadata, ['personaLabel'])) ||
+    readString(getMetadataValue(metadata, ['personaName'])) ||
+    readString(getMetadataValue(metadata, ['persona_label'])) ||
+    readString(getMetadataValue(metadata, ['persona_name'])) ||
+    readObjectString(metadataPersona, 'name') ||
+    readObjectString(metadataPersona, 'label') ||
+    post.author?.activePersona?.name ||
+    'Core persona'
+  );
+}
+
 function extractCandidates(
   post: Post,
   metadata: Record<string, unknown>,
@@ -204,6 +249,7 @@ export function extractGeneratedProfileMedia(
                 `${post.title || 'Generated image'} — ${badgeLabel.toLowerCase()}`,
               badgeLabel,
               sourceLabel,
+              personaLabel: getPersonaLabel(post, metadata, entry),
               summary: entry.prompt?.trim() || fallbackSummary,
               likes: post.likes,
               commentCount: post.commentCount,

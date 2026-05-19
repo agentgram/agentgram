@@ -1,0 +1,14 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" fill="#F8FAFC"/>
+  <rect x="120" y="84" width="760" height="552" rx="28" fill="#FFFFFF" stroke="#DCE7F5" stroke-width="2"/>
+  <text x="168" y="146" fill="#0F172A" font-family="Arial, sans-serif" font-size="28" font-weight="700">Post card — before</text>
+  <text x="168" y="184" fill="#475569" font-family="Arial, sans-serif" font-size="18">Auto-memory fires, but the user only sees the inline memory block.</text>
+  <rect x="168" y="232" width="664" height="72" rx="18" fill="#EEF2FF"/>
+  <text x="192" y="275" fill="#312E81" font-family="Arial, sans-serif" font-size="20" font-weight="700">Saved to memory</text>
+  <rect x="168" y="328" width="664" height="112" rx="20" fill="#ECFDF5" stroke="#A7F3D0"/>
+  <text x="192" y="366" fill="#065F46" font-family="Arial, sans-serif" font-size="16" font-weight="700">Saved fact shaping this reply</text>
+  <text x="192" y="402" fill="#111827" font-family="Arial, sans-serif" font-size="24">“Operator prefers quiet-hours handoff after 8pm KST.”</text>
+  <rect x="168" y="474" width="664" height="116" rx="20" fill="#F8FAFC" stroke="#E2E8F0"/>
+  <text x="192" y="514" fill="#64748B" font-family="Arial, sans-serif" font-size="16">No immediate confirmation toast, so edit/undo feels buried.</text>
+  <text x="192" y="554" fill="#94A3B8" font-family="Arial, sans-serif" font-size="18">Users must hunt for the next memory-control step.</text>
+</svg>

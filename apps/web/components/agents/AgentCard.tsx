@@ -57,7 +57,43 @@ type AgentCardAgent = {
   operatorTier?: PlanType | null;
   matureContent?: boolean;
   remixCount?: number | null;
+  email?: string | null;
+  publicKey?: string | null;
+  identityCard?: {
+    claimStatus?: 'claimed_verified' | 'pending_review' | 'unclaimed';
+    apiSafeHandle?: string;
+    apiSafeProfileUrl?: string;
+    ownerProofLabel?: string;
+  } | null;
 };
+
+const AGENTGRAM_PUBLIC_ORIGIN = 'https://agentgram.ai';
+
+function getApiSafeHandle(name: string) {
+  const normalized = name
+    .trim()
+    .replace(/[^A-Za-z0-9_-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^[-_]+|[-_]+$/g, '')
+    .slice(0, 64);
+
+  return normalized || 'agent';
+}
+
+function getClaimStatusLabel(
+  verificationState?: AgentCardAgent['verificationState'],
+  claimStatus?: NonNullable<AgentCardAgent['identityCard']>['claimStatus']
+) {
+  if (claimStatus === 'claimed_verified' || verificationState === 'verified') {
+    return 'Claimed and verified';
+  }
+
+  if (claimStatus === 'pending_review' || verificationState === 'pending') {
+    return 'Claim pending review';
+  }
+
+  return 'Unclaimed';
+}
 
 function formatTokenLabel(value: string) {
   return value
@@ -156,6 +192,23 @@ export function AgentCard({
     : undefined;
   const externalToolAccess = formatExternalToolAccess(agent.permissionScope);
   const paidTierLabel = formatOperatorTierLabel(agent.operatorTier);
+  const identityApiSafeHandle =
+    agent.identityCard?.apiSafeHandle ?? '@' + getApiSafeHandle(agent.name);
+  const identityApiSafeProfileUrl =
+    agent.identityCard?.apiSafeProfileUrl ??
+    AGENTGRAM_PUBLIC_ORIGIN +
+      '/agents/' +
+      encodeURIComponent(agent.name);
+  const identityDisplayUrl = identityApiSafeProfileUrl.replace(
+    /^https?:\/\//,
+    ''
+  );
+  const identityClaimStatusLabel = getClaimStatusLabel(
+    agent.verificationState,
+    agent.identityCard?.claimStatus
+  );
+  const identityOwnerProofLabel =
+    agent.identityCard?.ownerProofLabel?.trim() || publicOwnerLabel;
   const shouldShowPublicTrustBundle =
     agent.verificationState === 'verified' &&
     Boolean(publicOwnerLabel || formattedMemoryPolicy || activityFreshness);
@@ -181,7 +234,7 @@ export function AgentCard({
 
   return (
     <Link
-      href={`/agents/${agent.name}`}
+      href={'/agents/' + encodeURIComponent(agent.name)}
       data-testid="agent-card"
       className={cn(
         'group block rounded-lg border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
@@ -260,6 +313,51 @@ export function AgentCard({
         </div>
       </div>
 
+      <div
+        className="mt-3 flex flex-wrap items-center gap-2"
+        data-testid="agent-card-identity-row"
+      >
+        <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+          AI-agent identity
+        </span>
+        <span
+          className={cn(
+            'inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]',
+            agent.verificationState === 'verified'
+              ? 'border-green-500/20 bg-green-500/10 text-green-700 dark:text-green-300'
+              : agent.verificationState === 'pending'
+                ? 'border-yellow-500/20 bg-yellow-500/10 text-yellow-700 dark:text-yellow-300'
+                : 'border-border/70 bg-muted/40 text-muted-foreground'
+          )}
+          data-testid="agent-card-claim-status"
+        >
+          {identityClaimStatusLabel}
+        </span>
+        <code
+          className="max-w-full truncate rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-[10px] text-foreground"
+          data-testid="agent-card-api-domain"
+        >
+          {identityDisplayUrl}
+        </code>
+        <code
+          className="rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-[10px] text-foreground"
+          data-testid="agent-card-api-handle"
+        >
+          {identityApiSafeHandle}
+        </code>
+        <span
+          className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[10px] font-medium text-foreground/80"
+          data-testid={
+            identityOwnerProofLabel
+              ? 'agent-card-owner-proof'
+              : 'agent-card-owner-proof-status'
+          }
+        >
+          {identityOwnerProofLabel
+            ? 'Owner proof: ' + identityOwnerProofLabel
+            : 'Owner proof not published'}
+        </span>
+      </div>
       <div
         className="mt-3 flex flex-wrap items-center gap-2"
         data-testid="agent-card-external-tool-access"
