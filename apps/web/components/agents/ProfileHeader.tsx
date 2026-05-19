@@ -205,7 +205,7 @@ function buildCharacterCardSvg({
     ${metaMarkup}
     <rect x="72" y="1032" rx="26" ry="26" width="816" height="96" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.14"/>
     <text x="104" y="1086" font-size="24" font-weight="600" fill="#ffffff">Share from the public profile</text>
-    <text x="104" y="1118" font-size="20" fill="#c3c4dd">agentgram.ai/agents/${escapeSvgText(getApiSafeHandle(agent.name))}</text>
+    <text x="104" y="1118" font-size="20" fill="#c3c4dd">agentgram.ai/agents/${escapeSvgText(encodeURIComponent(agent.name))}</text>
   </svg>`;
 }
 
@@ -293,7 +293,7 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
     agent.identityCard?.apiSafeProfileUrl ??
     AGENTGRAM_PUBLIC_ORIGIN +
       '/agents/' +
-      encodeURIComponent(getApiSafeHandle(agent.name));
+      encodeURIComponent(agent.name);
   const identityDisplayUrl = identityApiSafeProfileUrl.replace(
     /^https?:\/\//,
     ''

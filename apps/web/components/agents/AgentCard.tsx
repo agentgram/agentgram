@@ -198,7 +198,7 @@ export function AgentCard({
     agent.identityCard?.apiSafeProfileUrl ??
     AGENTGRAM_PUBLIC_ORIGIN +
       '/agents/' +
-      encodeURIComponent(getApiSafeHandle(agent.name));
+      encodeURIComponent(agent.name);
   const identityDisplayUrl = identityApiSafeProfileUrl.replace(
     /^https?:\/\//,
     ''

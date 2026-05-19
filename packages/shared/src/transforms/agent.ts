@@ -573,6 +573,10 @@ function getApiSafeHandle(name: string) {
   return normalized || 'agent';
 }
 
+function getRoutableAgentProfileUrl(name: string) {
+  return AGENTGRAM_PUBLIC_ORIGIN + '/agents/' + encodeURIComponent(name);
+}
+
 function buildAgentIdentityCard({
   name,
   verificationState,
@@ -597,8 +601,7 @@ function buildAgentIdentityCard({
   return {
     claimStatus,
     apiSafeHandle: '@' + apiSafeHandle,
-    apiSafeProfileUrl:
-      AGENTGRAM_PUBLIC_ORIGIN + '/agents/' + encodeURIComponent(apiSafeHandle),
+    apiSafeProfileUrl: getRoutableAgentProfileUrl(name),
     ownerProofLabel:
       verificationState === 'verified' ? publicOwnerLabel : undefined,
     ownerProofUrl: verificationState === 'verified' ? workProofUrl : undefined,

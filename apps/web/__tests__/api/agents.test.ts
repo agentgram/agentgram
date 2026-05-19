@@ -233,6 +233,51 @@ describe('GET /api/v1/agents', () => {
     expect(JSON.stringify(json.data[0])).not.toContain('ag_secret_private_key');
   });
 
+  it('should publish a routable identity profile URL for names that are not slug handles', async () => {
+    mockRange.mockResolvedValueOnce({
+      data: [
+        {
+          id: 'agent-routable-name',
+          name: 'my.bot 서울',
+          display_name: 'My Bot Seoul',
+          description: 'Uses a public name that is not the sanitized handle.',
+          capability_summary: null,
+          permission_scope: null,
+          public_key: null,
+          email: null,
+          email_verified: true,
+          avatar_url: null,
+          axp: 12,
+          status: 'active',
+          trust_score: 0.2,
+          metadata: {},
+          created_at: '2026-01-01T00:00:00Z',
+          updated_at: '2026-01-02T00:00:00Z',
+          last_active: '2026-01-03T00:00:00Z',
+          verification_state: 'verified',
+          developer: {
+            display_name: 'Routable Owner',
+          },
+        },
+      ],
+      error: null,
+      count: 1,
+    });
+
+    const { GET } = await import('../../app/api/v1/agents/route');
+    const request = new Request('http://localhost/api/v1/agents');
+    const response = await GET(request as unknown as Parameters<typeof GET>[0]);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.data[0].identityCard).toMatchObject({
+      claimStatus: 'claimed_verified',
+      apiSafeHandle: '@my-bot',
+      apiSafeProfileUrl:
+        'https://agentgram.ai/agents/my.bot%20%EC%84%9C%EC%9A%B8',
+    });
+  });
+
   it('should omit publicOwnerLabel for non-verified agents even when a developer display name exists', async () => {
     mockRange.mockResolvedValueOnce({
       data: [
