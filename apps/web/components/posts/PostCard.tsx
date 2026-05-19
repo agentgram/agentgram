@@ -777,6 +777,58 @@ function formatMemoryTimestamp(value: string) {
   }).format(date);
 }
 
+function normalizeRecapFact(value: unknown): string | null {
+  if (typeof value === 'string' && value.trim()) {
+    return value.trim();
+  }
+
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const factCandidates = [
+    record.fact,
+    record.summary,
+    record.text,
+    record.value,
+    record.memory,
+  ];
+  const fact = factCandidates.find(
+    (candidate): candidate is string =>
+      typeof candidate === 'string' && candidate.trim().length > 0
+  );
+
+  return fact?.trim() ?? null;
+}
+
+function formatIdleGapDuration(totalMinutes: number) {
+  const roundedMinutes = Math.max(0, Math.round(totalMinutes));
+
+  if (roundedMinutes < 60) {
+    return `${roundedMinutes}m`;
+  }
+
+  const days = Math.floor(roundedMinutes / (60 * 24));
+  const hours = Math.floor((roundedMinutes % (60 * 24)) / 60);
+  const minutes = roundedMinutes % 60;
+  const parts: string[] = [];
+
+  if (days > 0) {
+    parts.push(`${days}d`);
+  }
+
+  if (hours > 0) {
+    parts.push(`${hours}h`);
+  }
+
+  if (days === 0 && minutes > 0) {
+    parts.push(`${minutes}m`);
+  }
+
+  return parts.join(' ') || '0m';
+}
+
 type SnippetActionMode =
   | 'remix'
   | 'quote'
@@ -1094,6 +1146,86 @@ export function PostCard({
       ['memory', 'previewLabel'],
       ['memory', 'preview_label'],
     ]) || 'Saved fact shaping this reply';
+  const explicitReturnToChatFacts = readMetadataArray(post.metadata, [
+    ['savedFacts'],
+    ['saved_facts'],
+    ['returnToChatRecap', 'savedFacts'],
+    ['return_to_chat_recap', 'saved_facts'],
+    ['returnToChat', 'savedFacts'],
+    ['return_to_chat', 'saved_facts'],
+    ['resumeRecap', 'savedFacts'],
+    ['resume_recap', 'saved_facts'],
+  ])
+    .map((entry) => normalizeRecapFact(entry))
+    .filter((entry): entry is string => entry != null);
+  const fallbackReturnToChatFacts = [
+    ...memoryCaptures.map((capture) => capture.fact.trim()).filter(Boolean),
+    memoryPreview?.fact?.trim(),
+  ].filter((entry): entry is string => Boolean(entry));
+  const returnToChatFacts = Array.from(
+    new Set(
+      (explicitReturnToChatFacts.length > 0
+        ? explicitReturnToChatFacts
+        : fallbackReturnToChatFacts
+      ).filter(Boolean)
+    )
+  );
+  const returnToChatLastGoal = readMetadataString(post.metadata, [
+    ['lastGoal'],
+    ['last_goal'],
+    ['goalRecap'],
+    ['goal_recap'],
+    ['returnToChatRecap', 'lastGoal'],
+    ['return_to_chat_recap', 'last_goal'],
+    ['returnToChat', 'lastGoal'],
+    ['return_to_chat', 'last_goal'],
+    ['resumeRecap', 'lastGoal'],
+    ['resume_recap', 'last_goal'],
+  ]);
+  const returnToChatGapLabel = readMetadataString(post.metadata, [
+    ['idleGapLabel'],
+    ['idle_gap_label'],
+    ['returnToChatRecap', 'idleGapLabel'],
+    ['return_to_chat_recap', 'idle_gap_label'],
+    ['returnToChat', 'idleGapLabel'],
+    ['return_to_chat', 'idle_gap_label'],
+    ['resumeRecap', 'idleGapLabel'],
+    ['resume_recap', 'idle_gap_label'],
+  ]);
+  const returnToChatGapMinutes =
+    readMetadataNumber(post.metadata, [
+      ['idleGapMinutes'],
+      ['idle_gap_minutes'],
+      ['returnToChatRecap', 'idleGapMinutes'],
+      ['return_to_chat_recap', 'idle_gap_minutes'],
+      ['returnToChat', 'idleGapMinutes'],
+      ['return_to_chat', 'idle_gap_minutes'],
+      ['resumeRecap', 'idleGapMinutes'],
+      ['resume_recap', 'idle_gap_minutes'],
+    ]) ??
+    (() => {
+      const idleGapHours = readMetadataNumber(post.metadata, [
+        ['idleGapHours'],
+        ['idle_gap_hours'],
+        ['returnToChatRecap', 'idleGapHours'],
+        ['return_to_chat_recap', 'idle_gap_hours'],
+        ['returnToChat', 'idleGapHours'],
+        ['return_to_chat', 'idle_gap_hours'],
+        ['resumeRecap', 'idleGapHours'],
+        ['resume_recap', 'idle_gap_hours'],
+      ]);
+
+      return idleGapHours !== undefined ? idleGapHours * 60 : undefined;
+    })();
+  const resolvedReturnToChatGapLabel =
+    returnToChatGapLabel ||
+    (returnToChatGapMinutes !== undefined
+      ? formatIdleGapDuration(returnToChatGapMinutes)
+      : undefined);
+  const hasReturnToChatRecap = Boolean(
+    resolvedReturnToChatGapLabel &&
+    (returnToChatFacts.length > 0 || returnToChatLastGoal)
+  );
   const memoryCorrection = readMetadataCorrection(post.metadata, [
     ['memoryCorrection'],
     ['memory_correction'],
@@ -1138,6 +1270,7 @@ export function PostCard({
   const hasWrongMemoryRecovery =
     memoryCorrection.required ??
     Boolean(wrongMemoryReason || incorrectMemoryFact || correctedMemoryFact);
+
   const blockedMessage = readMetadataString(post.metadata, [
     ['blockedMessage'],
     ['blocked_message'],
@@ -1197,6 +1330,7 @@ export function PostCard({
     ['toneLock', 'style'],
     ['tone_lock', 'style'],
   ]);
+
   const saferRewriteSource =
     blockedMessage || latestUserMessage || post.content || post.title;
   const hasSafetyRewriteContext = Boolean(
@@ -1860,6 +1994,68 @@ export function PostCard({
               : 'Preview'}
           </span>
         </div>
+
+        {hasReturnToChatRecap ? (
+          <div
+            data-testid="chat-snippet-return-recap"
+            className="mt-3 rounded-xl border border-sky-500/20 bg-sky-500/10 px-3 py-3"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="space-y-1">
+                <span className="inline-flex items-center rounded-full border border-sky-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
+                  Return to chat recap
+                </span>
+                <p className="text-xs text-sky-900/80">
+                  Reload the saved facts and last goal before the first reply
+                  after an idle gap.
+                </p>
+              </div>
+
+              <span
+                data-testid="chat-snippet-return-gap"
+                className="inline-flex items-center rounded-full border border-sky-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700"
+              >
+                {resolvedReturnToChatGapLabel} idle gap
+              </span>
+            </div>
+
+            {returnToChatFacts.length > 0 ? (
+              <div
+                data-testid="chat-snippet-return-facts"
+                className="mt-3 rounded-xl border border-sky-500/20 bg-background/70 px-3 py-2"
+              >
+                <span className="inline-flex items-center rounded-full border border-sky-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
+                  Saved facts
+                </span>
+                <ul className="mt-2 space-y-1.5 text-sm text-foreground/90">
+                  {returnToChatFacts.map((fact, index) => (
+                    <li
+                      key={`${fact}-${index}`}
+                      data-testid="chat-snippet-return-fact"
+                      className="list-none"
+                    >
+                      • {fact}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {returnToChatLastGoal ? (
+              <div
+                data-testid="chat-snippet-return-goal"
+                className="mt-3 rounded-xl border border-sky-500/20 bg-background/70 px-3 py-2"
+              >
+                <span className="inline-flex items-center rounded-full border border-sky-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
+                  Last goal
+                </span>
+                <p className="mt-2 text-sm text-foreground/90 whitespace-pre-line">
+                  {returnToChatLastGoal}
+                </p>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         {memorySavedLabel ? (
           <div className="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-3">
