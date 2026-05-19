@@ -593,6 +593,42 @@ const PUBLIC_DOMAIN_STORY_STARTERS = [
   },
 ] as const;
 
+const PUBLIC_DOMAIN_STORY_MONETIZATION = {
+  wonderland: {
+    savedMemoryOutcome:
+      'Saved after session: player role, scene mode, last clue, and one unresolved question for the next chapter.',
+    storyOutcome:
+      'Story outcome: curious guest + cozy puzzle produces a reusable clue recap and next-scene cliffhanger.',
+    upgradeReason:
+      'Upgrade reason: paid onboarding audits the public-domain premise, memory boundary, and chapter template before the second session.',
+    ctaLabel: 'Open paid onboarding audit',
+    kpiReadout:
+      'Next-day KPI readout: D1 story-mode upgrade rate, role-picked rate, mode-picked rate, saved-outcome rate, and paid-audit CTA clicks.',
+  },
+  oz: {
+    savedMemoryOutcome:
+      'Saved after session: expedition role, travel mode, chosen landmark, and the next road decision.',
+    storyOutcome:
+      'Story outcome: lost traveler + quest journal produces a journey log the guide can resume tomorrow.',
+    upgradeReason:
+      'Upgrade reason: paid onboarding turns the road journal into reusable lorebook entries, memory rules, and safer chapter prompts.',
+    ctaLabel: 'Open paid onboarding audit',
+    kpiReadout:
+      'Next-day KPI readout: D1 story-mode upgrade rate, role-picked rate, mode-picked rate, saved-outcome rate, and paid-audit CTA clicks.',
+  },
+  'baker-street': {
+    savedMemoryOutcome:
+      'Saved after session: investigator role, case mode, strongest clue, and the theory to test next.',
+    storyOutcome:
+      'Story outcome: junior detective + deduction board creates a case file with suspects, clue status, and a next interview.',
+    upgradeReason:
+      'Upgrade reason: paid onboarding audits clue memory, reveal pacing, and public-domain source boundaries before deeper serialized play.',
+    ctaLabel: 'Open paid onboarding audit',
+    kpiReadout:
+      'Next-day KPI readout: D1 story-mode upgrade rate, role-picked rate, mode-picked rate, saved-outcome rate, and paid-audit CTA clicks.',
+  },
+} as const;
+
 const COMPANION_RITUAL_PREVIEW = [
   {
     id: 'diary',
@@ -2400,6 +2436,91 @@ export default function OnboardPage() {
                           </div>
                         ))}
                       </div>
+                    </div>
+                  </div>
+
+                  <div
+                    className="rounded-2xl border border-primary/20 bg-primary/5 p-4"
+                    data-testid={
+                      'public-domain-story-upgrade-path-' + starter.id
+                    }
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="secondary">
+                        First-session upgrade path
+                      </Badge>
+                      <Badge variant="outline">Saved story outcome</Badge>
+                      <Badge variant="outline">Paid audit CTA</Badge>
+                    </div>
+                    <div className="mt-4 grid gap-4 lg:grid-cols-[1.1fr,0.9fr]">
+                      <div className="space-y-3 rounded-xl border border-border/60 bg-background/80 p-4">
+                        <div>
+                          <h3 className="font-medium">
+                            Save the role, mode, and story outcome
+                          </h3>
+                          <p className="mt-2 text-sm text-muted-foreground">
+                            {
+                              PUBLIC_DOMAIN_STORY_MONETIZATION[starter.id]
+                                .savedMemoryOutcome
+                            }
+                          </p>
+                        </div>
+                        <div className="rounded-lg bg-muted p-3 text-sm text-foreground">
+                          {
+                            PUBLIC_DOMAIN_STORY_MONETIZATION[starter.id]
+                              .storyOutcome
+                          }
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 rounded-xl border border-border/60 bg-background/80 p-4">
+                        <div>
+                          <h3 className="font-medium">
+                            Why this is the upgrade moment
+                          </h3>
+                          <p className="mt-2 text-sm text-muted-foreground">
+                            {
+                              PUBLIC_DOMAIN_STORY_MONETIZATION[starter.id]
+                                .upgradeReason
+                            }
+                          </p>
+                        </div>
+                        <Button
+                          asChild
+                          variant="outline"
+                          data-testid={
+                            'public-domain-story-paid-cta-' + starter.id
+                          }
+                        >
+                          <Link
+                            href={
+                              '/pricing?source=public_domain_story&starter=' +
+                              starter.id
+                            }
+                          >
+                            {
+                              PUBLIC_DOMAIN_STORY_MONETIZATION[starter.id]
+                                .ctaLabel
+                            }
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+                    <div
+                      className="mt-4 rounded-xl border border-border/60 bg-background/80 p-4"
+                      data-testid={
+                        'public-domain-story-kpi-readout-' + starter.id
+                      }
+                    >
+                      <p className="text-sm font-semibold text-foreground">
+                        Next-day KPI readout
+                      </p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {
+                          PUBLIC_DOMAIN_STORY_MONETIZATION[starter.id]
+                            .kpiReadout
+                        }
+                      </p>
                     </div>
                   </div>
                 </TabsContent>
