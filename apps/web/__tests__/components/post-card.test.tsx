@@ -599,6 +599,148 @@ describe('PostCard chat snippet support', () => {
     ).toHaveTextContent('Remember this');
   });
 
+  it('shows an auto-memory toast with saved fact, edit, and undo CTAs for fresh captures', async () => {
+    renderPostCard({
+      id: 'post-memory-toast-1',
+      metadata: {
+        ...basePost.metadata,
+        memory: {
+          event: 'Saved to memory',
+          savedAt: '2026-04-24T11:27:00.000Z',
+          preview: {
+            id: 'mem-1',
+            fact: 'Operator prefers quiet-hours handoff after 8pm KST.',
+            source: 'Captured from this snippet',
+            capturedAt: '2026-04-24T11:27:00.000Z',
+          },
+        },
+      },
+    });
+
+    await vi.waitFor(() => {
+      expect(toast).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Saved to memory' })
+      );
+    });
+
+    const memoryToast = toast.mock.calls[0]?.[0];
+    const { getByTestId, getAllByText } = render(<>{memoryToast.description}</>);
+
+    expect(getByTestId('memory-capture-toast-description')).toBeInTheDocument();
+    expect(getAllByText('Operator prefers quiet-hours handoff after 8pm KST.'))
+      .toHaveLength(2);
+    expect(getByTestId('memory-capture-toast-edit-button')).toHaveTextContent(
+      'Edit'
+    );
+    expect(getByTestId('memory-capture-toast-undo-button')).toHaveTextContent(
+      'Undo'
+    );
+  });
+
+  it('edits a fresh auto-saved memory from the toast and updates the inline preview', async () => {
+    fetchMock.mockResolvedValueOnce({ ok: true });
+
+    renderPostCard({
+      id: 'post-memory-toast-2',
+      metadata: {
+        ...basePost.metadata,
+        memory: {
+          event: 'Saved to memory',
+          savedAt: '2026-04-24T11:27:00.000Z',
+          preview: {
+            id: 'mem-1',
+            fact: 'Operator prefers quiet-hours handoff after 8pm KST.',
+            source: 'Captured from this snippet',
+            capturedAt: '2026-04-24T11:27:00.000Z',
+          },
+        },
+      },
+    });
+
+    await vi.waitFor(() => {
+      expect(toast).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Saved to memory' })
+      );
+    });
+
+    const memoryToast = toast.mock.calls[0]?.[0];
+    const toastRender = render(<>{memoryToast.description}</>);
+
+    fireEvent.click(toastRender.getByTestId('memory-capture-toast-edit-button'));
+    fireEvent.change(toastRender.getByTestId('memory-capture-toast-edit-input'), {
+      target: {
+        value: 'Operator prefers async handoff notes after 8pm KST.',
+      },
+    });
+
+    await act(async () => {
+      fireEvent.click(toastRender.getByTestId('memory-capture-toast-save-button'));
+    });
+
+    await vi.waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/v1/agents/me/memories/mem-1',
+        expect.objectContaining({ method: 'PATCH' })
+      );
+    });
+    expect(JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string)).toEqual({
+      value: 'Operator prefers async handoff notes after 8pm KST.',
+    });
+    expect(screen.getByTestId('chat-snippet-memory-preview')).toHaveTextContent(
+      'Operator prefers async handoff notes after 8pm KST.'
+    );
+    expect(toast).toHaveBeenLastCalledWith(
+      expect.objectContaining({ title: 'Saved fact updated' })
+    );
+  });
+
+  it('undos a fresh auto-saved memory from the toast and hides the inline memory signal', async () => {
+    fetchMock.mockResolvedValueOnce({ ok: true });
+
+    renderPostCard({
+      id: 'post-memory-toast-3',
+      metadata: {
+        ...basePost.metadata,
+        memory: {
+          event: 'Saved to memory',
+          savedAt: '2026-04-24T11:27:00.000Z',
+          preview: {
+            id: 'mem-1',
+            fact: 'Operator prefers quiet-hours handoff after 8pm KST.',
+            source: 'Captured from this snippet',
+            capturedAt: '2026-04-24T11:27:00.000Z',
+          },
+        },
+      },
+    });
+
+    await vi.waitFor(() => {
+      expect(toast).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Saved to memory' })
+      );
+    });
+
+    const memoryToast = toast.mock.calls[0]?.[0];
+    const toastRender = render(<>{memoryToast.description}</>);
+
+    await act(async () => {
+      fireEvent.click(toastRender.getByTestId('memory-capture-toast-undo-button'));
+    });
+
+    await vi.waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/v1/agents/me/memories/mem-1',
+        expect.objectContaining({ method: 'DELETE' })
+      );
+    });
+    expect(
+      screen.queryByTestId('chat-snippet-memory-event')
+    ).not.toBeInTheDocument();
+    expect(toast).toHaveBeenLastCalledWith(
+      expect.objectContaining({ title: 'Saved fact removed' })
+    );
+  });
+
   it('renders topic chips that deep-link into filtered AI-only subfeeds', () => {
     renderPostCard({
       title: 'Pair-programming transcript #AI #Robotics',
