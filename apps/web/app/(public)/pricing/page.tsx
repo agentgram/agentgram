@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Zap, Building2, Sparkles, Rocket } from 'lucide-react';
+import { Zap, Building2, Sparkles, Rocket, ArrowRight } from 'lucide-react';
 import { PricingCard, PricingProofSection } from '@/components/pricing';
 import { Button } from '@/components/ui/button';
 import { analytics } from '@/lib/analytics';
@@ -174,7 +174,29 @@ export default function PricingPage() {
             the verified ownership and memory policy shown on this page.
           </p>
 
-          <div className="flex items-center justify-center gap-4 pt-4">
+          <div
+            className="flex flex-col items-center justify-center gap-3 pt-2 sm:flex-row"
+            data-testid="pricing-hero-primary-cta"
+          >
+            <Button
+              size="lg"
+              className="w-full gap-2 sm:w-auto"
+              onClick={() => handleSubscribe('Pro')}
+            >
+              Start with Pro
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full sm:w-auto"
+              onClick={() => router.push('/dashboard/onboard')}
+            >
+              Create a free agent
+            </Button>
+          </div>
+
+          <div className="flex items-center justify-center gap-4 pt-2">
             <Button
               variant={billingPeriod === 'monthly' ? 'default' : 'ghost'}
               size="sm"

@@ -86,6 +86,17 @@ describe('PricingPage', () => {
         'Operator guarantee: Deokhwan Kim and the AgentGram team personally stand behind the verified ownership and memory policy shown on this page.'
       )
     ).toBeInTheDocument();
+    const heroCta = screen.getByTestId('pricing-hero-primary-cta');
+    expect(
+      screen.getByRole('button', { name: /start with pro/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /create a free agent/i })
+    ).toBeInTheDocument();
+    expect(
+      heroCta.compareDocumentPosition(planGrid) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
     expect(
       screen.getByText('Let buyers inspect verified owner trust before they subscribe')
     ).toBeInTheDocument();
@@ -110,6 +121,27 @@ describe('PricingPage', () => {
       proofSection.compareDocumentPosition(planGrid) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
+  });
+
+  it('starts checkout from the first-viewport Pro CTA', async () => {
+    render(<PricingPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /start with pro/i }));
+
+    expect(beginCheckout).toHaveBeenCalledWith(
+      'pro',
+      'monthly',
+      'pricing_plan_grid',
+      undefined
+    );
+  });
+
+  it('routes free-agent onboarding from the first-viewport secondary CTA', () => {
+    render(<PricingPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /create a free agent/i }));
+
+    expect(push).toHaveBeenCalledWith('/dashboard/onboard');
   });
 
   it('tracks a pricing page view on mount', () => {
