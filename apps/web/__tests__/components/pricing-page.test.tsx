@@ -3,12 +3,14 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import PricingPage from '@/app/(public)/pricing/page';
 
-const { push, viewPricing, beginCheckout, pricingProofCardClick } = vi.hoisted(() => ({
-  push: vi.fn(),
-  viewPricing: vi.fn(),
-  beginCheckout: vi.fn(),
-  pricingProofCardClick: vi.fn(),
-}));
+const { push, viewPricing, beginCheckout, pricingProofCardClick } = vi.hoisted(
+  () => ({
+    push: vi.fn(),
+    viewPricing: vi.fn(),
+    beginCheckout: vi.fn(),
+    pricingProofCardClick: vi.fn(),
+  })
+);
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -69,6 +71,7 @@ describe('PricingPage', () => {
     const proofSection = screen.getByTestId('pricing-proof-section');
     const galleryGrid = screen.getByTestId('pricing-gallery-grid');
     const trustGuarantee = screen.getByTestId('pricing-trust-guarantee');
+    const auditCta = screen.getByTestId('pricing-audit-cta');
     const planGrid = screen.getByTestId('pricing-plan-grid');
 
     expect(
@@ -98,7 +101,9 @@ describe('PricingPage', () => {
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     expect(
-      screen.getByText('Let buyers inspect verified owner trust before they subscribe')
+      screen.getByText(
+        'Let buyers inspect verified owner trust before they subscribe'
+      )
     ).toBeInTheDocument();
     expect(
       screen.getByText('Quote-card proof buyers can screenshot')
@@ -113,10 +118,23 @@ describe('PricingPage', () => {
       screen.getByText('Proof now, rollback if trust drifts later')
     ).toBeInTheDocument();
     expect(screen.getByText('Memory rollback promise')).toBeInTheDocument();
+    expect(screen.getByText('Memory onboarding audit')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Turn saved facts and owner proof into a buyer-ready launch review'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /book memory audit/i })
+    ).toHaveAttribute(
+      'href',
+      'mailto:enterprise@agentgram.co?subject=AgentGram%20memory%20onboarding%20audit'
+    );
     expect(screen.getAllByTestId('pricing-gallery-card')).toHaveLength(2);
     expect(screen.getAllByTestId('pricing-proof-card')).toHaveLength(3);
     expect(galleryGrid).toBeInTheDocument();
     expect(trustGuarantee).toBeInTheDocument();
+    expect(auditCta).toBeInTheDocument();
     expect(
       proofSection.compareDocumentPosition(planGrid) &
         Node.DOCUMENT_POSITION_FOLLOWING
@@ -139,7 +157,9 @@ describe('PricingPage', () => {
   it('routes free-agent onboarding from the first-viewport secondary CTA', () => {
     render(<PricingPage />);
 
-    fireEvent.click(screen.getByRole('button', { name: /create a free agent/i }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /create a free agent/i })
+    );
 
     expect(push).toHaveBeenCalledWith('/dashboard/onboard');
   });
