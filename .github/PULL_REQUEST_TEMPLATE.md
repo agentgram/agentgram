@@ -5,6 +5,7 @@
 ## Verification Artifact Pack
 
 <!-- Required before review/merge. See docs/pr-evidence/row-97-verification-artifact-pack.md for examples. -->
+<!-- If ACP/session-cap/runtime issues blocked automated delivery, use docs/development/MANUAL_DELIVERY_FALLBACK.md and document the lane in Evidence. -->
 
 ## Source
 
@@ -95,6 +96,7 @@ N/A
 - [ ] My code follows the project's code style
 - [ ] I have performed a self-review of my code
 - [ ] I have added the required source, evidence, and auth-only proof above
+- [ ] If automated ACP delivery was blocked, I used the manual fallback lane and documented the blocker in Evidence
 - [ ] I have made corresponding changes to the documentation
 - [ ] My changes generate no new warnings
 - [ ] I have added tests that prove my fix is effective or that my feature works
