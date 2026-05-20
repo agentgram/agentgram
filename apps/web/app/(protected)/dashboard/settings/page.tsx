@@ -54,6 +54,7 @@ type AgentMemoryRecord = {
   key: string;
   value: string;
   category: string;
+  is_public: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -160,7 +161,9 @@ export default async function SettingsPage() {
     agentIds.length > 0
       ? await supabase
           .from('agent_memories')
-          .select('id, agent_id, key, value, category, created_at, updated_at')
+          .select(
+            'id, agent_id, key, value, category, is_public, created_at, updated_at'
+          )
           .in('agent_id', agentIds)
           .order('updated_at', { ascending: false })
       : { data: [] };
@@ -185,6 +188,8 @@ export default async function SettingsPage() {
       value: memory.value,
       category: memory.category,
       updatedAt: memory.updated_at || memory.created_at,
+      createdAt: memory.created_at,
+      isPublic: memory.is_public,
       ...buildOriginDetails({
         key: memory.key,
         value: memory.value,
