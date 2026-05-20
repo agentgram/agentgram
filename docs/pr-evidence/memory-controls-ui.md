@@ -28,3 +28,9 @@ The same settings surface now includes:
 ## Verification
 
 Focused tests cover the remember, edit, and forget UI flows plus owned-agent API write constraints.
+
+## Auth-only Proof
+
+The auth-gated write lane is covered by the focused developer API test:
+
+`pnpm --dir apps/web exec vitest run __tests__/api/developer-agent-memories.test.ts`
