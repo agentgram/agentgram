@@ -1,6 +1,12 @@
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   AgentPinnedFactsCard,
   type AgentPinnedFactsSettings,
@@ -19,6 +25,7 @@ function buildSettings(
         value: 'Always preserve the latest release blocker in private memory.',
         category: 'relationship_context',
         updatedAt: '2026-05-08T12:30:00.000Z',
+        isPublic: false,
         originLabel: 'Remember this CTA',
         originSnippet: 'Preserve the latest release blocker.',
       },
@@ -28,6 +35,7 @@ function buildSettings(
         value: 'Keeps release notes precise and audit-ready.',
         category: 'profile_fact',
         updatedAt: '2026-05-07T10:30:00.000Z',
+        isPublic: false,
         originLabel: 'Registration description seed',
         originSnippet: 'Keeps release notes precise.',
       },
@@ -37,15 +45,18 @@ function buildSettings(
         value: 'Prefers async check-ins and clear handoff notes.',
         category: 'relationship_context',
         updatedAt: '2026-05-06T09:00:00.000Z',
+        isPublic: false,
         originLabel: 'Saved fact snapshot',
         originSnippet: 'Prefers async check-ins and clear handoff notes.',
       },
       {
         id: 'memory-4',
         key: 'favorite_release_window',
-        value: 'Ships bigger changes after lunch when review coverage is online.',
+        value:
+          'Ships bigger changes after lunch when review coverage is online.',
         category: 'profile_fact',
         updatedAt: '2026-05-05T09:00:00.000Z',
+        isPublic: true,
         originLabel: 'Developer note import',
         originSnippet: 'Ships bigger changes after lunch.',
       },
@@ -64,6 +75,10 @@ function buildSettings(
 }
 
 describe('AgentPinnedFactsCard', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('keeps the ledger summary visible while showing the three latest memory receipts', () => {
     render(<AgentPinnedFactsCard settings={buildSettings()} />);
 
@@ -80,6 +95,16 @@ describe('AgentPinnedFactsCard', () => {
     expect(
       screen.getByTestId('ledger-category-relationship-context')
     ).toHaveTextContent('Relationship context');
+    expect(screen.getByTestId('memory-health-status-badge')).toHaveTextContent(
+      'Recall ready'
+    );
+    expect(screen.getByTestId('memory-health-status-copy')).toHaveTextContent(
+      'Profile facts and relationship context both have saved evidence in the ledger.'
+    );
+    expect(screen.getByTestId('memory-resync-cta')).toHaveAttribute(
+      'href',
+      '#memory-trust-agent-1'
+    );
 
     const receipts = screen.getByTestId('pinned-facts-receipts');
     expect(receipts).toHaveTextContent('Latest memory receipts');
@@ -148,10 +173,169 @@ describe('AgentPinnedFactsCard', () => {
     expect(screen.getByTestId('pinned-facts-ledger-summary')).toHaveTextContent(
       '0 saved memories'
     );
+    expect(screen.getByTestId('memory-health-status-badge')).toHaveTextContent(
+      'No recall history'
+    );
+    expect(screen.getByTestId('memory-health-status-copy')).toHaveTextContent(
+      'Save the first fact before relying on this agent to recall private context.'
+    );
     expect(
       screen.getByText(
         'No pinned facts yet. Starter memories and future saves will show up here so you can inspect what is being kept.'
       )
     ).toBeInTheDocument();
+  });
+
+  it('recommends a re-sync when a memory category is missing', () => {
+    const settings = buildSettings();
+
+    render(
+      <AgentPinnedFactsCard
+        settings={{
+          ...settings,
+          facts: settings.facts.filter(
+            (fact) => fact.category === 'profile_fact'
+          ),
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('memory-health-status-badge')).toHaveTextContent(
+      'Re-sync recommended'
+    );
+    expect(screen.getByTestId('memory-health-status-copy')).toHaveTextContent(
+      'Review profile facts and relationship context together before the next important chat.'
+    );
+  });
+
+  it('remembers a new memory through the dashboard API', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      status: 201,
+      json: async () => ({
+        success: true,
+        data: {
+          id: 'memory-5',
+          key: 'release_window',
+          value: 'Ships larger changes after lunch.',
+          category: 'profile_fact',
+          is_public: false,
+          created_at: '2026-05-09T10:00:00.000Z',
+          updated_at: '2026-05-09T10:00:00.000Z',
+        },
+      }),
+    } as Response);
+
+    render(<AgentPinnedFactsCard settings={buildSettings()} />);
+
+    fireEvent.change(screen.getByLabelText('New memory key for Sage Bot'), {
+      target: { value: 'release_window' },
+    });
+    fireEvent.change(screen.getByLabelText('New memory value for Sage Bot'), {
+      target: { value: 'Ships larger changes after lunch.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /remember/i }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('pinned-fact-memory-5')).toHaveTextContent(
+        'Release Window'
+      )
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/v1/developers/me/agent-memories',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          agentId: 'agent-1',
+          key: 'release_window',
+          value: 'Ships larger changes after lunch.',
+          category: 'profile_fact',
+          isPublic: false,
+        }),
+      })
+    );
+    expect(screen.getByTestId('pinned-facts-ledger-summary')).toHaveTextContent(
+      '5 saved memories'
+    );
+  });
+
+  it('edits an existing memory in place', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        success: true,
+        data: {
+          id: 'memory-1',
+          key: 'latest_focus',
+          value: 'Always preserve the newest launch blocker.',
+          category: 'relationship_context',
+          is_public: false,
+          created_at: '2026-05-08T12:30:00.000Z',
+          updated_at: '2026-05-09T12:30:00.000Z',
+        },
+      }),
+    } as Response);
+
+    render(<AgentPinnedFactsCard settings={buildSettings()} />);
+
+    fireEvent.click(
+      within(screen.getByTestId('pinned-fact-memory-1')).getByRole('button', {
+        name: /edit/i,
+      })
+    );
+    fireEvent.change(screen.getByLabelText('Edit memory value latest_focus'), {
+      target: { value: 'Always preserve the newest launch blocker.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^save$/i }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('pinned-fact-memory-1')).toHaveTextContent(
+        'Always preserve the newest launch blocker.'
+      )
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/v1/developers/me/agent-memories/memory-1',
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({
+          agentId: 'agent-1',
+          key: 'latest_focus',
+          value: 'Always preserve the newest launch blocker.',
+          category: 'relationship_context',
+          isPublic: false,
+        }),
+      })
+    );
+  });
+
+  it('forgets a memory after confirmation', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      status: 204,
+      json: async () => ({ success: true }),
+    } as Response);
+
+    render(<AgentPinnedFactsCard settings={buildSettings()} />);
+
+    fireEvent.click(
+      within(screen.getByTestId('pinned-fact-memory-1')).getByRole('button', {
+        name: /forget/i,
+      })
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId('pinned-fact-memory-1')
+      ).not.toBeInTheDocument()
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/v1/developers/me/agent-memories/memory-1?agentId=agent-1',
+      { method: 'DELETE' }
+    );
   });
 });

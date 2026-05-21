@@ -88,13 +88,7 @@ function formatRecordedAt(value: string) {
   }).format(new Date(value));
 }
 
-function FieldCount({
-  current,
-  max,
-}: {
-  current: number;
-  max: number;
-}) {
+function FieldCount({ current, max }: { current: number; max: number }) {
   return (
     <span className="text-xs text-muted-foreground">
       {current}/{max}
@@ -102,14 +96,11 @@ function FieldCount({
   );
 }
 
-export function AgentMemoryTrustForm({
-  settings,
-}: AgentMemoryTrustFormProps) {
+export function AgentMemoryTrustForm({ settings }: AgentMemoryTrustFormProps) {
   const [form, setForm] = useState(settings.initialSnapshot);
   const [lastSaved, setLastSaved] = useState(settings.initialSnapshot);
-  const [rollbackSnapshot, setRollbackSnapshot] = useState<EditableSnapshot | null>(
-    null
-  );
+  const [rollbackSnapshot, setRollbackSnapshot] =
+    useState<EditableSnapshot | null>(null);
   const [digest, setDigest] = useState<MemoryDigest | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [status, setStatus] = useState<{
@@ -199,7 +190,10 @@ export function AgentMemoryTrustForm({
     rollbackSnapshot != null && !snapshotsEqual(rollbackSnapshot, lastSaved);
 
   return (
-    <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+    <Card
+      className="border-border/50 bg-card/50 backdrop-blur-sm"
+      id={'memory-trust-' + settings.agentId}
+    >
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ShieldCheck className="h-5 w-5 text-primary" />
@@ -211,7 +205,9 @@ export function AgentMemoryTrustForm({
         </CardDescription>
         <p className="text-sm text-muted-foreground">
           Agent slug:{' '}
-          <span className="font-mono text-foreground">{settings.agentName}</span>
+          <span className="font-mono text-foreground">
+            {settings.agentName}
+          </span>
           {settings.personaName ? (
             <>
               {' '}
@@ -361,7 +357,9 @@ export function AgentMemoryTrustForm({
                   <History className="h-4 w-4 text-primary" />
                   Recent memory change digest
                 </div>
-                <p className="text-sm text-muted-foreground">{digest.summary}</p>
+                <p className="text-sm text-muted-foreground">
+                  {digest.summary}
+                </p>
               </div>
               <span className="text-xs text-muted-foreground">
                 {formatRecordedAt(digest.recordedAt)}
