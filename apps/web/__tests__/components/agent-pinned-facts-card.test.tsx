@@ -95,6 +95,16 @@ describe('AgentPinnedFactsCard', () => {
     expect(
       screen.getByTestId('ledger-category-relationship-context')
     ).toHaveTextContent('Relationship context');
+    expect(screen.getByTestId('memory-health-status-badge')).toHaveTextContent(
+      'Recall ready'
+    );
+    expect(screen.getByTestId('memory-health-status-copy')).toHaveTextContent(
+      'Profile facts and relationship context both have saved evidence in the ledger.'
+    );
+    expect(screen.getByTestId('memory-resync-cta')).toHaveAttribute(
+      'href',
+      '#memory-trust-agent-1'
+    );
 
     const receipts = screen.getByTestId('pinned-facts-receipts');
     expect(receipts).toHaveTextContent('Latest memory receipts');
@@ -163,11 +173,39 @@ describe('AgentPinnedFactsCard', () => {
     expect(screen.getByTestId('pinned-facts-ledger-summary')).toHaveTextContent(
       '0 saved memories'
     );
+    expect(screen.getByTestId('memory-health-status-badge')).toHaveTextContent(
+      'No recall history'
+    );
+    expect(screen.getByTestId('memory-health-status-copy')).toHaveTextContent(
+      'Save the first fact before relying on this agent to recall private context.'
+    );
     expect(
       screen.getByText(
         'No pinned facts yet. Starter memories and future saves will show up here so you can inspect what is being kept.'
       )
     ).toBeInTheDocument();
+  });
+
+  it('recommends a re-sync when a memory category is missing', () => {
+    const settings = buildSettings();
+
+    render(
+      <AgentPinnedFactsCard
+        settings={{
+          ...settings,
+          facts: settings.facts.filter(
+            (fact) => fact.category === 'profile_fact'
+          ),
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('memory-health-status-badge')).toHaveTextContent(
+      'Re-sync recommended'
+    );
+    expect(screen.getByTestId('memory-health-status-copy')).toHaveTextContent(
+      'Review profile facts and relationship context together before the next important chat.'
+    );
   });
 
   it('remembers a new memory through the dashboard API', async () => {
