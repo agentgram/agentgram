@@ -51,7 +51,8 @@ describe('AgentMemoryTrustForm', () => {
                   'Started as a release engineer with a trust-first playbook.',
               },
               digest: {
-                summary: '3 trust-facing memory fields changed. Review before continuing.',
+                summary:
+                  '3 trust-facing memory fields changed. Review before continuing.',
                 recordedAt: '2026-04-30T10:00:00.000Z',
                 changedFields: [
                   {
@@ -106,7 +107,8 @@ describe('AgentMemoryTrustForm', () => {
                   'Started as a release engineer and now guards memory trust.',
               },
               digest: {
-                summary: '1 trust-facing memory field changed. Review before continuing.',
+                summary:
+                  '1 trust-facing memory field changed. Review before continuing.',
                 recordedAt: '2026-04-30T10:05:00.000Z',
                 changedFields: [
                   {
@@ -125,7 +127,13 @@ describe('AgentMemoryTrustForm', () => {
         })
     );
 
-    render(<AgentMemoryTrustForm settings={buildSettings()} />);
+    const { container } = render(
+      <AgentMemoryTrustForm settings={buildSettings()} />
+    );
+
+    expect(
+      container.querySelector('#memory-trust-agent-1')
+    ).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText(/display name for sage bot/i), {
       target: { value: 'Sage Ops' },
@@ -138,7 +146,9 @@ describe('AgentMemoryTrustForm', () => {
         value: 'Started as a release engineer and now guards memory trust.',
       },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Save profile memory' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Save profile memory' })
+    );
 
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(
@@ -159,9 +169,7 @@ describe('AgentMemoryTrustForm', () => {
     expect(
       await screen.findByText('Profile memory settings saved.')
     ).toBeInTheDocument();
-    expect(
-      screen.getByTestId('memory-digest-agent-1')
-    ).toBeInTheDocument();
+    expect(screen.getByTestId('memory-digest-agent-1')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /roll back previous snapshot/i })
     ).toBeInTheDocument();
@@ -199,7 +207,9 @@ describe('AgentMemoryTrustForm', () => {
 
     render(<AgentMemoryTrustForm settings={buildSettings()} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Save profile memory' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Save profile memory' })
+    );
 
     expect(fetch).not.toHaveBeenCalled();
     expect(

@@ -2,11 +2,14 @@
 
 import { useMemo, useState } from 'react';
 import {
+  AlertCircle,
+  CheckCircle2,
   Clock3,
   Edit3,
   Loader2,
   Pin,
   Plus,
+  RefreshCcw,
   Save,
   Trash2,
   X,
@@ -120,6 +123,46 @@ function formatCapacityCopy(count: number) {
   return count === 1 ? '1 slot left' : `${count} slots left`;
 }
 
+function getRecallHealth({
+  facts,
+  ledger,
+}: {
+  facts: AgentPinnedFactRecord[];
+  ledger: AgentPinnedFactsLedger;
+}) {
+  if (facts.length === 0) {
+    return {
+      label: 'No recall history',
+      description:
+        'Save the first fact before relying on this agent to recall private context.',
+      icon: AlertCircle,
+      className: 'border-border/70 bg-background text-muted-foreground',
+    };
+  }
+
+  if (
+    ledger.categoryCounts.profileFact === 0 ||
+    ledger.categoryCounts.relationshipContext === 0
+  ) {
+    return {
+      label: 'Re-sync recommended',
+      description:
+        'Review profile facts and relationship context together before the next important chat.',
+      icon: AlertCircle,
+      className:
+        'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300',
+    };
+  }
+
+  return {
+    label: 'Recall ready',
+    description:
+      'Profile facts and relationship context both have saved evidence in the ledger.',
+    icon: CheckCircle2,
+    className: 'border-primary/20 bg-primary/10 text-primary',
+  };
+}
+
 function isMemoryCategory(value: string): value is MemoryCategory {
   return (MEMORY_CATEGORIES as readonly string[]).includes(value);
 }
@@ -217,6 +260,9 @@ export function AgentPinnedFactsCard({ settings }: AgentPinnedFactsCardProps) {
     [facts, settings.ledger.capacity]
   );
   const recentFacts = facts.slice(0, 3);
+  const recallHealth = getRecallHealth({ facts, ledger });
+  const RecallHealthIcon = recallHealth.icon;
+  const reSyncHref = '#memory-trust-' + settings.agentId;
   const usagePercent =
     ledger.capacity === 0
       ? 0
@@ -403,9 +449,37 @@ export function AgentPinnedFactsCard({ settings }: AgentPinnedFactsCardProps) {
                 reaches its current {ledger.capacity}-memory capacity.
               </p>
             </div>
-            <div className="rounded-full border border-primary/20 bg-background/90 px-3 py-1 text-xs font-medium text-primary">
-              {usagePercent}% used
+            <div className="flex flex-wrap items-center gap-2">
+              <div
+                className={
+                  'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ' +
+                  recallHealth.className
+                }
+                data-testid="memory-health-status-badge"
+              >
+                <RecallHealthIcon className="h-3.5 w-3.5" />
+                {recallHealth.label}
+              </div>
+              <div className="rounded-full border border-primary/20 bg-background/90 px-3 py-1 text-xs font-medium text-primary">
+                {usagePercent}% used
+              </div>
             </div>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 bg-background/80 p-3">
+            <p
+              className="text-sm text-muted-foreground"
+              data-testid="memory-health-status-copy"
+            >
+              {recallHealth.description}
+            </p>
+            <a
+              className="inline-flex items-center gap-1.5 rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-sm font-medium text-primary transition hover:bg-primary/10 hover:text-primary/80"
+              data-testid="memory-resync-cta"
+              href={reSyncHref}
+            >
+              <RefreshCcw className="h-3.5 w-3.5" />
+              Re-sync memory
+            </a>
           </div>
 
           <div className="mt-4 h-2 overflow-hidden rounded-full bg-primary/10">
