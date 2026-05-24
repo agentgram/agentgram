@@ -204,6 +204,29 @@ function sortFacts(facts: AgentPinnedFactRecord[]) {
   });
 }
 
+function getFactReviewReason(fact: AgentPinnedFactRecord, index: number) {
+  if (index === 0) {
+    return 'Newest saved fact - confirm before it shapes the next reply.';
+  }
+
+  if (fact.category === 'relationship_context') {
+    return 'Relationship context - verify tone and boundaries before replies.';
+  }
+
+  if (fact.isPublic) {
+    return 'Public memory - confirm it is safe to expose.';
+  }
+
+  return 'Private fact - confirm this should stay in recall.';
+}
+
+function buildFactReviewLog(facts: AgentPinnedFactRecord[]) {
+  return facts.slice(0, 4).map((fact, index) => ({
+    fact,
+    reason: getFactReviewReason(fact, index),
+  }));
+}
+
 function toPinnedFact(
   record: MemoryApiRecord,
   fallback?: AgentPinnedFactRecord
@@ -260,6 +283,7 @@ export function AgentPinnedFactsCard({ settings }: AgentPinnedFactsCardProps) {
     [facts, settings.ledger.capacity]
   );
   const recentFacts = facts.slice(0, 3);
+  const factReviewLog = useMemo(() => buildFactReviewLog(facts), [facts]);
   const recallHealth = getRecallHealth({ facts, ledger });
   const RecallHealthIcon = recallHealth.icon;
   const reSyncHref = '#memory-trust-' + settings.agentId;
@@ -651,6 +675,57 @@ export function AgentPinnedFactsCard({ settings }: AgentPinnedFactsCardProps) {
           </div>
         ) : (
           <>
+            <div
+              className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-4"
+              data-testid="fact-review-log"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="font-medium text-foreground">
+                    Fact review log
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Audit the newest facts before they shape replies.
+                  </p>
+                </div>
+                <div className="rounded-full border border-amber-500/30 bg-background/90 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-300">
+                  {factReviewLog.length} to review
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-3">
+                {factReviewLog.map(({ fact, reason }) => (
+                  <div
+                    className="rounded-lg border border-border/60 bg-background/85 p-3"
+                    data-testid={'fact-review-log-entry-' + fact.id}
+                    key={fact.id}
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium text-foreground">
+                        {formatFactLabel(fact.key)}
+                      </span>
+                      <span
+                        className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-300"
+                        data-testid={'fact-review-log-reason-' + fact.id}
+                      >
+                        {reason}
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs text-muted-foreground">
+                        <Clock3 className="h-3.5 w-3.5" />
+                        {formatTimestamp(fact.updatedAt)}
+                      </span>
+                    </div>
+                    <p
+                      className="mt-3 text-sm text-muted-foreground"
+                      data-testid={'fact-review-log-origin-' + fact.id}
+                    >
+                      {fact.originLabel}: {fact.originSnippet}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div
               className="rounded-xl border border-primary/20 bg-primary/5 p-4"
               data-testid="pinned-facts-receipts"

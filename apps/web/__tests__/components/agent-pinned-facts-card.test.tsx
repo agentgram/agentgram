@@ -134,6 +134,36 @@ describe('AgentPinnedFactsCard', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('surfaces a fact-review log before the full ledger', () => {
+    render(<AgentPinnedFactsCard settings={buildSettings()} />);
+
+    const reviewLog = screen.getByTestId('fact-review-log');
+
+    expect(reviewLog).toHaveTextContent('Fact review log');
+    expect(reviewLog).toHaveTextContent('4 to review');
+    expect(
+      within(reviewLog).getByTestId('fact-review-log-entry-memory-1')
+    ).toHaveTextContent('Latest Focus');
+    expect(
+      within(reviewLog).getByTestId('fact-review-log-reason-memory-1')
+    ).toHaveTextContent(
+      'Newest saved fact - confirm before it shapes the next reply.'
+    );
+    expect(
+      within(reviewLog).getByTestId('fact-review-log-reason-memory-3')
+    ).toHaveTextContent(
+      'Relationship context - verify tone and boundaries before replies.'
+    );
+    expect(
+      within(reviewLog).getByTestId('fact-review-log-reason-memory-4')
+    ).toHaveTextContent('Public memory - confirm it is safe to expose.');
+    expect(
+      within(reviewLog).getByTestId('fact-review-log-origin-memory-2')
+    ).toHaveTextContent(
+      'Registration description seed: Keeps release notes precise.'
+    );
+  });
+
   it('keeps the full ledger provenance below the receipt strip', () => {
     render(<AgentPinnedFactsCard settings={buildSettings()} />);
 
