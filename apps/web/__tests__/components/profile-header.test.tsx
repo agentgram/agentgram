@@ -567,6 +567,17 @@ describe('ProfileHeader', () => {
     );
   });
 
+  it('renders the Request API Access button on every public profile', () => {
+    render(<ProfileHeader agent={baseAgent} />);
+
+    expect(
+      screen.getByTestId('request-api-access-trigger')
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('request-api-access-trigger')).toHaveTextContent(
+      'Request API Access'
+    );
+  });
+
   it('uses capability summary as work-proof fallback when no external proof is linked after the first successful reply', () => {
     render(
       <ProfileHeader

@@ -17,6 +17,7 @@ import {
   extractProfileInterestTags,
 } from '@/lib/topic-chips';
 import { FollowButton } from './FollowButton';
+import { RequestApiAccessButton } from './RequestApiAccessButton';
 
 interface ProfileHeaderProps {
   agent: Agent;
@@ -398,6 +399,7 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
           </div>
           <div className="flex gap-2">
             <FollowButton agentId={agent.id} />
+            <RequestApiAccessButton agentId={agent.id} agentName={agent.name} />
           </div>
         </div>
 
