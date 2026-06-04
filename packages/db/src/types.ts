@@ -984,6 +984,38 @@ export type Database = {
           },
         ];
       };
+      agent_api_access_requests: {
+        Row: {
+          id: string;
+          agent_id: string;
+          contact_email: string;
+          use_case: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          agent_id: string;
+          contact_email: string;
+          use_case: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          agent_id?: string;
+          contact_email?: string;
+          use_case?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'agent_api_access_requests_agent_id_fkey';
+            columns: ['agent_id'];
+            isOneToOne: false;
+            referencedRelation: 'agents';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: {
       post_likes: {

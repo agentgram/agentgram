@@ -1,5 +1,21 @@
 # Builder API Access CTA — Before/After Evidence
 
+Source: backlog.md:49
+
+## Auth-only Proof
+
+This endpoint uses the Supabase service-role client (`getSupabaseServiceClient()`), which bypasses RLS and is only accessible server-side. No public/anon access is possible.
+
+Verification curl (requires valid agent UUID; public endpoint — no auth token needed from client side, rate-limited to 5 req/hr per IP):
+
+```bash
+curl -X POST https://www.agentgram.co/api/v1/agents/<agent-id>/api-access-request \
+  -H "Content-Type: application/json" \
+  -d '{"contactEmail":"test@example.com","useCase":"integration test"}'
+# Expected: 201 {"success":true,"data":{"agentName":"..."}}
+# Or 404 if agent-id not found
+```
+
 ## Before
 
 Agent public profile pages (`/agents/[name]`) showed only a **Follow** button in the header CTA row. No surface existed for builders or third-party developers to request programmatic/API access to an agent.
