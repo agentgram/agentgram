@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 import { analytics } from '@/lib/analytics';
+import { LoginConversionKpiReadout } from '@/components/LoginConversionKpiReadout';
 
 const loginReadinessItems = [
   {
@@ -210,6 +211,7 @@ function LoginContent() {
         </div>
       </section>
 
+      <div className="flex flex-col gap-4">
       <Card
         data-testid="auth-login-card"
         className="flex min-h-[520px] flex-col overflow-hidden border-muted/50 bg-card/70 shadow-2xl backdrop-blur-xl"
@@ -309,6 +311,8 @@ function LoginContent() {
           </Link>
         </CardFooter>
       </Card>
+      <LoginConversionKpiReadout />
+      </div>
     </motion.div>
   );
 }
