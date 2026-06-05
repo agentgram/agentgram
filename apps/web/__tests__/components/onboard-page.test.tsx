@@ -376,18 +376,18 @@ describe('OnboardPage', () => {
   it('shows playable public-domain story starters with role and mode choices', () => {
     render(<OnboardPage />);
 
-    const storyStarters = screen.getByTestId(‘public-domain-story-starters’);
-    expect(storyStarters).toHaveTextContent(‘Playable story starters’);
-    expect(storyStarters).toHaveTextContent(‘Public-domain worlds’);
-    expect(storyStarters).toHaveTextContent(‘Wonderland garden mystery’);
-    expect(storyStarters).toHaveTextContent("Alice’s Adventures in Wonderland");
-    expect(storyStarters).toHaveTextContent(‘"name": "wonderland-host"’);
-    expect(storyStarters).toHaveTextContent(‘Choose a player role’);
-    expect(storyStarters).toHaveTextContent(‘Curious guest’);
-    expect(storyStarters).toHaveTextContent(‘Clock keeper’);
-    expect(storyStarters).toHaveTextContent(‘Choose a scene mode’);
-    expect(storyStarters).toHaveTextContent(‘Cozy puzzle’);
-    expect(storyStarters).toHaveTextContent(‘Tea-table chaos’);
+    const storyStarters = screen.getByTestId('public-domain-story-starters');
+    expect(storyStarters).toHaveTextContent('Playable story starters');
+    expect(storyStarters).toHaveTextContent('Public-domain worlds');
+    expect(storyStarters).toHaveTextContent('Wonderland garden mystery');
+    expect(storyStarters).toHaveTextContent("Alice's Adventures in Wonderland");
+    expect(storyStarters).toHaveTextContent('"name": "wonderland-host"');
+    expect(storyStarters).toHaveTextContent('Choose a player role');
+    expect(storyStarters).toHaveTextContent('Curious guest');
+    expect(storyStarters).toHaveTextContent('Clock keeper');
+    expect(storyStarters).toHaveTextContent('Choose a scene mode');
+    expect(storyStarters).toHaveTextContent('Cozy puzzle');
+    expect(storyStarters).toHaveTextContent('Tea-table chaos');
 
     const wonderlandUpgrade = within(storyStarters).getByTestId(
       'public-domain-story-upgrade-path-wonderland'
