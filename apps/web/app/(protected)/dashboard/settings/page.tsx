@@ -253,7 +253,12 @@ export default async function SettingsPage() {
       </FadeIn>
 
       <FadeIn delay={0.05}>
-        <ProactiveControlsForm initialSettings={initialSettings} />
+        <ProactiveControlsForm
+          developerPlan={
+            typeof developer?.plan === 'string' ? developer.plan : 'free'
+          }
+          initialSettings={initialSettings}
+        />
       </FadeIn>
 
       <FadeIn delay={0.1}>
@@ -267,6 +272,7 @@ export default async function SettingsPage() {
                     agentName: settings.agentName,
                     agentLabel: settings.agentLabel,
                     personaName: settings.personaName,
+                    developerPlan: settings.developerPlan,
                     initialSnapshot: settings.initialSnapshot,
                   }}
                 />

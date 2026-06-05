@@ -3,6 +3,21 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProactiveControlsForm } from '@/components/dashboard/ProactiveControlsForm';
 
+vi.mock('next/link', () => ({
+  default: ({
+    children,
+    href,
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+    children: React.ReactNode;
+    href: string;
+  }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
 const mockCreateClient = vi.fn();
 const mockFadeIn = vi.fn(({ children }: { children: React.ReactNode }) => (
   <div data-testid="fade-in">{children}</div>
@@ -16,9 +31,15 @@ const mockAgentLorebookForm = vi.fn(({ settings }: { settings: unknown }) => (
   <div data-testid="agent-lorebook-form">{JSON.stringify(settings)}</div>
 ));
 const mockProactiveControlsForm = vi.fn(
-  ({ initialSettings }: { initialSettings: unknown }) => (
+  ({
+    initialSettings,
+    developerPlan,
+  }: {
+    initialSettings: unknown;
+    developerPlan?: string;
+  }) => (
     <div data-testid="proactive-controls-form">
-      {JSON.stringify(initialSettings)}
+      {JSON.stringify({ initialSettings, developerPlan })}
     </div>
   )
 );
@@ -302,6 +323,54 @@ describe('ProactiveControlsForm', () => {
     expect(screen.getByRole('radio', { name: /warm/i })).toBeChecked();
   });
 
+  it('shows a paid-only truth label for free plans', () => {
+    render(
+      <ProactiveControlsForm
+        developerPlan="free"
+        initialSettings={{
+          optIn: false,
+          dailyLimit: 2,
+          weeklyLimit: 8,
+          quietHoursEnabled: false,
+          quietHoursStart: '22:00',
+          quietHoursEnd: '08:00',
+          tonePreset: 'neutral',
+        }}
+      />
+    );
+
+    const truthLabel = screen.getByTestId('proactive-premium-truth-label');
+    expect(truthLabel).toHaveTextContent(
+      'Paid Operator tiers unlock proactive outreach scheduling.'
+    );
+    expect(
+      screen.getByRole('link', { name: 'Compare Operator tiers' })
+    ).toHaveAttribute('href', '/dashboard/billing');
+    expect(screen.getByText('Paid only')).toBeInTheDocument();
+  });
+
+  it('hides the paid-only truth label for paid plans', () => {
+    render(
+      <ProactiveControlsForm
+        developerPlan="starter"
+        initialSettings={{
+          optIn: false,
+          dailyLimit: 2,
+          weeklyLimit: 8,
+          quietHoursEnabled: false,
+          quietHoursStart: '22:00',
+          quietHoursEnd: '08:00',
+          tonePreset: 'neutral',
+        }}
+      />
+    );
+
+    expect(
+      screen.queryByTestId('proactive-premium-truth-label')
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('Paid only')).not.toBeInTheDocument();
+  });
+
   it('shows last send and next eligible window status', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-04-26T20:15:00.000Z'));
@@ -506,6 +575,7 @@ describe('SettingsPage', () => {
     ).toBeInTheDocument();
     expect(mockProactiveControlsForm).toHaveBeenCalledWith(
       {
+        developerPlan: 'free',
         initialSettings: {
           optIn: false,
           dailyLimit: 2,
@@ -526,6 +596,7 @@ describe('SettingsPage', () => {
           agentName: 'sage-bot',
           agentLabel: 'Sage Bot',
           personaName: 'Release Sage',
+          developerPlan: 'free',
           initialSnapshot: {
             displayName: 'Sage Bot',
             description: 'Keeps release notes precise.',

@@ -1,7 +1,15 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
-import { Clock, Loader2, MessageSquare, ShieldCheck } from 'lucide-react';
+import {
+  Clock,
+  Loader2,
+  Lock,
+  MessageSquare,
+  ShieldCheck,
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -38,6 +46,7 @@ const TONE_LABELS: Record<TonePreset, { label: string; description: string }> =
 
 interface ProactiveControlsFormProps {
   initialSettings: ProactiveControlsSettings;
+  developerPlan?: string;
 }
 
 function formatStatusTimestamp(value?: string | null): string {
@@ -61,8 +70,15 @@ function formatQuietHoursWindow(start: string, end: string): string {
   return `${start} → ${end} KST`;
 }
 
+const PAID_OPERATOR_PLANS = new Set(['starter', 'pro', 'enterprise']);
+
+function hasPaidOperatorPlan(plan?: string) {
+  return Boolean(plan && PAID_OPERATOR_PLANS.has(plan));
+}
+
 export function ProactiveControlsForm({
   initialSettings,
+  developerPlan,
 }: ProactiveControlsFormProps) {
   const [settings, setSettings] = useState(initialSettings);
   const [isSaving, setIsSaving] = useState(false);
@@ -119,6 +135,7 @@ export function ProactiveControlsForm({
       : isEligibilityDelayed
         ? `AgentGram is still waiting for the next eligible send window at ${nextEligibleLabel}. Daily and weekly usage still stay capped at ${settings.dailyLimit}/day and ${settings.weeklyLimit}/week.`
         : `AgentGram can send again as early as ${nextEligibleLabel}. Daily and weekly usage still stay capped at ${settings.dailyLimit}/day and ${settings.weeklyLimit}/week.`;
+  const shouldShowPremiumTruthLabel = !hasPaidOperatorPlan(developerPlan);
 
   const handleSave = async (
     nextSettings: ProactiveControlsSettings = settings,
@@ -174,9 +191,18 @@ export function ProactiveControlsForm({
   return (
     <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex flex-wrap items-center gap-2">
           <ShieldCheck className="h-5 w-5 text-primary" />
           Proactive outreach controls
+          {shouldShowPremiumTruthLabel ? (
+            <Badge
+              className="gap-1 border-primary/20 bg-primary/10 text-primary"
+              variant="outline"
+            >
+              <Lock className="h-3.5 w-3.5" />
+              Paid only
+            </Badge>
+          ) : null}
         </CardTitle>
         <CardDescription>
           Outreach stays off until you explicitly opt in. Caps stay visible here
@@ -184,6 +210,31 @@ export function ProactiveControlsForm({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {shouldShowPremiumTruthLabel ? (
+          <div
+            className="rounded-xl border border-primary/20 bg-primary/5 p-4"
+            data-testid="proactive-premium-truth-label"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-foreground">
+                  Paid Operator tiers unlock proactive outreach scheduling.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Free creators should see that send windows, quiet hours, and
+                  tone controls belong to the paid proactive layer before they
+                  try to turn outreach on.
+                </p>
+              </div>
+              <Link
+                className="text-sm font-medium text-primary hover:underline"
+                href="/dashboard/billing"
+              >
+                Compare Operator tiers
+              </Link>
+            </div>
+          </div>
+        ) : null}
         <label className="flex items-start gap-3 rounded-lg border border-border/60 p-4">
           <input
             checked={settings.optIn}

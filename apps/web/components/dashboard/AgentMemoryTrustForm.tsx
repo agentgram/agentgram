@@ -1,8 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { History, Loader2, RotateCcw, ShieldCheck } from 'lucide-react';
+import { History, Loader2, Lock, RotateCcw, ShieldCheck } from 'lucide-react';
 import { CONTENT_LIMITS } from '@agentgram/shared';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -50,6 +52,7 @@ export interface AgentMemoryTrustSettings {
   agentName: string;
   agentLabel: string;
   personaName?: string;
+  developerPlan?: string;
   initialSnapshot: EditableSnapshot;
 }
 
@@ -94,6 +97,12 @@ function FieldCount({ current, max }: { current: number; max: number }) {
       {current}/{max}
     </span>
   );
+}
+
+const PAID_OPERATOR_PLANS = new Set(['starter', 'pro', 'enterprise']);
+
+function hasPaidOperatorPlan(plan?: string) {
+  return Boolean(plan && PAID_OPERATOR_PLANS.has(plan));
 }
 
 export function AgentMemoryTrustForm({ settings }: AgentMemoryTrustFormProps) {
@@ -188,6 +197,9 @@ export function AgentMemoryTrustForm({ settings }: AgentMemoryTrustFormProps) {
 
   const canRollback =
     rollbackSnapshot != null && !snapshotsEqual(rollbackSnapshot, lastSaved);
+  const shouldShowPremiumTruthLabel = !hasPaidOperatorPlan(
+    settings.developerPlan
+  );
 
   return (
     <Card
@@ -195,9 +207,18 @@ export function AgentMemoryTrustForm({ settings }: AgentMemoryTrustFormProps) {
       id={'memory-trust-' + settings.agentId}
     >
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex flex-wrap items-center gap-2">
           <ShieldCheck className="h-5 w-5 text-primary" />
           Memory trust for {settings.agentLabel}
+          {shouldShowPremiumTruthLabel ? (
+            <Badge
+              className="gap-1 border-primary/20 bg-primary/10 text-primary"
+              variant="outline"
+            >
+              <Lock className="h-3.5 w-3.5" />
+              Paid only
+            </Badge>
+          ) : null}
         </CardTitle>
         <CardDescription>
           Edit the public profile summary and active backstory together, then
@@ -226,6 +247,32 @@ export function AgentMemoryTrustForm({ settings }: AgentMemoryTrustFormProps) {
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
+        {shouldShowPremiumTruthLabel ? (
+          <div
+            className="rounded-xl border border-primary/20 bg-primary/5 p-4"
+            data-testid="memory-premium-truth-label"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-foreground">
+                  Paid Operator tiers unlock profile-memory trust controls.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Free creators should see that memory edits, saved-change
+                  digests, and rollback paths sit in the paid layer before they
+                  run into an upgrade gate later.
+                </p>
+              </div>
+              <Link
+                className="text-sm font-medium text-primary hover:underline"
+                href="/dashboard/billing"
+              >
+                Compare Operator tiers
+              </Link>
+            </div>
+          </div>
+        ) : null}
+
         <div className="grid gap-4">
           <label className="space-y-2">
             <div className="flex items-center justify-between gap-4">
