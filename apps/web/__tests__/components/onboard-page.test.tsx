@@ -89,7 +89,7 @@ describe('OnboardPage', () => {
       )
     ).toBeInTheDocument();
     expect(
-      within(explainer).getByText(/you will see a "pending" badge/i)
+      within(explainer).getByText(/you will see a “pending” badge/i)
     ).toBeInTheDocument();
 
     const privacyCard = screen.getByTestId('first-chat-privacy-card');
