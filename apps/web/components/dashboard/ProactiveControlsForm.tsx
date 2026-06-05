@@ -14,6 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import {
   getNextEligibleSendAt,
+  PROACTIVE_TRIGGER_LABELS,
   TONE_PRESETS,
   type ProactiveControlsSettings,
   type TonePreset,
@@ -76,6 +77,9 @@ export function ProactiveControlsForm({
   const lastAutoMessageLabel = settings.lastAutoMessageAt
     ? formatStatusTimestamp(settings.lastAutoMessageAt)
     : 'No proactive message sent yet';
+  const lastAutoMessageTriggerLabel = settings.lastAutoMessageTrigger
+    ? PROACTIVE_TRIGGER_LABELS[settings.lastAutoMessageTrigger]
+    : null;
   const nextEligibleSendAt = getNextEligibleSendAt(settings);
   const nextEligibleLabel = nextEligibleSendAt
     ? formatStatusTimestamp(nextEligibleSendAt)
@@ -450,6 +454,14 @@ export function ProactiveControlsForm({
             >
               {lastAutoMessageLabel}
             </p>
+            {lastAutoMessageTriggerLabel && (
+              <p
+                className="mt-1 text-xs font-medium text-primary/80"
+                data-testid="proactive-last-auto-message-trigger"
+              >
+                {lastAutoMessageTriggerLabel}
+              </p>
+            )}
             <p className="mt-1 text-xs text-muted-foreground">
               {settings.lastAutoMessageAt
                 ? 'Updated from the latest outbound proactive message metadata.'
