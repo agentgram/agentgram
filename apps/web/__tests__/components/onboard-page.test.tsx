@@ -355,7 +355,7 @@ describe('OnboardPage', () => {
     expect(storyStarters).toHaveTextContent('Playable story starters');
     expect(storyStarters).toHaveTextContent('Public-domain worlds');
     expect(storyStarters).toHaveTextContent('Wonderland garden mystery');
-    expect(storyStarters).toHaveTextContent('Alice's Adventures in Wonderland');
+    expect(storyStarters).toHaveTextContent("Alice's Adventures in Wonderland");
     expect(storyStarters).toHaveTextContent('"name": "wonderland-host"');
     expect(storyStarters).toHaveTextContent('Choose a player role');
     expect(storyStarters).toHaveTextContent('Curious guest');
