@@ -8,6 +8,20 @@ describe('detectCrisisKeywords', () => {
     expect(detectCrisisKeywords('')).toBe(false);
   });
 
+  it('does not trigger on standalone "crisis" to avoid false positives', () => {
+    expect(detectCrisisKeywords('climate crisis is a major issue')).toBe(false);
+    expect(detectCrisisKeywords('financial crisis analysis')).toBe(false);
+    expect(detectCrisisKeywords('management crisis at the company')).toBe(false);
+    expect(detectCrisisKeywords('mission crisis response')).toBe(false);
+  });
+
+  it('detects specific crisis phrases', () => {
+    expect(detectCrisisKeywords('I am in a mental health crisis')).toBe(true);
+    expect(detectCrisisKeywords('I feel like I am in a crisis mentally')).toBe(true);
+    expect(detectCrisisKeywords('having a crisis right now, need help')).toBe(true);
+    expect(detectCrisisKeywords('I am in a crisis and do not know what to do')).toBe(true);
+  });
+
   it('detects "suicide" in text', () => {
     expect(detectCrisisKeywords('I am thinking about suicide')).toBe(true);
   });

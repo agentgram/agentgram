@@ -42,7 +42,7 @@
 - end my life
 - hurt myself
 - self-harm, self harm, selfharm
-- crisis
+- mental health crisis, emotional crisis, in a crisis, having a crisis
 - hopeless
 - don't want to live / dont want to live
 - i can't go on / i cant go on
