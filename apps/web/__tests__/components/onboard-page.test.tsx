@@ -32,6 +32,24 @@ vi.mock('@/components/dashboard', () => ({
 
 describe('OnboardPage', () => {
   beforeEach(() => {
+    const storage = new Map<string, string>();
+
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: vi.fn((key: string) => storage.get(key) ?? null),
+        setItem: vi.fn((key: string, value: string) => {
+          storage.set(key, value);
+        }),
+        removeItem: vi.fn((key: string) => {
+          storage.delete(key);
+        }),
+        clear: vi.fn(() => {
+          storage.clear();
+        }),
+      },
+      configurable: true,
+    });
+
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
   });
 
@@ -545,7 +563,7 @@ describe('OnboardPage', () => {
     ).toHaveAttribute('href', '/dashboard/billing');
     expect(
       within(groupChatCard).getAllByText(/verified-builder-group/i)
-    ).toHaveLength(3);
+    ).toHaveLength(5);
     expect(
       within(groupChatCard).getByText(/topic": "group-chat"/i)
     ).toBeInTheDocument();
@@ -559,6 +577,70 @@ describe('OnboardPage', () => {
     expect(previewPanel).toHaveTextContent('Shared-memory scope preview');
     expect(previewPanel).toHaveTextContent('Shared room memory');
     expect(previewPanel).toHaveTextContent('Keep private');
+
+    const rosterPresets = within(groupChatCard).getByTestId(
+      'group-chat-roster-presets'
+    );
+    expect(rosterPresets).toHaveTextContent('Reusable roster presets');
+    expect(rosterPresets).toHaveTextContent('Duo handoff');
+    expect(rosterPresets).toHaveTextContent('Triad briefing');
+    expect(rosterPresets).toHaveTextContent('Roundtable scene');
+    expect(
+      within(rosterPresets).getByTestId('group-chat-roster-selected')
+    ).toHaveTextContent('"rosterPreset": "duo-handoff"');
+  });
+
+  it('saves reusable group roster presets for the next multi-agent start', () => {
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams({
+        remix: 'verified-builder',
+        displayName: 'Verified Builder',
+        description: 'Builds production agents.',
+        starter: 'group_chat',
+      })
+    );
+
+    const { unmount } = render(<OnboardPage />);
+
+    const rosterPresets = screen.getByTestId('group-chat-roster-presets');
+    fireEvent.click(
+      within(rosterPresets).getByTestId(
+        'group-chat-roster-option-triad-briefing'
+      )
+    );
+
+    expect(
+      within(rosterPresets).getByTestId('group-chat-roster-selected')
+    ).toHaveTextContent('"rosterPreset": "triad-briefing"');
+
+    fireEvent.click(
+      within(rosterPresets).getByRole('button', {
+        name: 'Save preset for later',
+      })
+    );
+
+    expect(
+      within(rosterPresets).getByTestId('group-chat-roster-save-status')
+    ).toHaveTextContent('Saved locally for the next multi-agent start.');
+    expect(
+      window.localStorage.getItem('agentgram:group-chat-roster-presets')
+    ).toContain('triad-briefing');
+
+    unmount();
+    render(<OnboardPage />);
+
+    const savedPresets = screen.getByTestId('group-chat-saved-roster-presets');
+    expect(savedPresets).toHaveTextContent('Triad briefing');
+
+    fireEvent.click(screen.getByTestId('group-chat-roster-option-duo-handoff'));
+    expect(screen.getByTestId('group-chat-roster-selected')).toHaveTextContent(
+      '"rosterPreset": "duo-handoff"'
+    );
+
+    fireEvent.click(screen.getByTestId('saved-group-chat-preset-triad-briefing'));
+    expect(screen.getByTestId('group-chat-roster-selected')).toHaveTextContent(
+      '"rosterPreset": "triad-briefing"'
+    );
   });
 
   it('maps imported Character Card JSON into starter payloads', () => {
