@@ -373,7 +373,7 @@ describe('OnboardPage', () => {
     expect(researchOpeners).toHaveTextContent('Joint research plan opener');
   });
 
-  it(‘shows playable public-domain story starters with role and mode choices’, () => {
+  it('shows playable public-domain story starters with role and mode choices', () => {
     render(<OnboardPage />);
 
     const storyStarters = screen.getByTestId(‘public-domain-story-starters’);
@@ -390,53 +390,53 @@ describe('OnboardPage', () => {
     expect(storyStarters).toHaveTextContent(‘Tea-table chaos’);
 
     const wonderlandUpgrade = within(storyStarters).getByTestId(
-      ‘public-domain-story-upgrade-path-wonderland’
+      'public-domain-story-upgrade-path-wonderland'
     );
-    expect(wonderlandUpgrade).toHaveTextContent(‘First-session upgrade path’);
+    expect(wonderlandUpgrade).toHaveTextContent('First-session upgrade path');
     expect(wonderlandUpgrade).toHaveTextContent(
-      ‘Save the role, mode, and story outcome’
-    );
-    expect(wonderlandUpgrade).toHaveTextContent(
-      ‘Saved after session: player role, scene mode, last clue’
+      'Save the role, mode, and story outcome'
     );
     expect(wonderlandUpgrade).toHaveTextContent(
-      ‘Why this is the upgrade moment’
+      'Saved after session: player role, scene mode, last clue'
     );
     expect(wonderlandUpgrade).toHaveTextContent(
-      ‘paid onboarding audits the public-domain premise’
+      'Why this is the upgrade moment'
     );
-    expect(wonderlandUpgrade).toHaveTextContent(‘Next-day KPI readout’);
-    expect(wonderlandUpgrade).toHaveTextContent(‘D1 story-mode upgrade rate’);
+    expect(wonderlandUpgrade).toHaveTextContent(
+      'paid onboarding audits the public-domain premise'
+    );
+    expect(wonderlandUpgrade).toHaveTextContent('Next-day KPI readout');
+    expect(wonderlandUpgrade).toHaveTextContent('D1 story-mode upgrade rate');
     expect(
-      within(wonderlandUpgrade).getByRole(‘link’, {
-        name: ‘Open paid onboarding audit’,
+      within(wonderlandUpgrade).getByRole('link', {
+        name: 'Open paid onboarding audit',
       })
     ).toHaveAttribute(
-      ‘href’,
-      ‘/pricing?source=public_domain_story&starter=wonderland’
+      'href',
+      '/pricing?source=public_domain_story&starter=wonderland'
     );
 
     fireEvent.click(
-      within(storyStarters).getByRole(‘tab’, {
-        name: ‘Baker Street cold case’,
+      within(storyStarters).getByRole('tab', {
+        name: 'Baker Street cold case',
       })
     );
 
     const bakerStreet = within(storyStarters).getByTestId(
-      ‘public-domain-story-baker-street’
+      'public-domain-story-baker-street'
     );
-    expect(bakerStreet).toHaveTextContent(‘Sherlock Holmes canon’);
-    expect(bakerStreet).toHaveTextContent(‘Junior detective’);
-    expect(bakerStreet).toHaveTextContent(‘Deduction board’);
-    expect(bakerStreet).toHaveTextContent(‘"name": "baker-street-analyst"’);
+    expect(bakerStreet).toHaveTextContent('Sherlock Holmes canon');
+    expect(bakerStreet).toHaveTextContent('Junior detective');
+    expect(bakerStreet).toHaveTextContent('Deduction board');
+    expect(bakerStreet).toHaveTextContent('"name": "baker-street-analyst"');
     expect(
       within(bakerStreet).getByTestId(
-        ‘public-domain-story-upgrade-path-baker-street’
+        'public-domain-story-upgrade-path-baker-street'
       )
-    ).toHaveTextContent(‘public-domain source boundaries’);
+    ).toHaveTextContent('public-domain source boundaries');
   });
 
-  it(‘toggles the memory contract payload and first-save preview before registration’, () => {
+  it('toggles the memory contract payload and first-save preview before registration', () => {
     render(<OnboardPage />);
 
     const memoryMode = screen.getByTestId('memory-mode-picker');
