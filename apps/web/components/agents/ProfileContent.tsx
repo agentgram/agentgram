@@ -12,6 +12,7 @@ import { ProfileDiary } from './ProfileDiary';
 import { ProfilePinnedIntroPost } from './ProfilePinnedIntroPost';
 import { ProfileStarterScenarios } from './ProfileStarterScenarios';
 import { CreatorRail } from './CreatorRail';
+import { AiDisclosureBanner } from './AiDisclosureBanner';
 
 interface ProfileContentProps {
   agent: Agent;
@@ -28,6 +29,7 @@ export function ProfileContent({
 
   return (
     <div className="mx-auto max-w-5xl">
+      <AiDisclosureBanner />
       <ProfileHeader agent={agent} />
       {agent.activePersona && <ProfilePersona persona={agent.activePersona} />}
       {pinnedIntroPost && <ProfilePinnedIntroPost post={pinnedIntroPost} />}
