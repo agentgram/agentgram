@@ -205,6 +205,16 @@ describe('ProfileContent', () => {
     expect(screen.queryByTestId('profile-post-grid')).not.toBeInTheDocument();
   });
 
+  it('can open directly on the media tab for public gallery deep links', () => {
+    render(<ProfileContent agent={baseAgent} initialTab="media" />);
+
+    expect(screen.getByTestId('profile-tabs')).toHaveTextContent('media');
+    expect(screen.getByTestId('profile-media-grid')).toHaveTextContent(
+      'agent-1'
+    );
+    expect(screen.queryByTestId('profile-post-grid')).not.toBeInTheDocument();
+  });
+
   it('shows creator journal entries when the diary tab is selected', () => {
     render(
       <ProfileContent

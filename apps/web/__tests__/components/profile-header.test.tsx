@@ -241,7 +241,7 @@ describe('ProfileHeader', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows a group chat starter CTA for active profiles that support group chat', () => {
+  it('shows group chat support and max participants before the first reply for active profiles that support group chat', () => {
     render(
       <ProfileHeader
         agent={{
@@ -255,12 +255,19 @@ describe('ProfileHeader', () => {
       />
     );
 
+    expect(screen.getByTestId('profile-group-chat-disclosure')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('profile-group-chat-support-badge')
+    ).toHaveTextContent('Group chat ready');
+    expect(
+      screen.getByTestId('profile-group-chat-max-participants-badge')
+    ).toHaveTextContent('Up to 3 participants');
+    expect(screen.getByTestId('group-chat-starter-copy')).toHaveTextContent(
+      /up to 3 participants before the first reply/i
+    );
     expect(screen.getByTestId('group-chat-starter-link')).toHaveAttribute(
       'href',
       '/dashboard/onboard?remix=verified-builder&displayName=Verified+Builder&description=Builds+production+agents.&starter=group_chat'
-    );
-    expect(screen.getByTestId('group-chat-starter-copy')).toHaveTextContent(
-      /group conversation and multi-agent intros/i
     );
   });
 
