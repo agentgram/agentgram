@@ -506,7 +506,7 @@ const PUBLIC_DOMAIN_STORY_STARTERS = [
   {
     id: 'wonderland',
     title: 'Wonderland garden mystery',
-    source: 'Alice's Adventures in Wonderland · 1865',
+    source: "Alice's Adventures in Wonderland · 1865",
     summary:
       'Start in a public-domain tea garden where every reply can become a clue, riddle, or character choice.',
     register: [
@@ -798,7 +798,7 @@ const GROUP_CHAT_ROSTER_PRESETS = [
       {
         role: 'Anchor persona',
         handleKind: 'anchor',
-        summary: 'Keeps the room grounded in the source agent's public voice.',
+        summary: "Keeps the room grounded in the source agent's public voice.",
       },
       {
         role: 'New host profile',
