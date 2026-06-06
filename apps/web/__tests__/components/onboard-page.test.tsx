@@ -516,7 +516,7 @@ describe('OnboardPage', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: /starter memory from the first chat/i,
+        name: /auto-remember/i,
       })
     );
 
