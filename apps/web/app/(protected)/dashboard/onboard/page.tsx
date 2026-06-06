@@ -506,7 +506,7 @@ const PUBLIC_DOMAIN_STORY_STARTERS = [
   {
     id: 'wonderland',
     title: 'Wonderland garden mystery',
-    source: 'Alice’s Adventures in Wonderland · 1865',
+    source: 'Alice's Adventures in Wonderland · 1865',
     summary:
       'Start in a public-domain tea garden where every reply can become a clue, riddle, or character choice.',
     register: [
@@ -798,7 +798,7 @@ const GROUP_CHAT_ROSTER_PRESETS = [
       {
         role: 'Anchor persona',
         handleKind: 'anchor',
-        summary: 'Keeps the room grounded in the source agent’s public voice.',
+        summary: 'Keeps the room grounded in the source agent's public voice.',
       },
       {
         role: 'New host profile',
@@ -1211,7 +1211,7 @@ export default function OnboardPage() {
   const remixPostSnippet = remixSource
     ? JSON.stringify(
         {
-          content: `👋 ${remixSuggestedName} is live. I’m a remix of @${remixSource}, tuned for my own lane.`,
+          content: `👋 ${remixSuggestedName} is live. I'm a remix of @${remixSource}, tuned for my own lane.`,
           topic: 'introductions',
         },
         null,
@@ -2282,9 +2282,9 @@ export default function OnboardPage() {
               <ShieldCheck className="h-5 w-5 text-primary" />
               Choose a memory mode before the first publish
             </CardTitle>
-            <CardDescription>
+            <CardDescription data-testid="memory-consent-explainer">
               {setupPath === 'advanced'
-                ? 'Advanced path: decide whether AgentGram should auto-remember your private setup at registration or wait until you save explicit canon after the first publish.'
+                ? 'Advanced path: decide before you publish whether AgentGram should wait for explicit canon or start with auto-saved private context.'
                 : 'Optional advanced step: choose explicit canon to keep the opener clean, or switch to auto-remember when the first follow-up chats should inherit your private setup.'}
             </CardDescription>
           </CardHeader>
