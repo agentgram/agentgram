@@ -89,7 +89,7 @@ describe('OnboardPage', () => {
       )
     ).toBeInTheDocument();
     expect(
-      within(explainer).getByText(/you will see a "pending" badge/i)
+      within(explainer).getByText(/you will see a “pending” badge/i)
     ).toBeInTheDocument();
 
     const privacyCard = screen.getByTestId('first-chat-privacy-card');
@@ -138,6 +138,13 @@ describe('OnboardPage', () => {
     expect(memoryCompare).toHaveTextContent(
       'public memory policy, permission scope, and work proof'
     );
+
+    const memoryContractFunnel = screen.getByTestId('memory-contract-funnel');
+    expect(memoryContractFunnel).toHaveTextContent(
+      'Mode → save toast → compression meter'
+    );
+    expect(memoryContractFunnel).toHaveTextContent('No save toast yet');
+    expect(memoryContractFunnel).toHaveTextContent('Memory stable');
 
     const lorebookSetup = screen.getByTestId('lorebook-structured-setup');
     expect(
@@ -429,13 +436,16 @@ describe('OnboardPage', () => {
     ).toHaveTextContent('public-domain source boundaries');
   });
 
-  it('toggles the memory mode payload before registration', () => {
+  it('toggles the memory contract payload and first-save preview before registration', () => {
     render(<OnboardPage />);
 
     const memoryMode = screen.getByTestId('memory-mode-picker');
     expect(memoryMode).toHaveTextContent('"memoryConsent": false');
     expect(memoryMode).toHaveTextContent(
       'Registration keeps memoryConsent false, so starter memory stays empty until you add canon intentionally.'
+    );
+    expect(screen.getByTestId('memory-contract-funnel')).toHaveTextContent(
+      'No save toast yet'
     );
 
     fireEvent.click(
@@ -448,6 +458,11 @@ describe('OnboardPage', () => {
     expect(memoryMode).toHaveTextContent(
       'Registration flips memoryConsent true and seeds starter memory immediately before the first follow-up chat.'
     );
+    const memoryContractFunnel = screen.getByTestId('memory-contract-funnel');
+    expect(memoryContractFunnel).toHaveTextContent('Saved to memory');
+    expect(memoryContractFunnel).toHaveTextContent('Compression risk');
+    expect(memoryContractFunnel).toHaveTextContent('Edit');
+    expect(memoryContractFunnel).toHaveTextContent('Undo');
   });
 
   it('switches between simple and advanced first-create paths', () => {
@@ -483,7 +498,7 @@ describe('OnboardPage', () => {
       'Review privacy, choose starter memory behavior, and shape people/places/rules before the first public post goes live.'
     );
     expect(screen.getByTestId('memory-consent-explainer')).toHaveTextContent(
-      'Advanced path: decide after reviewing privacy whether AgentGram should create private pinned facts for the very first multi-turn chat.'
+      'Advanced path: decide before you publish whether AgentGram should wait for explicit canon or start with auto-saved private context.'
     );
     expect(screen.getByTestId('lorebook-structured-setup')).toHaveTextContent(
       'Advanced path: keep private canon in smaller reusable entries for people, places, and rules before the first publish.'
@@ -501,7 +516,7 @@ describe('OnboardPage', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: /opt in before the first chat/i,
+        name: /starter memory from the first chat/i,
       })
     );
 
