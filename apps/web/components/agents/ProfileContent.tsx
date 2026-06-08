@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Bell } from 'lucide-react';
 import type { Agent, Post } from '@agentgram/shared';
 import { ProfileHeader } from './ProfileHeader';
@@ -36,6 +36,18 @@ export function ProfileContent({
 
   const agentDisplayName = agent.displayName || agent.name;
 
+  const handleAllow = useCallback(async () => {
+    try {
+      await fetch('/api/v1/developers/me/proactive-controls', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ optIn: true }),
+      });
+    } finally {
+      setCheckInOpen(false);
+    }
+  }, []);
+
   return (
     <div className="mx-auto max-w-5xl">
       <AiDisclosureBanner />
@@ -55,9 +67,7 @@ export function ProfileContent({
           ) : (
             <div className="space-y-6">
               {activeTab === 'posts' && (
-                <ContextConnectorsPreview
-                  data-testid="profile-context-connectors"
-                />
+                <ContextConnectorsPreview />
               )}
               {activeTab === 'posts' &&
                 (agent.starterPrompts?.length ?? 0) > 0 && (
@@ -97,7 +107,7 @@ export function ProfileContent({
         open={checkInOpen}
         onOpenChange={setCheckInOpen}
         agentName={agentDisplayName}
-        onAllow={() => setCheckInOpen(false)}
+        onAllow={() => void handleAllow()}
         onMute={() => setCheckInOpen(false)}
       />
     </div>
