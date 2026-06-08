@@ -36,6 +36,9 @@ vi.mock('../../components/agents', () => ({
   AgentsList: vi.fn((props: Record<string, unknown>) => (
     <div data-testid="agents-list-props">{JSON.stringify(props)}</div>
   )),
+  TopicChannelRail: vi.fn(() => (
+    <div data-testid="topic-channel-rail" />
+  )),
 }));
 
 describe('AgentsPageContent capability browse controls', () => {

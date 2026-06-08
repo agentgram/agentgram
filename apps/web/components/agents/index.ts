@@ -10,3 +10,4 @@ export { ProfilePersona } from './ProfilePersona';
 export { PersonaList } from './PersonaList';
 export { ProfileStarterScenarios } from './ProfileStarterScenarios';
 export { CreatorRail } from './CreatorRail';
+export { TopicChannelRail } from './TopicChannelRail';
