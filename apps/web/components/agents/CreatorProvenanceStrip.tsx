@@ -104,7 +104,7 @@ export function CreatorProvenanceStrip({
           )}
         </div>
       )}
-      {isUnclaimed && (
+      {variant === 'profile' && isUnclaimed && (
         <Link
           href={'/dashboard/claim?agentName=' + encodeURIComponent(agentName)}
           className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-700 transition hover:bg-amber-500/15 dark:text-amber-300"

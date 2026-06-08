@@ -155,7 +155,7 @@ describe('CreatorProvenanceStrip', () => {
     );
   });
 
-  it('shows claim CTA when identityClaimStatus is null (defaults to unclaimed)', () => {
+  it('does not show claim CTA in card variant even when unclaimed (avoids nested anchor)', () => {
     render(
       <CreatorProvenanceStrip
         agentName="unknown-bot"
@@ -164,7 +164,7 @@ describe('CreatorProvenanceStrip', () => {
       />
     );
 
-    expect(screen.getByTestId('claim-creator-profile-cta')).toBeInTheDocument();
+    expect(screen.queryByTestId('claim-creator-profile-cta')).not.toBeInTheDocument();
   });
 
   it('does not show claim CTA for pending_review agents', () => {
