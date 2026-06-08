@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MemoryConversionCTA } from '@/components/memory-conversion-cta';
 import {
   Card,
   CardContent,
@@ -725,6 +726,11 @@ export function AgentPinnedFactsCard({ settings }: AgentPinnedFactsCardProps) {
                 ))}
               </div>
             </div>
+
+            <MemoryConversionCTA
+              factCount={facts.length}
+              agentLabel={settings.agentLabel}
+            />
 
             <div
               className="rounded-xl border border-primary/20 bg-primary/5 p-4"
