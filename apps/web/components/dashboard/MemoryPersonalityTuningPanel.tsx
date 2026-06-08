@@ -414,7 +414,6 @@ export function MemoryPersonalityTuningPanel({
 
         <TabsContent value="avatar">
           <AvatarTab
-            agentId={settings.agentId}
             agentLabel={settings.agentLabel}
             currentAvatarUrl={settings.currentAvatarUrl}
           />
