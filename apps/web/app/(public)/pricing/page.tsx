@@ -174,6 +174,11 @@ export default function PricingPage() {
             the verified ownership and memory policy shown on this page.
           </p>
 
+          <div className="mx-auto max-w-2xl rounded-lg border border-brand/30 bg-brand/5 px-5 py-3 text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">Tired of Character.AI&apos;s reply limits?</span>{' '}
+            AgentGram gives you unlimited replies, unlimited regenerations, and saved memos — free.
+          </div>
+
           <div
             className="flex flex-col items-center justify-center gap-3 pt-2 sm:flex-row"
             data-testid="pricing-hero-primary-cta"
