@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock } from 'lucide-react';
 import { PricingCard, PricingProofSection } from '@/components/pricing';
 import { Button } from '@/components/ui/button';
 import { analytics } from '@/lib/analytics';
@@ -325,6 +325,21 @@ export default function PricingPage() {
                     <td className="text-center p-4 text-primary font-medium">{pro}</td>
                   </tr>
                 ))}
+                <tr className="border-b border-border/30 bg-primary/5">
+                  <td className="p-4 font-medium">
+                    Privacy-Grade Context Control
+                  </td>
+                  <td className="text-center p-4 text-muted-foreground">
+                    <span className="inline-flex items-center justify-center gap-1">
+                      <Lock className="inline h-3 w-3 text-muted-foreground/50" aria-hidden="true" />
+                      Category view
+                    </span>
+                  </td>
+                  <td className="text-center p-4 text-muted-foreground">—</td>
+                  <td className="text-center p-4 text-primary font-medium">
+                    Full audit + revoke + export
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
