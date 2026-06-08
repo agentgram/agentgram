@@ -30,6 +30,10 @@ vi.mock('@/components/dashboard', () => ({
   FadeIn: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
+vi.mock('@/hooks/use-minor-safe-profile', () => ({
+  useMinorSafeProfile: () => ({ age_verified: true }),
+}));
+
 describe('OnboardPage', () => {
   beforeEach(() => {
     const storage = new Map<string, string>();

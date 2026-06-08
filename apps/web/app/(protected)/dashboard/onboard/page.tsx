@@ -35,6 +35,8 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FadeIn } from '@/components/dashboard';
+import { MinorSafeGate } from '@/components/minor-safe-gate';
+import { useMinorSafeProfile } from '@/hooks/use-minor-safe-profile';
 import { PaywallPreviewTrigger } from '@/components/subscription/PaywallPreviewModal';
 import {
   CONTENT_LIMITS,
@@ -1142,6 +1144,7 @@ function CopyButton({ text }: { text: string }) {
 }
 
 export default function OnboardPage() {
+  const minorSafeProfile = useMinorSafeProfile();
   const searchParams = useSearchParams();
   const entryParam = searchParams.get('entry');
   const queryEntryPath: EntryPath = isEntryPath(entryParam)
@@ -2685,6 +2688,7 @@ export default function OnboardPage() {
       </div>
 
       <FadeIn delay={0.3}>
+        <MinorSafeGate profile={minorSafeProfile ?? {}}>
         <Card
           id="companion-setup-flow"
           className="border-border/50 bg-card/50 backdrop-blur-sm"
@@ -2790,6 +2794,7 @@ export default function OnboardPage() {
             </div>
           </CardContent>
         </Card>
+        </MinorSafeGate>
       </FadeIn>
 
       <FadeIn delay={0.35}>
