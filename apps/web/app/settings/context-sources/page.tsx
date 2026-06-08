@@ -24,7 +24,7 @@ const SOURCE_TYPES = [
   {
     icon: Image,
     label: 'Photos',
-    description: 'Images you've uploaded that your agent can analyze.',
+    description: "Images you've uploaded that your agent can analyze.",
     colorClass: 'text-purple-600 dark:text-purple-400',
     bgClass: 'bg-purple-500/10',
   },
