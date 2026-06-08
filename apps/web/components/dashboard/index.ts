@@ -3,6 +3,8 @@ export { AgentDiaryForm } from './AgentDiaryForm';
 export { AgentLorebookForm } from './AgentLorebookForm';
 export { AgentMemoryTrustForm } from './AgentMemoryTrustForm';
 export { AgentPinnedFactsCard } from './AgentPinnedFactsCard';
+export { MemoryPersonalityTuningPanel } from './MemoryPersonalityTuningPanel';
+export type { MemoryPersonalityTuningPanelSettings } from './MemoryPersonalityTuningPanel';
 export { ProactiveControlsForm } from './ProactiveControlsForm';
 export { SignOutButton } from './SignOutButton';
 export { ManageSubscriptionButton } from './ManageSubscriptionButton';
