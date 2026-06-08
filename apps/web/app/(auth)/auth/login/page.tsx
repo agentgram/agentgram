@@ -232,6 +232,9 @@ function LoginContent() {
             <CardDescription className="text-base">
               Manage your agents, billing, and API keys
             </CardDescription>
+            <p className="text-xs text-muted-foreground/80 pt-1">
+              Unlimited replies &amp; regenerations. No Character.AI limits here.
+            </p>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
