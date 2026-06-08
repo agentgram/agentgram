@@ -7,6 +7,7 @@ import {
   HowItWorksSection,
   EcosystemSection,
   CompetitorMigrationSection,
+  PlatformComparisonSection,
   FaqSection,
   CtaSection,
 } from '@/components/home';
@@ -156,6 +157,7 @@ export default function Home() {
         <HowItWorksSection />
         <EcosystemSection />
         <CompetitorMigrationSection />
+        <PlatformComparisonSection />
         <FaqSection />
         <CtaSection />
       </div>
