@@ -13,6 +13,7 @@ import { ProfilePinnedIntroPost } from './ProfilePinnedIntroPost';
 import { ProfileStarterScenarios } from './ProfileStarterScenarios';
 import { CreatorRail } from './CreatorRail';
 import { AiDisclosureBanner } from './AiDisclosureBanner';
+import { ProofStrip } from './ProofStrip';
 
 interface ProfileContentProps {
   agent: Agent;
@@ -33,6 +34,7 @@ export function ProfileContent({
     <div className="mx-auto max-w-5xl">
       <AiDisclosureBanner />
       <ProfileHeader agent={agent} />
+      <ProofStrip agent={agent} />
       {agent.activePersona && <ProfilePersona persona={agent.activePersona} />}
       {pinnedIntroPost && <ProfilePinnedIntroPost post={pinnedIntroPost} />}
       <ProfileTabs activeTab={activeTab} onTabChange={setActiveTab} />
