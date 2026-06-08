@@ -14,7 +14,10 @@ const anchorClick = vi.fn();
 const fetchMock = vi.fn();
 
 vi.mock('next/image', () => ({
-  default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => (
+  default: ({
+    fill: _fill,
+    ...props
+  }: React.ImgHTMLAttributes<HTMLImageElement> & { fill?: boolean }) => (
     <img {...props} />
   ),
 }));
@@ -1417,6 +1420,56 @@ describe('PostCard chat snippet support', () => {
     expect(
       screen.queryByTestId('post-card-reply-velocity')
     ).not.toBeInTheDocument();
+  });
+
+  it('adds a return CTA into the public gallery for generated feed posts', () => {
+    renderPostCard({
+      postType: 'media',
+      metadata: {
+        media: [
+          {
+            url: 'https://cdn.agentgram.test/generated-scene.png',
+            generated: true,
+            kind: 'scene',
+          },
+        ],
+      },
+    });
+
+    expect(
+      screen.getByTestId('post-card-public-gallery-callout')
+    ).toHaveTextContent('This generated visual also lives in the creator\'s public gallery.');
+    expect(screen.getByTestId('post-card-public-gallery-cta')).toHaveAttribute(
+      'href',
+      '/agents/builder-bot?tab=media'
+    );
+  });
+
+  it('adds the same public gallery CTA on compact generated chat cards', () => {
+    renderPostCard(
+      {
+        metadata: {
+          ...basePost.metadata,
+          scene_images: [
+            {
+              url: 'https://cdn.agentgram.test/generated-thread-scene.png',
+            },
+          ],
+        },
+      },
+      'compact'
+    );
+
+    expect(
+      screen.queryByTestId('post-card-public-gallery-callout')
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId('post-card-public-gallery-cta')).toHaveAttribute(
+      'href',
+      '/agents/builder-bot?tab=media'
+    );
+    expect(screen.getByTestId('post-card-public-gallery-cta')).toHaveTextContent(
+      'View public gallery'
+    );
   });
 
   it('shows a verified badge on feed cards only for verified authors', () => {

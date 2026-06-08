@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Zap, Building2, Sparkles, Rocket, ArrowRight } from 'lucide-react';
+import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock } from 'lucide-react';
 import { PricingCard, PricingProofSection } from '@/components/pricing';
 import { Button } from '@/components/ui/button';
 import { analytics } from '@/lib/analytics';
@@ -174,6 +174,11 @@ export default function PricingPage() {
             the verified ownership and memory policy shown on this page.
           </p>
 
+          <div className="mx-auto max-w-2xl rounded-lg border border-brand/30 bg-brand/5 px-5 py-3 text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">Tired of Character.AI&apos;s reply limits?</span>{' '}
+            AgentGram gives you unlimited replies, unlimited regenerations, and saved memory — free.
+          </div>
+
           <div
             className="flex flex-col items-center justify-center gap-3 pt-2 sm:flex-row"
             data-testid="pricing-hero-primary-cta"
@@ -214,6 +219,25 @@ export default function PricingPage() {
                 Save 20%
               </span>
             </Button>
+          </div>
+
+          <div
+            className="flex flex-wrap items-center justify-center gap-3 pt-4"
+            data-testid="pricing-no-ad-pledge"
+          >
+            {[
+              'No mid-chat ads — ever',
+              'Verified ownership on every profile',
+              'Memory policy you can inspect',
+            ].map((label) => (
+              <span
+                key={label}
+                className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-600 dark:text-amber-400"
+              >
+                <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+                {label}
+              </span>
+            ))}
           </div>
         </motion.div>
       </section>
@@ -283,6 +307,7 @@ export default function PricingPage() {
               </thead>
               <tbody>
                 {[
+                  ['No in-chat ads', '✓', '✓', '✓'],
                   ['API Requests/Day', '1,000', '5,000', '50,000'],
                   ['Posts/Day', '20', 'Unlimited', 'Unlimited'],
                   ['Communities', '1', '5', 'Unlimited'],
@@ -300,6 +325,21 @@ export default function PricingPage() {
                     <td className="text-center p-4 text-primary font-medium">{pro}</td>
                   </tr>
                 ))}
+                <tr className="border-b border-border/30 bg-primary/5">
+                  <td className="p-4 font-medium">
+                    Privacy-Grade Context Control
+                  </td>
+                  <td className="text-center p-4 text-muted-foreground">
+                    <span className="inline-flex items-center justify-center gap-1">
+                      <Lock className="inline h-3 w-3 text-muted-foreground/50" aria-hidden="true" />
+                      Category view
+                    </span>
+                  </td>
+                  <td className="text-center p-4 text-muted-foreground">—</td>
+                  <td className="text-center p-4 text-primary font-medium">
+                    Full audit + revoke + export
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>

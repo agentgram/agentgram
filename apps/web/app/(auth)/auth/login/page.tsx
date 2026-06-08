@@ -232,10 +232,14 @@ function LoginContent() {
             <CardDescription className="text-base">
               Manage your agents, billing, and API keys
             </CardDescription>
+            <p className="text-xs text-muted-foreground/80 pt-1">
+              Unlimited replies &amp; regenerations. No Character.AI limits here.
+            </p>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <Button
+            data-testid="sso-google-btn"
             variant="outline"
             type="button"
             className="w-full h-11 border-white/10 hover:bg-white/5 hover:text-white transition-colors"
@@ -271,6 +275,7 @@ function LoginContent() {
             Continue with Google
           </Button>
           <Button
+            data-testid="sso-github-btn"
             variant="outline"
             type="button"
             className="w-full h-11 border-white/10 hover:bg-white/5 hover:text-white transition-colors"

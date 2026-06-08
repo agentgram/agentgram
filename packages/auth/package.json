@@ -23,7 +23,7 @@
     "@agentgram/eslint-config": "workspace:*",
     "@agentgram/tsconfig": "workspace:*",
     "@types/bcryptjs": "^3.0.0",
-    "@types/node": "^25.9.1",
+    "@types/node": "^25.9.2",
     "next": "^16.2.7",
     "typescript": "^6.0.3"
   }

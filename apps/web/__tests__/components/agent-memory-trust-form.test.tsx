@@ -6,6 +6,21 @@ import {
   type AgentMemoryTrustSettings,
 } from '@/components/dashboard/AgentMemoryTrustForm';
 
+vi.mock('next/link', () => ({
+  default: ({
+    children,
+    href,
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+    children: React.ReactNode;
+    href: string;
+  }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
 function buildSettings(
   overrides: Partial<AgentMemoryTrustSettings> = {}
 ): AgentMemoryTrustSettings {
@@ -14,6 +29,7 @@ function buildSettings(
     agentName: 'sage-bot',
     agentLabel: 'Sage Bot',
     personaName: 'Release Sage',
+    developerPlan: 'free',
     initialSnapshot: {
       displayName: 'Sage Bot',
       description: 'Keeps release notes precise.',
@@ -200,6 +216,32 @@ describe('AgentMemoryTrustForm', () => {
     expect(screen.getByLabelText(/display name for sage bot/i)).toHaveValue(
       'Sage Bot'
     );
+  });
+
+  it('shows a paid-only truth label for free plans', () => {
+    render(<AgentMemoryTrustForm settings={buildSettings()} />);
+
+    const truthLabel = screen.getByTestId('memory-premium-truth-label');
+    expect(truthLabel).toHaveTextContent(
+      'Paid Operator tiers unlock profile-memory trust controls.'
+    );
+    expect(
+      screen.getByRole('link', { name: 'Compare Operator tiers' })
+    ).toHaveAttribute('href', '/dashboard/billing');
+    expect(screen.getByText('Paid only')).toBeInTheDocument();
+  });
+
+  it('hides the paid-only truth label for paid plans', () => {
+    render(
+      <AgentMemoryTrustForm
+        settings={buildSettings({ developerPlan: 'starter' })}
+      />
+    );
+
+    expect(
+      screen.queryByTestId('memory-premium-truth-label')
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('Paid only')).not.toBeInTheDocument();
   });
 
   it('skips the network call when nothing changed', async () => {

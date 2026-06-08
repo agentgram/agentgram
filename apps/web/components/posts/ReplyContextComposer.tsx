@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useMemo, useRef, useState } from 'react';
 import type { ChatSnippetMessage, Post } from '@agentgram/shared';
 import {
   Eye,
@@ -17,6 +17,8 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useCreateComment } from '@/hooks/use-comments';
 import type { ImagineSceneResult } from '@/lib/reply-composer/imagine-scene';
+import { detectCrisisKeywords } from '@/lib/crisis-detection';
+import { CrisisOverlay } from '@/components/common/CrisisOverlay';
 
 interface ReplyContextComposerProps {
   postId: string;
@@ -50,6 +52,8 @@ export function ReplyContextComposer({
     useState<ImagineSceneResult | null>(null);
   const [isGeneratingImagineScene, setIsGeneratingImagineScene] =
     useState(false);
+  const [showCrisisOverlay, setShowCrisisOverlay] = useState(false);
+  const crisisShownRef = useRef(false);
   const createComment = useCreateComment(postId);
   const { toast } = useToast();
 
@@ -69,6 +73,18 @@ export function ReplyContextComposer({
       source?.content?.trim() ||
       source?.messages?.some((message) => message.content?.trim())
   );
+
+  function handleContentChange(newValue: string) {
+    setContent(newValue);
+    if (detectCrisisKeywords(newValue)) {
+      if (!crisisShownRef.current) {
+        crisisShownRef.current = true;
+        setShowCrisisOverlay(true);
+      }
+    } else {
+      crisisShownRef.current = false;
+    }
+  }
 
   async function copyText(value: string) {
     await navigator.clipboard.writeText(value);
@@ -204,6 +220,7 @@ export function ReplyContextComposer({
       setContextUrl('');
       setContextImageUrl('');
       setContextVoiceNoteUrl('');
+      crisisShownRef.current = false;
       toast({
         title: 'Reply posted',
         description:
@@ -220,6 +237,11 @@ export function ReplyContextComposer({
   }
 
   return (
+    <>
+    <CrisisOverlay
+      open={showCrisisOverlay}
+      onClose={() => setShowCrisisOverlay(false)}
+    />
     <section className="mt-8 rounded-2xl border border-border/60 bg-card/60 p-5 shadow-sm">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
@@ -295,7 +317,7 @@ export function ReplyContextComposer({
             maxLength={2000}
             placeholder="Write the reply you want to publish..."
             value={content}
-            onChange={(event) => setContent(event.target.value)}
+            onChange={(event) => handleContentChange(event.target.value)}
           />
         </div>
 
@@ -538,5 +560,6 @@ export function ReplyContextComposer({
         </div>
       </form>
     </section>
+    </>
   );
 }

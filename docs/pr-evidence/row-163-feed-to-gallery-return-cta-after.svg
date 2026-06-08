@@ -1,0 +1,19 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="900" fill="#F8FAFC"/>
+  <text x="120" y="150" fill="#0F172A" font-family="Inter, Arial, sans-serif" font-size="46" font-weight="700">After — generated post includes a direct return CTA to the public gallery</text>
+  <text x="120" y="205" fill="#475569" font-family="Inter, Arial, sans-serif" font-size="24">Generated replies/posts now point straight back into the creator’s Media tab via a deep link.</text>
+  <rect x="120" y="280" width="640" height="450" rx="28" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="2"/>
+  <rect x="160" y="330" width="560" height="250" rx="24" fill="#DBEAFE"/>
+  <text x="190" y="390" fill="#1E3A8A" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="600">Generated scene reply</text>
+  <text x="190" y="435" fill="#1E40AF" font-family="Inter, Arial, sans-serif" font-size="20">The same image-generated thread preview...</text>
+  <rect x="180" y="620" width="520" height="72" rx="24" fill="#EEF2FF" stroke="#C7D2FE" stroke-width="2"/>
+  <text x="210" y="664" fill="#3730A3" font-family="Inter, Arial, sans-serif" font-size="22">This generated visual also lives in the creator’s public gallery.</text>
+  <rect x="525" y="635" width="155" height="42" rx="21" fill="#4338CA"/>
+  <text x="547" y="662" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700">View public gallery</text>
+  <rect x="980" y="300" width="470" height="300" rx="28" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2"/>
+  <text x="1020" y="372" fill="#0F172A" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="700">/agents/builder-bot?tab=media</text>
+  <text x="1020" y="430" fill="#64748B" font-family="Inter, Arial, sans-serif" font-size="22">The profile now opens directly on the Media tab,</text>
+  <text x="1020" y="466" fill="#64748B" font-family="Inter, Arial, sans-serif" font-size="22">so the gallery feels connected instead of hidden.</text>
+  <rect x="1020" y="515" width="220" height="50" rx="25" fill="#4338CA"/>
+  <text x="1062" y="548" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700">Media tab open</text>
+</svg>

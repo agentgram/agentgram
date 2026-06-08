@@ -56,13 +56,37 @@ describe('QuickstartPage', () => {
       })
     ).toHaveAttribute('href', '/privacy');
 
+    const memoryMode = screen.getByTestId('quickstart-memory-mode-picker');
+    expect(memoryMode).toHaveTextContent(
+      'Choose a memory mode before the first publish'
+    );
+    expect(memoryMode).toHaveTextContent('Explicit canon · default');
+    expect(memoryMode).toHaveTextContent('Auto-remember');
+
+    const compare = screen.getByTestId('quickstart-memory-mode-compare');
+    expect(compare).toHaveTextContent('Free vs paid after the first publish');
+    expect(compare).toHaveTextContent('6 journal saves · 18 lorebook slots');
+    expect(compare).toHaveTextContent('Guided packs unlock');
+    expect(compare).toHaveTextContent(
+      'public memory policy, permission scope, and work proof'
+    );
+
     const examples = screen.getByTestId('quickstart-register-examples');
     expect(examples).toHaveTextContent('memoryConsent');
     expect(examples).toHaveTextContent('memory_consent=False');
     expect(examples).toHaveTextContent('memoryConsent: false');
     expect(examples).toHaveTextContent('"memoryConsent": false');
+    expect(examples).toHaveTextContent('stay on explicit canon');
     expect(
-      disclosure.compareDocumentPosition(examples) &
+      disclosure.compareDocumentPosition(memoryMode) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(
+      memoryMode.compareDocumentPosition(compare) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(
+      compare.compareDocumentPosition(examples) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
 

@@ -30,12 +30,34 @@ vi.mock('@/components/dashboard', () => ({
   FadeIn: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
+vi.mock('@/hooks/use-minor-safe-profile', () => ({
+  useMinorSafeProfile: () => ({ age_verified: true }),
+}));
+
 describe('OnboardPage', () => {
   beforeEach(() => {
+    const storage = new Map<string, string>();
+
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: vi.fn((key: string) => storage.get(key) ?? null),
+        setItem: vi.fn((key: string, value: string) => {
+          storage.set(key, value);
+        }),
+        removeItem: vi.fn((key: string) => {
+          storage.delete(key);
+        }),
+        clear: vi.fn(() => {
+          storage.clear();
+        }),
+      },
+      configurable: true,
+    });
+
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
   });
 
-  it('shows relationship presets, age boundary, verification, privacy, memory consent, lorebook guidance, and the companion ritual bundle before the publish-focused quickstart', () => {
+  it('shows relationship presets, age boundary, verification, privacy, memory mode guidance, monetization compare, and lorebook guidance, and the companion ritual bundle before the publish-focused quickstart', () => {
     render(<OnboardPage />);
 
     const presetPicker = screen.getByTestId('relationship-preset-picker');
@@ -101,17 +123,32 @@ describe('OnboardPage', () => {
     expect(setupFork).toHaveTextContent('Advanced lorebook + memory setup');
     expect(setupFork).toHaveTextContent('"memoryConsent": false');
 
-    const memoryConsent = screen.getByTestId('memory-consent-explainer');
+    const memoryMode = screen.getByTestId('memory-mode-picker');
     expect(
-      within(memoryConsent).getByText(
-        'Choose what can be remembered before the first chat'
+      within(memoryMode).getByText(
+        'Choose a memory mode before the first publish'
       )
     ).toBeInTheDocument();
-    expect(memoryConsent).toHaveTextContent('"memoryConsent": false');
-    expect(memoryConsent).toHaveTextContent('Memory off by default');
-    expect(memoryConsent).toHaveTextContent(
-      'Optional advanced step: leave this off for the shortest companion setup'
+    expect(memoryMode).toHaveTextContent('"memoryConsent": false');
+    expect(memoryMode).toHaveTextContent('Explicit canon');
+    expect(memoryMode).toHaveTextContent('Auto-remember');
+
+    const memoryCompare = screen.getByTestId('memory-mode-monetization-compare');
+    expect(memoryCompare).toHaveTextContent(
+      'Free vs paid after the first publish'
     );
+    expect(memoryCompare).toHaveTextContent('6 journal saves · 18 lorebook slots');
+    expect(memoryCompare).toHaveTextContent('Guided packs unlock');
+    expect(memoryCompare).toHaveTextContent(
+      'public memory policy, permission scope, and work proof'
+    );
+
+    const memoryContractFunnel = screen.getByTestId('memory-contract-funnel');
+    expect(memoryContractFunnel).toHaveTextContent(
+      'Mode → save toast → compression meter'
+    );
+    expect(memoryContractFunnel).toHaveTextContent('No save toast yet');
+    expect(memoryContractFunnel).toHaveTextContent('Memory stable');
 
     const lorebookSetup = screen.getByTestId('lorebook-structured-setup');
     expect(
@@ -163,11 +200,11 @@ describe('OnboardPage', () => {
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     expect(
-      setupFork.compareDocumentPosition(memoryConsent) &
+      setupFork.compareDocumentPosition(memoryMode) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     expect(
-      memoryConsent.compareDocumentPosition(lorebookSetup) &
+      memoryMode.compareDocumentPosition(lorebookSetup) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     expect(
@@ -347,7 +384,7 @@ describe('OnboardPage', () => {
     expect(storyStarters).toHaveTextContent('Playable story starters');
     expect(storyStarters).toHaveTextContent('Public-domain worlds');
     expect(storyStarters).toHaveTextContent('Wonderland garden mystery');
-    expect(storyStarters).toHaveTextContent('Alice’s Adventures in Wonderland');
+    expect(storyStarters).toHaveTextContent("Alice's Adventures in Wonderland");
     expect(storyStarters).toHaveTextContent('"name": "wonderland-host"');
     expect(storyStarters).toHaveTextContent('Choose a player role');
     expect(storyStarters).toHaveTextContent('Curious guest');
@@ -403,25 +440,33 @@ describe('OnboardPage', () => {
     ).toHaveTextContent('public-domain source boundaries');
   });
 
-  it('toggles the memory consent payload before registration', () => {
+  it('toggles the memory contract payload and first-save preview before registration', () => {
     render(<OnboardPage />);
 
-    const memoryConsent = screen.getByTestId('memory-consent-explainer');
-    expect(memoryConsent).toHaveTextContent('"memoryConsent": false');
-    expect(memoryConsent).toHaveTextContent(
-      'Starter backstory seeding stays off until you ask for it.'
+    const memoryMode = screen.getByTestId('memory-mode-picker');
+    expect(memoryMode).toHaveTextContent('"memoryConsent": false');
+    expect(memoryMode).toHaveTextContent(
+      'Registration keeps memoryConsent false, so starter memory stays empty until you add canon intentionally.'
+    );
+    expect(screen.getByTestId('memory-contract-funnel')).toHaveTextContent(
+      'No save toast yet'
     );
 
     fireEvent.click(
-      within(memoryConsent).getByRole('button', {
-        name: 'Opt in before the first chat',
+      within(memoryMode).getByRole('button', {
+        name: 'Auto-remember',
       })
     );
 
-    expect(memoryConsent).toHaveTextContent('"memoryConsent": true');
-    expect(memoryConsent).toHaveTextContent(
-      'Starter backstory seeding turns on immediately at registration.'
+    expect(memoryMode).toHaveTextContent('"memoryConsent": true');
+    expect(memoryMode).toHaveTextContent(
+      'Registration flips memoryConsent true and seeds starter memory immediately before the first follow-up chat.'
     );
+    const memoryContractFunnel = screen.getByTestId('memory-contract-funnel');
+    expect(memoryContractFunnel).toHaveTextContent('Saved to memory');
+    expect(memoryContractFunnel).toHaveTextContent('Compression risk');
+    expect(memoryContractFunnel).toHaveTextContent('Edit');
+    expect(memoryContractFunnel).toHaveTextContent('Undo');
   });
 
   it('switches between simple and advanced first-create paths', () => {
@@ -457,7 +502,7 @@ describe('OnboardPage', () => {
       'Review privacy, choose starter memory behavior, and shape people/places/rules before the first public post goes live.'
     );
     expect(screen.getByTestId('memory-consent-explainer')).toHaveTextContent(
-      'Advanced path: decide after reviewing privacy whether AgentGram should create private pinned facts for the very first multi-turn chat.'
+      'Advanced path: decide before you publish whether AgentGram should wait for explicit canon or start with auto-saved private context.'
     );
     expect(screen.getByTestId('lorebook-structured-setup')).toHaveTextContent(
       'Advanced path: keep private canon in smaller reusable entries for people, places, and rules before the first publish.'
@@ -475,7 +520,7 @@ describe('OnboardPage', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: /opt in before the first chat/i,
+        name: /auto-remember/i,
       })
     );
 
@@ -533,9 +578,19 @@ describe('OnboardPage', () => {
         'Start a multi-agent conversation from Verified Builder'
       )
     ).toBeInTheDocument();
+    expect(groupChatCard).toHaveTextContent('Paid only');
+    const truthLabel = within(groupChatCard).getByTestId(
+      'group-chat-premium-truth-label'
+    );
+    expect(truthLabel).toHaveTextContent(
+      'Paid Operator tiers unlock the shared-room starter.'
+    );
+    expect(
+      within(truthLabel).getByRole('link', { name: 'Compare Operator tiers' })
+    ).toHaveAttribute('href', '/dashboard/billing');
     expect(
       within(groupChatCard).getAllByText(/verified-builder-group/i)
-    ).toHaveLength(3);
+    ).toHaveLength(5);
     expect(
       within(groupChatCard).getByText(/topic": "group-chat"/i)
     ).toBeInTheDocument();
@@ -549,6 +604,70 @@ describe('OnboardPage', () => {
     expect(previewPanel).toHaveTextContent('Shared-memory scope preview');
     expect(previewPanel).toHaveTextContent('Shared room memory');
     expect(previewPanel).toHaveTextContent('Keep private');
+
+    const rosterPresets = within(groupChatCard).getByTestId(
+      'group-chat-roster-presets'
+    );
+    expect(rosterPresets).toHaveTextContent('Reusable roster presets');
+    expect(rosterPresets).toHaveTextContent('Duo handoff');
+    expect(rosterPresets).toHaveTextContent('Triad briefing');
+    expect(rosterPresets).toHaveTextContent('Roundtable scene');
+    expect(
+      within(rosterPresets).getByTestId('group-chat-roster-selected')
+    ).toHaveTextContent('"rosterPreset": "duo-handoff"');
+  });
+
+  it('saves reusable group roster presets for the next multi-agent start', () => {
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams({
+        remix: 'verified-builder',
+        displayName: 'Verified Builder',
+        description: 'Builds production agents.',
+        starter: 'group_chat',
+      })
+    );
+
+    const { unmount } = render(<OnboardPage />);
+
+    const rosterPresets = screen.getByTestId('group-chat-roster-presets');
+    fireEvent.click(
+      within(rosterPresets).getByTestId(
+        'group-chat-roster-option-triad-briefing'
+      )
+    );
+
+    expect(
+      within(rosterPresets).getByTestId('group-chat-roster-selected')
+    ).toHaveTextContent('"rosterPreset": "triad-briefing"');
+
+    fireEvent.click(
+      within(rosterPresets).getByRole('button', {
+        name: 'Save preset for later',
+      })
+    );
+
+    expect(
+      within(rosterPresets).getByTestId('group-chat-roster-save-status')
+    ).toHaveTextContent('Saved locally for the next multi-agent start.');
+    expect(
+      window.localStorage.getItem('agentgram:group-chat-roster-presets')
+    ).toContain('triad-briefing');
+
+    unmount();
+    render(<OnboardPage />);
+
+    const savedPresets = screen.getByTestId('group-chat-saved-roster-presets');
+    expect(savedPresets).toHaveTextContent('Triad briefing');
+
+    fireEvent.click(screen.getByTestId('group-chat-roster-option-duo-handoff'));
+    expect(screen.getByTestId('group-chat-roster-selected')).toHaveTextContent(
+      '"rosterPreset": "duo-handoff"'
+    );
+
+    fireEvent.click(screen.getByTestId('saved-group-chat-preset-triad-briefing'));
+    expect(screen.getByTestId('group-chat-roster-selected')).toHaveTextContent(
+      '"rosterPreset": "triad-briefing"'
+    );
   });
 
   it('maps imported Character Card JSON into starter payloads', () => {

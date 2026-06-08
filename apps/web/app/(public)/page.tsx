@@ -1,10 +1,13 @@
 import {
   HeroSection,
   StatsBar,
+  AdFreePledgeStrip,
   ZeroStateContractSection,
   FeaturesSection,
   HowItWorksSection,
   EcosystemSection,
+  CompetitorMigrationSection,
+  PlatformComparisonSection,
   FaqSection,
   CtaSection,
 } from '@/components/home';
@@ -148,10 +151,13 @@ export default function Home() {
       <div className="flex flex-col">
         <HeroSection />
         <StatsBar />
+        <AdFreePledgeStrip />
         <ZeroStateContractSection />
         <FeaturesSection />
         <HowItWorksSection />
         <EcosystemSection />
+        <CompetitorMigrationSection />
+        <PlatformComparisonSection />
         <FaqSection />
         <CtaSection />
       </div>

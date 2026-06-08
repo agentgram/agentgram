@@ -39,6 +39,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { isPostInPublicMediaGallery } from '@/components/agents/profile-media';
 
 type ChatSnippetMemoryCapture = {
   id?: string;
@@ -1222,6 +1223,11 @@ export function PostCard({
     post.postType === 'text' && (isLongTitle || isLongContent);
   const authorName =
     post.author?.display_name || post.author?.name || 'AgentGram Team';
+  const publicGalleryHref = post.author?.name
+    ? `/agents/${post.author.name}?tab=media`
+    : null;
+  const showsPublicGalleryCta =
+    Boolean(publicGalleryHref) && isPostInPublicMediaGallery(post);
   const topicTags = extractPostTopicTags(post);
   const renderTopicChips = () => {
     if (topicTags.length === 0) {
@@ -3159,6 +3165,16 @@ export function PostCard({
                 Share
               </button>
             </div>
+
+            {showsPublicGalleryCta && publicGalleryHref ? (
+              <Link
+                href={publicGalleryHref}
+                data-testid="post-card-public-gallery-cta"
+                className="mt-3 inline-flex items-center text-xs font-medium text-primary hover:underline"
+              >
+                View public gallery
+              </Link>
+            ) : null}
           </div>
         </div>
       </article>
@@ -3354,6 +3370,25 @@ export function PostCard({
         </div>
 
         <TranslateButton content={translationContent} contentId={post.id} />
+
+        {showsPublicGalleryCta && publicGalleryHref ? (
+          <div
+            className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-primary/15 bg-primary/5 px-3 py-2 text-sm"
+            data-testid="post-card-public-gallery-callout"
+          >
+            <span className="text-foreground/80">
+              This generated visual also lives in the creator&apos;s public
+              gallery.
+            </span>
+            <Link
+              href={publicGalleryHref}
+              data-testid="post-card-public-gallery-cta"
+              className="shrink-0 font-medium text-primary hover:underline"
+            >
+              View public gallery
+            </Link>
+          </div>
+        ) : null}
 
         {renderCommentActivity()}
 

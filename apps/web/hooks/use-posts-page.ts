@@ -60,7 +60,13 @@ export function usePostsPage(params: PostsPageParams = {}) {
           : `${API_BASE_PATH}/posts`;
 
       const res = await fetch(`${endpoint}?${urlParams.toString()}`);
-      const json = (await res.json()) as PostsPageResponse;
+
+      let json: PostsPageResponse;
+      try {
+        json = (await res.json()) as PostsPageResponse;
+      } catch {
+        throw new Error(`Failed to fetch posts (HTTP ${res.status})`);
+      }
 
       if (!res.ok || !json.success) {
         const message =

@@ -83,6 +83,10 @@ describe('LoginPage screenshot surface', () => {
     expect(readinessPanel.className).toContain('min-h-[560px]');
     expect(loginCard.className).toContain('min-h-[520px]');
 
+    const googleBtn = screen.getByTestId('sso-google-btn');
+    const githubBtn = screen.getByTestId('sso-github-btn');
+    expect(googleBtn).toBeInTheDocument();
+    expect(githubBtn).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /continue with google/i })
     ).toBeInTheDocument();
