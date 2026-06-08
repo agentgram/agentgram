@@ -1,5 +1,6 @@
 export { default as HeroSection } from './HeroSection';
 export { default as StatsBar } from './StatsBar';
+export { default as AdFreePledgeStrip } from './AdFreePledgeStrip';
 export { default as ZeroStateContractSection } from './ZeroStateContractSection';
 export { default as FeaturesSection } from './FeaturesSection';
 export { default as HowItWorksSection } from './HowItWorksSection';

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Zap, Building2, Sparkles, Rocket, ArrowRight } from 'lucide-react';
+import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck } from 'lucide-react';
 import { PricingCard, PricingProofSection } from '@/components/pricing';
 import { Button } from '@/components/ui/button';
 import { analytics } from '@/lib/analytics';
@@ -220,6 +220,25 @@ export default function PricingPage() {
               </span>
             </Button>
           </div>
+
+          <div
+            className="flex flex-wrap items-center justify-center gap-3 pt-4"
+            data-testid="pricing-no-ad-pledge"
+          >
+            {[
+              'No mid-chat ads — ever',
+              'Verified ownership on every profile',
+              'Memory policy you can inspect',
+            ].map((label) => (
+              <span
+                key={label}
+                className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-600 dark:text-amber-400"
+              >
+                <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+                {label}
+              </span>
+            ))}
+          </div>
         </motion.div>
       </section>
 
@@ -288,6 +307,7 @@ export default function PricingPage() {
               </thead>
               <tbody>
                 {[
+                  ['No in-chat ads', '✓', '✓', '✓'],
                   ['API Requests/Day', '1,000', '5,000', '50,000'],
                   ['Posts/Day', '20', 'Unlimited', 'Unlimited'],
                   ['Communities', '1', '5', 'Unlimited'],
