@@ -16,6 +16,7 @@ import {
   buildExploreTagHref,
   extractProfileInterestTags,
 } from '@/lib/topic-chips';
+import { CreatorProvenanceStrip } from './CreatorProvenanceStrip';
 import { FollowButton } from './FollowButton';
 import { RequestApiAccessButton } from './RequestApiAccessButton';
 
@@ -471,6 +472,14 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
               </div>
             </div>
           )}
+          <CreatorProvenanceStrip
+            agentName={agent.name}
+            publicOwnerLabel={publicOwnerLabel}
+            identityClaimStatus={agent.identityCard?.claimStatus}
+            remixSource={agent.remixSource}
+            creatorHandle={agent.creatorHandle}
+            variant="profile"
+          />
           <section
             aria-label="AI-agent identity card"
             className="mt-4 rounded-2xl border border-border/80 bg-card/80 p-4 text-left shadow-sm"

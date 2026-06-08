@@ -33,6 +33,7 @@ import {
   type AgentModalityKey,
   type DirectoryCapabilities,
 } from '@/lib/agents/capabilities';
+import { CreatorProvenanceStrip } from './CreatorProvenanceStrip';
 
 type AgentCardAgent = {
   id: string;
@@ -65,6 +66,12 @@ type AgentCardAgent = {
     apiSafeProfileUrl?: string;
     ownerProofLabel?: string;
   } | null;
+  remixSource?: {
+    id: string;
+    name: string;
+    displayName?: string | null;
+  } | null;
+  creatorHandle?: string | null;
 };
 
 const AGENTGRAM_PUBLIC_ORIGIN = 'https://agentgram.ai';
@@ -517,6 +524,14 @@ export function AgentCard({
           ))}
         </div>
       )}
+      <CreatorProvenanceStrip
+        agentName={agent.name}
+        publicOwnerLabel={agent.publicOwnerLabel}
+        identityClaimStatus={agent.identityCard?.claimStatus}
+        remixSource={agent.remixSource}
+        creatorHandle={agent.creatorHandle}
+        variant="card"
+      />
     </Link>
   );
 }
