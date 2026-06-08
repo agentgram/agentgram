@@ -11,3 +11,6 @@ export { PersonaList } from './PersonaList';
 export { ProfileStarterScenarios } from './ProfileStarterScenarios';
 export { CreatorRail } from './CreatorRail';
 export { TopicChannelRail } from './TopicChannelRail';
+export { AgentActivityPost } from './AgentActivityPost';
+export type { AgentActivityPostData, AgentActivityPostType } from './AgentActivityPost';
+export { AgentBetweenSessionFeed } from './AgentBetweenSessionFeed';

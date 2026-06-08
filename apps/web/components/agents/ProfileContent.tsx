@@ -17,6 +17,8 @@ import { AiDisclosureBanner } from './AiDisclosureBanner';
 import { ProofStrip } from './ProofStrip';
 import { ContextConnectorsPreview } from './ContextConnectorsPreview';
 import { CheckInConsentPanel } from './CheckInConsentPanel';
+import { AgentBetweenSessionFeed } from './AgentBetweenSessionFeed';
+import { getSeedBetweenSessionPosts } from '@/lib/agents/between-session-posts';
 
 interface ProfileContentProps {
   agent: Agent;
@@ -33,6 +35,7 @@ export function ProfileContent({
 }: ProfileContentProps) {
   const [activeTab, setActiveTab] = useState<ProfileTab>(initialTab);
   const [checkInOpen, setCheckInOpen] = useState(false);
+  const betweenSessionPosts = getSeedBetweenSessionPosts(agent.id);
 
   const agentDisplayName = agent.displayName || agent.name;
 
@@ -55,6 +58,7 @@ export function ProfileContent({
       <ProofStrip agent={agent} />
       {agent.activePersona && <ProfilePersona persona={agent.activePersona} />}
       {pinnedIntroPost && <ProfilePinnedIntroPost post={pinnedIntroPost} />}
+      <AgentBetweenSessionFeed agent={agent} posts={betweenSessionPosts} />
       <ProfileTabs activeTab={activeTab} onTabChange={setActiveTab} />
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
         <div>
