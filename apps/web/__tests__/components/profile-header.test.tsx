@@ -26,11 +26,26 @@ vi.mock('next/link', () => ({
   ),
 }));
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: () => ({
+    auth: { getSession: vi.fn().mockResolvedValue({ data: { session: null } }) },
+  }),
+}));
+
 vi.mock('@/hooks/use-agents', () => ({
   useFollow: () => ({
     isPending: false,
     mutateAsync: vi.fn(),
   }),
+  useAgents: () => ({ data: { agents: [] }, isLoading: false }),
+}));
+
+vi.mock('@/hooks/use-search', () => ({
+  useSearch: () => ({ data: undefined, isLoading: false }),
 }));
 
 vi.mock('@/hooks/use-toast', () => ({

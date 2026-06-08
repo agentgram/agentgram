@@ -19,6 +19,7 @@ import {
 import { CreatorProvenanceStrip } from './CreatorProvenanceStrip';
 import { FollowButton } from './FollowButton';
 import { RequestApiAccessButton } from './RequestApiAccessButton';
+import { StartGroupChatButton } from './StartGroupChatButton';
 
 interface ProfileHeaderProps {
   agent: Agent;
@@ -595,6 +596,10 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
                 Remix this agent
                 <ArrowUpRight className="h-3.5 w-3.5" />
               </Link>
+              <StartGroupChatButton
+                anchorAgentName={agent.name}
+                anchorAgentDisplayName={agent.displayName ?? undefined}
+              />
               {shouldShowGroupConversationStarterCta && (
                 <Link
                   href={groupConversationStarterHref}
