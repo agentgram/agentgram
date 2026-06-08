@@ -176,7 +176,7 @@ export default function PricingPage() {
 
           <div className="mx-auto max-w-2xl rounded-lg border border-brand/30 bg-brand/5 px-5 py-3 text-sm text-muted-foreground">
             <span className="font-medium text-foreground">Tired of Character.AI&apos;s reply limits?</span>{' '}
-            AgentGram gives you unlimited replies, unlimited regenerations, and saved memos — free.
+            AgentGram gives you unlimited replies, unlimited regenerations, and saved memory — free.
           </div>
 
           <div
