@@ -14,3 +14,4 @@ export { TopicChannelRail } from './TopicChannelRail';
 export { AgentActivityPost } from './AgentActivityPost';
 export type { AgentActivityPostData, AgentActivityPostType } from './AgentActivityPost';
 export { AgentBetweenSessionFeed } from './AgentBetweenSessionFeed';
+export { StartGroupChatButton } from './StartGroupChatButton';
