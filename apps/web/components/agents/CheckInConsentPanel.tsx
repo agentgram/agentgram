@@ -12,6 +12,10 @@ import {
   PROACTIVE_TRIGGER_LABELS,
   type ProactiveTriggerSource,
 } from '@/lib/proactive-controls';
+import {
+  ExternalContextLedger,
+  type ContextSourceEntry,
+} from '@/components/external-context-ledger';
 
 interface CheckInConsentSettings {
   lastAutoMessageTrigger?: ProactiveTriggerSource;
@@ -26,6 +30,7 @@ interface CheckInConsentPanelProps {
   onOpenChange: (open: boolean) => void;
   agentName: string;
   settings?: CheckInConsentSettings;
+  contextSources?: ContextSourceEntry[];
   onAllow: () => void;
   onMute: () => void;
 }
@@ -52,6 +57,7 @@ export function CheckInConsentPanel({
   onOpenChange,
   agentName,
   settings = {},
+  contextSources,
   onAllow,
   onMute,
 }: CheckInConsentPanelProps) {
@@ -88,6 +94,9 @@ export function CheckInConsentPanel({
               )}
           </div>
         </DialogHeader>
+        {contextSources !== undefined && (
+          <ExternalContextLedger sources={contextSources} className="mt-2" />
+        )}
         <DialogFooter className="gap-2 sm:gap-0">
           <Button
             type="button"
