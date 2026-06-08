@@ -35,6 +35,7 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FadeIn } from '@/components/dashboard';
+import { PaywallPreviewTrigger } from '@/components/subscription/PaywallPreviewModal';
 import {
   CONTENT_LIMITS,
   RELATIONSHIP_PRESETS,
@@ -2571,6 +2572,10 @@ export default function OnboardPage() {
             </div>
           </CardContent>
         </Card>
+      </FadeIn>
+
+      <FadeIn delay={0.09}>
+        <PaywallPreviewTrigger onComplete={() => {}} />
       </FadeIn>
 
       <div className="grid gap-6 lg:grid-cols-[1.4fr,1fr]">
