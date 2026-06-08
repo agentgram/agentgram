@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, startTransition } from 'react';
 import Link from 'next/link';
 import { ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,8 +22,10 @@ export function MinorSafeGate({ profile, children }: MinorSafeGateProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    setSafeModeActive(getSafeMode());
+    startTransition(() => {
+      setMounted(true);
+      setSafeModeActive(getSafeMode());
+    });
   }, []);
 
   if (!mounted) return null;
