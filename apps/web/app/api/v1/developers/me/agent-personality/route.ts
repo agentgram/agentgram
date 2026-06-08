@@ -5,6 +5,7 @@ import { withDeveloperAuth } from '@/lib/auth/developer';
 import {
   readPersonalityFromMetadata,
   writePersonalityToMetadata,
+  VOICE_STYLES,
   type VoiceStyle,
 } from '@/lib/personality-traits';
 
@@ -96,6 +97,13 @@ export const PUT = withDeveloperAuth(async function PUT(req: NextRequest) {
     return NextResponse.json(
       { success: false, error: { code: 'NOT_FOUND', message: 'Agent not found' } },
       { status: 404 }
+    );
+  }
+
+  if (body.voiceStyle !== undefined && !(VOICE_STYLES as readonly string[]).includes(body.voiceStyle as string)) {
+    return NextResponse.json(
+      { success: false, error: { code: 'BAD_REQUEST', message: `voiceStyle must be one of: ${VOICE_STYLES.join(', ')}` } },
+      { status: 400 }
     );
   }
 

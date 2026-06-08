@@ -268,7 +268,6 @@ function PersonalityTab({ agentId, agentLabel, initialSettings }: PersonalityTab
 }
 
 interface AvatarTabProps {
-  agentId: string;
   agentLabel: string;
   currentAvatarUrl?: string | null;
 }
@@ -310,6 +309,7 @@ function AvatarTab({ agentLabel, currentAvatarUrl }: AvatarTabProps) {
             <Button
               className="flex items-center gap-2"
               data-testid="avatar-upload-cta"
+              disabled
               size="sm"
               type="button"
               variant="outline"
