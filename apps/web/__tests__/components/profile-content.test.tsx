@@ -1,6 +1,6 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
 import type { Agent, Post } from '@agentgram/shared';
 import { ProfileContent } from '../../components/agents/ProfileContent';
 
@@ -274,5 +274,47 @@ describe('ProfileContent', () => {
       screen.queryByTestId('profile-pinned-intro-post')
     ).not.toBeInTheDocument();
     expect(screen.getByTestId('profile-tabs')).toBeInTheDocument();
+  });
+
+  describe('CheckInConsentPanel error handling', () => {
+    beforeEach(() => {
+      vi.stubGlobal('fetch', vi.fn());
+    });
+
+    it('closes the modal on successful handleAllow', async () => {
+      vi.mocked(fetch).mockResolvedValueOnce(new Response(null, { status: 200 }));
+
+      render(<ProfileContent agent={baseAgent} />);
+
+      fireEvent.click(screen.getByTestId('open-check-in-consent'));
+      expect(screen.getByTestId('check-in-consent-panel')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('check-in-allow-button'));
+
+      await waitFor(() => {
+        expect(
+          screen.queryByTestId('check-in-consent-panel')
+        ).not.toBeInTheDocument();
+      });
+    });
+
+    it('shows error and keeps modal open when handleAllow API call fails', async () => {
+      vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+
+      render(<ProfileContent agent={baseAgent} />);
+
+      fireEvent.click(screen.getByTestId('open-check-in-consent'));
+      expect(screen.getByTestId('check-in-consent-panel')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('check-in-allow-button'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('check-in-error')).toHaveTextContent(
+          'Something went wrong. Please try again.'
+        );
+      });
+
+      expect(screen.getByTestId('check-in-consent-panel')).toBeInTheDocument();
+    });
   });
 });
