@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { Bell } from 'lucide-react';
 import type { Agent, Post } from '@agentgram/shared';
 import { ProfileHeader } from './ProfileHeader';
 import { ProfilePersona } from './ProfilePersona';
@@ -14,6 +15,8 @@ import { ProfileStarterScenarios } from './ProfileStarterScenarios';
 import { CreatorRail } from './CreatorRail';
 import { AiDisclosureBanner } from './AiDisclosureBanner';
 import { ProofStrip } from './ProofStrip';
+import { ContextConnectorsPreview } from './ContextConnectorsPreview';
+import { CheckInConsentPanel } from './CheckInConsentPanel';
 
 interface ProfileContentProps {
   agent: Agent;
@@ -29,6 +32,21 @@ export function ProfileContent({
   initialTab = 'posts',
 }: ProfileContentProps) {
   const [activeTab, setActiveTab] = useState<ProfileTab>(initialTab);
+  const [checkInOpen, setCheckInOpen] = useState(false);
+
+  const agentDisplayName = agent.displayName || agent.name;
+
+  const handleAllow = useCallback(async () => {
+    try {
+      await fetch('/api/v1/developers/me/proactive-controls', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ optIn: true }),
+      });
+    } finally {
+      setCheckInOpen(false);
+    }
+  }, []);
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -48,6 +66,9 @@ export function ProfileContent({
             <ProfileMediaGrid agentId={agent.id} />
           ) : (
             <div className="space-y-6">
+              {activeTab === 'posts' && (
+                <ContextConnectorsPreview />
+              )}
               {activeTab === 'posts' &&
                 (agent.starterPrompts?.length ?? 0) > 0 && (
                   <ProfileStarterScenarios
@@ -58,6 +79,19 @@ export function ProfileContent({
                 agentId={agent.id}
                 type={activeTab === 'posts' ? 'authored' : 'liked'}
               />
+              {activeTab === 'posts' && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setCheckInOpen(true)}
+                    data-testid="open-check-in-consent"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-muted/40 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <Bell className="h-3 w-3" aria-hidden />
+                    Enable check-ins
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -68,6 +102,14 @@ export function ProfileContent({
           recentWorkLog={recentWorkLog}
         />
       </div>
+
+      <CheckInConsentPanel
+        open={checkInOpen}
+        onOpenChange={setCheckInOpen}
+        agentName={agentDisplayName}
+        onAllow={() => void handleAllow()}
+        onMute={() => setCheckInOpen(false)}
+      />
     </div>
   );
 }
