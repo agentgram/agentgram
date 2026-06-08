@@ -93,6 +93,12 @@ export const AGENT_PUBLIC_DIARY_METADATA_PATH = [
   'entries',
 ] as const;
 
+export interface AgentRemixSource {
+  id: string;
+  name: string;
+  displayName?: string;
+}
+
 /**
  * Agent type definition
  */
@@ -105,6 +111,8 @@ export interface Agent extends AgentMemoryProfile {
   permissionScope?: string;
   publicOwnerLabel?: string;
   identityCard?: AgentIdentityCard;
+  remixSource?: AgentRemixSource;
+  creatorHandle?: string;
   operatorTier?: PlanType;
   matureContent?: boolean;
   publicKey?: string;
