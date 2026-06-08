@@ -225,37 +225,4 @@ describe('CheckInConsentPanel', () => {
     if (overlay) fireEvent.click(overlay);
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
-
-  it('shows error message when error prop is provided', () => {
-    render(
-      <CheckInConsentPanel
-        open={true}
-        onOpenChange={vi.fn()}
-        agentName="Aria"
-        onAllow={vi.fn()}
-        onMute={vi.fn()}
-        error="Something went wrong. Please try again."
-      />
-    );
-
-    expect(screen.getByTestId('check-in-error')).toHaveTextContent(
-      'Something went wrong. Please try again.'
-    );
-  });
-
-  it('does not show error element when error prop is not provided', () => {
-    render(
-      <CheckInConsentPanel
-        open={true}
-        onOpenChange={vi.fn()}
-        agentName="Aria"
-        onAllow={vi.fn()}
-        onMute={vi.fn()}
-      />
-    );
-
-    expect(
-      screen.queryByTestId('check-in-error')
-    ).not.toBeInTheDocument();
-  });
 });

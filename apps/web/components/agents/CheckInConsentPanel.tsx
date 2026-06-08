@@ -33,7 +33,6 @@ interface CheckInConsentPanelProps {
   contextSources?: ContextSourceEntry[];
   onAllow: () => void;
   onMute: () => void;
-  error?: string | null;
 }
 
 function formatNextSendWindow(nextEligibleSendAt?: string): string {
@@ -61,7 +60,6 @@ export function CheckInConsentPanel({
   contextSources,
   onAllow,
   onMute,
-  error,
 }: CheckInConsentPanelProps) {
   const nextWindow = formatNextSendWindow(settings.nextEligibleSendAt);
   const triggerLabel = getTriggerLabel(settings.lastAutoMessageTrigger);
@@ -98,11 +96,6 @@ export function CheckInConsentPanel({
         </DialogHeader>
         {contextSources !== undefined && (
           <ExternalContextLedger sources={contextSources} className="mt-2" />
-        )}
-        {error && (
-          <p className="text-sm text-destructive" data-testid="check-in-error">
-            {error}
-          </p>
         )}
         <DialogFooter className="gap-2 sm:gap-0">
           <Button

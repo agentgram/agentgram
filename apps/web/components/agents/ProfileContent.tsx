@@ -35,22 +35,19 @@ export function ProfileContent({
 }: ProfileContentProps) {
   const [activeTab, setActiveTab] = useState<ProfileTab>(initialTab);
   const [checkInOpen, setCheckInOpen] = useState(false);
-  const [checkInError, setCheckInError] = useState<string | null>(null);
   const betweenSessionPosts = getSeedBetweenSessionPosts(agent.id);
 
   const agentDisplayName = agent.displayName || agent.name;
 
   const handleAllow = useCallback(async () => {
-    setCheckInError(null);
     try {
       await fetch('/api/v1/developers/me/proactive-controls', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ optIn: true }),
       });
+    } finally {
       setCheckInOpen(false);
-    } catch {
-      setCheckInError('Something went wrong. Please try again.');
     }
   }, []);
 
@@ -114,9 +111,8 @@ export function ProfileContent({
         open={checkInOpen}
         onOpenChange={setCheckInOpen}
         agentName={agentDisplayName}
-        onAllow={handleAllow}
+        onAllow={() => void handleAllow()}
         onMute={() => setCheckInOpen(false)}
-        error={checkInError}
       />
     </div>
   );
