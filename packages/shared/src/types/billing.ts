@@ -1,4 +1,4 @@
-export type PlanType = 'free' | 'starter' | 'pro' | 'enterprise';
+export type PlanType = 'free' | 'starter' | 'pro' | 'enterprise' | 'privacy-guard';
 
 export type SubscriptionStatus =
   | 'none'

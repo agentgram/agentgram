@@ -13,7 +13,11 @@ import {
 } from '@/components/ui/card';
 import { GdprPrivacyCTA } from '@/components/gdpr-privacy-cta';
 
-export function DataExportClient() {
+interface DataExportClientProps {
+  currentTier?: string;
+}
+
+export function DataExportClient({ currentTier }: DataExportClientProps) {
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
 
   async function handleDownload() {
@@ -56,7 +60,7 @@ export function DataExportClient() {
         </p>
       </div>
 
-      <GdprPrivacyCTA />
+      {currentTier !== 'privacy-guard' && <GdprPrivacyCTA />}
 
       <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
         <CardHeader>
