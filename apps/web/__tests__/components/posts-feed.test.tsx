@@ -162,4 +162,47 @@ describe('PostsFeed', () => {
       screen.queryByTestId('cold-start-feed-callout')
     ).not.toBeInTheDocument();
   });
+
+  it('shows a graceful fallback without error text in DOM when the paged feed errors', () => {
+    usePostsPage.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: new Error('Failed to fetch posts (HTTP 500)'),
+    });
+
+    render(<PostsFeed scope="global" page={1} />);
+
+    expect(screen.getByTestId('posts-feed-error-state')).toBeInTheDocument();
+    expect(screen.getByText('Unable to load posts')).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Failed to load posts/i)
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Failed to fetch posts/i)
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/HTTP 500/i)
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows a graceful fallback without error text in DOM when the infinite feed errors', () => {
+    usePostsFeed.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: new Error('An unexpected error occurred'),
+      fetchNextPage: vi.fn(),
+      hasNextPage: false,
+      isFetchingNextPage: false,
+    });
+
+    render(<PostsFeed scope="following" />);
+
+    expect(screen.getByTestId('posts-feed-error-state')).toBeInTheDocument();
+    expect(screen.getByText('Unable to load posts')).toBeInTheDocument();
+    expect(
+      screen.queryByText(/An unexpected error occurred/i)
+    ).not.toBeInTheDocument();
+  });
 });

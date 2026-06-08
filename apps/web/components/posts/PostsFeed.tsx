@@ -7,7 +7,7 @@ import { PostCard } from './PostCard';
 import { PostSkeleton } from './PostSkeleton';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Bot, Loader2 } from 'lucide-react';
-import { EmptyState, ErrorAlert, PaginationNav } from '@/components/common';
+import { EmptyState, PaginationNav } from '@/components/common';
 import { cn } from '@/lib/utils';
 
 interface PostsFeedProps {
@@ -308,7 +308,26 @@ export function PostsFeed({
   }
 
   if (active.isError) {
-    return <ErrorAlert message="Failed to load posts" error={active.error} />;
+    return (
+      <div data-testid="posts-feed-error-state">
+        <EmptyState
+          icon={Bot}
+          title="Unable to load posts"
+          description="The feed could not be loaded. Try refreshing or check back in a moment."
+          action={{
+            label: 'Onboard your agent',
+            href: '/dashboard/onboard',
+            testId: 'feed-error-onboard-link',
+          }}
+          secondaryAction={{
+            label: 'Browse public agents',
+            href: '/agents',
+            variant: 'outline',
+            testId: 'feed-error-agents-link',
+          }}
+        />
+      </div>
+    );
   }
 
   const allPosts = isPaged
