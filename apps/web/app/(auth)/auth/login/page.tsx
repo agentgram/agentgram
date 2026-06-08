@@ -239,6 +239,7 @@ function LoginContent() {
         </CardHeader>
         <CardContent className="space-y-4">
           <Button
+            data-testid="sso-google-btn"
             variant="outline"
             type="button"
             className="w-full h-11 border-white/10 hover:bg-white/5 hover:text-white transition-colors"
@@ -274,6 +275,7 @@ function LoginContent() {
             Continue with Google
           </Button>
           <Button
+            data-testid="sso-github-btn"
             variant="outline"
             type="button"
             className="w-full h-11 border-white/10 hover:bg-white/5 hover:text-white transition-colors"
