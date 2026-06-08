@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SearchBar, PageContainer } from '@/components/common';
-import { AgentsList } from '@/components/agents';
+import { AgentsList, TopicChannelRail } from '@/components/agents';
 import {
   DIRECTORY_CAPABILITY_KEYS,
   DIRECTORY_CAPABILITY_LABELS,
@@ -28,6 +28,10 @@ import {
   RELATIONSHIP_GOAL_OPTIONS,
   WORLDBUILDING_OPTIONS,
 } from '@/lib/agents/discovery-facets';
+import {
+  getTopicChannelById,
+  TOPIC_CLEAR_PARAMS,
+} from '@/lib/agents/topic-channels';
 import type {
   AgentsDirectoryBrowseSlice,
   AgentsDirectoryCapabilityFilters,
@@ -147,7 +151,25 @@ export default function AgentsPageContent({
       ),
     [searchParams]
   );
+  const topicParam = searchParams.get('topic') || undefined;
+  const activeTopicChannel = useMemo(
+    () => (topicParam ? getTopicChannelById(topicParam) : undefined),
+    [topicParam]
+  );
+
+  const effectiveRelationshipGoal: RelationshipGoalFacet | undefined =
+    activeTopicChannel?.filters.relationship_goal ?? relationshipGoal;
+  const effectiveWorldbuilding: WorldbuildingFacet | undefined =
+    activeTopicChannel?.filters.worldbuilding ?? worldbuilding;
+  const effectiveVoice =
+    Boolean(activeTopicChannel?.filters.voice) || capabilityFilters.voice;
+  const effectiveGroupChat =
+    Boolean(activeTopicChannel?.filters.group_chat) || capabilityFilters.group_chat;
+  const effectiveRoleplay =
+    Boolean(activeTopicChannel?.filters.roleplay) || capabilityFilters.roleplay;
+
   const hasActiveFilters =
+    Boolean(topicParam) ||
     capabilityFilters.voice ||
     capabilityFilters.group_chat ||
     capabilityFilters.roleplay ||
@@ -331,6 +353,16 @@ export default function AgentsPageContent({
         </div>
       </div>
 
+      <div className="mb-4">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+          Topic channels
+        </p>
+        <TopicChannelRail
+          activeTopic={topicParam}
+          createHref={createHref}
+        />
+      </div>
+
       <div className="mb-8 space-y-4 rounded-2xl border bg-card/60 p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -342,16 +374,7 @@ export default function AgentsPageContent({
           </div>
           {hasActiveFilters && (
             <Button variant="ghost" size="sm" asChild>
-              <Link
-                href={createHref({
-                  voice: null,
-                  group_chat: null,
-                  roleplay: null,
-                  relationship_goal: null,
-                  worldbuilding: null,
-                  page: null,
-                })}
-              >
+              <Link href={createHref(TOPIC_CLEAR_PARAMS)}>
                 Clear filters
               </Link>
             </Button>
@@ -463,11 +486,11 @@ export default function AgentsPageContent({
         browse={browse}
         page={page}
         search={search}
-        voice={capabilityFilters.voice}
-        group_chat={capabilityFilters.group_chat}
-        roleplay={capabilityFilters.roleplay}
-        relationship_goal={relationshipGoal}
-        worldbuilding={worldbuilding}
+        voice={effectiveVoice}
+        group_chat={effectiveGroupChat}
+        roleplay={effectiveRoleplay}
+        relationship_goal={effectiveRelationshipGoal}
+        worldbuilding={effectiveWorldbuilding}
         initialData={initialDirectoryState}
       />
 
