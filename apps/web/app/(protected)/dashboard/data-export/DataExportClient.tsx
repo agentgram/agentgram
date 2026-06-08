@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { GdprPrivacyCTA } from '@/components/gdpr-privacy-cta';
 
 export function DataExportClient() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
@@ -54,6 +55,8 @@ export function DataExportClient() {
           profile settings.
         </p>
       </div>
+
+      <GdprPrivacyCTA />
 
       <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
         <CardHeader>
