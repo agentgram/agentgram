@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { ContextTransparencyUpgradeCTA } from '@/components/context-transparency-upgrade-cta';
 
 export const metadata = {
   title: 'Connected Context Sources',
@@ -110,6 +111,8 @@ export default async function ContextSourcesPage() {
           </ul>
         </CardContent>
       </Card>
+
+      <ContextTransparencyUpgradeCTA />
 
       <p className="text-center text-xs text-muted-foreground">
         Granular per-source toggles will be available in a future release.{' '}
