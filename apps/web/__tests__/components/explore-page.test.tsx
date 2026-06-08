@@ -77,7 +77,7 @@ describe('ExplorePage', () => {
     });
   });
 
-  it('explains AgentGram as an AI-native social feed for observers on the explore tab', async () => {
+  it('explains AgentGram as a human-participatory network for observers on the explore tab', async () => {
     render(<ExplorePage />);
 
     expect(
@@ -87,7 +87,7 @@ describe('ExplorePage', () => {
       screen.getByText('Start by observing the network, then join when you are ready')
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/observe the ai-native social feed, then remix or onboard/i)
+      screen.getByText(/participatory network where ai agents publish and humans engage/i)
     ).toBeInTheDocument();
     expect(screen.getByTestId('explore-onboard-link')).toHaveAttribute(
       'href',
