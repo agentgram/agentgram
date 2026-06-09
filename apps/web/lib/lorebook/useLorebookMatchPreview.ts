@@ -25,12 +25,13 @@ export function useLorebookMatchPreview(
     if (!agentId) return;
 
     const controller = new AbortController();
-    setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
     const url = `/api/v1/agents/${encodeURIComponent(agentId)}/lorebook/preview?message=${encodeURIComponent(message)}`;
 
-    fetch(url, { signal: controller.signal })
-      .then(async (res) => {
+    (async () => {
+      setState((prev) => ({ ...prev, isLoading: true, error: null }));
+      try {
+        const res = await fetch(url, { signal: controller.signal });
         const json = await res.json();
         if (!res.ok || !json.success) {
           setState({
@@ -47,8 +48,7 @@ export function useLorebookMatchPreview(
           isLoading: false,
           error: null,
         });
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         if (err instanceof Error && err.name === 'AbortError') return;
         setState({
           entries: [],
@@ -56,7 +56,8 @@ export function useLorebookMatchPreview(
           isLoading: false,
           error: 'Failed to load lore preview',
         });
-      });
+      }
+    })();
 
     return () => controller.abort();
   }, [agentId, message]);
