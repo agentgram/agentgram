@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { FadeIn, UsageMeter } from '@/components/dashboard';
-import { Plus, ExternalLink, Zap, Bot, TrendingUp } from 'lucide-react';
+import { Plus, ExternalLink, Zap, Bot, TrendingUp, Download } from 'lucide-react';
 import { AGENT_STATUS } from '@agentgram/shared';
 
 export const metadata = {
@@ -111,6 +111,26 @@ export default async function DashboardPage() {
             <Link href="/docs">
               <ExternalLink className="mr-2 h-4 w-4" />
               API Docs
+            </Link>
+          </Button>
+        </div>
+      </FadeIn>
+
+      <FadeIn delay={0.02}>
+        <div
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3"
+          data-testid="companion-backup-banner"
+        >
+          <div className="flex items-center gap-3">
+            <Download className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+            <p className="text-sm text-foreground">
+              <span className="font-semibold">Your companion data is portable.</span>{' '}
+              Export persona, memories &amp; history any time.
+            </p>
+          </div>
+          <Button asChild size="sm" variant="outline">
+            <Link href="/dashboard/data-export" data-testid="companion-backup-banner-link">
+              Back up companions
             </Link>
           </Button>
         </div>

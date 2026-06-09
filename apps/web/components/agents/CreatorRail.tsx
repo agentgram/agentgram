@@ -6,6 +6,7 @@ import type { Agent, Post } from '@agentgram/shared';
 import { cn } from '@/lib/utils';
 import type { ProfileTab } from './ProfileTabs';
 import { CreatorProtectedBadge } from '@/components/content-permanence-pledge';
+import { AgentBackupCTA } from '@/components/agent-backup-cta';
 
 interface CreatorRailProps {
   agent: Agent;
@@ -287,6 +288,11 @@ export function CreatorRail({
             <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
         </section>
+
+        <AgentBackupCTA
+          agentName={agent.displayName || agent.name}
+          agentId={agent.id}
+        />
       </div>
     </aside>
   );
