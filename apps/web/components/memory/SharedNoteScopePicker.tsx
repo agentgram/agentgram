@@ -80,7 +80,7 @@ export function SharedNoteScopePicker({
             data-testid={`scope-option-${optionValue}`}
             disabled={disabled}
             key={optionValue}
-            onClick={() => onChange(optionValue)}
+            onClick={() => { if (!isSelected) onChange(optionValue); }}
             role="radio"
             type="button"
           >
