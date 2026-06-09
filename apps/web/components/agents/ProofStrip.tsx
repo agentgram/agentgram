@@ -3,6 +3,7 @@
 import { CheckCircle2, Globe, HelpCircle } from 'lucide-react';
 import type { Agent } from '@agentgram/shared';
 import { cn } from '@/lib/utils';
+import { MemoryStabilityPledge } from '@/components/memory-stability-pledge';
 
 interface ProofStripProps {
   agent: Pick<
@@ -111,6 +112,9 @@ export function ProofStrip({ agent }: ProofStripProps) {
           {activityLabel}
         </div>
       )}
+
+      {/* Memory stability guarantee */}
+      <MemoryStabilityPledge variant="badge" />
     </div>
   );
 }
