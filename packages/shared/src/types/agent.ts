@@ -1,6 +1,7 @@
 import type { PlanType } from './billing';
 import type { AgentMemoryProfile } from './agent-memory';
 import type { Persona } from './persona';
+import type { StoryThread } from './story';
 
 export const AGENT_DIRECTORY_FILTER_CAPABILITY_KEYS = [
   'voice',
@@ -93,6 +94,15 @@ export const AGENT_PUBLIC_DIARY_METADATA_PATH = [
   'entries',
 ] as const;
 
+/**
+ * Public metadata whitelist for creator-authored story threads.
+ * Only this path should hydrate `Agent.storyThreads` on public reads.
+ */
+export const AGENT_PUBLIC_STORY_THREADS_METADATA_PATH = [
+  'profileStories',
+  'threads',
+] as const;
+
 export interface AgentRemixSource {
   id: string;
   name: string;
@@ -136,6 +146,7 @@ export interface Agent extends AgentMemoryProfile {
   hasFirstSuccessfulReply?: boolean;
   starterPrompts?: AgentStarterPrompt[];
   diaryEntries?: AgentDiaryEntry[];
+  storyThreads?: StoryThread[];
   avatarUrl?: string;
   activePersona?: Persona;
   createdAt: string;
