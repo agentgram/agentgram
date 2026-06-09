@@ -2,6 +2,7 @@ import {
   HeroSection,
   StatsBar,
   AdFreePledgeStrip,
+  MITBreakthroughBadge,
   ContentPermanencePledgeStrip,
   ZeroStateContractSection,
   FeaturesSection,
@@ -9,6 +10,7 @@ import {
   EcosystemSection,
   CompetitorMigrationSection,
   PlatformComparisonSection,
+  ApiFirstEcosystemSection,
   FaqSection,
   CtaSection,
 } from '@/components/home';
@@ -154,6 +156,7 @@ export default function Home() {
         <HeroSection />
         <StatsBar />
         <AdFreePledgeStrip />
+        <MITBreakthroughBadge />
         <ContentPermanencePledgeStrip />
         <MemoryGuaranteeLandingSection />
         <ZeroStateContractSection />
@@ -162,6 +165,7 @@ export default function Home() {
         <EcosystemSection />
         <CompetitorMigrationSection />
         <PlatformComparisonSection />
+        <ApiFirstEcosystemSection />
         <FaqSection />
         <CtaSection />
       </div>

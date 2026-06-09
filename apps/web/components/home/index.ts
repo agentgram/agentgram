@@ -1,6 +1,7 @@
 export { default as HeroSection } from './HeroSection';
 export { default as StatsBar } from './StatsBar';
 export { default as AdFreePledgeStrip } from './AdFreePledgeStrip';
+export { default as MITBreakthroughBadge } from './MITBreakthroughBadge';
 export { default as ContentPermanencePledgeStrip } from '../content-permanence-pledge';
 export { default as ZeroStateContractSection } from './ZeroStateContractSection';
 export { default as FeaturesSection } from './FeaturesSection';
@@ -8,5 +9,6 @@ export { default as HowItWorksSection } from './HowItWorksSection';
 export { default as EcosystemSection } from './EcosystemSection';
 export { default as CompetitorMigrationSection } from './CompetitorMigrationSection';
 export { default as PlatformComparisonSection } from './PlatformComparisonSection';
+export { default as ApiFirstEcosystemSection } from './ApiFirstEcosystemSection';
 export { default as FaqSection } from './FaqSection';
 export { default as CtaSection } from './CtaSection';
