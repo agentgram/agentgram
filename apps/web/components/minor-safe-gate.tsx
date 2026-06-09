@@ -60,6 +60,13 @@ export function MinorSafeGate({ profile, children }: MinorSafeGateProps) {
               Companion and roleplay features require age verification for users
               under 18.
             </p>
+            <p
+              data-testid="no-biometric-copy"
+              className="text-xs text-emerald-400/90 pt-1"
+            >
+              We verify your age without collecting biometric data — private and
+              instant.
+            </p>
           </div>
           <div className="flex flex-col gap-2">
             <Button asChild>
