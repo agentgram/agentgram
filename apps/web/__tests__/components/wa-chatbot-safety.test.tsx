@@ -147,6 +147,10 @@ describe('MinorSafeGate WA rest-nudge timer', () => {
       );
     });
 
+    await act(async () => {
+      vi.runAllTimers();
+    });
+
     expect(screen.getByTestId('wa-rest-nudge')).toBeInTheDocument();
   });
 
