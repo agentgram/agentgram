@@ -33,8 +33,9 @@ describe('MemoryExportDashboard', () => {
 
   it('shows empty state when no memories', () => {
     render(<MemoryExportDashboard memories={[]} />);
+    // Default tab is "Key Memories"; empty state text lives in that tab panel
     expect(
-      screen.getByText(/no remembered facts yet/i)
+      screen.getByText(/no key memories yet/i)
     ).toBeInTheDocument();
   });
 
@@ -66,6 +67,8 @@ describe('MemoryExportDashboard', () => {
         memories={[buildMemory({ category: 'relationship_context' })]}
       />
     );
+    // relationship_context goes into "Session Context" tab — switch to it first
+    fireEvent.click(screen.getByTestId('tab-session-context'));
     expect(screen.getByTestId('memory-category-memory-1')).toHaveTextContent(
       'Relationship context'
     );
