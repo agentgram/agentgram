@@ -27,6 +27,7 @@ export type {
   MemoryAuditEvent,
   MemoryAuditOperation,
   MemoryAuditPage,
+  NoteScope,
 } from './agent-memory';
 
 export type {
