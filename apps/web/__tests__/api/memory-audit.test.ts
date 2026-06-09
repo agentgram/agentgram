@@ -5,12 +5,30 @@ const DEVELOPER_ID = 'dev-test-001';
 const AGENT_ID = 'agent-test-001';
 const OTHER_DEVELOPER_ID = 'dev-other-999';
 
-// DB mock state
+// Simulated DB rows returned by agent_memory_audit_log (newest first)
+const DB_EVENTS = Array.from({ length: 15 }, (_, i) => ({
+  id: `audit-${i}`,
+  agent_id: AGENT_ID,
+  session_id: `session-${i}`,
+  developer_id: DEVELOPER_ID,
+  operation: ['read', 'write', 'delete'][i % 3] as string,
+  fact_key: `key_${i}`,
+  fact_summary: `summary_${i}`,
+  created_at: new Date(Date.now() - i * 60_000).toISOString(),
+}));
+
+// DB mock state — agents table
 const mockAgentSingle = vi.fn();
 const mockAgentEq2 = vi.fn();
 const mockAgentEq1 = vi.fn();
 const mockAgentSelect = vi.fn();
 const mockFrom = vi.fn();
+
+// DB mock state — agent_memory_audit_log table
+const mockAuditRange = vi.fn();
+const mockAuditOrder = vi.fn();
+const mockAuditEq = vi.fn();
+const mockAuditSelect = vi.fn();
 
 vi.mock('@agentgram/db', () => ({
   getSupabaseServiceClient: () => ({ from: mockFrom }),
@@ -37,8 +55,22 @@ function setupOwnershipSuccess() {
   mockAgentEq2.mockReturnValue({ single: mockAgentSingle });
   mockAgentEq1.mockReturnValue({ eq: mockAgentEq2 });
   mockAgentSelect.mockReturnValue({ eq: mockAgentEq1 });
+
+  // Simulates DB pagination: slices DB_EVENTS by the requested range
+  mockAuditRange.mockImplementation((from: number, to: number) =>
+    Promise.resolve({
+      data: DB_EVENTS.slice(from, to + 1),
+      count: DB_EVENTS.length,
+      error: null,
+    })
+  );
+  mockAuditOrder.mockReturnValue({ range: mockAuditRange });
+  mockAuditEq.mockReturnValue({ order: mockAuditOrder });
+  mockAuditSelect.mockReturnValue({ eq: mockAuditEq });
+
   mockFrom.mockImplementation((table: string) => {
     if (table === 'agents') return { select: mockAgentSelect };
+    if (table === 'agent_memory_audit_log') return { select: mockAuditSelect };
     return {};
   });
 }
@@ -180,20 +212,20 @@ describe('GET /api/v1/agents/me/memory-audit', () => {
     expect(json.data.events.length).toBeLessThanOrEqual(10);
   });
 
-  // 8. hasMore is false on last page
+  // 8. hasMore is false when DB returns all events within one page
   it('hasMore is false when all events fit on one page', async () => {
     const { GET } = await import(
       '../../app/api/v1/agents/me/memory-audit/route'
     );
     setupOwnershipSuccess();
-    // pageSize=100 covers all 47 mock events
+    // pageSize=100 exceeds DB_EVENTS.length (15), so hasMore must be false
     const req = makeReq(
       `http://localhost/api/v1/agents/me/memory-audit?agentId=${AGENT_ID}&pageSize=100`
     );
     const res = await GET(req);
     const json = await res.json();
     expect(json.data.hasMore).toBe(false);
-    expect(json.data.events.length).toBe(47);
+    expect(json.data.events.length).toBe(DB_EVENTS.length);
   });
 
   // 9. pageSize is capped at MAX (100)

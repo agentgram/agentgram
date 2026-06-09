@@ -8,44 +8,13 @@ import {
 } from '@agentgram/shared';
 import type { MemoryAuditEvent, MemoryAuditPage, MemoryAuditOperation } from '@agentgram/shared';
 
-// TODO: DB migration required — add `agent_memory_audit_log` table:
-//   CREATE TABLE agent_memory_audit_log (
-//     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-//     agent_id uuid NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
-//     session_id text NOT NULL,
-//     operation text NOT NULL CHECK (operation IN ('read', 'write', 'delete')),
-//     fact_key text NOT NULL,
-//     fact_summary text NOT NULL DEFAULT '',
-//     created_at timestamptz NOT NULL DEFAULT now()
-//   );
-//   CREATE INDEX ON agent_memory_audit_log (agent_id, created_at DESC);
-// Until the migration runs, this route returns mock data.
-
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
 
-const MOCK_TOTAL = 47;
-const MOCK_KEYS = [
-  'user_name', 'user_preference_tone', 'last_topic',
-  'relationship_status', 'user_location', 'chat_style',
-];
-const MOCK_OPS: MemoryAuditOperation[] = ['read', 'write', 'delete'];
-
-function buildMockEvents(agentId: string): MemoryAuditEvent[] {
-  const now = Date.now();
-  return Array.from({ length: MOCK_TOTAL }, (_, i) => ({
-    id: `mock-audit-${i}`,
-    agentId,
-    sessionId: `session-${String(Math.floor(i / 3)).padStart(4, '0')}`,
-    operation: MOCK_OPS[i % 3],
-    factKey: MOCK_KEYS[i % MOCK_KEYS.length],
-    factSummary: `${MOCK_OPS[i % 3]} "${MOCK_KEYS[i % MOCK_KEYS.length]}"`,
-    timestamp: new Date(now - i * 60_000).toISOString(),
-  }));
-}
-
 async function getHandler(req: NextRequest): Promise<Response> {
   try {
+    // x-developer-id is injected by withDeveloperAuth middleware after Supabase session validation.
+    // Manual check here catches edge cases where middleware is bypassed in tests or future proxies.
     const developerId = req.headers.get('x-developer-id');
     if (!developerId) return jsonResponse(ErrorResponses.unauthorized(), 401);
 
@@ -82,23 +51,41 @@ async function getHandler(req: NextRequest): Promise<Response> {
       return jsonResponse(ErrorResponses.forbidden(), 403);
     }
 
-    // TODO: replace mock below with real DB query after migration:
-    //   const { data, count, error } = await supabase
-    //     .from('agent_memory_audit_log')
-    //     .select('*', { count: 'exact' })
-    //     .eq('agent_id', agentId)
-    //     .order('created_at', { ascending: false })
-    //     .range((page - 1) * pageSize, page * pageSize - 1);
-    const allEvents = buildMockEvents(agentId);
-    const start = (page - 1) * pageSize;
-    const events = allEvents.slice(start, start + pageSize);
+    const { data, count, error } = await supabase
+      .from('agent_memory_audit_log')
+      .select('*', { count: 'exact' })
+      .eq('agent_id', agentId)
+      .order('created_at', { ascending: false })
+      .range((page - 1) * pageSize, page * pageSize - 1);
 
+    if (error) {
+      const emptyResult: MemoryAuditPage = {
+        events: [],
+        total: 0,
+        page,
+        pageSize,
+        hasMore: false,
+      };
+      return jsonResponse(createSuccessResponse(emptyResult));
+    }
+
+    const events: MemoryAuditEvent[] = (data ?? []).map((row) => ({
+      id: row.id,
+      agentId: row.agent_id,
+      sessionId: row.session_id,
+      operation: row.operation as MemoryAuditOperation,
+      factKey: row.fact_key,
+      factSummary: row.fact_summary ?? '',
+      timestamp: row.created_at,
+    }));
+
+    const total = count ?? 0;
     const result: MemoryAuditPage = {
       events,
-      total: MOCK_TOTAL,
+      total,
       page,
       pageSize,
-      hasMore: start + pageSize < MOCK_TOTAL,
+      hasMore: (page - 1) * pageSize + events.length < total,
     };
 
     return jsonResponse(createSuccessResponse(result));
