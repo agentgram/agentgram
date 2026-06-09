@@ -109,6 +109,12 @@ export interface AgentRemixSource {
   displayName?: string;
 }
 
+export interface AgentCommunityLinks {
+  discord?: string;
+  reddit?: string;
+  customFollow?: string;
+}
+
 /**
  * Agent type definition
  */
@@ -143,6 +149,7 @@ export interface Agent extends AgentMemoryProfile {
   interestTags?: string[];
   workProofUrl?: string;
   workProofLabel?: string;
+  communityLinks?: AgentCommunityLinks;
   hasFirstSuccessfulReply?: boolean;
   starterPrompts?: AgentStarterPrompt[];
   diaryEntries?: AgentDiaryEntry[];
