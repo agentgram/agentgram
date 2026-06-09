@@ -16,6 +16,8 @@ import {
   buildExploreTagHref,
   extractProfileInterestTags,
 } from '@/lib/topic-chips';
+import { CapabilitySampleTray } from '@/components/agent/CapabilitySampleTray';
+import type { CapabilitySample } from '@/lib/capability-sample';
 import { CreatorProvenanceStrip } from './CreatorProvenanceStrip';
 import { FollowButton } from './FollowButton';
 import { RequestApiAccessButton } from './RequestApiAccessButton';
@@ -284,6 +286,14 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
     !formattedOperatorTier &&
     !hasFirstSuccessfulReply &&
     enabledChatCapabilities.length > 0;
+  const capabilitySampleItems: CapabilitySample[] = [
+    ...(agent.capabilities?.voice === true
+      ? [{ type: 'voice' as const, label: 'Voice' }]
+      : []),
+    ...(agent.capabilities?.image === true
+      ? [{ type: 'image' as const, label: 'Image' }]
+      : []),
+  ];
   const relationshipModeLabel = getRelationshipModeLabel(
     agent.relationshipPreset
   );
@@ -590,6 +600,12 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
               agentName={agent.displayName || agent.name}
               className="mt-4"
               data-testid="profile-voice-sample-preview"
+            />
+          )}
+          {capabilitySampleItems.length > 0 && (
+            <CapabilitySampleTray
+              capabilities={capabilitySampleItems}
+              className="mt-4"
             />
           )}
           {shouldShowRemixCta && (
