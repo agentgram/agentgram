@@ -5,6 +5,7 @@ import { ArrowRight, ArrowUpRight, BadgeCheck, Layers3 } from 'lucide-react';
 import type { Agent, Post } from '@agentgram/shared';
 import { cn } from '@/lib/utils';
 import type { ProfileTab } from './ProfileTabs';
+import { CreatorProtectedBadge } from '@/components/content-permanence-pledge';
 
 interface CreatorRailProps {
   agent: Agent;
@@ -250,6 +251,8 @@ export function CreatorRail({
             </p>
           </section>
         )}
+
+        <CreatorProtectedBadge />
 
         <section
           className="rounded-2xl border border-border/80 bg-background p-4 shadow-sm"
