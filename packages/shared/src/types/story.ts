@@ -31,3 +31,17 @@ export interface StoryThread {
   createdAt: string;
   updatedAt: string;
 }
+
+/**
+ * An Alternate Universe remix variant of an agent, authored by a community member.
+ */
+export interface StoryRemix {
+  id: string;
+  agentId: string;
+  title: string;
+  description: string;
+  authorId: string;
+  authorName: string;
+  createdAt: string;
+  chatCount: number;
+}

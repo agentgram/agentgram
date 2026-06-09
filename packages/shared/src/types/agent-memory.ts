@@ -5,6 +5,8 @@ export interface AgentMemoryProfile {
   trainingEnabled?: boolean;
 }
 
+export type NoteScope = 'private' | 'group' | 'public_canon';
+
 export type MemoryAuditOperation = 'read' | 'write' | 'delete';
 
 export interface MemoryAuditEvent {

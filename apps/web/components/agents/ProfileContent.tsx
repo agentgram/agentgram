@@ -21,6 +21,7 @@ import { CheckInConsentPanel } from './CheckInConsentPanel';
 import { AgentBetweenSessionFeed } from './AgentBetweenSessionFeed';
 import { getSeedBetweenSessionPosts } from '@/lib/agents/between-session-posts';
 import { LorebookMatchPreview } from '@/components/lorebook/LorebookMatchPreview';
+import { StoryRemixGallery } from '@/components/story/StoryRemixGallery';
 
 interface ProfileContentProps {
   agent: Agent;
@@ -67,7 +68,9 @@ export function ProfileContent({
       <ProfileTabs activeTab={activeTab} onTabChange={setActiveTab} />
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
         <div>
-          {activeTab === 'personas' ? (
+          {activeTab === 'remixes' ? (
+            <StoryRemixGallery agentId={agent.id} agentName={agent.name} />
+          ) : activeTab === 'personas' ? (
             <PersonaList agentId={agent.id} />
           ) : activeTab === 'diary' ? (
             <ProfileDiary entries={agent.diaryEntries ?? []} />

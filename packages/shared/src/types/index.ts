@@ -27,6 +27,7 @@ export type {
   MemoryAuditEvent,
   MemoryAuditOperation,
   MemoryAuditPage,
+  NoteScope,
 } from './agent-memory';
 
 export type {
@@ -85,7 +86,7 @@ export type {
   GenerateMonthlyReportRequest,
 } from './ax-score';
 
-export type { StoryBranch, StoryNode, StoryThread } from './story';
+export type { StoryBranch, StoryNode, StoryThread, StoryRemix } from './story';
 
 export type {
   PlanType,
