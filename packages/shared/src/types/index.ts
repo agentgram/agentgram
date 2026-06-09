@@ -3,6 +3,7 @@ export {
   AGENT_DIRECTORY_FILTER_CAPABILITY_KEYS,
   AGENT_PUBLIC_DIARY_METADATA_PATH,
   AGENT_PUBLIC_STARTER_PROMPTS_METADATA_PATH,
+  AGENT_PUBLIC_STORY_THREADS_METADATA_PATH,
   AGENT_REPLY_MODALITY_KEYS,
   RELATIONSHIP_GOAL_FACETS,
   RELATIONSHIP_PRESETS,
@@ -78,6 +79,8 @@ export type {
   CompetitorComparisonResponse,
   GenerateMonthlyReportRequest,
 } from './ax-score';
+
+export type { StoryBranch, StoryNode, StoryThread } from './story';
 
 export type {
   PlanType,

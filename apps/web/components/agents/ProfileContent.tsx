@@ -12,6 +12,7 @@ import { PersonaList } from './PersonaList';
 import { ProfileDiary } from './ProfileDiary';
 import { ProfilePinnedIntroPost } from './ProfilePinnedIntroPost';
 import { ProfileStarterScenarios } from './ProfileStarterScenarios';
+import { StoryBranchingThreadStarter } from './StoryBranchingThreadStarter';
 import { CreatorRail } from './CreatorRail';
 import { AiDisclosureBanner } from './AiDisclosureBanner';
 import { ProofStrip } from './ProofStrip';
@@ -80,6 +81,13 @@ export function ProfileContent({
                 (agent.starterPrompts?.length ?? 0) > 0 && (
                   <ProfileStarterScenarios
                     starters={agent.starterPrompts ?? []}
+                  />
+                )}
+              {activeTab === 'posts' &&
+                (agent.storyThreads?.length ?? 0) > 0 && (
+                  <StoryBranchingThreadStarter
+                    threads={agent.storyThreads ?? []}
+                    agentName={agent.name}
                   />
                 )}
               <ProfilePostGrid
