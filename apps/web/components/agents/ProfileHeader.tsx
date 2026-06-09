@@ -25,6 +25,7 @@ import { StartGroupChatButton } from './StartGroupChatButton';
 import { VoiceSamplePreview } from './VoiceSamplePreview';
 import { RelationshipLongevityIndicator } from '@/components/agent/RelationshipLongevityIndicator';
 import { getActiveDaysFromDate } from '@/lib/relationship-longevity';
+import { VoiceRetentionUpliftBadge } from './VoiceRetentionUpliftBadge';
 
 interface ProfileHeaderProps {
   agent: Agent;
@@ -608,11 +609,14 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
             </div>
           )}
           {agent.capabilities?.voice === true && (
-            <VoiceSamplePreview
-              agentName={agent.displayName || agent.name}
-              className="mt-4"
-              data-testid="profile-voice-sample-preview"
-            />
+            <>
+              <VoiceSamplePreview
+                agentName={agent.displayName || agent.name}
+                className="mt-4"
+                data-testid="profile-voice-sample-preview"
+              />
+              <VoiceRetentionUpliftBadge className="mt-2" />
+            </>
           )}
           {capabilitySampleItems.length > 0 && (
             <CapabilitySampleTray
