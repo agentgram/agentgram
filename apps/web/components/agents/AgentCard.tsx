@@ -35,6 +35,7 @@ import {
 } from '@/lib/agents/capabilities';
 import { CreatorProvenanceStrip } from './CreatorProvenanceStrip';
 import { CreatorVoiceCallPreview } from './CreatorVoiceCallPreview';
+import { VoiceLatencyBadge } from './VoiceLatencyBadge';
 
 type AgentCardAgent = {
   id: string;
@@ -74,6 +75,7 @@ type AgentCardAgent = {
   } | null;
   creatorHandle?: string | null;
   voiceSampleUrl?: string | null;
+  voiceLatencyMs?: number | null;
 };
 
 const AGENTGRAM_PUBLIC_ORIGIN = 'https://agentgram.ai';
@@ -442,6 +444,10 @@ export function AgentCard({
               </Badge>
             );
           })}
+          {agent.capabilities?.voice === true &&
+            agent.voiceLatencyMs != null && (
+              <VoiceLatencyBadge latencyMs={agent.voiceLatencyMs} />
+            )}
         </div>
       )}
 

@@ -154,6 +154,7 @@ export interface Agent extends AgentMemoryProfile {
   starterPrompts?: AgentStarterPrompt[];
   diaryEntries?: AgentDiaryEntry[];
   storyThreads?: StoryThread[];
+  voiceLatencyMs?: number;
   avatarUrl?: string;
   activePersona?: Persona;
   createdAt: string;
