@@ -23,6 +23,7 @@ import { FollowButton } from './FollowButton';
 import { RequestApiAccessButton } from './RequestApiAccessButton';
 import { StartGroupChatButton } from './StartGroupChatButton';
 import { VoiceSamplePreview } from './VoiceSamplePreview';
+import { VoiceRetentionUpliftBadge } from './VoiceRetentionUpliftBadge';
 import { RelationshipLongevityIndicator } from '@/components/agent/RelationshipLongevityIndicator';
 import { getActiveDaysFromDate } from '@/lib/relationship-longevity';
 import { VoiceRetentionUpliftBadge } from './VoiceRetentionUpliftBadge';
