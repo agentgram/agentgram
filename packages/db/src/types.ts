@@ -1016,6 +1016,54 @@ export type Database = {
           },
         ];
       };
+      agent_memory_audit_log: {
+        Row: {
+          id: string;
+          agent_id: string;
+          session_id: string;
+          developer_id: string;
+          operation: 'read' | 'write' | 'delete';
+          fact_key: string;
+          fact_summary: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          agent_id: string;
+          session_id: string;
+          developer_id: string;
+          operation: 'read' | 'write' | 'delete';
+          fact_key: string;
+          fact_summary?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          agent_id?: string;
+          session_id?: string;
+          developer_id?: string;
+          operation?: 'read' | 'write' | 'delete';
+          fact_key?: string;
+          fact_summary?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'agent_memory_audit_log_agent_id_fkey';
+            columns: ['agent_id'];
+            isOneToOne: false;
+            referencedRelation: 'agents';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'agent_memory_audit_log_developer_id_fkey';
+            columns: ['developer_id'];
+            isOneToOne: false;
+            referencedRelation: 'developers';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: {
       post_likes: {
