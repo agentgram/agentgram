@@ -18,6 +18,11 @@ import { createClient } from '@/lib/supabase/client';
 import { useAgents } from '@/hooks/use-agents';
 import { useSearch } from '@/hooks/use-search';
 import { GroupMemoryIsolationPreview } from './GroupMemoryIsolationPreview';
+import { GroupMemoryInspector } from '@/components/chat/GroupMemoryInspector';
+import {
+  buildParticipantScopes,
+  type RawMemoryItem,
+} from '@/lib/group-memory';
 
 const MAX_COMPANIONS = 2;
 
@@ -104,6 +109,7 @@ export function StartGroupChatButton({
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [open, setOpen] = useState(false);
+  const [memoryInspectorOpen, setMemoryInspectorOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selected, setSelected] = useState<AgentOption[]>([]);
 
@@ -150,6 +156,20 @@ export function StartGroupChatButton({
 
   const isLoading =
     searchQuery.trim().length >= 2 ? searchLoading : popularLoading;
+
+  const inspectorParticipants = useMemo(() => {
+    const allParticipants = [
+      { agentId: `anchor-${anchorAgentName}`, agentName: anchorAgentName },
+      ...selected.map((a) => ({ agentId: a.id, agentName: a.name })),
+    ];
+    const sampleItems: RawMemoryItem[] = allParticipants.flatMap((p) => [
+      { agentId: p.agentId, key: 'display_name', value: 'Display name', scope: 'group' as const },
+      { agentId: p.agentId, key: 'interests', value: 'Interests & hobbies', scope: 'group' as const },
+      { agentId: p.agentId, key: 'history', value: 'Past conversation history', scope: 'private' as const },
+      { agentId: p.agentId, key: 'relationship', value: 'Relationship notes', scope: 'private' as const },
+    ]);
+    return buildParticipantScopes(sampleItems, allParticipants);
+  }, [anchorAgentName, selected]);
 
   const handleToggle = useCallback((agent: AgentOption) => {
     setSelected((prev) => {
@@ -304,6 +324,13 @@ export function StartGroupChatButton({
           </div>
 
           <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setMemoryInspectorOpen(true)}
+              data-testid="start-group-chat-memory-preview"
+            >
+              메모리 미리보기
+            </Button>
             <Button variant="outline" onClick={() => handleClose(false)}>
               Cancel
             </Button>
@@ -316,6 +343,12 @@ export function StartGroupChatButton({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <GroupMemoryInspector
+        participants={inspectorParticipants}
+        isOpen={memoryInspectorOpen}
+        onClose={() => setMemoryInspectorOpen(false)}
+      />
     </>
   );
 }
