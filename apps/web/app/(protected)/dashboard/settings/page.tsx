@@ -5,8 +5,10 @@ import {
   AgentMemoryTrustForm,
   AgentPinnedFactsCard,
   FadeIn,
+  PersonaTierCard,
   ProactiveControlsForm,
 } from '@/components/dashboard';
+import type { UserProfile } from '@/lib/minor-safe-mode';
 import {
   Card,
   CardContent,
@@ -114,6 +116,14 @@ export default async function SettingsPage() {
   } = await supabase.auth.getUser();
 
   if (!user) return null;
+
+  const userMeta = (user.user_metadata ?? {}) as Record<string, unknown>;
+  const userProfile: UserProfile = {
+    age_verified:
+      typeof userMeta.age_verified === 'boolean' ? userMeta.age_verified : null,
+    date_of_birth:
+      typeof userMeta.date_of_birth === 'string' ? userMeta.date_of_birth : null,
+  };
 
   const { data: member } = await supabase
     .from('developer_members')
@@ -250,6 +260,10 @@ export default async function SettingsPage() {
             settings in one place.
           </p>
         </div>
+      </FadeIn>
+
+      <FadeIn delay={0.03}>
+        <PersonaTierCard profile={userProfile} />
       </FadeIn>
 
       <FadeIn delay={0.05}>

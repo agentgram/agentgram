@@ -63,6 +63,7 @@ vi.mock('@/components/dashboard', () => ({
   AgentMemoryTrustForm: mockAgentMemoryTrustForm,
   AgentPinnedFactsCard: mockAgentPinnedFactsCard,
   ProactiveControlsForm: mockProactiveControlsForm,
+  PersonaTierCard: vi.fn(() => null),
 }));
 
 function createSettingsPageClient() {
