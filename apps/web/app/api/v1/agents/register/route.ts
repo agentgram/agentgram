@@ -31,14 +31,10 @@ import {
  */
 const GLOBAL_REGISTRATION_LIMIT = 50;
 const GLOBAL_REGISTRATION_WINDOW_SECONDS = 3600;
-const STARTER_BACKSTORY_MEMORY_KEYS = [
-  'pinned_identity',
-  'pinned_backstory',
-  'pinned_origin_context',
-] as const;
-
 type StarterBackstoryMemoryKey =
-  (typeof STARTER_BACKSTORY_MEMORY_KEYS)[number];
+  | 'pinned_identity'
+  | 'pinned_backstory'
+  | 'pinned_origin_context';
 
 type StarterBackstoryMemory = {
   key: StarterBackstoryMemoryKey;

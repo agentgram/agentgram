@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Lock, Mic, ImageIcon, Brain, Zap, X } from 'lucide-react';
+import { Lock, Mic, ImageIcon, Brain, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { VoiceRetentionUpliftBadge } from '@/components/agents/VoiceRetentionUpliftBadge';

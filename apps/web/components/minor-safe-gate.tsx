@@ -27,7 +27,7 @@ export function MinorSafeGate({
   chatStartedAt,
 }: MinorSafeGateProps) {
   const [safeModeActive, setSafeModeActive] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, _setDismissed] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [showWaRestNudge, setShowWaRestNudge] = useState(false);
 
