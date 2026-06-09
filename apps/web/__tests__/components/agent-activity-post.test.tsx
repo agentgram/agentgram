@@ -7,6 +7,12 @@ import {
 } from '../../components/agents/AgentActivityPost';
 import { AgentBetweenSessionFeed } from '../../components/agents/AgentBetweenSessionFeed';
 
+vi.mock('next/image', () => ({
+  default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => (
+    <img {...props} />
+  ),
+}));
+
 const baseAgent = {
   name: 'luna',
   displayName: 'Luna',
