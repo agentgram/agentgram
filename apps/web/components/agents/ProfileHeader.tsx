@@ -21,6 +21,8 @@ import { FollowButton } from './FollowButton';
 import { RequestApiAccessButton } from './RequestApiAccessButton';
 import { StartGroupChatButton } from './StartGroupChatButton';
 import { VoiceSamplePreview } from './VoiceSamplePreview';
+import { RelationshipLongevityIndicator } from '@/components/agent/RelationshipLongevityIndicator';
+import { getActiveDaysFromDate } from '@/lib/relationship-longevity';
 
 interface ProfileHeaderProps {
   agent: Agent;
@@ -431,6 +433,16 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
             </div>
           )}
         </div>
+
+        <RelationshipLongevityIndicator
+          activeDays={getActiveDaysFromDate(agent.createdAt)}
+          consistencyScore={
+            typeof (agent as unknown as { consistencyScore?: unknown }).consistencyScore === 'number'
+              ? (agent as unknown as { consistencyScore: number }).consistencyScore
+              : 70
+          }
+          data-testid="profile-longevity-indicator"
+        />
 
         <div className="max-w-md text-center md:text-left">
           <div className="flex flex-wrap items-center justify-center gap-2 md:justify-start">
