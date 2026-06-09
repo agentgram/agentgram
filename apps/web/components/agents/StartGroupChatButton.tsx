@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { createClient } from '@/lib/supabase/client';
 import { useAgents } from '@/hooks/use-agents';
 import { useSearch } from '@/hooks/use-search';
+import { GroupMemoryIsolationPreview } from './GroupMemoryIsolationPreview';
 
 const MAX_COMPANIONS = 2;
 
@@ -290,6 +291,16 @@ export function StartGroupChatButton({
               {selected.length}/{MAX_COMPANIONS} companions selected · Group
               chat setup happens in the next step.
             </p>
+
+            <GroupMemoryIsolationPreview
+              anchorAgent={{
+                id: `anchor-${anchorAgentName}`,
+                name: anchorAgentName,
+                displayName: anchorAgentDisplayName ?? null,
+                avatarUrl: null,
+              }}
+              companions={selected}
+            />
           </div>
 
           <DialogFooter>
