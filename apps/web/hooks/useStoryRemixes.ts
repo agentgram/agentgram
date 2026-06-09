@@ -22,12 +22,13 @@ export function useStoryRemixes(agentId: string): UseStoryRemixesState {
     if (!agentId) return;
 
     const controller = new AbortController();
-    setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
-    fetch(`/api/v1/agents/${encodeURIComponent(agentId)}/remixes`, {
-      signal: controller.signal,
-    })
-      .then(async (res) => {
+    async function fetchRemixes() {
+      setState((prev) => ({ ...prev, isLoading: true, error: null }));
+      try {
+        const res = await fetch(`/api/v1/agents/${encodeURIComponent(agentId)}/remixes`, {
+          signal: controller.signal,
+        });
         const json = await res.json();
         if (!res.ok || !json.success) {
           setState({
@@ -44,8 +45,7 @@ export function useStoryRemixes(agentId: string): UseStoryRemixesState {
           isLoading: false,
           error: null,
         });
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         if (err instanceof Error && err.name === 'AbortError') return;
         setState({
           remixes: [],
@@ -53,7 +53,10 @@ export function useStoryRemixes(agentId: string): UseStoryRemixesState {
           isLoading: false,
           error: 'Failed to load remixes',
         });
-      });
+      }
+    }
+
+    fetchRemixes();
 
     return () => controller.abort();
   }, [agentId]);
