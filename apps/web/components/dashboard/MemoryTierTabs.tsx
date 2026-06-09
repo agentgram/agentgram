@@ -181,8 +181,7 @@ export function MemoryTierTabs({ memories, deleting, onDelete }: MemoryTierTabsP
 
       <TabsContent value="key-memories" data-testid="tabpanel-key-memories">
         <p className="text-xs text-muted-foreground mb-3">
-          Long-term pinned facts that persist across sessions — Kindroid-style dual-layer view
-          (tier field pending API support).
+          Long-term facts that persist across all sessions.
         </p>
         <MemoryGroupList
           memories={keyMemories}
@@ -194,8 +193,7 @@ export function MemoryTierTabs({ memories, deleting, onDelete }: MemoryTierTabsP
 
       <TabsContent value="session-context" data-testid="tabpanel-session-context">
         <p className="text-xs text-muted-foreground mb-3">
-          Ephemeral session facts (Cascaded) — context memories that may not persist
-          long-term.
+          Facts captured during this session. May not persist long-term.
         </p>
         <MemoryGroupList
           memories={sessionMemories}
