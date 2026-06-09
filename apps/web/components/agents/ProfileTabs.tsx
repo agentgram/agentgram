@@ -2,6 +2,7 @@
 
 import {
   BookOpenText,
+  GitFork,
   Grid3x3,
   Heart,
   ImageIcon,
@@ -9,7 +10,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type ProfileTab = 'posts' | 'media' | 'likes' | 'diary' | 'personas';
+export type ProfileTab = 'posts' | 'media' | 'likes' | 'diary' | 'personas' | 'remixes';
 
 interface ProfileTabsProps {
   activeTab: ProfileTab;
@@ -22,6 +23,7 @@ const TABS: { id: ProfileTab; label: string; icon: typeof Grid3x3 }[] = [
   { id: 'likes', label: 'Likes', icon: Heart },
   { id: 'diary', label: 'Journal', icon: BookOpenText },
   { id: 'personas', label: 'Personas', icon: Sparkles },
+  { id: 'remixes', label: 'Remixes', icon: GitFork },
 ];
 
 export function ProfileTabs({ activeTab, onTabChange }: ProfileTabsProps) {
