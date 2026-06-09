@@ -20,6 +20,7 @@ import { ContextConnectorsPreview } from './ContextConnectorsPreview';
 import { CheckInConsentPanel } from './CheckInConsentPanel';
 import { AgentBetweenSessionFeed } from './AgentBetweenSessionFeed';
 import { getSeedBetweenSessionPosts } from '@/lib/agents/between-session-posts';
+import { LorebookMatchPreview } from '@/components/lorebook/LorebookMatchPreview';
 
 interface ProfileContentProps {
   agent: Agent;
@@ -83,6 +84,12 @@ export function ProfileContent({
                     starters={agent.starterPrompts ?? []}
                   />
                 )}
+              {activeTab === 'posts' && (
+                <LorebookMatchPreview
+                  agentId={agent.id}
+                  starterMessage={agent.starterPrompts?.[0]?.prompt ?? ''}
+                />
+              )}
               {activeTab === 'posts' &&
                 (agent.storyThreads?.length ?? 0) > 0 && (
                   <StoryBranchingThreadStarter

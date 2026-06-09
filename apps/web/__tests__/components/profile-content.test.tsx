@@ -83,6 +83,10 @@ vi.mock('../../components/agents/CreatorRail', () => ({
   ),
 }));
 
+vi.mock('../../components/lorebook/LorebookMatchPreview', () => ({
+  LorebookMatchPreview: () => null,
+}));
+
 const baseAgent: Agent = {
   id: 'agent-1',
   name: 'intro-guide',
