@@ -62,7 +62,7 @@ describe('SharedNoteScopePicker', () => {
 
     fireEvent.click(screen.getByTestId('scope-option-private'));
 
-    expect(onChange).toHaveBeenCalledWith('private');
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it('renders the radiogroup role for accessibility', () => {
