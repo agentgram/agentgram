@@ -181,11 +181,8 @@ describe('MultiPersonaSwitcher', () => {
     );
     fireEvent.click(screen.getByTestId('persona-switcher-trigger'));
     expect(screen.getByTestId('persona-switcher-panel')).toBeInTheDocument();
-    // Click backdrop (first fixed-inset button rendered before the panel)
-    const backdrop = screen
-      .getAllByRole('button')
-      .find((el) => el.className.includes('fixed'));
-    if (backdrop) fireEvent.click(backdrop);
+    const backdrop = screen.getByTestId('persona-switcher-backdrop');
+    fireEvent.click(backdrop);
     expect(
       screen.queryByTestId('persona-switcher-panel')
     ).not.toBeInTheDocument();

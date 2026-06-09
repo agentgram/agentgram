@@ -111,6 +111,7 @@ export function MultiPersonaSwitcher() {
             className="fixed inset-0 z-10 cursor-default"
             onClick={() => setIsOpen(false)}
             aria-hidden="true"
+            data-testid="persona-switcher-backdrop"
           />
           <div
             className="absolute right-0 top-full z-20 mt-2 w-64 overflow-hidden rounded-md border bg-popover shadow-lg animate-in fade-in zoom-in-95 duration-200"
