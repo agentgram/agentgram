@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Lock, Mic, ImageIcon, Brain, Zap, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { VoiceRetentionUpliftBadge } from '@/components/agents/VoiceRetentionUpliftBadge';
 import {
   Dialog,
   DialogContent,
@@ -73,21 +74,23 @@ export function PaywallPreviewModal({
 
         <div className="grid gap-3">
           {PAID_FEATURES.map((feature) => (
-            <div
-              key={feature.title}
-              className="flex items-start gap-3 rounded-xl border border-border/60 bg-background/60 p-3"
-            >
-              <div className="rounded-md bg-primary/10 p-1.5 mt-0.5 shrink-0">
-                <feature.icon className="h-4 w-4 text-primary" />
+            <div key={feature.title}>
+              <div className="flex items-start gap-3 rounded-xl border border-border/60 bg-background/60 p-3">
+                <div className="rounded-md bg-primary/10 p-1.5 mt-0.5 shrink-0">
+                  <feature.icon className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">
+                    {feature.title}
+                  </p>
+                  <p className="mt-0.5 text-sm text-muted-foreground">
+                    {feature.description}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-foreground">
-                  {feature.title}
-                </p>
-                <p className="mt-0.5 text-sm text-muted-foreground">
-                  {feature.description}
-                </p>
-              </div>
+              {feature.title === 'Voice responses' && (
+                <VoiceRetentionUpliftBadge className="mt-1.5" />
+              )}
             </div>
           ))}
         </div>
