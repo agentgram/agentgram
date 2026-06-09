@@ -46,7 +46,11 @@ export function MinorSafeGate({
     if (!chatStartedAt) return;
 
     const elapsed = Date.now() - chatStartedAt;
-    const remaining = Math.max(0, WA_REST_NUDGE_THRESHOLD_MS - elapsed);
+    const remaining = WA_REST_NUDGE_THRESHOLD_MS - elapsed;
+    if (remaining <= 0) {
+      setShowWaRestNudge(true);
+      return;
+    }
     const timer = setTimeout(() => setShowWaRestNudge(true), remaining);
     return () => clearTimeout(timer);
   }, [mounted, chatStartedAt, profile]);
