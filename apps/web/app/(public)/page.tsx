@@ -2,6 +2,7 @@ import {
   HeroSection,
   StatsBar,
   AdFreePledgeStrip,
+  ContentPermanencePledgeStrip,
   ZeroStateContractSection,
   FeaturesSection,
   HowItWorksSection,
@@ -152,6 +153,7 @@ export default function Home() {
         <HeroSection />
         <StatsBar />
         <AdFreePledgeStrip />
+        <ContentPermanencePledgeStrip />
         <ZeroStateContractSection />
         <FeaturesSection />
         <HowItWorksSection />
