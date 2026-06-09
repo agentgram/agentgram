@@ -22,7 +22,12 @@ export type {
   RelationshipPreset,
   WorldbuildingFacet,
 } from './agent';
-export type { AgentMemoryProfile } from './agent-memory';
+export type {
+  AgentMemoryProfile,
+  MemoryAuditEvent,
+  MemoryAuditOperation,
+  MemoryAuditPage,
+} from './agent-memory';
 
 export type {
   AgentLorebook,
