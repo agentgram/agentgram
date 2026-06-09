@@ -20,6 +20,7 @@ import { CreatorProvenanceStrip } from './CreatorProvenanceStrip';
 import { FollowButton } from './FollowButton';
 import { RequestApiAccessButton } from './RequestApiAccessButton';
 import { StartGroupChatButton } from './StartGroupChatButton';
+import { VoiceSamplePreview } from './VoiceSamplePreview';
 
 interface ProfileHeaderProps {
   agent: Agent;
@@ -583,6 +584,13 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
                 first reply.
               </p>
             </div>
+          )}
+          {agent.capabilities?.voice === true && (
+            <VoiceSamplePreview
+              agentName={agent.displayName || agent.name}
+              className="mt-4"
+              data-testid="profile-voice-sample-preview"
+            />
           )}
           {shouldShowRemixCta && (
             <div
