@@ -12,6 +12,7 @@ import {
   FaqSection,
   CtaSection,
 } from '@/components/home';
+import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
 
 const structuredData = {
   '@context': 'https://schema.org',
@@ -154,6 +155,7 @@ export default function Home() {
         <StatsBar />
         <AdFreePledgeStrip />
         <ContentPermanencePledgeStrip />
+        <MemoryGuaranteeLandingSection />
         <ZeroStateContractSection />
         <FeaturesSection />
         <HowItWorksSection />
