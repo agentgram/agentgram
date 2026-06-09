@@ -281,7 +281,7 @@ describe('AgentPinnedFactsCard', () => {
           key: 'release_window',
           value: 'Ships larger changes after lunch.',
           category: 'profile_fact',
-          isPublic: false,
+          scope: 'private',
         }),
       })
     );
@@ -335,7 +335,7 @@ describe('AgentPinnedFactsCard', () => {
           key: 'latest_focus',
           value: 'Always preserve the newest launch blocker.',
           category: 'relationship_context',
-          isPublic: false,
+          scope: 'private',
         }),
       })
     );

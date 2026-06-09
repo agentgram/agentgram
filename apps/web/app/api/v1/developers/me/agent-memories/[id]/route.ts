@@ -7,12 +7,16 @@ const VALUE_MAX = 2048;
 const VALID_CATEGORIES = ['profile_fact', 'relationship_context'] as const;
 type MemoryCategory = (typeof VALID_CATEGORIES)[number];
 
+const VALID_SCOPES = ['private', 'group', 'public_canon'] as const;
+type NoteScope = (typeof VALID_SCOPES)[number];
+
 type MemoryUpdatePayload = {
   agentId?: unknown;
   key?: unknown;
   value?: unknown;
   category?: unknown;
   isPublic?: unknown;
+  scope?: unknown;
 };
 
 function jsonError(code: string, message: string, status: number) {
@@ -48,6 +52,18 @@ function normalizeOptionalCategory(
   }
 
   return null;
+}
+
+function normalizeScope(value: unknown): NoteScope | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value === 'string' && (VALID_SCOPES as readonly string[]).includes(value)) {
+    return value as NoteScope;
+  }
+  return undefined;
+}
+
+function scopeToIsPublic(scope: NoteScope): boolean {
+  return scope === 'public_canon';
 }
 
 async function readJson(req: NextRequest) {
@@ -111,6 +127,7 @@ export const PATCH = withDeveloperAuth(async function PATCH(
   const key = normalizeOptionalKey(payload.key);
   const value = normalizeOptionalValue(payload.value);
   const category = normalizeOptionalCategory(payload.category);
+  const scope = normalizeScope(payload.scope);
 
   if (key !== undefined && (!key || key.length > KEY_MAX)) {
     return jsonError('INVALID_INPUT', `key must be 1-${KEY_MAX} chars`, 400);
@@ -136,13 +153,14 @@ export const PATCH = withDeveloperAuth(async function PATCH(
   if (ownership.error) return ownership.error;
 
   const { id } = await params;
+  const isPublicFromScope = scope !== undefined ? scopeToIsPublic(scope) : undefined;
   const update = {
     ...(key !== undefined && { key }),
     ...(value !== undefined && { value }),
     ...(category !== undefined && { category }),
-    ...(payload.isPublic !== undefined && {
-      is_public: payload.isPublic === true,
-    }),
+    ...(isPublicFromScope !== undefined
+      ? { is_public: isPublicFromScope }
+      : payload.isPublic !== undefined && { is_public: payload.isPublic === true }),
     updated_at: new Date().toISOString(),
   };
 

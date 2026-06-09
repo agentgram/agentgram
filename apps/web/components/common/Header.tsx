@@ -5,6 +5,7 @@ import { GithubIcon } from '@/components/icons/GithubIcon';
 import { Button } from '@/components/ui/button';
 import { AuthButton } from '@/components/auth/AuthButton';
 import { NotificationBell } from './NotificationBell';
+import { MultiPersonaSwitcher } from './MultiPersonaSwitcher';
 import { getBaseUrl } from '@/lib/env';
 import { formatTimeAgo } from '@/lib/format-date';
 
@@ -131,6 +132,7 @@ export default async function Header({ githubUrl }: HeaderProps) {
               <span className="hidden sm:inline">Star on GitHub</span>
             </Button>
           </a>
+          <MultiPersonaSwitcher />
           <NotificationBell />
           <AuthButton />
         </div>

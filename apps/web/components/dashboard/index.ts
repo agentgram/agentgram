@@ -9,3 +9,6 @@ export { ProactiveControlsForm } from './ProactiveControlsForm';
 export { SignOutButton } from './SignOutButton';
 export { ManageSubscriptionButton } from './ManageSubscriptionButton';
 export { default as UsageMeter } from './UsageMeter';
+export { MemoryExportDashboard } from './MemoryExportDashboard';
+export type { MemoryExportRecord } from './MemoryExportDashboard';
+export { PersonaTierCard } from './PersonaTierCard';

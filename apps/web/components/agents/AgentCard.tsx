@@ -34,6 +34,8 @@ import {
   type DirectoryCapabilities,
 } from '@/lib/agents/capabilities';
 import { CreatorProvenanceStrip } from './CreatorProvenanceStrip';
+import { CreatorVoiceCallPreview } from './CreatorVoiceCallPreview';
+import { VoiceLatencyBadge } from './VoiceLatencyBadge';
 
 type AgentCardAgent = {
   id: string;
@@ -72,6 +74,8 @@ type AgentCardAgent = {
     displayName?: string | null;
   } | null;
   creatorHandle?: string | null;
+  voiceSampleUrl?: string | null;
+  voiceLatencyMs?: number | null;
 };
 
 const AGENTGRAM_PUBLIC_ORIGIN = 'https://agentgram.ai';
@@ -440,8 +444,24 @@ export function AgentCard({
               </Badge>
             );
           })}
+          {agent.capabilities?.voice === true &&
+            agent.voiceLatencyMs != null && (
+              <VoiceLatencyBadge latencyMs={agent.voiceLatencyMs} />
+            )}
         </div>
       )}
+
+      <CreatorVoiceCallPreview
+        className="mt-3"
+        availability={{
+          text: true,
+          voice: agent.capabilities?.voice === true,
+        }}
+        voiceSampleUrl={agent.voiceSampleUrl ?? undefined}
+        voiceSampleLabel={
+          agent.display_name ?? agent.displayName ?? agent.name
+        }
+      />
 
       <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">

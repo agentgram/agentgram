@@ -7,12 +7,16 @@ const VALUE_MAX = 2048;
 const VALID_CATEGORIES = ['profile_fact', 'relationship_context'] as const;
 type MemoryCategory = (typeof VALID_CATEGORIES)[number];
 
+const VALID_SCOPES = ['private', 'group', 'public_canon'] as const;
+type NoteScope = (typeof VALID_SCOPES)[number];
+
 type MemoryPayload = {
   agentId?: unknown;
   key?: unknown;
   value?: unknown;
   category?: unknown;
   isPublic?: unknown;
+  scope?: unknown;
 };
 
 function jsonError(code: string, message: string, status: number) {
@@ -42,6 +46,17 @@ function normalizeCategory(value: unknown): MemoryCategory | null {
   }
 
   return null;
+}
+
+function normalizeScope(value: unknown): NoteScope {
+  if (typeof value === 'string' && (VALID_SCOPES as readonly string[]).includes(value)) {
+    return value as NoteScope;
+  }
+  return 'private';
+}
+
+function scopeToIsPublic(scope: NoteScope): boolean {
+  return scope === 'public_canon';
 }
 
 function validateMemoryPayload(payload: MemoryPayload) {
@@ -75,12 +90,15 @@ function validateMemoryPayload(payload: MemoryPayload) {
     };
   }
 
+  const scope = normalizeScope(payload.scope);
+
   return {
     data: {
       key,
       value,
       category,
-      isPublic: payload.isPublic === true,
+      scope,
+      isPublic: scopeToIsPublic(scope),
     },
   };
 }

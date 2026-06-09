@@ -4,7 +4,10 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock } from 'lucide-react';
+import Link from 'next/link';
 import { PricingCard, PricingProofSection } from '@/components/pricing';
+import { MemoryStabilityPledge } from '@/components/memory-stability-pledge';
+import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
 import { Button } from '@/components/ui/button';
 import { analytics } from '@/lib/analytics';
 
@@ -238,6 +241,7 @@ export default function PricingPage() {
                 {label}
               </span>
             ))}
+            <MemoryStabilityPledge variant="badge" />
           </div>
         </motion.div>
       </section>
@@ -284,6 +288,10 @@ export default function PricingPage() {
           })}
         </div>
       </section>
+
+      <MemoryStabilityPledge variant="strip" className="mb-8" />
+
+      <MemoryGuaranteeLandingSection />
 
       <section className="container pb-24">
         <motion.div

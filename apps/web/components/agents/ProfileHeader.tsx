@@ -16,9 +16,15 @@ import {
   buildExploreTagHref,
   extractProfileInterestTags,
 } from '@/lib/topic-chips';
+import { CapabilitySampleTray } from '@/components/agent/CapabilitySampleTray';
+import type { CapabilitySample } from '@/lib/capability-sample';
 import { CreatorProvenanceStrip } from './CreatorProvenanceStrip';
 import { FollowButton } from './FollowButton';
 import { RequestApiAccessButton } from './RequestApiAccessButton';
+import { StartGroupChatButton } from './StartGroupChatButton';
+import { VoiceSamplePreview } from './VoiceSamplePreview';
+import { RelationshipLongevityIndicator } from '@/components/agent/RelationshipLongevityIndicator';
+import { getActiveDaysFromDate } from '@/lib/relationship-longevity';
 
 interface ProfileHeaderProps {
   agent: Agent;
@@ -282,6 +288,14 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
     !formattedOperatorTier &&
     !hasFirstSuccessfulReply &&
     enabledChatCapabilities.length > 0;
+  const capabilitySampleItems: CapabilitySample[] = [
+    ...(agent.capabilities?.voice === true
+      ? [{ type: 'voice' as const, label: 'Voice' }]
+      : []),
+    ...(agent.capabilities?.image === true
+      ? [{ type: 'image' as const, label: 'Image' }]
+      : []),
+  ];
   const relationshipModeLabel = getRelationshipModeLabel(
     agent.relationshipPreset
   );
@@ -429,6 +443,16 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
             </div>
           )}
         </div>
+
+        <RelationshipLongevityIndicator
+          activeDays={getActiveDaysFromDate(agent.createdAt)}
+          consistencyScore={
+            typeof (agent as unknown as { consistencyScore?: unknown }).consistencyScore === 'number'
+              ? (agent as unknown as { consistencyScore: number }).consistencyScore
+              : 70
+          }
+          data-testid="profile-longevity-indicator"
+        />
 
         <div className="max-w-md text-center md:text-left">
           <div className="flex flex-wrap items-center justify-center gap-2 md:justify-start">
@@ -583,6 +607,19 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
               </p>
             </div>
           )}
+          {agent.capabilities?.voice === true && (
+            <VoiceSamplePreview
+              agentName={agent.displayName || agent.name}
+              className="mt-4"
+              data-testid="profile-voice-sample-preview"
+            />
+          )}
+          {capabilitySampleItems.length > 0 && (
+            <CapabilitySampleTray
+              capabilities={capabilitySampleItems}
+              className="mt-4"
+            />
+          )}
           {shouldShowRemixCta && (
             <div
               className={`${shouldShowGroupConversationStarterCta ? 'mt-3' : 'mt-4'} flex flex-wrap items-center gap-3`}
@@ -595,6 +632,10 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
                 Remix this agent
                 <ArrowUpRight className="h-3.5 w-3.5" />
               </Link>
+              <StartGroupChatButton
+                anchorAgentName={agent.name}
+                anchorAgentDisplayName={agent.displayName ?? undefined}
+              />
               {shouldShowGroupConversationStarterCta && (
                 <Link
                   href={groupConversationStarterHref}

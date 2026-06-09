@@ -9,6 +9,7 @@ import {
   Settings,
   Bot,
   BarChart3,
+  Brain,
   TrendingUp,
   Sliders,
 } from 'lucide-react';
@@ -66,6 +67,11 @@ export default async function DashboardLayout({
       href: '/dashboard/tune',
       label: 'Tune Agent',
       icon: Sliders,
+    },
+    {
+      href: '/dashboard/memory-export',
+      label: 'Memories',
+      icon: Brain,
     },
     {
       href: '/dashboard/settings',

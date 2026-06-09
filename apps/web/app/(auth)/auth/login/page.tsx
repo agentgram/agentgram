@@ -235,6 +235,13 @@ function LoginContent() {
             <p className="text-xs text-muted-foreground/80 pt-1">
               Unlimited replies &amp; regenerations. No Character.AI limits here.
             </p>
+            <div
+              data-testid="no-face-scan-badge"
+              className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400 mx-auto mt-1"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+              Age-verified — no face scan required
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">

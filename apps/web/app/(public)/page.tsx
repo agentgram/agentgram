@@ -2,6 +2,7 @@ import {
   HeroSection,
   StatsBar,
   AdFreePledgeStrip,
+  ContentPermanencePledgeStrip,
   ZeroStateContractSection,
   FeaturesSection,
   HowItWorksSection,
@@ -11,6 +12,7 @@ import {
   FaqSection,
   CtaSection,
 } from '@/components/home';
+import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
 
 const structuredData = {
   '@context': 'https://schema.org',
@@ -152,6 +154,8 @@ export default function Home() {
         <HeroSection />
         <StatsBar />
         <AdFreePledgeStrip />
+        <ContentPermanencePledgeStrip />
+        <MemoryGuaranteeLandingSection />
         <ZeroStateContractSection />
         <FeaturesSection />
         <HowItWorksSection />

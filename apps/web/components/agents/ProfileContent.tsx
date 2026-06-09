@@ -12,6 +12,7 @@ import { PersonaList } from './PersonaList';
 import { ProfileDiary } from './ProfileDiary';
 import { ProfilePinnedIntroPost } from './ProfilePinnedIntroPost';
 import { ProfileStarterScenarios } from './ProfileStarterScenarios';
+import { StoryBranchingThreadStarter } from './StoryBranchingThreadStarter';
 import { CreatorRail } from './CreatorRail';
 import { AiDisclosureBanner } from './AiDisclosureBanner';
 import { ProofStrip } from './ProofStrip';
@@ -19,6 +20,9 @@ import { ContextConnectorsPreview } from './ContextConnectorsPreview';
 import { CheckInConsentPanel } from './CheckInConsentPanel';
 import { AgentBetweenSessionFeed } from './AgentBetweenSessionFeed';
 import { getSeedBetweenSessionPosts } from '@/lib/agents/between-session-posts';
+import { LorebookMatchPreview } from '@/components/lorebook/LorebookMatchPreview';
+import { StoryRemixGallery } from '@/components/story/StoryRemixGallery';
+import { CommunityHandoffLinks } from './CommunityHandoffLinks';
 
 interface ProfileContentProps {
   agent: Agent;
@@ -35,19 +39,22 @@ export function ProfileContent({
 }: ProfileContentProps) {
   const [activeTab, setActiveTab] = useState<ProfileTab>(initialTab);
   const [checkInOpen, setCheckInOpen] = useState(false);
+  const [checkInError, setCheckInError] = useState<string | null>(null);
   const betweenSessionPosts = getSeedBetweenSessionPosts(agent.id);
 
   const agentDisplayName = agent.displayName || agent.name;
 
   const handleAllow = useCallback(async () => {
+    setCheckInError(null);
     try {
       await fetch('/api/v1/developers/me/proactive-controls', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ optIn: true }),
       });
-    } finally {
       setCheckInOpen(false);
+    } catch {
+      setCheckInError('Something went wrong. Please try again.');
     }
   }, []);
 
@@ -56,13 +63,20 @@ export function ProfileContent({
       <AiDisclosureBanner />
       <ProfileHeader agent={agent} />
       <ProofStrip agent={agent} />
+      {agent.communityLinks && (
+        <div className="mt-3">
+          <CommunityHandoffLinks links={agent.communityLinks} />
+        </div>
+      )}
       {agent.activePersona && <ProfilePersona persona={agent.activePersona} />}
       {pinnedIntroPost && <ProfilePinnedIntroPost post={pinnedIntroPost} />}
       <AgentBetweenSessionFeed agent={agent} posts={betweenSessionPosts} />
       <ProfileTabs activeTab={activeTab} onTabChange={setActiveTab} />
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
         <div>
-          {activeTab === 'personas' ? (
+          {activeTab === 'remixes' ? (
+            <StoryRemixGallery agentId={agent.id} agentName={agent.name} />
+          ) : activeTab === 'personas' ? (
             <PersonaList agentId={agent.id} />
           ) : activeTab === 'diary' ? (
             <ProfileDiary entries={agent.diaryEntries ?? []} />
@@ -77,6 +91,19 @@ export function ProfileContent({
                 (agent.starterPrompts?.length ?? 0) > 0 && (
                   <ProfileStarterScenarios
                     starters={agent.starterPrompts ?? []}
+                  />
+                )}
+              {activeTab === 'posts' && (
+                <LorebookMatchPreview
+                  agentId={agent.id}
+                  starterMessage={agent.starterPrompts?.[0]?.prompt ?? ''}
+                />
+              )}
+              {activeTab === 'posts' &&
+                (agent.storyThreads?.length ?? 0) > 0 && (
+                  <StoryBranchingThreadStarter
+                    threads={agent.storyThreads ?? []}
+                    agentName={agent.name}
                   />
                 )}
               <ProfilePostGrid
@@ -111,8 +138,9 @@ export function ProfileContent({
         open={checkInOpen}
         onOpenChange={setCheckInOpen}
         agentName={agentDisplayName}
-        onAllow={() => void handleAllow()}
+        onAllow={handleAllow}
         onMute={() => setCheckInOpen(false)}
+        error={checkInError}
       />
     </div>
   );

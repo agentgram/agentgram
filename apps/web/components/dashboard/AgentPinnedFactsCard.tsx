@@ -24,6 +24,11 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import {
+  NoteScopeBadge,
+  SharedNoteScopePicker,
+} from '@/components/memory/SharedNoteScopePicker';
+import type { NoteScope } from '@/components/memory/SharedNoteScopePicker';
 
 const MEMORY_CATEGORIES = ['profile_fact', 'relationship_context'] as const;
 type MemoryCategory = (typeof MEMORY_CATEGORIES)[number];
@@ -36,6 +41,7 @@ export interface AgentPinnedFactRecord {
   updatedAt: string;
   createdAt?: string;
   isPublic?: boolean;
+  scope?: NoteScope;
   originLabel: string;
   originSnippet: string;
 }
@@ -65,7 +71,7 @@ type MemoryDraft = {
   key: string;
   value: string;
   category: MemoryCategory;
-  isPublic: boolean;
+  scope: NoteScope;
 };
 
 type MemoryApiRecord = {
@@ -90,7 +96,7 @@ const EMPTY_DRAFT: MemoryDraft = {
   key: '',
   value: '',
   category: 'profile_fact',
-  isPublic: false,
+  scope: 'private',
 };
 
 function formatTimestamp(value: string) {
@@ -205,6 +211,11 @@ function sortFacts(facts: AgentPinnedFactRecord[]) {
   });
 }
 
+function deriveScopeFromFact(fact: AgentPinnedFactRecord): NoteScope {
+  if (fact.scope) return fact.scope;
+  return fact.isPublic ? 'public_canon' : 'private';
+}
+
 function getFactReviewReason(fact: AgentPinnedFactRecord, index: number) {
   if (index === 0) {
     return 'Newest saved fact - confirm before it shapes the next reply.';
@@ -214,7 +225,7 @@ function getFactReviewReason(fact: AgentPinnedFactRecord, index: number) {
     return 'Relationship context - verify tone and boundaries before replies.';
   }
 
-  if (fact.isPublic) {
+  if (deriveScopeFromFact(fact) === 'public_canon') {
     return 'Public memory - confirm it is safe to expose.';
   }
 
@@ -238,6 +249,9 @@ function toPinnedFact(
     fallback?.updatedAt ||
     new Date().toISOString();
 
+  const isPublic = record.is_public ?? fallback?.isPublic ?? false;
+  const scope: NoteScope = fallback?.scope ?? (isPublic ? 'public_canon' : 'private');
+
   return {
     id: record.id,
     key: record.key,
@@ -245,7 +259,8 @@ function toPinnedFact(
     category: record.category,
     createdAt: record.created_at || fallback?.createdAt,
     updatedAt,
-    isPublic: record.is_public ?? fallback?.isPublic ?? false,
+    isPublic,
+    scope,
     originLabel: fallback?.originLabel ?? 'Manual memory control',
     originSnippet: fallback?.originSnippet ?? truncateSnippet(record.value),
   };
@@ -256,7 +271,7 @@ function draftFromFact(fact: AgentPinnedFactRecord): MemoryDraft {
     key: fact.key,
     value: fact.value,
     category: isMemoryCategory(fact.category) ? fact.category : 'profile_fact',
-    isPublic: fact.isPublic ?? false,
+    scope: deriveScopeFromFact(fact),
   };
 }
 
@@ -315,7 +330,7 @@ export function AgentPinnedFactsCard({ settings }: AgentPinnedFactsCardProps) {
           key: draft.key,
           value: draft.value,
           category: draft.category,
-          isPublic: draft.isPublic,
+          scope: draft.scope,
         }),
       });
       const payload = await parseMemoryPayload(response);
@@ -327,7 +342,9 @@ export function AgentPinnedFactsCard({ settings }: AgentPinnedFactsCardProps) {
       }
 
       const savedMemory = payload.data;
-      setFacts((current) => sortFacts([toPinnedFact(savedMemory), ...current]));
+      const newFact = toPinnedFact(savedMemory);
+      newFact.scope = draft.scope;
+      setFacts((current) => sortFacts([newFact, ...current]));
       setDraft(EMPTY_DRAFT);
       setStatus({ tone: 'success', message: 'Memory remembered.' });
     } catch (error) {
@@ -360,7 +377,7 @@ export function AgentPinnedFactsCard({ settings }: AgentPinnedFactsCardProps) {
             key: editDraft.key,
             value: editDraft.value,
             category: editDraft.category,
-            isPublic: editDraft.isPublic,
+            scope: editDraft.scope,
           }),
         }
       );
@@ -372,6 +389,7 @@ export function AgentPinnedFactsCard({ settings }: AgentPinnedFactsCardProps) {
 
       const updatedMemory = payload.data;
       const updatedFact = toPinnedFact(updatedMemory, editFact);
+      updatedFact.scope = editDraft.scope;
       setFacts((current) =>
         sortFacts(
           current.map((fact) =>
@@ -625,21 +643,19 @@ export function AgentPinnedFactsCard({ settings }: AgentPinnedFactsCardProps) {
             />
           </label>
 
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-            <label className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-              <input
-                checked={draft.isPublic}
-                className="h-4 w-4 rounded border-border"
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    isPublic: event.target.checked,
-                  }))
-                }
-                type="checkbox"
-              />
-              Public memory
-            </label>
+          <div className="mt-4 space-y-2">
+            <span className="text-sm font-medium text-foreground">
+              Visibility scope
+            </span>
+            <SharedNoteScopePicker
+              value={draft.scope}
+              onChange={(scope) =>
+                setDraft((current) => ({ ...current, scope }))
+              }
+            />
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
             <Button
               disabled={!canRemember || busyAction === 'remember'}
               onClick={handleRemember}
@@ -801,6 +817,7 @@ export function AgentPinnedFactsCard({ settings }: AgentPinnedFactsCardProps) {
               {facts.map((fact) => {
                 const isEditing = editingId === fact.id && editDraft != null;
                 const activeDraft = isEditing ? editDraft : null;
+                const factScope = deriveScopeFromFact(fact);
 
                 return (
                   <div
@@ -813,9 +830,12 @@ export function AgentPinnedFactsCard({ settings }: AgentPinnedFactsCardProps) {
                         <div className="font-medium text-foreground">
                           {formatFactLabel(fact.key)}
                         </div>
-                        <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                          {formatCategoryLabel(fact.category)}
-                          {fact.isPublic ? ' · Public' : ' · Private'}
+                        <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+                          <span>{formatCategoryLabel(fact.category)}</span>
+                          <NoteScopeBadge
+                            scope={factScope}
+                            data-testid={`pinned-fact-scope-badge-${fact.id}`}
+                          />
                         </div>
                       </div>
                       <div
@@ -899,53 +919,47 @@ export function AgentPinnedFactsCard({ settings }: AgentPinnedFactsCardProps) {
                           />
                         </label>
 
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <label className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-                            <input
-                              checked={activeDraft.isPublic}
-                              className="h-4 w-4 rounded border-border"
-                              onChange={(event) =>
-                                setEditDraft((current) =>
-                                  current
-                                    ? {
-                                        ...current,
-                                        isPublic: event.target.checked,
-                                      }
-                                    : current
-                                )
-                              }
-                              type="checkbox"
-                            />
-                            Public memory
-                          </label>
-                          <div className="flex flex-wrap gap-2">
-                            <Button
-                              onClick={cancelEdit}
-                              size="sm"
-                              type="button"
-                              variant="outline"
-                            >
-                              <X className="mr-2 h-4 w-4" />
-                              Cancel
-                            </Button>
-                            <Button
-                              disabled={
-                                busyAction === `edit-${fact.id}` ||
-                                activeDraft.key.trim().length === 0 ||
-                                activeDraft.value.trim().length === 0
-                              }
-                              onClick={handleSaveEdit}
-                              size="sm"
-                              type="button"
-                            >
-                              {busyAction === `edit-${fact.id}` ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              ) : (
-                                <Save className="mr-2 h-4 w-4" />
-                              )}
-                              Save
-                            </Button>
-                          </div>
+                        <div className="space-y-2">
+                          <span className="text-sm font-medium text-foreground">
+                            Visibility scope
+                          </span>
+                          <SharedNoteScopePicker
+                            value={activeDraft.scope}
+                            onChange={(scope) =>
+                              setEditDraft((current) =>
+                                current ? { ...current, scope } : current
+                              )
+                            }
+                          />
+                        </div>
+
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <Button
+                            onClick={cancelEdit}
+                            size="sm"
+                            type="button"
+                            variant="outline"
+                          >
+                            <X className="mr-2 h-4 w-4" />
+                            Cancel
+                          </Button>
+                          <Button
+                            disabled={
+                              busyAction === `edit-${fact.id}` ||
+                              activeDraft.key.trim().length === 0 ||
+                              activeDraft.value.trim().length === 0
+                            }
+                            onClick={handleSaveEdit}
+                            size="sm"
+                            type="button"
+                          >
+                            {busyAction === `edit-${fact.id}` ? (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                              <Save className="mr-2 h-4 w-4" />
+                            )}
+                            Save
+                          </Button>
                         </div>
                       </div>
                     ) : (
