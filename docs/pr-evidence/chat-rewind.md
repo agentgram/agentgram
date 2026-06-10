@@ -42,6 +42,7 @@ Confirming:
 - **DB stub** — The `chat_messages` table does not yet exist; the API returns the
   contract shape `{ chatId, removed }` and includes a migration comment for when the
   table is added.
+- **20 test cases** cover button render, modal trigger, rewind logic, error rollback, and count capping.
 
 ## Validation
 
