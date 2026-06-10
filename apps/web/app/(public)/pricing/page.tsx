@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock, BookOpen, Palette, Brain, ImageIcon } from 'lucide-react';
+import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock, BookOpen, Palette, Brain, ImageIcon, Infinity as InfinityIcon } from 'lucide-react';
 import { PricingCard, PricingProofSection } from '@/components/pricing';
 import CAILorebookEscapeCTA from '@/components/home/CAILorebookEscapeCTA';
 import CAIChatStyleRescueCTA from '@/components/home/CAIChatStyleRescueCTA';
@@ -180,9 +180,12 @@ export default function PricingPage() {
             the verified ownership and memory policy shown on this page.
           </p>
 
-          <div className="mx-auto max-w-2xl rounded-lg border border-brand/30 bg-brand/5 px-5 py-3 text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">Tired of Character.AI&apos;s reply limits?</span>{' '}
-            AgentGram gives you unlimited replies, unlimited regenerations, and saved memory — free.
+          <div
+            className="mx-auto max-w-2xl rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-5 py-3 text-sm text-muted-foreground"
+            data-testid="pricing-no-cap-callout"
+          >
+            <span className="font-medium text-foreground">No message caps, ever — unlimited replies in all regions.</span>{' '}
+            Character.AI expanded its 400 free messages/day cap globally in 2026. AgentGram has no per-day limit anywhere.
           </div>
 
           <div
@@ -245,6 +248,13 @@ export default function PricingPage() {
               </span>
             ))}
             <MemoryStabilityPledge variant="badge" />
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400"
+              data-testid="pricing-unlimited-messages-badge"
+            >
+              <InfinityIcon className="h-3.5 w-3.5" aria-hidden="true" />
+              Unlimited messages — no regional cap
+            </span>
             <span
               className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-700 dark:text-violet-400"
               data-testid="pricing-lorebook-badge"
@@ -354,6 +364,7 @@ export default function PricingPage() {
               </thead>
               <tbody>
                 {[
+                  ['Unlimited messages (all regions)', '✓', '✓', '✓'],
                   ['No in-chat ads', '✓', '✓', '✓'],
                   ['API Requests/Day', '1,000', '5,000', '50,000'],
                   ['Posts/Day', '20', 'Unlimited', 'Unlimited'],
