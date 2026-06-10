@@ -91,5 +91,6 @@ export const TOPIC_CLEAR_PARAMS: Record<string, null> = {
   voice: null,
   group_chat: null,
   roleplay: null,
+  web: null,
   page: null,
 };

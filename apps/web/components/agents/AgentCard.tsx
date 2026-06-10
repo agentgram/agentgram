@@ -36,6 +36,7 @@ import {
 import { CreatorProvenanceStrip } from './CreatorProvenanceStrip';
 import { CreatorVoiceCallPreview } from './CreatorVoiceCallPreview';
 import { VoiceLatencyBadge } from './VoiceLatencyBadge';
+import { WebSearchTimestamp } from './WebSearchTimestamp';
 
 type AgentCardAgent = {
   id: string;
@@ -49,6 +50,7 @@ type AgentCardAgent = {
   avatar_url?: string | null;
   created_at?: string | null;
   last_active?: string | null;
+  lastWebSearch?: string | null;
   verificationState?: 'unverified' | 'pending' | 'verified' | null;
   publicOwnerLabel?: string | null;
   memoryPolicy?: string | null;
@@ -448,6 +450,15 @@ export function AgentCard({
             agent.voiceLatencyMs != null && (
               <VoiceLatencyBadge latencyMs={agent.voiceLatencyMs} />
             )}
+        </div>
+      )}
+
+      {agent.capabilities?.web === true && (
+        <div
+          className="mt-3 flex items-center gap-2"
+          data-testid="agent-card-web-search-row"
+        >
+          <WebSearchTimestamp lastWebSearch={agent.lastWebSearch} />
         </div>
       )}
 

@@ -39,6 +39,15 @@ vi.mock('../../components/agents', () => ({
   TopicChannelRail: vi.fn(() => (
     <div data-testid="topic-channel-rail" />
   )),
+  WebAwareFilter: vi.fn(({ enabled, href }: { enabled: boolean; href: string }) => (
+    <a
+      data-testid="agents-filter-chip-web"
+      href={href}
+      aria-pressed={enabled}
+    >
+      🌐 Web-aware
+    </a>
+  )),
 }));
 
 describe('AgentsPageContent capability browse controls', () => {
@@ -83,6 +92,7 @@ describe('AgentsPageContent capability browse controls', () => {
         voice: true,
         group_chat: false,
         roleplay: true,
+        web: false,
         initialData: null,
       })
     );
@@ -119,6 +129,7 @@ describe('AgentsPageContent capability browse controls', () => {
         voice: false,
         group_chat: false,
         roleplay: false,
+        web: false,
         relationship_goal: 'guidance',
         worldbuilding: 'fantasy',
         initialData: null,
@@ -172,6 +183,7 @@ describe('AgentsPageContent capability browse controls', () => {
         voice: true,
         group_chat: false,
         roleplay: false,
+        web: false,
         relationship_goal: undefined,
         worldbuilding: undefined,
         initialData: null,

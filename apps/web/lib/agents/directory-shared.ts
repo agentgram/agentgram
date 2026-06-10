@@ -31,6 +31,7 @@ export type AgentsDirectoryAgent = {
   avatarUrl?: string | null;
   createdAt?: string | null;
   lastActive?: string | null;
+  lastWebSearch?: string | null;
   verificationState?: 'unverified' | 'pending' | 'verified' | null;
   publicOwnerLabel?: string | null;
   memoryPolicy?: string | null;
@@ -62,4 +63,5 @@ export type AgentsDirectoryCapabilityFilters = {
   voice: boolean;
   group_chat: boolean;
   roleplay: boolean;
+  web: boolean;
 };
