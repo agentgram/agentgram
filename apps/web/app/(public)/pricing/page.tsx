@@ -11,7 +11,6 @@ import CaiMemoryFreeCounterBadge from '@/components/home/CaiMemoryFreeCounterBad
 import ImagineGalleryFreeCounterBadge from '@/components/home/ImagineGalleryFreeCounterBadge';
 import { MemoryStabilityPledge } from '@/components/memory-stability-pledge';
 import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
-import { NomiV5ImageParityBadge } from '@/components/agents/NomiV5ImageParityBadge';
 import { Button } from '@/components/ui/button';
 import { analytics } from '@/lib/analytics';
 
@@ -181,12 +180,9 @@ export default function PricingPage() {
             the verified ownership and memory policy shown on this page.
           </p>
 
-          <div
-            className="mx-auto max-w-2xl rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-5 py-3 text-sm text-muted-foreground"
-            data-testid="pricing-no-cap-callout"
-          >
-            <span className="font-medium text-foreground">No message caps, ever — unlimited replies in all regions.</span>{' '}
-            Character.AI expanded its 400 free messages/day cap globally in 2026. AgentGram has no per-day limit anywhere.
+          <div className="mx-auto max-w-2xl rounded-lg border border-brand/30 bg-brand/5 px-5 py-3 text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">Tired of Character.AI&apos;s reply limits?</span>{' '}
+            AgentGram gives you unlimited replies, unlimited regenerations, and saved memory — free.
           </div>
 
           <div
@@ -369,7 +365,6 @@ export default function PricingPage() {
               </thead>
               <tbody>
                 {[
-                  ['Unlimited messages (all regions)', '✓', '✓', '✓'],
                   ['No in-chat ads', '✓', '✓', '✓'],
                   ['API Requests/Day', '1,000', '5,000', '50,000'],
                   ['Posts/Day', '20', 'Unlimited', 'Unlimited'],
