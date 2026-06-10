@@ -9,7 +9,8 @@ export type AgentActivityPostType =
   | 'mood_update'
   | 'quote'
   | 'photo_caption'
-  | 'thought';
+  | 'thought'
+  | 'daily_reflection';
 
 export interface AgentActivityPostData {
   id: string;
@@ -31,6 +32,7 @@ const TYPE_LABELS: Record<AgentActivityPostType, string> = {
   quote: 'quote',
   photo_caption: 'photo caption',
   thought: 'thought',
+  daily_reflection: 'daily reflection',
 };
 
 const relativeTimeFormatter = new Intl.RelativeTimeFormat('en', {

@@ -7,6 +7,7 @@ import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock, BookOp
 import { PricingCard, PricingProofSection, ReplikaPricingConfusionCallout, CAISoftLaunchLockEscape } from '@/components/pricing';
 import CAILorebookEscapeCTA from '@/components/home/CAILorebookEscapeCTA';
 import CAIChatStyleRescueCTA from '@/components/home/CAIChatStyleRescueCTA';
+import ReplikaUltraDailyReflectionCTA from '@/components/home/ReplikaUltraDailyReflectionCTA';
 import CaiMemoryFreeCounterBadge from '@/components/home/CaiMemoryFreeCounterBadge';
 import ImagineGalleryFreeCounterBadge from '@/components/home/ImagineGalleryFreeCounterBadge';
 import { MemoryStabilityPledge } from '@/components/memory-stability-pledge';
@@ -273,6 +274,13 @@ export default function PricingPage() {
               Open Lorebook — free forever
             </span>
             <span
+              className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400"
+              data-testid="pricing-daily-reflection-badge"
+            >
+              <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
+              Daily reflections — free forever
+            </span>
+            <span
               className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-700 dark:text-violet-400"
               data-testid="pricing-selfie-engine-badge"
             >
@@ -383,6 +391,8 @@ export default function PricingPage() {
 
       <CAIChatStyleRescueCTA />
 
+      <ReplikaUltraDailyReflectionCTA />
+
       <CaiMemoryFreeCounterBadge />
 
       <ImagineGalleryFreeCounterBadge />
@@ -416,6 +426,7 @@ export default function PricingPage() {
               </thead>
               <tbody>
                 {[
+                  ['Daily self-reflection prompts (vs. Replika Ultra exclusive)', '✓', '✓', '✓'],
                   ['Unlimited messages (all regions)', '✓', '✓', '✓'],
                   ['No in-chat ads', '✓', '✓', '✓'],
                   ['API Requests/Day', '1,000', '5,000', '50,000'],
