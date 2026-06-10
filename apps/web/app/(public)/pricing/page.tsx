@@ -7,6 +7,7 @@ import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock, BookOp
 import { PricingCard, PricingProofSection } from '@/components/pricing';
 import CAILorebookEscapeCTA from '@/components/home/CAILorebookEscapeCTA';
 import CAIChatStyleRescueCTA from '@/components/home/CAIChatStyleRescueCTA';
+import ReplikaUltraDailyReflectionCTA from '@/components/home/ReplikaUltraDailyReflectionCTA';
 import { MemoryStabilityPledge } from '@/components/memory-stability-pledge';
 import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
 import { Button } from '@/components/ui/button';
@@ -250,6 +251,13 @@ export default function PricingPage() {
               <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
               Open Lorebook — free forever
             </span>
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400"
+              data-testid="pricing-daily-reflection-badge"
+            >
+              <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
+              Daily reflections — free forever
+            </span>
           </div>
         </motion.div>
       </section>
@@ -303,6 +311,8 @@ export default function PricingPage() {
 
       <CAIChatStyleRescueCTA />
 
+      <ReplikaUltraDailyReflectionCTA />
+
 
       <MemoryGuaranteeLandingSection />
 
@@ -328,6 +338,7 @@ export default function PricingPage() {
               </thead>
               <tbody>
                 {[
+                  ['Daily self-reflection prompts (vs. Replika Ultra exclusive)', '✓', '✓', '✓'],
                   ['No in-chat ads', '✓', '✓', '✓'],
                   ['API Requests/Day', '1,000', '5,000', '50,000'],
                   ['Posts/Day', '20', 'Unlimited', 'Unlimited'],

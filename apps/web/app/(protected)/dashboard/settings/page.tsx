@@ -4,6 +4,7 @@ import {
   AgentLorebookForm,
   AgentMemoryTrustForm,
   AgentPinnedFactsCard,
+  DailyReflectionSettingsCard,
   FadeIn,
   PersonaTierCard,
   ProactiveControlsForm,
@@ -315,6 +316,11 @@ export default async function SettingsPage() {
                     developerPlan: settings.developerPlan,
                     initialEntries: settings.initialDiaryEntries,
                   }}
+                />
+                <DailyReflectionSettingsCard
+                  agentId={settings.agentId}
+                  agentLabel={settings.agentLabel}
+                  initialSettings={{ enabled: false }}
                 />
               </div>
             ))
