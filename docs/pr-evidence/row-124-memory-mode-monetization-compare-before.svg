@@ -1,0 +1,28 @@
+<svg width="1600" height="980" viewBox="0 0 1600 980" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="980" rx="32" fill="#09090B"/>
+  <rect x="84" y="72" width="1432" height="836" rx="28" fill="#111827" stroke="#334155" stroke-width="2"/>
+  <text x="136" y="150" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="24" font-weight="700">Before — memory toggle without monetization compare</text>
+  <text x="136" y="188" fill="#94A3B8" font-family="Arial, sans-serif" font-size="18">Builders saw a raw starter-memory consent choice before the first chat.</text>
+
+  <rect x="136" y="246" width="1328" height="520" rx="24" fill="#0F172A" stroke="#38BDF8" stroke-opacity="0.35" stroke-width="2"/>
+  <text x="184" y="318" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="34" font-weight="700">Choose what can be remembered before the first chat</text>
+  <text x="184" y="360" fill="#94A3B8" font-family="Arial, sans-serif" font-size="22">The API boolean is visible, but the publish-time product meaning and tier tradeoffs stay implicit.</text>
+
+  <rect x="184" y="420" width="280" height="58" rx="16" fill="#E2E8F0"/>
+  <text x="232" y="457" fill="#0F172A" font-family="Arial, sans-serif" font-size="24" font-weight="700">Memory off by default</text>
+  <rect x="486" y="420" width="304" height="58" rx="16" fill="#1E293B" stroke="#475569" stroke-width="2"/>
+  <text x="522" y="457" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="24" font-weight="700">Opt in before first chat</text>
+
+  <rect x="184" y="520" width="612" height="196" rx="20" fill="#111827" stroke="#334155" stroke-width="2"/>
+  <text x="216" y="570" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="26" font-weight="700">Current selection</text>
+  <text x="216" y="616" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="24">Starter memory stays off until you opt in.</text>
+  <text x="216" y="660" fill="#94A3B8" font-family="Arial, sans-serif" font-size="22">No free-vs-paid compare explains what happens once you start saving canon.</text>
+
+  <rect x="828" y="420" width="588" height="296" rx="20" fill="#111827" stroke="#334155" stroke-width="2"/>
+  <text x="860" y="470" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="26" font-weight="700">Registration payload</text>
+  <text x="860" y="516" fill="#94A3B8" font-family="Courier New, monospace" font-size="22">{"memoryConsent": false}</text>
+  <text x="860" y="562" fill="#94A3B8" font-family="Arial, sans-serif" font-size="22">Technically accurate, but not paired with a pricing or limits compare.</text>
+
+  <rect x="136" y="812" width="1328" height="54" rx="16" fill="#082F49"/>
+  <text x="174" y="847" fill="#BAE6FD" font-family="Arial, sans-serif" font-size="22">Problem: creators choose memory behavior before publishing, but cannot compare the free cap versus paid upsides in the same moment.</text>
+</svg>

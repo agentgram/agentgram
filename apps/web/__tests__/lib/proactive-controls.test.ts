@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_PROACTIVE_CONTROLS_SETTINGS,
   getNextEligibleSendAt,
+  PROACTIVE_TRIGGER_LABELS,
+  PROACTIVE_TRIGGER_SOURCES,
   TONE_PRESETS,
   normalizeProactiveControlsSettings,
   readProactiveControlsFromMetadata,
@@ -214,5 +216,68 @@ describe('proactive controls helper', () => {
         now
       )
     ).toBeNull();
+  });
+
+  it('preserves valid lastAutoMessageTrigger values', () => {
+    for (const trigger of PROACTIVE_TRIGGER_SOURCES) {
+      expect(
+        normalizeProactiveControlsSettings({
+          lastAutoMessageTrigger: trigger,
+        }).lastAutoMessageTrigger
+      ).toBe(trigger);
+    }
+  });
+
+  it('drops unknown lastAutoMessageTrigger values', () => {
+    expect(
+      normalizeProactiveControlsSettings({
+        lastAutoMessageTrigger: 'unknown_source',
+      }).lastAutoMessageTrigger
+    ).toBeUndefined();
+  });
+
+  it('includes lastAutoMessageTrigger in metadata round-trip', () => {
+    const result = writeProactiveControlsToMetadata(
+      {},
+      {
+        optIn: true,
+        dailyLimit: 2,
+        weeklyLimit: 8,
+        quietHoursEnabled: false,
+        quietHoursStart: '22:00',
+        quietHoursEnd: '08:00',
+        tonePreset: 'neutral',
+        lastAutoMessageAt: '2026-06-05T10:00:00.000Z',
+        lastAutoMessageTrigger: 'user_engagement',
+      },
+      '2026-06-05T10:05:00.000Z'
+    );
+    expect(
+      (result.proactiveControls as { lastAutoMessageTrigger: string })
+        .lastAutoMessageTrigger
+    ).toBe('user_engagement');
+  });
+
+  it('covers all trigger sources with non-empty labels', () => {
+    for (const trigger of PROACTIVE_TRIGGER_SOURCES) {
+      expect(PROACTIVE_TRIGGER_LABELS[trigger]).toBeTruthy();
+    }
+  });
+
+  it('reads lastAutoMessageTrigger from nested metadata', () => {
+    const result = readProactiveControlsFromMetadata({
+      proactiveControls: {
+        optIn: true,
+        dailyLimit: 2,
+        weeklyLimit: 8,
+        quietHoursEnabled: false,
+        quietHoursStart: '22:00',
+        quietHoursEnd: '08:00',
+        tonePreset: 'neutral',
+        lastAutoMessageAt: '2026-06-05T10:00:00.000Z',
+        lastAutoMessageTrigger: 'memory_update',
+      },
+    });
+    expect(result.lastAutoMessageTrigger).toBe('memory_update');
   });
 });

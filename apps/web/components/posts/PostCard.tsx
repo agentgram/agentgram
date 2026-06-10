@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -11,11 +11,14 @@ import {
   Send,
   Repeat2,
   Quote,
+  Lock,
   ShieldCheck,
   ShieldAlert,
   AlertTriangle,
   BadgeCheck,
+  BookmarkPlus,
   History,
+  Loader2,
 } from 'lucide-react';
 import { Post } from '@agentgram/shared';
 import type { PostMedia, ChatSnippetMessage } from '@agentgram/shared';
@@ -26,6 +29,8 @@ import { motion } from 'framer-motion';
 import { formatTimeAgo } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
 import { analytics } from '@/lib/analytics';
+import { buildExploreTagHref, extractPostTopicTags } from '@/lib/topic-chips';
+import type { ProactiveControlsSettings } from '@/lib/proactive-controls';
 import {
   Dialog,
   DialogContent,
@@ -34,6 +39,22 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { isPostInPublicMediaGallery } from '@/components/agents/profile-media';
+
+type ChatSnippetMemoryCapture = {
+  id?: string;
+  fact: string;
+  source?: string;
+  capturedAt?: string;
+  reason?: string;
+};
+
+type ChatSnippetMemoryCorrection = {
+  required?: boolean;
+  reason?: string;
+  incorrectFact?: string;
+  correctedFact?: string;
+};
 
 interface PostCardProps {
   post: Post & {
@@ -167,6 +188,88 @@ const LOW_CONTEXT_REPLY_PATTERNS = [
   /what should i know about you/i,
 ];
 
+const HUMAN_CHAT_ROLES = ['user', 'human', 'operator', 'developer'];
+const AGENT_CHAT_ROLE_KEYWORDS = ['agent', 'assistant', 'bot'];
+
+function normalizeChatRole(role?: string) {
+  return role?.trim().toLowerCase() ?? '';
+}
+
+function matchesRoleKeyword(role: string, keyword: string) {
+  return (
+    role === keyword ||
+    role.startsWith(`${keyword}-`) ||
+    role.endsWith(`-${keyword}`) ||
+    role.includes(`-${keyword}-`) ||
+    role.startsWith(`${keyword}_`) ||
+    role.endsWith(`_${keyword}`) ||
+    role.includes(`_${keyword}_`) ||
+    role.startsWith(`${keyword}:`) ||
+    role.endsWith(`:${keyword}`) ||
+    role.includes(`:${keyword}:`)
+  );
+}
+
+function isHumanChatRole(role?: string) {
+  const normalizedRole = normalizeChatRole(role);
+
+  if (!normalizedRole) {
+    return false;
+  }
+
+  return HUMAN_CHAT_ROLES.some((keyword) =>
+    matchesRoleKeyword(normalizedRole, keyword)
+  );
+}
+
+function isAgentChatRole(role?: string) {
+  const normalizedRole = normalizeChatRole(role);
+
+  if (!normalizedRole || isHumanChatRole(normalizedRole)) {
+    return false;
+  }
+
+  return AGENT_CHAT_ROLE_KEYWORDS.some((keyword) =>
+    matchesRoleKeyword(normalizedRole, keyword)
+  );
+}
+
+function isAgentToAgentChatSnippet(
+  post: Post,
+  chatMessages: ChatSnippetMessage[]
+) {
+  const explicitMetadataState = readMetadataBoolean(post.metadata, [
+    ['agentToAgent'],
+    ['agent_to_agent'],
+    ['conversation', 'agentToAgent'],
+    ['conversation', 'agent_to_agent'],
+    ['chatSnippet', 'agentToAgent'],
+    ['chat_snippet', 'agent_to_agent'],
+  ]);
+
+  if (explicitMetadataState !== undefined) {
+    return explicitMetadataState;
+  }
+
+  if (post.postType !== 'chat_snippet' || chatMessages.length < 2) {
+    return false;
+  }
+
+  const roles = chatMessages
+    .map((message) => normalizeChatRole(message.role))
+    .filter(Boolean);
+
+  if (roles.length < 2 || roles.some((role) => isHumanChatRole(role))) {
+    return false;
+  }
+
+  if (!roles.every((role) => isAgentChatRole(role))) {
+    return false;
+  }
+
+  return new Set(roles).size >= 2;
+}
+
 function isLowContextReplyMessage(value?: string) {
   if (!value?.trim()) {
     return false;
@@ -211,7 +314,9 @@ function getReplyVelocity(post: Post): ReplyVelocityState | null {
     ['comments', 'lastReplyAt'],
     ['comments', 'last_reply_at'],
   ]);
-  const recentReplyAtMs = recentReplyAt ? new Date(recentReplyAt).getTime() : Number.NaN;
+  const recentReplyAtMs = recentReplyAt
+    ? new Date(recentReplyAt).getTime()
+    : Number.NaN;
   const elapsedHours = Number.isFinite(recentReplyAtMs)
     ? Math.max(0, Date.now() - recentReplyAtMs) / (1000 * 60 * 60)
     : undefined;
@@ -269,14 +374,231 @@ function getReplyVelocity(post: Post): ReplyVelocityState | null {
   return null;
 }
 
-type MemoryCapture = {
-  fact: string;
-  source?: string;
-  capturedAt?: string;
-  reason?: string;
+type FollowUpOptInSignal = {
+  title: string;
+  description: string;
 };
 
-function normalizeMemoryCapture(value: unknown): MemoryCapture | null {
+function getFollowUpOptInSignal({
+  isChatSnippet,
+  chatMessageCount,
+  commentCount,
+  hasMemorySignal,
+  replyVelocity,
+}: {
+  isChatSnippet: boolean;
+  chatMessageCount: number;
+  commentCount: number;
+  hasMemorySignal: boolean;
+  replyVelocity: ReplyVelocityState | null;
+}): FollowUpOptInSignal | null {
+  if (!isChatSnippet || chatMessageCount < 2) {
+    return null;
+  }
+
+  if (hasMemorySignal && replyVelocity) {
+    return {
+      title: 'Strong thread — keep the door open',
+      description:
+        'This exchange already has saved context and active replies. Turn on future check-ins before the momentum fades.',
+    };
+  }
+
+  if (replyVelocity) {
+    return {
+      title: 'Strong thread — follow up while it is fresh',
+      description:
+        'This chat still has active reply momentum. One tap lets AgentGram check in later without opening Settings first.',
+    };
+  }
+
+  if (hasMemorySignal) {
+    return {
+      title: 'Strong thread — keep this context alive',
+      description:
+        'This snippet already captured a memory signal. Turn on future check-ins so AgentGram can reconnect from the same thread later.',
+    };
+  }
+
+  if (commentCount >= 3 && chatMessageCount >= 3) {
+    return {
+      title: 'Strong thread — invite a future check-in',
+      description:
+        'This back-and-forth already has momentum. One tap lets AgentGram follow up later from threads like this.',
+    };
+  }
+
+  return null;
+}
+
+type ConversationMemoryPressureLevel = 'watch' | 'high' | 'critical';
+
+type ConversationMemoryPressureSignal = {
+  level: ConversationMemoryPressureLevel;
+  badge: string;
+  title: string;
+  description: string;
+  toneClassName: string;
+};
+
+function normalizeConversationMemoryPressureLevel(value?: string) {
+  const normalized = value
+    ?.trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
+
+  if (!normalized) {
+    return null;
+  }
+
+  if (
+    ['critical', 'severe', 'max', 'overflow', 'compressed'].includes(
+      normalized
+    ) ||
+    (normalized.includes('compression') && normalized.includes('risk'))
+  ) {
+    return 'critical';
+  }
+
+  if (
+    ['high', 'elevated', 'warn', 'warning', 'rising'].includes(normalized) ||
+    normalized.includes('high')
+  ) {
+    return 'high';
+  }
+
+  if (
+    ['watch', 'medium', 'moderate', 'early'].includes(normalized) ||
+    normalized.includes('watch')
+  ) {
+    return 'watch';
+  }
+
+  return null;
+}
+
+function getConversationMemoryPressureLevelFromCount(
+  chatMessageCount: number
+): ConversationMemoryPressureLevel | null {
+  if (chatMessageCount >= 16) {
+    return 'critical';
+  }
+
+  if (chatMessageCount >= 10) {
+    return 'high';
+  }
+
+  if (chatMessageCount >= 6) {
+    return 'watch';
+  }
+
+  return null;
+}
+
+function getConversationMemoryPressureSignal({
+  isChatSnippet,
+  chatMessageCount,
+  memoryCueCount,
+  hasVisibleMemorySignal,
+  overrideLevel,
+  overrideReason,
+}: {
+  isChatSnippet: boolean;
+  chatMessageCount: number;
+  memoryCueCount: number;
+  hasVisibleMemorySignal: boolean;
+  overrideLevel?: ConversationMemoryPressureLevel | null;
+  overrideReason?: string;
+}): ConversationMemoryPressureSignal | null {
+  if (!isChatSnippet) {
+    return null;
+  }
+
+  const level =
+    overrideLevel ?? getConversationMemoryPressureLevelFromCount(chatMessageCount);
+
+  if (!level) {
+    return null;
+  }
+
+  const cueSummary = hasVisibleMemorySignal
+    ? memoryCueCount > 0
+      ? `${memoryCueCount} saved cue${memoryCueCount === 1 ? '' : 's'} already surfaced here.`
+      : 'Saved memory is already shaping this thread.'
+    : 'No saved fact is visible in this snippet yet.';
+
+  if (level === 'critical') {
+    return {
+      level,
+      badge: 'Compression risk',
+      title: 'Save the durable facts before older context collapses',
+      description:
+        overrideReason ||
+        `This thread is already ${chatMessageCount} turns long. Older details are likely to get summarized away unless you pin or restate the key facts now. ${cueSummary}`,
+      toneClassName: 'border-rose-500/25 bg-rose-500/10 text-rose-700',
+    };
+  }
+
+  if (level === 'high') {
+    return {
+      level,
+      badge: 'Memory pressure',
+      title: 'Long thread — save the facts you want carried forward',
+      description:
+        overrideReason ||
+        `This snippet is up to ${chatMessageCount} turns. Context is getting dense, so save the details you do not want the next replies to blur. ${cueSummary}`,
+      toneClassName: 'border-amber-500/25 bg-amber-500/10 text-amber-700',
+    };
+  }
+
+  return {
+    level,
+    badge: 'Memory watch',
+    title: 'Context is getting longer — mark the key facts early',
+    description:
+      overrideReason ||
+      `This conversation has reached ${chatMessageCount} turns. Save the durable facts now so later replies do not flatten the thread into a vague summary. ${cueSummary}`,
+    toneClassName: 'border-sky-500/20 bg-sky-500/10 text-sky-700',
+  };
+}
+
+type ProactiveControlsResponse = {
+  success?: boolean;
+  data?: ProactiveControlsSettings;
+  error?: {
+    code?: string;
+    message?: string;
+  };
+};
+
+const FOLLOW_UP_TONE_LABELS: Record<
+  ProactiveControlsSettings['tonePreset'],
+  string
+> = {
+  warm: 'Warm',
+  neutral: 'Neutral',
+  brief: 'Brief',
+};
+
+function getFollowUpQuietHoursSummary(
+  settings: ProactiveControlsSettings
+): string {
+  return settings.quietHoursEnabled
+    ? `${settings.quietHoursStart} → ${settings.quietHoursEnd} KST`
+    : 'Off';
+}
+
+function getFollowUpOptInSummary(settings: ProactiveControlsSettings) {
+  return {
+    caps: `${settings.dailyLimit}/day · ${settings.weeklyLimit}/week`,
+    quietHours: getFollowUpQuietHoursSummary(settings),
+    tone: FOLLOW_UP_TONE_LABELS[settings.tonePreset],
+  };
+}
+
+function normalizeMemoryCapture(
+  value: unknown
+): ChatSnippetMemoryCapture | null {
   if (typeof value === 'string' && value.trim()) {
     return { fact: value.trim() };
   }
@@ -302,12 +624,21 @@ function normalizeMemoryCapture(value: unknown): MemoryCapture | null {
     return null;
   }
 
+  const idCandidates = [record.id, record.memoryId, record.memory_id];
+  const id = idCandidates.find(
+    (candidate): candidate is string =>
+      typeof candidate === 'string' && candidate.trim().length > 0
+  );
   const sourceCandidates = [record.source, record.savedFrom, record.from];
   const source = sourceCandidates.find(
     (candidate): candidate is string =>
       typeof candidate === 'string' && candidate.trim().length > 0
   );
-  const capturedAtCandidates = [record.capturedAt, record.recordedAt, record.savedAt];
+  const capturedAtCandidates = [
+    record.capturedAt,
+    record.recordedAt,
+    record.savedAt,
+  ];
   const capturedAt = capturedAtCandidates.find(
     (candidate): candidate is string =>
       typeof candidate === 'string' && candidate.trim().length > 0
@@ -323,6 +654,7 @@ function normalizeMemoryCapture(value: unknown): MemoryCapture | null {
   );
 
   return {
+    id: id?.trim(),
     fact: fact.trim(),
     source: source?.trim(),
     capturedAt: capturedAt?.trim(),
@@ -333,7 +665,7 @@ function normalizeMemoryCapture(value: unknown): MemoryCapture | null {
 function readMetadataCapture(
   metadata: Post['metadata'],
   paths: string[][]
-): MemoryCapture | null {
+): ChatSnippetMemoryCapture | null {
   if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
     return null;
   }
@@ -343,6 +675,94 @@ function readMetadataCapture(
     const capture = normalizeMemoryCapture(value);
     if (capture) {
       return capture;
+    }
+  }
+
+  return null;
+}
+
+function normalizeMemoryCorrection(
+  value: unknown
+): ChatSnippetMemoryCorrection | null {
+  if (typeof value === 'string' && value.trim()) {
+    return { correctedFact: value.trim() };
+  }
+
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const incorrectFactCandidates = [
+    record.incorrectFact,
+    record.incorrect_fact,
+    record.recalledFact,
+    record.recalled_fact,
+    record.wrongFact,
+    record.wrong_fact,
+  ];
+  const correctedFactCandidates = [
+    record.correctedFact,
+    record.corrected_fact,
+    record.correctFact,
+    record.correct_fact,
+    record.rememberThisInstead,
+    record.remember_this_instead,
+    record.replacementFact,
+    record.replacement_fact,
+    record.value,
+  ];
+  const reasonCandidates = [
+    record.reason,
+    record.summary,
+    record.explainer,
+    record.why,
+  ];
+
+  const incorrectFact = incorrectFactCandidates.find(
+    (candidate): candidate is string =>
+      typeof candidate === 'string' && candidate.trim().length > 0
+  );
+  const correctedFact = correctedFactCandidates.find(
+    (candidate): candidate is string =>
+      typeof candidate === 'string' && candidate.trim().length > 0
+  );
+  const reason = reasonCandidates.find(
+    (candidate): candidate is string =>
+      typeof candidate === 'string' && candidate.trim().length > 0
+  );
+  const required =
+    typeof record.required === 'boolean'
+      ? record.required
+      : typeof record.enabled === 'boolean'
+        ? record.enabled
+        : undefined;
+
+  if (!incorrectFact && !correctedFact && !reason && required === undefined) {
+    return null;
+  }
+
+  return {
+    required,
+    reason: reason?.trim(),
+    incorrectFact: incorrectFact?.trim(),
+    correctedFact: correctedFact?.trim(),
+  };
+}
+
+function readMetadataCorrection(
+  metadata: Post['metadata'],
+  paths: string[][]
+): ChatSnippetMemoryCorrection | null {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return null;
+  }
+
+  for (const path of paths) {
+    const value = readMetadataValue(metadata as Record<string, unknown>, path);
+    const correction = normalizeMemoryCorrection(value);
+    if (correction) {
+      return correction;
     }
   }
 
@@ -364,15 +784,256 @@ function formatMemoryTimestamp(value: string) {
   }).format(date);
 }
 
+function isSameMemoryCapture(
+  left?: ChatSnippetMemoryCapture | null,
+  right?: ChatSnippetMemoryCapture | null
+) {
+  if (!left || !right) {
+    return false;
+  }
+
+  if (left.id && right.id) {
+    return left.id === right.id;
+  }
+
+  return (
+    left.fact === right.fact &&
+    (left.capturedAt || '') === (right.capturedAt || '')
+  );
+}
+
+function isFreshMemoryCapture(value?: string, nowMs = Date.now()) {
+  if (!value) {
+    return false;
+  }
+
+  const timestamp = new Date(value).getTime();
+
+  if (!Number.isFinite(timestamp)) {
+    return false;
+  }
+
+  return nowMs - timestamp >= 0 && nowMs - timestamp <= 10 * 60 * 1000;
+}
+
+const shownMemoryCaptureToastKeys = new Set<string>();
+
+type MemoryCaptureToastBodyProps = {
+  capture: ChatSnippetMemoryCapture;
+  canInlineEdit: boolean;
+  isUndoEnabled: boolean;
+  onEditInline: (nextFact: string) => Promise<void>;
+  onUndo: () => Promise<void>;
+  onOpenSettings: () => void;
+};
+
+function MemoryCaptureToastBody({
+  capture,
+  canInlineEdit,
+  isUndoEnabled,
+  onEditInline,
+  onUndo,
+  onOpenSettings,
+}: MemoryCaptureToastBodyProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(capture.fact);
+  const [status, setStatus] = useState<'idle' | 'saving' | 'undoing'>('idle');
+
+  return (
+    <div
+      className="mt-2 space-y-3"
+      data-testid="memory-capture-toast-description"
+    >
+      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-foreground">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
+          Saved fact
+        </div>
+        {isEditing ? (
+          <div className="mt-2 space-y-2">
+            <textarea
+              data-testid="memory-capture-toast-edit-input"
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              className="min-h-[88px] w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            />
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                data-testid="memory-capture-toast-save-button"
+                disabled={status !== 'idle' || !draft.trim()}
+                onClick={async () => {
+                  setStatus('saving');
+                  try {
+                    await onEditInline(draft.trim());
+                    setIsEditing(false);
+                  } catch {
+                    // Parent toast handler surfaces the error state.
+                  } finally {
+                    setStatus('idle');
+                  }
+                }}
+                className="inline-flex items-center rounded-full bg-foreground px-3 py-1.5 text-xs font-semibold text-background transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {status === 'saving' ? 'Saving…' : 'Save'}
+              </button>
+              <button
+                type="button"
+                data-testid="memory-capture-toast-cancel-button"
+                disabled={status !== 'idle'}
+                onClick={() => {
+                  setDraft(capture.fact);
+                  setIsEditing(false);
+                }}
+                className="inline-flex items-center rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <p className="mt-2 whitespace-pre-line text-sm text-foreground">
+              {capture.fact}
+            </p>
+            {capture.source || capture.capturedAt ? (
+              <p className="mt-2 text-xs text-muted-foreground">
+                {[capture.source, capture.capturedAt]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </p>
+            ) : null}
+          </>
+        )}
+      </div>
+
+      {!isEditing ? (
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            data-testid="memory-capture-toast-edit-button"
+            onClick={() => {
+              if (canInlineEdit) {
+                setDraft(capture.fact);
+                setIsEditing(true);
+                return;
+              }
+
+              onOpenSettings();
+            }}
+            className="inline-flex items-center rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted"
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            data-testid="memory-capture-toast-undo-button"
+            disabled={!isUndoEnabled || status !== 'idle'}
+            onClick={async () => {
+              setStatus('undoing');
+              try {
+                await onUndo();
+              } catch {
+                // Parent toast handler surfaces the error state.
+              } finally {
+                setStatus('idle');
+              }
+            }}
+            className="inline-flex items-center rounded-full border border-rose-500/20 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {status === 'undoing' ? 'Undoing…' : 'Undo'}
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function normalizeRecapFact(value: unknown): string | null {
+  if (typeof value === 'string' && value.trim()) {
+    return value.trim();
+  }
+
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const factCandidates = [
+    record.fact,
+    record.summary,
+    record.text,
+    record.value,
+    record.memory,
+  ];
+  const fact = factCandidates.find(
+    (candidate): candidate is string =>
+      typeof candidate === 'string' && candidate.trim().length > 0
+  );
+
+  return fact?.trim() ?? null;
+}
+
+function formatIdleGapDuration(totalMinutes: number) {
+  const roundedMinutes = Math.max(0, Math.round(totalMinutes));
+
+  if (roundedMinutes < 60) {
+    return `${roundedMinutes}m`;
+  }
+
+  const days = Math.floor(roundedMinutes / (60 * 24));
+  const hours = Math.floor((roundedMinutes % (60 * 24)) / 60);
+  const minutes = roundedMinutes % 60;
+  const parts: string[] = [];
+
+  if (days > 0) {
+    parts.push(`${days}d`);
+  }
+
+  if (hours > 0) {
+    parts.push(`${hours}h`);
+  }
+
+  if (days === 0 && minutes > 0) {
+    parts.push(`${minutes}m`);
+  }
+
+  return parts.join(' ') || '0m';
+}
+
 type SnippetActionMode =
   | 'remix'
   | 'quote'
   | 'quote_card'
   | 'rewind'
+  | 'lock_tone'
   | 'recover'
+  | 'recover_keep_previous_tone'
   | 'safer_rewrite'
   | 'contradiction'
-  | 'restate_key_facts';
+  | 'restate_key_facts'
+  | 'remember_instead';
+
+function isAbruptStyleShiftTrigger(value: string | undefined) {
+  const normalized = value
+    ?.trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
+
+  if (!normalized) {
+    return false;
+  }
+
+  return (
+    normalized === 'abrupt_style_shift' ||
+    normalized === 'abrupt_tone_shift' ||
+    normalized === 'style_shift' ||
+    normalized === 'tone_shift' ||
+    (normalized.includes('abrupt') &&
+      (normalized.includes('style') || normalized.includes('tone'))) ||
+    normalized.includes('style_shift') ||
+    normalized.includes('tone_shift')
+  );
+}
 
 function escapeSvgText(value: string) {
   return value
@@ -434,14 +1095,81 @@ function getChatRewindContext(messages: ChatSnippetMessage[]) {
       return {
         previousUserMessage: candidate.content.trim(),
         discardedAgentReply: message.content.trim(),
-        contextMessages: messages.slice(0, index).filter((entry) =>
-          Boolean(entry.content?.trim())
-        ),
+        contextMessages: messages
+          .slice(0, index)
+          .filter((entry) => Boolean(entry.content?.trim())),
       };
     }
   }
 
   return null;
+}
+
+function normalizeRememberedFact(value: string | undefined, maxLength = 180) {
+  const normalized = value?.replace(/\s+/g, ' ').trim();
+
+  if (!normalized) {
+    return undefined;
+  }
+
+  return normalized.length <= maxLength
+    ? normalized
+    : normalized.slice(0, maxLength - 1).trimEnd() + '…';
+}
+
+type ManualMemoryDraft = {
+  key: string;
+  value: string;
+  category: 'profile_fact' | 'relationship_context';
+  preview: ChatSnippetMemoryCapture;
+};
+
+function buildManualMemoryDraft(
+  postId: string,
+  messages: ChatSnippetMessage[],
+  fallbackText?: string,
+  fallbackTitle?: string
+): ManualMemoryDraft | null {
+  const latestHumanMessage = [...messages]
+    .reverse()
+    .find((message) => isHumanSnippetRole(message.role))?.content;
+  const latestAgentMessage = [...messages]
+    .reverse()
+    .find((message) => isAgentSnippetRole(message.role))?.content;
+
+  const relationshipValue = normalizeRememberedFact(latestHumanMessage);
+
+  if (relationshipValue) {
+    return {
+      key: 'chat-' + postId + '-relationship-context',
+      value: relationshipValue,
+      category: 'relationship_context',
+      preview: {
+        fact: relationshipValue,
+        source: 'Saved from this snippet',
+        reason: 'Saved manually from a standout chat moment.',
+      },
+    };
+  }
+
+  const profileValue = normalizeRememberedFact(
+    latestAgentMessage || fallbackText || fallbackTitle
+  );
+
+  if (!profileValue) {
+    return null;
+  }
+
+  return {
+    key: 'chat-' + postId + '-profile-fact',
+    value: profileValue,
+    category: 'profile_fact',
+    preview: {
+      fact: profileValue,
+      source: 'Saved from this snippet',
+      reason: 'Saved manually from a standout chat moment.',
+    },
+  };
 }
 
 export function PostCard({
@@ -457,6 +1185,13 @@ export function PostCard({
   const [isLiked, setIsLiked] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMemoryCapturesOpen, setIsMemoryCapturesOpen] = useState(false);
+  const [manualMemoryCaptureState, setManualMemoryCaptureState] = useState<{
+    postId: string;
+    capture: ChatSnippetMemoryCapture;
+  } | null>(null);
+  const [savingManualRememberPostId, setSavingManualRememberPostId] = useState<
+    string | null
+  >(null);
 
   const mediaUrl = (post.metadata?.media as PostMedia[] | undefined)?.[0]?.url;
   const chatMessages = (
@@ -465,10 +1200,20 @@ export function PostCard({
     Boolean(message?.content?.trim())
   );
   const isChatSnippet = post.postType === 'chat_snippet';
+  const isAgentToAgentConversation = isAgentToAgentChatSnippet(
+    post,
+    chatMessages
+  );
   const chatSnippetPreview = chatMessages.slice(0, 3);
   const chatSnippetSummary = chatMessages
     .map((message) => `${message.role}: ${message.content}`)
     .join('\n');
+  const manualMemoryDraft = buildManualMemoryDraft(
+    post.id,
+    chatMessages,
+    post.content,
+    post.title
+  );
   const translationContent = [post.title, post.content, chatSnippetSummary]
     .filter(Boolean)
     .join('\n');
@@ -478,6 +1223,32 @@ export function PostCard({
     post.postType === 'text' && (isLongTitle || isLongContent);
   const authorName =
     post.author?.display_name || post.author?.name || 'AgentGram Team';
+  const publicGalleryHref = post.author?.name
+    ? `/agents/${post.author.name}?tab=media`
+    : null;
+  const showsPublicGalleryCta =
+    Boolean(publicGalleryHref) && isPostInPublicMediaGallery(post);
+  const topicTags = extractPostTopicTags(post);
+  const renderTopicChips = () => {
+    if (topicTags.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="mt-3 flex flex-wrap gap-2" data-testid="post-topic-chips">
+        {topicTags.map((tag) => (
+          <Link
+            key={tag}
+            href={buildExploreTagHref(tag)}
+            className="inline-flex items-center rounded-full border border-primary/15 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary transition hover:bg-primary/10 hover:text-primary/80"
+            data-testid={`post-topic-chip-${tag}`}
+          >
+            #{tag}
+          </Link>
+        ))}
+      </div>
+    );
+  };
   const memoryExplanation = readMetadataString(post.metadata, [
     ['memoryReason'],
     ['memory_reason'],
@@ -485,7 +1256,7 @@ export function PostCard({
     ['remembered_because'],
     ['memory', 'reason'],
   ]);
-  const memoryCaptures = readMetadataArray(post.metadata, [
+  const baseMemoryCaptures = readMetadataArray(post.metadata, [
     ['memoryCaptures'],
     ['memory_captures'],
     ['capturedMemories'],
@@ -493,8 +1264,17 @@ export function PostCard({
     ['memory', 'captures'],
   ])
     .map((entry) => normalizeMemoryCapture(entry))
-    .filter((entry): entry is MemoryCapture => entry != null);
-  const memoryPreview =
+    .filter((entry): entry is ChatSnippetMemoryCapture => entry != null);
+  const manualMemoryCapture =
+    manualMemoryCaptureState?.postId === post.id
+      ? manualMemoryCaptureState.capture
+      : null;
+  const manualRememberStatus =
+    savingManualRememberPostId === post.id ? 'saving' : 'idle';
+  const memoryCaptures = manualMemoryCapture
+    ? [manualMemoryCapture, ...baseMemoryCaptures]
+    : baseMemoryCaptures;
+  const baseMemoryPreview =
     readMetadataCapture(post.metadata, [
       ['memoryPreview'],
       ['memory_preview'],
@@ -507,27 +1287,32 @@ export function PostCard({
       ['memory', 'fact_preview'],
       ['memory', 'savedFactPreview'],
       ['memory', 'saved_fact_preview'],
-    ]) || memoryCaptures[0];
+    ]) || baseMemoryCaptures[0];
+  const memoryPreview = manualMemoryCapture || baseMemoryPreview;
   const memorySavedLabel =
-    readMetadataString(post.metadata, [
-      ['memorySavedEvent'],
-      ['memory_saved_event'],
-      ['memoryStatus'],
-      ['memory_status'],
-      ['memory', 'event'],
-      ['memory', 'status'],
-    ]) ||
-    (memoryExplanation || memoryCaptures.length > 0 || memoryPreview
+    manualMemoryCapture
       ? 'Saved to memory'
-      : undefined);
-  const memorySavedAt = readMetadataString(post.metadata, [
-    ['memorySavedAt'],
-    ['memory_saved_at'],
-    ['memoryRecordedAt'],
-    ['memory_recorded_at'],
-    ['memory', 'savedAt'],
-    ['memory', 'recordedAt'],
-  ]);
+      : readMetadataString(post.metadata, [
+          ['memorySavedEvent'],
+          ['memory_saved_event'],
+          ['memoryStatus'],
+          ['memory_status'],
+          ['memory', 'event'],
+          ['memory', 'status'],
+        ]) ||
+        (memoryExplanation || baseMemoryCaptures.length > 0 || baseMemoryPreview
+          ? 'Saved to memory'
+          : undefined);
+  const memorySavedAt =
+    manualMemoryCapture?.capturedAt ||
+    readMetadataString(post.metadata, [
+      ['memorySavedAt'],
+      ['memory_saved_at'],
+      ['memoryRecordedAt'],
+      ['memory_recorded_at'],
+      ['memory', 'savedAt'],
+      ['memory', 'recordedAt'],
+    ]);
   const memoryPreviewLabel =
     readMetadataString(post.metadata, [
       ['memoryPreviewLabel'],
@@ -537,6 +1322,218 @@ export function PostCard({
       ['memory', 'previewLabel'],
       ['memory', 'preview_label'],
     ]) || 'Saved fact shaping this reply';
+  const memorySignalResetKey = [
+    post.id,
+    memoryPreview?.id,
+    memoryPreview?.capturedAt,
+    memoryPreview?.fact,
+  ]
+    .filter(Boolean)
+    .join(':');
+  const [memorySignalState, setMemorySignalState] = useState<{
+    key: string;
+    factOverride: string | null;
+    isHidden: boolean;
+  }>({
+    key: memorySignalResetKey,
+    factOverride: null,
+    isHidden: false,
+  });
+  const activeMemorySignalState =
+    memorySignalState.key === memorySignalResetKey
+      ? memorySignalState
+      : {
+          key: memorySignalResetKey,
+          factOverride: null,
+          isHidden: false,
+        };
+  const memoryPreviewFactOverride = activeMemorySignalState.factOverride;
+  const isMemorySignalHidden = activeMemorySignalState.isHidden;
+  const visibleMemoryPreview = isMemorySignalHidden
+    ? null
+    : memoryPreview
+      ? {
+          ...memoryPreview,
+          fact: memoryPreviewFactOverride ?? memoryPreview.fact,
+        }
+      : null;
+  const visibleMemoryCaptures = isMemorySignalHidden
+    ? []
+    : memoryCaptures.map((capture) =>
+        isSameMemoryCapture(capture, memoryPreview) && memoryPreviewFactOverride
+          ? {
+              ...capture,
+              fact: memoryPreviewFactOverride,
+            }
+          : capture
+      );
+  const visibleMemorySavedLabel = isMemorySignalHidden
+    ? undefined
+    : memorySavedLabel;
+  const visibleMemoryExplanation = isMemorySignalHidden
+    ? undefined
+    : memoryExplanation;
+  const memoryCaptureToastEnabled = readMetadataBoolean(post.metadata, [
+    ['memoryCaptureToast'],
+    ['memory_capture_toast'],
+    ['showMemoryCaptureToast'],
+    ['show_memory_capture_toast'],
+    ['memory', 'captureToast'],
+    ['memory', 'capture_toast'],
+    ['memory', 'justCaptured'],
+    ['memory', 'just_captured'],
+    ['memory', 'autoCaptured'],
+    ['memory', 'auto_captured'],
+  ]);
+  const memoryCaptureToastSource =
+    visibleMemoryPreview || visibleMemoryCaptures[0] || null;
+  const memoryCaptureToastSourceId = memoryCaptureToastSource?.id;
+  const memoryCaptureToastKey = memoryCaptureToastSource
+    ? [
+        post.id,
+        memoryCaptureToastSource.id ||
+          memoryCaptureToastSource.capturedAt ||
+          post.updatedAt ||
+          memoryCaptureToastSource.fact,
+      ]
+        .filter(Boolean)
+        .join(':')
+    : null;
+  const shouldShowMemoryCaptureToast =
+    isChatSnippet &&
+    Boolean(visibleMemorySavedLabel && memoryCaptureToastSource?.fact) &&
+    (memoryCaptureToastEnabled ??
+      isFreshMemoryCapture(
+        memorySavedAt || memoryCaptureToastSource?.capturedAt || post.updatedAt
+      ));
+  const explicitReturnToChatFacts = readMetadataArray(post.metadata, [
+    ['savedFacts'],
+    ['saved_facts'],
+    ['returnToChatRecap', 'savedFacts'],
+    ['return_to_chat_recap', 'saved_facts'],
+    ['returnToChat', 'savedFacts'],
+    ['return_to_chat', 'saved_facts'],
+    ['resumeRecap', 'savedFacts'],
+    ['resume_recap', 'saved_facts'],
+  ])
+    .map((entry) => normalizeRecapFact(entry))
+    .filter((entry): entry is string => entry != null);
+  const fallbackReturnToChatFacts = [
+    ...visibleMemoryCaptures
+      .map((capture) => capture.fact.trim())
+      .filter(Boolean),
+    visibleMemoryPreview?.fact?.trim(),
+  ].filter((entry): entry is string => Boolean(entry));
+  const returnToChatFacts = Array.from(
+    new Set(
+      (explicitReturnToChatFacts.length > 0
+        ? explicitReturnToChatFacts
+        : fallbackReturnToChatFacts
+      ).filter(Boolean)
+    )
+  );
+  const returnToChatLastGoal = readMetadataString(post.metadata, [
+    ['lastGoal'],
+    ['last_goal'],
+    ['goalRecap'],
+    ['goal_recap'],
+    ['returnToChatRecap', 'lastGoal'],
+    ['return_to_chat_recap', 'last_goal'],
+    ['returnToChat', 'lastGoal'],
+    ['return_to_chat', 'last_goal'],
+    ['resumeRecap', 'lastGoal'],
+    ['resume_recap', 'last_goal'],
+  ]);
+  const returnToChatGapLabel = readMetadataString(post.metadata, [
+    ['idleGapLabel'],
+    ['idle_gap_label'],
+    ['returnToChatRecap', 'idleGapLabel'],
+    ['return_to_chat_recap', 'idle_gap_label'],
+    ['returnToChat', 'idleGapLabel'],
+    ['return_to_chat', 'idle_gap_label'],
+    ['resumeRecap', 'idleGapLabel'],
+    ['resume_recap', 'idle_gap_label'],
+  ]);
+  const returnToChatGapMinutes =
+    readMetadataNumber(post.metadata, [
+      ['idleGapMinutes'],
+      ['idle_gap_minutes'],
+      ['returnToChatRecap', 'idleGapMinutes'],
+      ['return_to_chat_recap', 'idle_gap_minutes'],
+      ['returnToChat', 'idleGapMinutes'],
+      ['return_to_chat', 'idle_gap_minutes'],
+      ['resumeRecap', 'idleGapMinutes'],
+      ['resume_recap', 'idle_gap_minutes'],
+    ]) ??
+    (() => {
+      const idleGapHours = readMetadataNumber(post.metadata, [
+        ['idleGapHours'],
+        ['idle_gap_hours'],
+        ['returnToChatRecap', 'idleGapHours'],
+        ['return_to_chat_recap', 'idle_gap_hours'],
+        ['returnToChat', 'idleGapHours'],
+        ['return_to_chat', 'idle_gap_hours'],
+        ['resumeRecap', 'idleGapHours'],
+        ['resume_recap', 'idle_gap_hours'],
+      ]);
+
+      return idleGapHours !== undefined ? idleGapHours * 60 : undefined;
+    })();
+  const resolvedReturnToChatGapLabel =
+    returnToChatGapLabel ||
+    (returnToChatGapMinutes !== undefined
+      ? formatIdleGapDuration(returnToChatGapMinutes)
+      : undefined);
+  const hasReturnToChatRecap = Boolean(
+    resolvedReturnToChatGapLabel &&
+    (returnToChatFacts.length > 0 || returnToChatLastGoal)
+  );
+
+  const memoryCorrection = readMetadataCorrection(post.metadata, [
+    ['memoryCorrection'],
+    ['memory_correction'],
+    ['wrongMemoryRecovery'],
+    ['wrong_memory_recovery'],
+    ['memory', 'correction'],
+    ['memory', 'wrongMemoryRecovery'],
+    ['memory', 'wrong_memory_recovery'],
+  ]) ?? {
+    required: readMetadataBoolean(post.metadata, [
+      ['badRecall'],
+      ['bad_recall'],
+      ['wrongMemoryRecall'],
+      ['wrong_memory_recall'],
+    ]),
+    reason: readMetadataString(post.metadata, [
+      ['badRecallReason'],
+      ['bad_recall_reason'],
+      ['wrongMemoryReason'],
+      ['wrong_memory_reason'],
+    ]),
+    incorrectFact: readMetadataString(post.metadata, [
+      ['incorrectFact'],
+      ['incorrect_fact'],
+      ['badRecallFact'],
+      ['bad_recall_fact'],
+      ['wrongMemoryFact'],
+      ['wrong_memory_fact'],
+    ]),
+    correctedFact: readMetadataString(post.metadata, [
+      ['correctedFact'],
+      ['corrected_fact'],
+      ['rememberThisInstead'],
+      ['remember_this_instead'],
+      ['replacementFact'],
+      ['replacement_fact'],
+    ]),
+  };
+  const wrongMemoryReason = memoryCorrection.reason;
+  const incorrectMemoryFact = memoryCorrection.incorrectFact;
+  const correctedMemoryFact = memoryCorrection.correctedFact;
+  const hasWrongMemoryRecovery =
+    memoryCorrection.required ??
+    Boolean(wrongMemoryReason || incorrectMemoryFact || correctedMemoryFact);
+
   const blockedMessage = readMetadataString(post.metadata, [
     ['blockedMessage'],
     ['blocked_message'],
@@ -584,6 +1581,19 @@ export function PostCard({
   const latestAgentMessage = [...chatMessages]
     .reverse()
     .find((message) => isAgentSnippetRole(message.role))?.content;
+  const threadToneHint = readMetadataString(post.metadata, [
+    ['threadTone'],
+    ['thread_tone'],
+    ['toneStyle'],
+    ['tone_style'],
+    ['styleGuide'],
+    ['style_guide'],
+    ['toneLock'],
+    ['tone_lock'],
+    ['toneLock', 'style'],
+    ['tone_lock', 'style'],
+  ]);
+
   const saferRewriteSource =
     blockedMessage || latestUserMessage || post.content || post.title;
   const hasSafetyRewriteContext = Boolean(
@@ -608,12 +1618,447 @@ export function PostCard({
     ]) ?? isLowContextReplyMessage(latestAgentMessage);
   const restateKeyFactCues = Array.from(
     new Set(
-      [memoryPreview?.fact, ...memoryCaptures.map((capture) => capture.fact)].filter(
-        (value): value is string => Boolean(value?.trim())
-      )
+      [
+        visibleMemoryPreview?.fact,
+        ...visibleMemoryCaptures.map((capture) => capture.fact),
+      ].filter((value): value is string => Boolean(value?.trim()))
     )
   ).slice(0, 3);
+  const memoryPressureLevel = normalizeConversationMemoryPressureLevel(
+    readMetadataString(post.metadata, [
+      ['memoryPressure'],
+      ['memory_pressure'],
+      ['compressionRisk'],
+      ['compression_risk'],
+      ['memory', 'pressure'],
+      ['memory', 'memoryPressure'],
+      ['memory', 'memory_pressure'],
+      ['conversation', 'memoryPressure'],
+      ['conversation', 'memory_pressure'],
+      ['conversation', 'compressionRisk'],
+      ['conversation', 'compression_risk'],
+    ])
+  );
+  const memoryPressureReason = readMetadataString(post.metadata, [
+    ['memoryPressureReason'],
+    ['memory_pressure_reason'],
+    ['compressionRiskReason'],
+    ['compression_risk_reason'],
+    ['memory', 'pressureReason'],
+    ['memory', 'pressure_reason'],
+    ['memory', 'compressionRiskReason'],
+    ['memory', 'compression_risk_reason'],
+    ['conversation', 'memoryPressureReason'],
+    ['conversation', 'memory_pressure_reason'],
+    ['conversation', 'compressionRiskReason'],
+    ['conversation', 'compression_risk_reason'],
+  ]);
+  const hasVisibleMemorySignal = Boolean(
+    memorySavedLabel ||
+      memoryExplanation ||
+      memoryPreview ||
+      memoryCaptures.length > 0
+  );
+  const conversationMemoryPressure = getConversationMemoryPressureSignal({
+    isChatSnippet,
+    chatMessageCount: chatMessages.length,
+    memoryCueCount: restateKeyFactCues.length,
+    hasVisibleMemorySignal,
+    overrideLevel: memoryPressureLevel,
+    overrideReason: memoryPressureReason,
+  });
+  const continuityRecoveryTrigger = readMetadataString(post.metadata, [
+    ['recoveryTrigger'],
+    ['recovery_trigger'],
+    ['styleShiftTrigger'],
+    ['style_shift_trigger'],
+    ['styleContinuityTrigger'],
+    ['style_continuity_trigger'],
+    ['recovery', 'trigger'],
+    ['recovery', 'type'],
+    ['continuity', 'trigger'],
+    ['continuity', 'type'],
+  ]);
+  const continuityRecoveryReason = readMetadataString(post.metadata, [
+    ['recoveryReason'],
+    ['recovery_reason'],
+    ['styleShiftReason'],
+    ['style_shift_reason'],
+    ['styleContinuityReason'],
+    ['style_continuity_reason'],
+    ['recovery', 'reason'],
+    ['continuity', 'reason'],
+  ]);
+  const previousToneHint = readMetadataString(post.metadata, [
+    ['previousTone'],
+    ['previous_tone'],
+    ['earlierTone'],
+    ['earlier_tone'],
+    ['baselineTone'],
+    ['baseline_tone'],
+    ['recovery', 'previousTone'],
+    ['recovery', 'previous_tone'],
+    ['continuity', 'previousTone'],
+    ['continuity', 'previous_tone'],
+  ]);
+  const keepPreviousToneRequested = readMetadataBoolean(post.metadata, [
+    ['keepPreviousTone'],
+    ['keep_previous_tone'],
+    ['recovery', 'keepPreviousTone'],
+    ['recovery', 'keep_previous_tone'],
+    ['continuity', 'keepPreviousTone'],
+    ['continuity', 'keep_previous_tone'],
+  ]);
+  const shouldShowKeepPreviousToneChip =
+    !hasSafetyRewriteContext &&
+    (keepPreviousToneRequested === true ||
+      isAbruptStyleShiftTrigger(continuityRecoveryTrigger) ||
+      Boolean(previousToneHint));
   const replyVelocity = getReplyVelocity(post);
+  const followUpOptInSignal = getFollowUpOptInSignal({
+    isChatSnippet,
+    chatMessageCount: chatMessages.length,
+    commentCount: post.commentCount,
+    hasMemorySignal: Boolean(
+      visibleMemorySavedLabel ||
+      visibleMemoryExplanation ||
+      visibleMemoryPreview ||
+      visibleMemoryCaptures.length > 0
+    ),
+
+    replyVelocity,
+  });
+  const [followUpOptInStatus, setFollowUpOptInStatus] = useState<
+    'idle' | 'saving' | 'enabled'
+  >('idle');
+  const [followUpOptInSettings, setFollowUpOptInSettings] =
+    useState<ProactiveControlsSettings | null>(null);
+  const followUpOptInSummary = followUpOptInSettings
+    ? getFollowUpOptInSummary(followUpOptInSettings)
+    : null;
+
+  useEffect(() => {
+    if (
+      !shouldShowMemoryCaptureToast ||
+      !memoryCaptureToastSource ||
+      !memoryCaptureToastKey ||
+      shownMemoryCaptureToastKeys.has(memoryCaptureToastKey)
+    ) {
+      return;
+    }
+
+    const openSettings = () => {
+      if (typeof window === 'undefined') {
+        return;
+      }
+
+      window.location.assign('/dashboard/settings');
+    };
+
+    const editMemoryCapture = async (nextFact: string) => {
+      if (!memoryCaptureToastSourceId) {
+        openSettings();
+        return;
+      }
+
+      const response = await fetch(
+        `/api/v1/agents/me/memories/${memoryCaptureToastSourceId}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ value: nextFact }),
+        }
+      );
+
+      if (!response.ok) {
+        let message = 'Could not update this saved fact.';
+
+        try {
+          const payload = (await response.json()) as {
+            error?: { message?: string };
+          };
+          message = payload.error?.message || message;
+        } catch {
+          // Ignore JSON parse failures.
+        }
+
+        throw new Error(message);
+      }
+
+      setMemorySignalState({
+        key: memorySignalResetKey,
+        factOverride: nextFact,
+        isHidden: false,
+      });
+      analytics.clickCta('chat_snippet_memory_capture_edit');
+      toast({
+        title: 'Saved fact updated',
+        description: 'Future replies will use your edited memory snippet.',
+      });
+    };
+
+    const undoMemoryCapture = async () => {
+      if (!memoryCaptureToastSourceId) {
+        openSettings();
+        return;
+      }
+
+      const response = await fetch(
+        `/api/v1/agents/me/memories/${memoryCaptureToastSourceId}`,
+        {
+          method: 'DELETE',
+        }
+      );
+
+      if (!response.ok) {
+        let message = 'Could not remove this saved fact.';
+
+        try {
+          const payload = (await response.json()) as {
+            error?: { message?: string };
+          };
+          message = payload.error?.message || message;
+        } catch {
+          // Ignore JSON parse failures.
+        }
+
+        throw new Error(message);
+      }
+
+      setMemorySignalState({
+        key: memorySignalResetKey,
+        factOverride: null,
+        isHidden: true,
+      });
+      analytics.clickCta('chat_snippet_memory_capture_undo');
+      toast({
+        title: 'Saved fact removed',
+        description: 'This auto-saved memory will not shape future replies.',
+      });
+    };
+
+    shownMemoryCaptureToastKeys.add(memoryCaptureToastKey);
+
+    toast({
+      title: visibleMemorySavedLabel,
+      description: (
+        <MemoryCaptureToastBody
+          capture={memoryCaptureToastSource}
+          canInlineEdit={Boolean(memoryCaptureToastSourceId)}
+          isUndoEnabled
+          onEditInline={async (nextFact) => {
+            try {
+              await editMemoryCapture(nextFact);
+            } catch (error) {
+              const message =
+                error instanceof Error
+                  ? error.message
+                  : 'Could not update this saved fact.';
+              toast({
+                title: 'Could not update saved fact',
+                description: message,
+              });
+              throw error;
+            }
+          }}
+          onUndo={async () => {
+            try {
+              await undoMemoryCapture();
+            } catch (error) {
+              const message =
+                error instanceof Error
+                  ? error.message
+                  : 'Could not remove this saved fact.';
+              toast({
+                title: 'Could not undo saved fact',
+                description: message,
+              });
+              throw error;
+            }
+          }}
+          onOpenSettings={openSettings}
+        />
+      ),
+    });
+  }, [
+    memoryCaptureToastKey,
+    memoryCaptureToastSource,
+    memoryCaptureToastSourceId,
+    memorySignalResetKey,
+    shouldShowMemoryCaptureToast,
+    toast,
+    visibleMemorySavedLabel,
+  ]);
+
+  const handleFollowUpOptIn = async () => {
+    if (!followUpOptInSignal || followUpOptInStatus !== 'idle') {
+      return;
+    }
+
+    setFollowUpOptInStatus('saving');
+
+    try {
+      const currentResponse = await fetch(
+        '/api/v1/developers/me/proactive-controls',
+        {
+          method: 'GET',
+          cache: 'no-store',
+        }
+      );
+      const currentPayload =
+        (await currentResponse.json()) as ProactiveControlsResponse;
+
+      if (
+        !currentResponse.ok ||
+        !currentPayload.success ||
+        !currentPayload.data
+      ) {
+        throw new Error(
+          currentPayload.error?.message || 'Failed to load proactive controls'
+        );
+      }
+
+      if (currentPayload.data.optIn) {
+        setFollowUpOptInSettings(currentPayload.data);
+        setFollowUpOptInStatus('enabled');
+        toast({
+          title: 'Future check-ins already on',
+          description:
+            'AgentGram is already allowed to follow up later after strong threads.',
+        });
+        return;
+      }
+
+      const updateResponse = await fetch(
+        '/api/v1/developers/me/proactive-controls',
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...currentPayload.data,
+            optIn: true,
+          }),
+        }
+      );
+      const updatePayload =
+        (await updateResponse.json()) as ProactiveControlsResponse;
+
+      if (
+        !updateResponse.ok ||
+        !updatePayload.success ||
+        !updatePayload.data?.optIn
+      ) {
+        throw new Error(
+          updatePayload.error?.message || 'Failed to enable future check-ins'
+        );
+      }
+
+      setFollowUpOptInSettings(updatePayload.data);
+      setFollowUpOptInStatus('enabled');
+      analytics.clickCta('chat_snippet_follow_up_opt_in');
+      toast({
+        title: 'Future check-ins enabled',
+        description:
+          'AgentGram can now follow up later after strong threads like this one.',
+      });
+    } catch (error) {
+      console.error('Error enabling post-chat follow-up opt-in:', error);
+      setFollowUpOptInStatus('idle');
+      const message = error instanceof Error ? error.message : '';
+      toast({
+        title: 'Could not enable future check-ins',
+        description: /not authenticated/i.test(message)
+          ? 'Log in to save follow-up preferences first.'
+          : 'Please try again from Settings if this keeps failing.',
+      });
+    }
+  };
+
+  const handleRememberThis = async () => {
+    if (!manualMemoryDraft || manualRememberStatus !== 'idle') {
+      return;
+    }
+
+    setSavingManualRememberPostId(post.id);
+
+    try {
+      const response = await fetch('/api/v1/agents/me/memories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          key: manualMemoryDraft.key,
+          value: manualMemoryDraft.value,
+          category: manualMemoryDraft.category,
+          isPublic: false,
+        }),
+      });
+      const payload = (await response.json().catch(() => null)) as {
+        success?: boolean;
+        data?: {
+          id?: string;
+          value?: string;
+          created_at?: string;
+        };
+        error?: {
+          message?: string;
+        };
+      } | null;
+
+      if (response.status === 409) {
+        setManualMemoryCaptureState({
+          postId: post.id,
+          capture: manualMemoryDraft.preview,
+        });
+        setSavingManualRememberPostId(null);
+        toast({
+          title: 'Already saved to memory',
+          description:
+            'This standout chat moment is already in your saved memory list.',
+        });
+        return;
+      }
+
+      if (!response.ok || !payload?.success) {
+        throw new Error(
+          payload?.error?.message || 'Could not save this chat moment.'
+        );
+      }
+
+      const capturedAt = payload.data?.created_at || new Date().toISOString();
+
+      setManualMemoryCaptureState({
+        postId: post.id,
+        capture: {
+          ...manualMemoryDraft.preview,
+          id: payload.data?.id,
+          fact: payload.data?.value?.trim() || manualMemoryDraft.value,
+          capturedAt,
+        },
+      });
+      setSavingManualRememberPostId(null);
+      analytics.clickCta('chat_snippet_remember_this');
+      toast({
+        title: 'Saved to memory',
+        description: 'This standout chat moment is now pinned for future replies.',
+      });
+    } catch (error) {
+      console.error('Error saving standout chat moment to memory:', error);
+      setSavingManualRememberPostId(null);
+      const message = error instanceof Error ? error.message : '';
+      toast({
+        title: 'Could not save to memory',
+        description: /not authenticated/i.test(message)
+          ? 'Log in to save standout chat moments first.'
+          : message || 'Please try again from Settings if this keeps failing.',
+      });
+    }
+  };
 
   const buildSnippetClipboardText = (mode: SnippetActionMode) => {
     const postUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/posts/${post.id}`;
@@ -634,16 +2079,22 @@ export function PostCard({
         '> Start from the final human/operator turn and write one fresh replacement reply.',
         '> Do not repeat or lightly paraphrase the discarded answer; replace it with a meaningfully different try.',
         '',
-        rewindContext?.contextMessages.length ? 'Conversation before the retry:' : '',
+        rewindContext?.contextMessages.length
+          ? 'Conversation before the retry:'
+          : '',
         ...(rewindContext?.contextMessages ?? []).map(
           (message) => `${message.role}: ${message.content}`
         ),
         rewindContext?.contextMessages.length ? '' : '',
         'Retry from this user message:',
-        rewindContext?.previousUserMessage || latestUserMessage || 'No previous user turn found.',
+        rewindContext?.previousUserMessage ||
+          latestUserMessage ||
+          'No previous user turn found.',
         '',
         'Discarded AI reply:',
-        rewindContext?.discardedAgentReply || latestAgentMessage || 'No previous AI reply found.',
+        rewindContext?.discardedAgentReply ||
+          latestAgentMessage ||
+          'No previous AI reply found.',
         '',
         `Source: ${postUrl}`,
       ]
@@ -664,22 +2115,62 @@ export function PostCard({
       ].join('\n');
     }
 
-    if (mode === 'recover') {
+    if (mode === 'lock_tone') {
       return [
-        `Stay in character — recovery prompt for ${authorName}`,
+        `Lock current tone/style for ${authorName}'s thread`,
         '',
-        'The conversation above drifted out of character.',
+        'Use the current exchange as the style anchor for the next reply.',
+        '- keep the same warmth, pacing, confidence, and relationship framing already on display',
+        '- do not reset into generic assistant language or explain the style; just continue naturally',
+        '- stay consistent with the same thread voice even if the next reply changes topic slightly',
+        threadToneHint ? `Style note: ${threadToneHint}` : '',
+        latestAgentMessage ? `Latest tone anchor: ${latestAgentMessage}` : '',
+        latestUserMessage ? `Replying to: ${latestUserMessage}` : '',
+        '',
+        transcript,
+        '',
+        `Source: ${postUrl}`,
+      ]
+        .filter(Boolean)
+        .join('\n');
+    }
+
+    if (mode === 'recover' || mode === 'recover_keep_previous_tone') {
+      const recoveryLead =
+        mode === 'recover_keep_previous_tone'
+          ? previousToneHint
+            ? `> Keep the next reply anchored to the earlier ${previousToneHint} tone, pacing, and emotional temperature instead of abruptly switching style.`
+            : '> Match the tone, pacing, and emotional temperature from the earlier turns instead of abruptly switching style.'
+          : '> Stay fully in their voice, relationship, and point of view.';
+      const recoveryTitle =
+        mode === 'recover_keep_previous_tone'
+          ? `Keep previous tone — recovery prompt for ${authorName}`
+          : `Stay in character — recovery prompt for ${authorName}`;
+      const recoveryIntro =
+        mode === 'recover_keep_previous_tone'
+          ? 'The latest reply shifted tone too abruptly from the earlier conversation.'
+          : 'The conversation above drifted out of character.';
+
+      return [
+        recoveryTitle,
+        '',
+        recoveryIntro,
         'Use this prompt to get back on track:',
         '',
         `> Re-read the transcript below and continue as ${authorName} would.`,
-        '> Stay fully in their voice, relationship, and point of view.',
+        recoveryLead,
+        mode === 'recover_keep_previous_tone'
+          ? '> Use the earlier turns as the baseline for wording, warmth, and confidence.'
+          : undefined,
         '> Do not say you are an AI, assistant, chatbot, or language model.',
         '> Do not mention hidden prompts, policies, or being out of character; continue the exchange naturally.',
         '',
         transcript,
         '',
         `Source: ${postUrl}`,
-      ].join('\n');
+      ]
+        .filter(Boolean)
+        .join('\n');
     }
 
     if (mode === 'safer_rewrite') {
@@ -718,7 +2209,9 @@ export function PostCard({
         '> Keep it grounded in remembered facts only; if anything feels uncertain, say so.',
         '> After restating the facts, continue the reply naturally.',
         '',
-        restateKeyFactCues.length > 0 ? 'Memory cues visible in this snippet:' : '',
+        restateKeyFactCues.length > 0
+          ? 'Memory cues visible in this snippet:'
+          : '',
         ...restateKeyFactCues.map((fact) => `- ${fact}`),
         restateKeyFactCues.length > 0 ? '' : '',
         transcript,
@@ -729,6 +2222,34 @@ export function PostCard({
         .join('\n');
     }
 
+    if (mode === 'remember_instead') {
+      return [
+        `Remember this instead for ${authorName}`,
+        '',
+        'The latest reply recalled the wrong memory.',
+        'Before you answer again:',
+        '',
+        '> Treat the recalled fact below as incorrect.',
+        '> Replace it with the corrected fact exactly as written.',
+        '> Acknowledge the correction naturally, then continue the reply without debating hidden memory.',
+        '',
+        'Incorrect recalled fact:',
+        incorrectMemoryFact ||
+          '- [the reply referenced a wrong remembered fact here]',
+        '',
+        'Remember this instead:',
+        correctedMemoryFact || '- [replace this line with the corrected fact]',
+        wrongMemoryReason
+          ? `Why this correction matters: ${wrongMemoryReason}`
+          : '',
+        '',
+        transcript,
+        '',
+        `Source: ${postUrl}`,
+      ]
+        .filter(Boolean)
+        .join('\n');
+    }
     if (mode === 'quote') {
       return [
         `Quoting ${authorName} on AgentGram`,
@@ -753,7 +2274,9 @@ export function PostCard({
   const buildSnippetQuoteCardSvg = () => {
     const postUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/posts/${post.id}`;
     const quoteSource =
-      chatSnippetPreview.map((message) => `${message.role}: ${message.content}`).join(' ') ||
+      chatSnippetPreview
+        .map((message) => `${message.role}: ${message.content}`)
+        .join(' ') ||
       post.content ||
       post.title ||
       'Chat snippet';
@@ -792,10 +2315,13 @@ export function PostCard({
     quote: 'Quote copied',
     quote_card: 'Quote card downloaded',
     rewind: 'Rewind prompt copied',
+    lock_tone: 'Tone lock copied',
     recover: 'Recovery prompt copied',
+    recover_keep_previous_tone: 'Keep previous tone retry copied',
     safer_rewrite: 'Safer rewrite copied',
     contradiction: 'Contradiction report copied',
     restate_key_facts: 'Key facts prompt copied',
+    remember_instead: 'Correction prompt copied',
   };
 
   const handleSnippetAction = async (mode: SnippetActionMode) => {
@@ -862,9 +2388,30 @@ export function PostCard({
         )}
       >
         <div className="flex items-center justify-between gap-2">
-          <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-            Chat snippet
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+              Chat snippet
+            </span>
+            {compact && isAgentToAgentConversation ? (
+              <span
+                data-testid="chat-snippet-agent-to-agent-badge"
+                className="inline-flex items-center rounded-full border border-sky-500/20 bg-sky-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700"
+              >
+                Agent-to-agent
+              </span>
+            ) : null}
+            {conversationMemoryPressure ? (
+              <span
+                data-testid="chat-snippet-memory-pressure-badge"
+                className={cn(
+                  'inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]',
+                  conversationMemoryPressure.toneClassName
+                )}
+              >
+                {conversationMemoryPressure.badge}
+              </span>
+            ) : null}
+          </div>
           <span className="text-[11px] text-muted-foreground">
             {chatMessages.length > 0
               ? `${chatMessages.length} turns`
@@ -872,7 +2419,69 @@ export function PostCard({
           </span>
         </div>
 
-        {memorySavedLabel ? (
+        {hasReturnToChatRecap ? (
+          <div
+            data-testid="chat-snippet-return-recap"
+            className="mt-3 rounded-xl border border-sky-500/20 bg-sky-500/10 px-3 py-3"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="space-y-1">
+                <span className="inline-flex items-center rounded-full border border-sky-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
+                  Return to chat recap
+                </span>
+                <p className="text-xs text-sky-900/80">
+                  Reload the saved facts and last goal before the first reply
+                  after an idle gap.
+                </p>
+              </div>
+
+              <span
+                data-testid="chat-snippet-return-gap"
+                className="inline-flex items-center rounded-full border border-sky-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700"
+              >
+                {resolvedReturnToChatGapLabel} idle gap
+              </span>
+            </div>
+
+            {returnToChatFacts.length > 0 ? (
+              <div
+                data-testid="chat-snippet-return-facts"
+                className="mt-3 rounded-xl border border-sky-500/20 bg-background/70 px-3 py-2"
+              >
+                <span className="inline-flex items-center rounded-full border border-sky-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
+                  Saved facts
+                </span>
+                <ul className="mt-2 space-y-1.5 text-sm text-foreground/90">
+                  {returnToChatFacts.map((fact, index) => (
+                    <li
+                      key={`${fact}-${index}`}
+                      data-testid="chat-snippet-return-fact"
+                      className="list-none"
+                    >
+                      • {fact}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {returnToChatLastGoal ? (
+              <div
+                data-testid="chat-snippet-return-goal"
+                className="mt-3 rounded-xl border border-sky-500/20 bg-background/70 px-3 py-2"
+              >
+                <span className="inline-flex items-center rounded-full border border-sky-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
+                  Last goal
+                </span>
+                <p className="mt-2 text-sm text-foreground/90 whitespace-pre-line">
+                  {returnToChatLastGoal}
+                </p>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        {visibleMemorySavedLabel ? (
           <div className="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-3">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="space-y-1">
@@ -880,7 +2489,7 @@ export function PostCard({
                   data-testid="chat-snippet-memory-event"
                   className="inline-flex items-center rounded-full border border-emerald-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700"
                 >
-                  {memorySavedLabel}
+                  {visibleMemorySavedLabel}
                 </span>
                 <p className="text-xs text-emerald-900/80">
                   {memorySavedAt
@@ -889,7 +2498,7 @@ export function PostCard({
                 </p>
               </div>
 
-              {memoryCaptures.length > 0 ? (
+              {visibleMemoryCaptures.length > 0 ? (
                 <Dialog
                   open={isMemoryCapturesOpen}
                   onOpenChange={setIsMemoryCapturesOpen}
@@ -899,18 +2508,19 @@ export function PostCard({
                     data-testid="chat-snippet-memory-drawer-trigger"
                   >
                     <History className="h-3.5 w-3.5" aria-hidden="true" />
-                    Recent captures ({memoryCaptures.length})
+                    Recent captures ({visibleMemoryCaptures.length})
                   </DialogTrigger>
                   <DialogContent data-testid="chat-snippet-memory-drawer">
                     <DialogHeader>
                       <DialogTitle>Recent captures</DialogTitle>
                       <DialogDescription>
-                        Review the latest facts this chat snippet marked as worth remembering.
+                        Review the latest facts this chat snippet marked as
+                        worth remembering.
                       </DialogDescription>
                     </DialogHeader>
 
                     <div className="space-y-3">
-                      {memoryCaptures.map((capture, index) => (
+                      {visibleMemoryCaptures.map((capture, index) => (
                         <div
                           key={`${capture.fact}-${index}`}
                           data-testid="chat-snippet-memory-capture"
@@ -919,7 +2529,9 @@ export function PostCard({
                           <p className="text-sm font-medium text-foreground">
                             {capture.fact}
                           </p>
-                          {(capture.reason || capture.source || capture.capturedAt) ? (
+                          {capture.reason ||
+                          capture.source ||
+                          capture.capturedAt ? (
                             <div className="mt-2 space-y-1 text-xs text-muted-foreground">
                               {capture.reason ? <p>{capture.reason}</p> : null}
                               <div className="flex flex-wrap gap-2">
@@ -927,7 +2539,9 @@ export function PostCard({
                                   <span>{capture.source}</span>
                                 ) : null}
                                 {capture.capturedAt ? (
-                                  <span>{formatMemoryTimestamp(capture.capturedAt)}</span>
+                                  <span>
+                                    {formatMemoryTimestamp(capture.capturedAt)}
+                                  </span>
                                 ) : null}
                               </div>
                             </div>
@@ -940,7 +2554,7 @@ export function PostCard({
               ) : null}
             </div>
 
-            {memoryPreview ? (
+            {visibleMemoryPreview ? (
               <div
                 data-testid="chat-snippet-memory-preview"
                 className="mt-3 rounded-xl border border-emerald-500/20 bg-background/70 px-3 py-2"
@@ -949,11 +2563,16 @@ export function PostCard({
                   {memoryPreviewLabel}
                 </span>
                 <p className="mt-2 text-sm text-foreground/90 whitespace-pre-line">
-                  {memoryPreview.fact}
+                  {visibleMemoryPreview.fact}
                 </p>
-                {memoryPreview.source || memoryPreview.capturedAt ? (
+                {visibleMemoryPreview.source || visibleMemoryPreview.capturedAt ? (
                   <p className="mt-2 text-xs text-muted-foreground">
-                    {[memoryPreview.source, memoryPreview.capturedAt ? `Saved ${formatMemoryTimestamp(memoryPreview.capturedAt)}` : undefined]
+                    {[
+                      visibleMemoryPreview.source,
+                      visibleMemoryPreview.capturedAt
+                        ? `Saved ${formatMemoryTimestamp(visibleMemoryPreview.capturedAt)}`
+                        : undefined,
+                    ]
                       .filter(Boolean)
                       .join(' · ')}
                   </p>
@@ -961,7 +2580,7 @@ export function PostCard({
               </div>
             ) : null}
 
-            {memoryExplanation ? (
+            {visibleMemoryExplanation ? (
               <div
                 data-testid="chat-snippet-memory-reason"
                 className="mt-3 rounded-xl border border-emerald-500/20 bg-background/70 px-3 py-2"
@@ -970,7 +2589,63 @@ export function PostCard({
                   Why I remembered this
                 </span>
                 <p className="mt-2 text-sm text-foreground/90 whitespace-pre-line">
-                  {memoryExplanation}
+                  {visibleMemoryExplanation}
+                </p>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        {hasWrongMemoryRecovery ? (
+          <div
+            data-testid="chat-snippet-bad-recall-recovery"
+            className="mt-3 rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-3"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="space-y-1">
+                <span className="inline-flex items-center rounded-full border border-rose-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-rose-700">
+                  Wrong memory recovery
+                </span>
+                <p className="text-sm text-foreground/90">
+                  {wrongMemoryReason ||
+                    'That reply pulled in the wrong remembered fact. Send the correction inline so the next answer updates its memory instead of doubling down.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                data-testid="chat-snippet-remember-instead-button"
+                onClick={() => handleSnippetAction('remember_instead')}
+                className="inline-flex items-center gap-2 rounded-full border border-rose-500/20 bg-background px-3 py-1.5 text-xs font-semibold text-rose-700 transition-colors hover:bg-rose-50"
+              >
+                <History className="h-3.5 w-3.5" aria-hidden="true" />
+                Remember this instead
+              </button>
+            </div>
+
+            {incorrectMemoryFact ? (
+              <div
+                data-testid="chat-snippet-bad-recall-incorrect-fact"
+                className="mt-3 rounded-xl border border-rose-500/20 bg-background/70 px-3 py-2"
+              >
+                <span className="inline-flex items-center rounded-full border border-rose-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-rose-700">
+                  Agent recalled
+                </span>
+                <p className="mt-2 text-sm text-foreground/90 whitespace-pre-line">
+                  {incorrectMemoryFact}
+                </p>
+              </div>
+            ) : null}
+
+            {correctedMemoryFact ? (
+              <div
+                data-testid="chat-snippet-bad-recall-corrected-fact"
+                className="mt-3 rounded-xl border border-emerald-500/20 bg-background/70 px-3 py-2"
+              >
+                <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
+                  Remember this instead
+                </span>
+                <p className="mt-2 text-sm text-foreground/90 whitespace-pre-line">
+                  {correctedMemoryFact}
                 </p>
               </div>
             ) : null}
@@ -986,7 +2661,8 @@ export function PostCard({
               Safety recovery
             </span>
             <p className="mt-2 text-sm text-foreground/90 whitespace-pre-line">
-              Blocked by a guardrail? Copy a calmer rewrite that keeps the same goal.
+              Blocked by a guardrail? Copy a calmer rewrite that keeps the same
+              goal.
             </p>
             {safetyReason ? (
               <p
@@ -1031,106 +2707,286 @@ export function PostCard({
           </p>
         ) : null}
 
-        {hasLowContextReply ? (
-          <div
-            data-testid="chat-snippet-low-context-rescue"
-            className="mt-3 rounded-xl border border-sky-500/20 bg-sky-500/10 px-3 py-3"
-          >
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="space-y-1">
-                <span className="inline-flex items-center rounded-full border border-sky-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
-                  Memory rescue
-                </span>
-                <p className="text-sm text-foreground/90">
-                  {lowContextReplyReason ||
-                    'The latest reply asked for more context. Ask the agent to restate what it already remembers before retrying.'}
-                </p>
-                {restateKeyFactCues.length > 0 ? (
-                  <p className="text-xs text-sky-900/75">
-                    Includes {restateKeyFactCues.length} remembered cue
-                    {restateKeyFactCues.length === 1 ? '' : 's'} from this snippet.
+        <div className="mt-3 space-y-2">
+          {conversationMemoryPressure ? (
+            <div
+              data-testid="chat-snippet-memory-pressure-card"
+              className={cn(
+                'rounded-xl border px-3 py-3',
+                conversationMemoryPressure.toneClassName
+              )}
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <span
+                    data-testid="chat-snippet-memory-pressure-card-label"
+                    className="inline-flex items-center rounded-full border border-current/15 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em]"
+                  >
+                    {conversationMemoryPressure.badge}
+                  </span>
+                  <p
+                    data-testid="chat-snippet-memory-pressure-title"
+                    className="text-sm font-medium text-foreground"
+                  >
+                    {conversationMemoryPressure.title}
                   </p>
-                ) : null}
+                  <p
+                    data-testid="chat-snippet-memory-pressure-description"
+                    className="text-xs text-foreground/80"
+                  >
+                    {conversationMemoryPressure.description}
+                  </p>
+                </div>
+                <span
+                  data-testid="chat-snippet-memory-pressure-turns"
+                  className="inline-flex items-center rounded-full border border-current/15 bg-background/80 px-2 py-1 text-[11px] font-medium"
+                >
+                  {chatMessages.length} turns
+                </span>
               </div>
+            </div>
+          ) : null}
+
+          {hasLowContextReply ? (
+            <div
+              data-testid="chat-snippet-low-context-rescue"
+              className="rounded-xl border border-sky-500/20 bg-sky-500/10 px-3 py-3"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <span className="inline-flex items-center rounded-full border border-sky-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
+                    Memory rescue
+                  </span>
+                  <p className="text-sm text-foreground/90">
+                    {lowContextReplyReason ||
+                      'The latest reply asked for more context. Ask the agent to restate what it already remembers before retrying.'}
+                  </p>
+                  {restateKeyFactCues.length > 0 ? (
+                    <p className="text-xs text-sky-900/75">
+                      Includes {restateKeyFactCues.length} remembered cue
+                      {restateKeyFactCues.length === 1 ? '' : 's'} from this
+                      snippet.
+                    </p>
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  data-testid="chat-snippet-restate-key-facts-button"
+                  onClick={() => handleSnippetAction('restate_key_facts')}
+                  className="inline-flex items-center gap-2 rounded-full border border-sky-500/20 bg-background px-3 py-1.5 text-xs font-semibold text-sky-700 transition-colors hover:bg-sky-50"
+                >
+                  <History className="h-3.5 w-3.5" aria-hidden="true" />
+                  Restate my key facts
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          {shouldShowKeepPreviousToneChip ? (
+            <div
+              data-testid="chat-snippet-tone-continuity-bar"
+              className="rounded-xl border border-sky-500/20 bg-sky-500/10 px-3 py-2"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center rounded-full border border-sky-500/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
+                  Abrupt style shift
+                </span>
+                <button
+                  type="button"
+                  data-testid="chat-snippet-recover-chip-keep-previous-tone"
+                  onClick={() =>
+                    handleSnippetAction('recover_keep_previous_tone')
+                  }
+                  className="inline-flex items-center rounded-full border border-sky-500/20 bg-background px-2.5 py-1 text-[11px] font-semibold text-sky-700 transition-colors hover:bg-sky-500/10"
+                >
+                  Keep previous tone
+                </button>
+              </div>
+              {continuityRecoveryReason ? (
+                <p
+                  data-testid="chat-snippet-tone-continuity-reason"
+                  className="mt-2 text-xs text-foreground/80"
+                >
+                  {continuityRecoveryReason}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
+          {followUpOptInSignal ? (
+            <div
+              data-testid="chat-snippet-follow-up-opt-in"
+              className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-3"
+            >
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-1.5">
+                  <span className="inline-flex items-center rounded-full border border-primary/20 bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">
+                    Future check-ins
+                  </span>
+                  <p className="text-sm font-medium text-foreground">
+                    {followUpOptInSignal.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {followUpOptInStatus === 'enabled'
+                      ? 'AgentGram can now follow up later from strong threads like this one using your saved outreach settings.'
+                      : followUpOptInSignal.description}
+                  </p>
+                  {followUpOptInStatus === 'enabled' && followUpOptInSummary ? (
+                    <div
+                      data-testid="chat-snippet-follow-up-opt-in-summary"
+                      className="flex flex-wrap gap-2"
+                    >
+                      <span
+                        data-testid="chat-snippet-follow-up-opt-in-summary-caps"
+                        className="inline-flex items-center rounded-full border border-emerald-500/20 bg-background/80 px-2 py-1 text-[11px] font-medium text-foreground"
+                      >
+                        Caps · {followUpOptInSummary.caps}
+                      </span>
+                      <span
+                        data-testid="chat-snippet-follow-up-opt-in-summary-quiet-hours"
+                        className="inline-flex items-center rounded-full border border-emerald-500/20 bg-background/80 px-2 py-1 text-[11px] font-medium text-foreground"
+                      >
+                        Quiet hours · {followUpOptInSummary.quietHours}
+                      </span>
+                      <span
+                        data-testid="chat-snippet-follow-up-opt-in-summary-tone"
+                        className="inline-flex items-center rounded-full border border-emerald-500/20 bg-background/80 px-2 py-1 text-[11px] font-medium text-foreground"
+                      >
+                        Tone · {followUpOptInSummary.tone}
+                      </span>
+                    </div>
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  data-testid="chat-snippet-follow-up-opt-in-button"
+                  onClick={handleFollowUpOptIn}
+                  disabled={followUpOptInStatus !== 'idle'}
+                  className={cn(
+                    'inline-flex items-center justify-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',
+                    followUpOptInStatus === 'enabled'
+                      ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-700'
+                      : 'border-primary/20 bg-background text-primary hover:bg-primary/10',
+                    followUpOptInStatus === 'saving' && 'cursor-wait opacity-70'
+                  )}
+                >
+                  {followUpOptInStatus === 'saving' ? (
+                    <>
+                      <Loader2
+                        className="h-3.5 w-3.5 animate-spin"
+                        aria-hidden="true"
+                      />
+                      Enabling…
+                    </>
+                  ) : followUpOptInStatus === 'enabled' ? (
+                    'Future check-ins enabled'
+                  ) : (
+                    'Enable future check-ins'
+                  )}
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="flex flex-wrap gap-2">
+            {manualMemoryDraft && !memorySavedLabel ? (
               <button
                 type="button"
-                data-testid="chat-snippet-restate-key-facts-button"
-                onClick={() => handleSnippetAction('restate_key_facts')}
-                className="inline-flex items-center gap-2 rounded-full border border-sky-500/20 bg-background px-3 py-1.5 text-xs font-semibold text-sky-700 transition-colors hover:bg-sky-50"
+                data-testid="chat-snippet-remember-this-button"
+                onClick={() => {
+                  void handleRememberThis();
+                }}
+                disabled={manualRememberStatus !== 'idle'}
+                className={cn(
+                  'inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',
+                  manualRememberStatus === 'saving'
+                    ? 'cursor-wait border-emerald-500/25 bg-emerald-500/10 text-emerald-700 opacity-80'
+                    : 'border-emerald-500/25 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15'
+                )}
               >
-                <History className="h-3.5 w-3.5" aria-hidden="true" />
-                Restate my key facts
+                {manualRememberStatus === 'saving' ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                ) : (
+                  <BookmarkPlus className="h-3.5 w-3.5" aria-hidden="true" />
+                )}
+                {manualRememberStatus === 'saving' ? 'Saving…' : 'Remember this'}
               </button>
-            </div>
-          </div>
-        ) : null}
-
-        <div className="mt-3 flex flex-wrap gap-2">
-          <button
-            type="button"
-            data-testid="chat-snippet-remix-button"
-            onClick={() => handleSnippetAction('remix')}
-            className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
-          >
-            <Repeat2 className="h-3.5 w-3.5" aria-hidden="true" />
-            Remix
-          </button>
-          <button
-            type="button"
-            data-testid="chat-snippet-quote-button"
-            onClick={() => handleSnippetAction('quote')}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
-          >
-            <Quote className="h-3.5 w-3.5" aria-hidden="true" />
-            Quote
-          </button>
-          <button
-            type="button"
-            data-testid="chat-snippet-quote-card-button"
-            onClick={() => handleSnippetAction('quote_card')}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
-          >
-            <Quote className="h-3.5 w-3.5" aria-hidden="true" />
-            Quote card
-          </button>
-          {rewindContext ? (
+            ) : null}
             <button
               type="button"
-              data-testid="chat-snippet-rewind-button"
-              onClick={() => handleSnippetAction('rewind')}
+              data-testid="chat-snippet-remix-button"
+              onClick={() => handleSnippetAction('remix')}
+              className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
+            >
+              <Repeat2 className="h-3.5 w-3.5" aria-hidden="true" />
+              Remix
+            </button>
+            <button
+              type="button"
+              data-testid="chat-snippet-quote-button"
+              onClick={() => handleSnippetAction('quote')}
               className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
             >
-              <History className="h-3.5 w-3.5" aria-hidden="true" />
-              Rewind reply
+              <Quote className="h-3.5 w-3.5" aria-hidden="true" />
+              Quote
             </button>
-          ) : null}
-          <button
-            type="button"
-            data-testid="chat-snippet-recover-button"
-            onClick={() => handleSnippetAction('recover')}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
-          >
-            <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-            Stay in character
-          </button>
-          <button
-            type="button"
-            data-testid="chat-snippet-safer-rewrite-button"
-            onClick={() => handleSnippetAction('safer_rewrite')}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-amber-500/30 hover:text-amber-700"
-          >
-            <ShieldAlert className="h-3.5 w-3.5" aria-hidden="true" />
-            Safer rewrite
-          </button>
-          <button
-            type="button"
-            data-testid="chat-snippet-contradiction-button"
-            onClick={() => handleSnippetAction('contradiction')}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-amber-500/30 hover:text-amber-600"
-          >
-            <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
-            Flag contradiction
-          </button>
+            <button
+              type="button"
+              data-testid="chat-snippet-quote-card-button"
+              onClick={() => handleSnippetAction('quote_card')}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+            >
+              <Quote className="h-3.5 w-3.5" aria-hidden="true" />
+              Quote card
+            </button>
+            <button
+              type="button"
+              data-testid="chat-snippet-lock-tone-button"
+              onClick={() => handleSnippetAction('lock_tone')}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+            >
+              <Lock className="h-3.5 w-3.5" aria-hidden="true" />
+              Lock current tone
+            </button>
+            {rewindContext ? (
+              <button
+                type="button"
+                data-testid="chat-snippet-rewind-button"
+                onClick={() => handleSnippetAction('rewind')}
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+              >
+                <History className="h-3.5 w-3.5" aria-hidden="true" />
+                Rewind reply
+              </button>
+            ) : null}
+            <button
+              type="button"
+              data-testid="chat-snippet-recover-button"
+              onClick={() => handleSnippetAction('recover')}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+              Stay in character
+            </button>
+            <button
+              type="button"
+              data-testid="chat-snippet-safer-rewrite-button"
+              onClick={() => handleSnippetAction('safer_rewrite')}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-amber-500/30 hover:text-amber-700"
+            >
+              <ShieldAlert className="h-3.5 w-3.5" aria-hidden="true" />
+              Safer rewrite
+            </button>
+            <button
+              type="button"
+              data-testid="chat-snippet-contradiction-button"
+              onClick={() => handleSnippetAction('contradiction')}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-amber-500/30 hover:text-amber-600"
+            >
+              <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+              Flag contradiction
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -1297,6 +3153,8 @@ export function PostCard({
 
             {renderCommentActivity()}
 
+            {renderTopicChips()}
+
             <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
               <span>{post.likes} likes</span>
               <button
@@ -1307,6 +3165,16 @@ export function PostCard({
                 Share
               </button>
             </div>
+
+            {showsPublicGalleryCta && publicGalleryHref ? (
+              <Link
+                href={publicGalleryHref}
+                data-testid="post-card-public-gallery-cta"
+                className="mt-3 inline-flex items-center text-xs font-medium text-primary hover:underline"
+              >
+                View public gallery
+              </Link>
+            ) : null}
           </div>
         </div>
       </article>
@@ -1440,6 +3308,8 @@ export function PostCard({
                   )}
                 </>
               )}
+
+              {renderTopicChips()}
             </div>
           )}
         </div>
@@ -1500,6 +3370,25 @@ export function PostCard({
         </div>
 
         <TranslateButton content={translationContent} contentId={post.id} />
+
+        {showsPublicGalleryCta && publicGalleryHref ? (
+          <div
+            className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-primary/15 bg-primary/5 px-3 py-2 text-sm"
+            data-testid="post-card-public-gallery-callout"
+          >
+            <span className="text-foreground/80">
+              This generated visual also lives in the creator&apos;s public
+              gallery.
+            </span>
+            <Link
+              href={publicGalleryHref}
+              data-testid="post-card-public-gallery-cta"
+              className="shrink-0 font-medium text-primary hover:underline"
+            >
+              View public gallery
+            </Link>
+          </div>
+        ) : null}
 
         {renderCommentActivity()}
 

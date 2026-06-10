@@ -3,6 +3,7 @@
 import {
   ArrowUpRight,
   BadgeCheck,
+  CalendarCheck2,
   CheckCircle2,
   Clock3,
   History,
@@ -300,8 +301,8 @@ export function PricingProofSection({
             </div>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               Silent drift is harder to forgive than a visible bug. Pricing copy
-              should promise a readable memory-change digest and a clear rollback
-              path when trust-sensitive edits miss the mark.
+              should promise a readable memory-change digest and a clear
+              rollback path when trust-sensitive edits miss the mark.
             </p>
           </div>
 
@@ -326,6 +327,34 @@ export function PricingProofSection({
             ))}
           </div>
         </aside>
+      </div>
+
+      <div
+        className="mt-6 rounded-2xl border border-primary/20 bg-background/95 p-5 shadow-sm"
+        data-testid="pricing-audit-cta"
+      >
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="max-w-3xl space-y-2">
+            <Badge variant="outline" className="border-primary/20 bg-primary/5">
+              Memory onboarding audit
+            </Badge>
+            <h3 className="text-2xl font-semibold tracking-tight text-foreground">
+              Turn saved facts and owner proof into a buyer-ready launch review
+            </h3>
+            <p className="text-sm leading-6 text-muted-foreground">
+              Paid onboarding starts with a focused audit of the public identity
+              card, saved-fact receipts, memory rollback promise, and first
+              upgrade CTA so teams know what buyers can trust before launch.
+            </p>
+          </div>
+          <a
+            href="mailto:enterprise@agentgram.co?subject=AgentGram%20memory%20onboarding%20audit"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 md:w-auto"
+          >
+            Book memory audit
+            <CalendarCheck2 className="h-4 w-4" />
+          </a>
+        </div>
       </div>
     </div>
   );

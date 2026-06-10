@@ -1,17 +1,77 @@
 import {
   AGENT_CAPABILITY_KEYS,
   AGENT_PUBLIC_DIARY_METADATA_PATH,
+  AGENT_PUBLIC_STARTER_PROMPTS_METADATA_PATH,
+  RELATIONSHIP_GOAL_FACETS,
   RELATIONSHIP_PRESETS,
+  WORLDBUILDING_FACETS,
   type Agent,
   type AgentCapabilities,
+  type AgentCapabilityKey,
   type AgentDiaryEntry,
+  type AgentStarterPrompt,
+  type RelationshipGoalFacet,
   type RelationshipPreset,
+  type WorldbuildingFacet,
 } from '../types';
 import { deriveAgentMemoryProfile } from './agent-memory';
 import { metadataBoolean, metadataString, metadataValue } from './metadata';
 
-function readCapabilityEnabled(value: unknown): boolean {
-  return value === true;
+const CAPABILITY_METADATA_PATHS: Record<
+  AgentCapabilityKey,
+  ReadonlyArray<readonly string[]>
+> = {
+  voice: [
+    ['capabilities', 'voice'],
+    ['capabilities', 'voice_reply'],
+    ['capabilities', 'voiceReply'],
+    ['replyModalities', 'voice'],
+    ['reply_modalities', 'voice'],
+  ],
+  group_chat: [
+    ['capabilities', 'group_chat'],
+    ['capabilities', 'groupChat'],
+  ],
+  roleplay: [['capabilities', 'roleplay']],
+  video: [
+    ['capabilities', 'video'],
+    ['capabilities', 'video_reply'],
+    ['capabilities', 'videoReply'],
+    ['replyModalities', 'video'],
+    ['reply_modalities', 'video'],
+  ],
+  image: [
+    ['capabilities', 'image'],
+    ['capabilities', 'image_reply'],
+    ['capabilities', 'imageReply'],
+    ['replyModalities', 'image'],
+    ['reply_modalities', 'image'],
+  ],
+  web: [
+    ['capabilities', 'web'],
+    ['capabilities', 'web_aware'],
+    ['capabilities', 'webAware'],
+    ['capabilities', 'web_aware_replies'],
+    ['capabilities', 'webAwareReplies'],
+    ['replyModalities', 'web'],
+    ['replyModalities', 'webAware'],
+    ['reply_modalities', 'web'],
+    ['reply_modalities', 'web_aware'],
+  ],
+};
+
+function readCapabilityEnabled(
+  meta: Record<string, unknown>,
+  key: AgentCapabilityKey
+): boolean {
+  for (const path of CAPABILITY_METADATA_PATHS[key]) {
+    const value = metadataValue(meta, path);
+    if (typeof value === 'boolean') {
+      return value;
+    }
+  }
+
+  return false;
 }
 
 function deriveCapabilities(meta: Record<string, unknown>): AgentCapabilities {
@@ -19,26 +79,86 @@ function deriveCapabilities(meta: Record<string, unknown>): AgentCapabilities {
     voice: false,
     group_chat: false,
     roleplay: false,
+    video: false,
+    image: false,
+    web: false,
   };
-
-  const capabilities = metadataValue(meta, ['capabilities']);
-  if (
-    !capabilities ||
-    typeof capabilities !== 'object' ||
-    Array.isArray(capabilities)
-  ) {
-    return emptyCapabilities;
-  }
-
-  const capabilityRecord = capabilities as Record<string, unknown>;
 
   return AGENT_CAPABILITY_KEYS.reduce(
     (acc, key) => {
-      acc[key] = readCapabilityEnabled(capabilityRecord[key]);
+      acc[key] = readCapabilityEnabled(meta, key);
       return acc;
     },
     { ...emptyCapabilities }
   );
+}
+
+function normalizeFacetToken(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
+}
+
+const RELATIONSHIP_GOAL_ALIASES: Record<string, RelationshipGoalFacet> = {
+  companionship: 'companionship',
+  companion: 'companionship',
+  friend: 'companionship',
+  friendship: 'companionship',
+  guidance: 'guidance',
+  guide: 'guidance',
+  mentor: 'guidance',
+  mentorship: 'guidance',
+  coach: 'guidance',
+  coaching: 'guidance',
+  romance: 'romance',
+  romantic: 'romance',
+  partner: 'romance',
+  partnership: 'romance',
+};
+
+const WORLDBUILDING_ALIASES: Record<string, WorldbuildingFacet> = {
+  contemporary: 'contemporary',
+  modern: 'contemporary',
+  grounded: 'contemporary',
+  realistic: 'contemporary',
+  real_world: 'contemporary',
+  fantasy: 'fantasy',
+  magical: 'fantasy',
+  magic: 'fantasy',
+  sci_fi: 'sci_fi',
+  scifi: 'sci_fi',
+  sci_fi_world: 'sci_fi',
+  science_fiction: 'sci_fi',
+  futuristic: 'sci_fi',
+};
+
+function normalizeRelationshipGoal(
+  value: string
+): RelationshipGoalFacet | undefined {
+  const normalized = normalizeFacetToken(value);
+  const mapped = RELATIONSHIP_GOAL_ALIASES[normalized];
+
+  if (mapped) {
+    return mapped;
+  }
+
+  return RELATIONSHIP_GOAL_FACETS.includes(normalized as RelationshipGoalFacet)
+    ? (normalized as RelationshipGoalFacet)
+    : undefined;
+}
+
+function normalizeWorldbuilding(value: string): WorldbuildingFacet | undefined {
+  const normalized = normalizeFacetToken(value);
+  const mapped = WORLDBUILDING_ALIASES[normalized];
+
+  if (mapped) {
+    return mapped;
+  }
+
+  return WORLDBUILDING_FACETS.includes(normalized as WorldbuildingFacet)
+    ? (normalized as WorldbuildingFacet)
+    : undefined;
 }
 
 function deriveRelationshipPreset(
@@ -55,11 +175,63 @@ function deriveRelationshipPreset(
     return undefined;
   }
 
-  return RELATIONSHIP_PRESETS.includes(
-    relationshipPreset as RelationshipPreset
-  )
+  return RELATIONSHIP_PRESETS.includes(relationshipPreset as RelationshipPreset)
     ? (relationshipPreset as RelationshipPreset)
     : undefined;
+}
+
+function deriveRelationshipGoal(
+  meta: Record<string, unknown>,
+  relationshipPreset: RelationshipPreset | undefined
+): RelationshipGoalFacet | undefined {
+  const relationshipGoal = metadataString(meta, [
+    ['discovery', 'relationshipGoal'],
+    ['discovery', 'relationship_goal'],
+    ['relationshipGoal'],
+    ['relationship_goal'],
+  ]);
+
+  if (relationshipGoal) {
+    const normalizedRelationshipGoal =
+      normalizeRelationshipGoal(relationshipGoal);
+
+    if (normalizedRelationshipGoal) {
+      return normalizedRelationshipGoal;
+    }
+  }
+
+  if (relationshipPreset === 'friend') {
+    return 'companionship';
+  }
+
+  if (relationshipPreset === 'mentor') {
+    return 'guidance';
+  }
+
+  if (relationshipPreset === 'partner') {
+    return 'romance';
+  }
+
+  return undefined;
+}
+
+function deriveWorldbuilding(
+  meta: Record<string, unknown>
+): WorldbuildingFacet | undefined {
+  const worldbuilding = metadataString(meta, [
+    ['discovery', 'worldbuilding'],
+    ['discovery', 'world_building'],
+    ['worldbuilding'],
+    ['world_building'],
+    ['worldType'],
+    ['world_type'],
+  ]);
+
+  if (!worldbuilding) {
+    return undefined;
+  }
+
+  return normalizeWorldbuilding(worldbuilding);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -118,12 +290,77 @@ export function deriveAgentDiaryEntries(
   return rawEntries
     .map((entry, index) => normalizeDiaryEntry(entry, index))
     .filter((entry): entry is AgentDiaryEntry => Boolean(entry))
-    .sort((left, right) =>
-      right.publishedAt.localeCompare(left.publishedAt)
-    );
+    .sort((left, right) => right.publishedAt.localeCompare(left.publishedAt));
 }
 
-function deriveMatureContent(meta: Record<string, unknown>): boolean | undefined {
+function normalizeStarterPrompt(
+  value: unknown,
+  index: number
+): AgentStarterPrompt | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  const prompt =
+    typeof value.prompt === 'string'
+      ? value.prompt.trim()
+      : typeof value.message === 'string'
+        ? value.message.trim()
+        : typeof value.text === 'string'
+          ? value.text.trim()
+          : '';
+
+  if (!prompt) {
+    return undefined;
+  }
+
+  const title =
+    typeof value.title === 'string' && value.title.trim()
+      ? value.title.trim()
+      : typeof value.name === 'string' && value.name.trim()
+        ? value.name.trim()
+        : undefined;
+
+  const description =
+    typeof value.description === 'string' && value.description.trim()
+      ? value.description.trim()
+      : typeof value.context === 'string' && value.context.trim()
+        ? value.context.trim()
+        : typeof value.whenToUse === 'string' && value.whenToUse.trim()
+          ? value.whenToUse.trim()
+          : undefined;
+
+  return {
+    id:
+      typeof value.id === 'string' && value.id.trim()
+        ? value.id.trim()
+        : `starter-prompt-${index + 1}`,
+    title,
+    description,
+    prompt,
+  };
+}
+
+export function deriveAgentStarterPrompts(
+  meta: Record<string, unknown>
+): AgentStarterPrompt[] {
+  const rawItems = metadataValue(
+    meta,
+    AGENT_PUBLIC_STARTER_PROMPTS_METADATA_PATH
+  );
+  if (!Array.isArray(rawItems)) {
+    return [];
+  }
+
+  return rawItems
+    .map((item, index) => normalizeStarterPrompt(item, index))
+    .filter((item): item is AgentStarterPrompt => Boolean(item))
+    .slice(0, 4);
+}
+
+function deriveMatureContent(
+  meta: Record<string, unknown>
+): boolean | undefined {
   const matureFlag = metadataBoolean(meta, [
     ['matureContent'],
     ['mature_content'],
@@ -159,6 +396,54 @@ function deriveMatureContent(meta: Record<string, unknown>): boolean | undefined
   return ['18+', '18_plus', 'adult', 'mature', 'nsfw'].includes(contentRating);
 }
 
+const INTEREST_TAG_REGEX = /^[a-z][a-z0-9_]{0,99}$/;
+
+function normalizeInterestTag(value: string): string | undefined {
+  const normalized = value.trim().replace(/^#+/, '').toLowerCase();
+
+  if (!INTEREST_TAG_REGEX.test(normalized)) {
+    return undefined;
+  }
+
+  return normalized;
+}
+
+function deriveInterestTags(meta: Record<string, unknown>): string[] {
+  const metadataPaths = [
+    ['interests'],
+    ['interestTags'],
+    ['interest_tags'],
+    ['topics'],
+    ['hashtags'],
+    ['profile', 'interests'],
+    ['profile', 'interestTags'],
+    ['profile', 'interest_tags'],
+    ['profile', 'topics'],
+    ['profile', 'hashtags'],
+    ['discovery', 'interests'],
+    ['discovery', 'topics'],
+  ];
+
+  for (const path of metadataPaths) {
+    const value = metadataValue(meta, path);
+    if (!Array.isArray(value)) {
+      continue;
+    }
+
+    const tags = value
+      .map((item) =>
+        typeof item === 'string' ? normalizeInterestTag(item) : undefined
+      )
+      .filter((item): item is string => Boolean(item));
+
+    if (tags.length > 0) {
+      return Array.from(new Set(tags)).slice(0, 6);
+    }
+  }
+
+  return [];
+}
+
 /** Derive public trust/capability fields that are not part of the memory layer. */
 export function deriveAgentPublicFields(
   meta: Record<string, unknown>
@@ -166,12 +451,17 @@ export function deriveAgentPublicFields(
   Agent,
   | 'capabilities'
   | 'relationshipPreset'
+  | 'relationshipGoal'
+  | 'worldbuilding'
+  | 'interestTags'
   | 'workProofUrl'
   | 'workProofLabel'
   | 'hasFirstSuccessfulReply'
+  | 'starterPrompts'
   | 'diaryEntries'
   | 'matureContent'
 > {
+  const relationshipPreset = deriveRelationshipPreset(meta);
   const workProofUrl = metadataString(meta, [
     ['workProofUrl'],
     ['work_proof_url'],
@@ -182,7 +472,10 @@ export function deriveAgentPublicFields(
   ]);
   return {
     capabilities: deriveCapabilities(meta),
-    relationshipPreset: deriveRelationshipPreset(meta),
+    relationshipPreset,
+    relationshipGoal: deriveRelationshipGoal(meta, relationshipPreset),
+    worldbuilding: deriveWorldbuilding(meta),
+    interestTags: deriveInterestTags(meta),
     workProofUrl,
     workProofLabel:
       metadataString(meta, [
@@ -201,6 +494,7 @@ export function deriveAgentPublicFields(
         ['replyMilestones', 'firstSuccessfulReply'],
         ['reply_milestones', 'first_successful_reply'],
       ]) === true,
+    starterPrompts: deriveAgentStarterPrompts(meta),
     diaryEntries: deriveAgentDiaryEntries(meta),
     matureContent: deriveMatureContent(meta),
   };
@@ -256,6 +550,66 @@ function derivePublicOwnerLabel(agent: AgentResponse): string | undefined {
   return label || undefined;
 }
 
+const AGENTGRAM_PUBLIC_ORIGIN = 'https://agentgram.ai';
+
+function resolveAgentVerificationState(
+  value: string | null | undefined
+): Agent['verificationState'] {
+  if (value === 'verified' || value === 'pending') {
+    return value;
+  }
+
+  return 'unverified';
+}
+
+function getApiSafeHandle(name: string) {
+  const normalized = name
+    .trim()
+    .replace(/[^A-Za-z0-9_-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^[-_]+|[-_]+$/g, '')
+    .slice(0, 64);
+
+  return normalized || 'agent';
+}
+
+function getRoutableAgentProfileUrl(name: string) {
+  return AGENTGRAM_PUBLIC_ORIGIN + '/agents/' + encodeURIComponent(name);
+}
+
+function buildAgentIdentityCard({
+  name,
+  verificationState,
+  publicOwnerLabel,
+  workProofUrl,
+  workProofLabel,
+}: {
+  name: string;
+  verificationState: Agent['verificationState'];
+  publicOwnerLabel?: string;
+  workProofUrl?: string;
+  workProofLabel?: string;
+}): Agent['identityCard'] {
+  const apiSafeHandle = getApiSafeHandle(name);
+  const claimStatus =
+    verificationState === 'verified'
+      ? 'claimed_verified'
+      : verificationState === 'pending'
+        ? 'pending_review'
+        : 'unclaimed';
+
+  return {
+    claimStatus,
+    apiSafeHandle: '@' + apiSafeHandle,
+    apiSafeProfileUrl: getRoutableAgentProfileUrl(name),
+    ownerProofLabel:
+      verificationState === 'verified' ? publicOwnerLabel : undefined,
+    ownerProofUrl: verificationState === 'verified' ? workProofUrl : undefined,
+    ownerProofLinkLabel:
+      verificationState === 'verified' ? workProofLabel : undefined,
+  };
+}
+
 function resolveOperatorTier(
   agent: AgentResponse
 ): Agent['operatorTier'] | undefined {
@@ -296,6 +650,14 @@ export function transformAgent(agent: AgentResponse): Agent {
     !Array.isArray(agent.metadata)
       ? (agent.metadata as Record<string, unknown>)
       : {};
+  const publicFields = deriveAgentPublicFields(metadata);
+  const verificationState = resolveAgentVerificationState(
+    agent.verification_state
+  );
+  const publicOwnerLabel = derivePublicOwnerLabel({
+    ...agent,
+    verification_state: verificationState,
+  });
 
   return {
     id: agent.id,
@@ -304,17 +666,23 @@ export function transformAgent(agent: AgentResponse): Agent {
     description: agent.description || undefined,
     capabilitySummary: agent.capability_summary || undefined,
     permissionScope: agent.permission_scope || undefined,
-    publicOwnerLabel: derivePublicOwnerLabel(agent),
+    publicOwnerLabel,
+    identityCard: buildAgentIdentityCard({
+      name: agent.name,
+      verificationState,
+      publicOwnerLabel,
+      workProofUrl: publicFields.workProofUrl,
+      workProofLabel: publicFields.workProofLabel,
+    }),
     operatorTier: resolveOperatorTier(agent),
     publicKey: agent.public_key || undefined,
     email: agent.email || undefined,
     emailVerified: agent.email_verified ?? false,
     axp: agent.axp ?? 0,
-    verificationState:
-      (agent.verification_state as Agent['verificationState']) ?? 'unverified',
+    verificationState,
     status: (agent.status as Agent['status']) ?? 'active',
     trustScore: agent.trust_score ?? 0,
-    ...deriveAgentPublicFields(metadata),
+    ...publicFields,
     ...deriveAgentMemoryProfile(metadata),
     avatarUrl: agent.avatar_url || undefined,
     createdAt: agent.created_at ?? '',

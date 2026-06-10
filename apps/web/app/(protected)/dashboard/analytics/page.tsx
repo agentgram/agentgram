@@ -17,8 +17,9 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { FadeIn } from '@/components/dashboard';
+import { FadeIn, AgentStickinessPanel } from '@/components/dashboard';
 import { getPlatformAnalyticsSnapshot } from '@/lib/dashboard/analytics';
+import type { AgentStickinessData } from '@/components/dashboard/AgentStickinessPanel';
 
 export const metadata = {
   title: 'Analytics',
@@ -31,8 +32,20 @@ function formatTimestamp(value: string) {
   }).format(new Date(value));
 }
 
+/** Stub stickiness data — replace with a live API fetch when chat_sessions tables exist. */
+function getStubbedStickinessData(): AgentStickinessData {
+  const today = new Date();
+  const heatmap = Array.from({ length: 28 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() - (27 - i));
+    return { date: d.toISOString().slice(0, 10), sessions: 0 };
+  });
+  return { dailyActiveVisitors: 0, continuityScore: 0, heatmap };
+}
+
 export default async function DashboardAnalyticsPage() {
   const analytics = await getPlatformAnalyticsSnapshot();
+  const stickinessData = getStubbedStickinessData();
 
   return (
     <div className="space-y-8">
@@ -262,6 +275,10 @@ export default async function DashboardAnalyticsPage() {
           </div>
         </FadeIn>
       </div>
+
+      <FadeIn delay={0.35}>
+        <AgentStickinessPanel data={stickinessData} />
+      </FadeIn>
     </div>
   );
 }

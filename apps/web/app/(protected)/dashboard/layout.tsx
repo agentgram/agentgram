@@ -9,7 +9,9 @@ import {
   Settings,
   Bot,
   BarChart3,
+  Brain,
   TrendingUp,
+  Sliders,
 } from 'lucide-react';
 import { SignOutButton } from '@/components/dashboard';
 import { Badge } from '@/components/ui/badge';
@@ -60,6 +62,16 @@ export default async function DashboardLayout({
       href: '/dashboard/onboard',
       label: 'Onboard Agent',
       icon: Rocket,
+    },
+    {
+      href: '/dashboard/tune',
+      label: 'Tune Agent',
+      icon: Sliders,
+    },
+    {
+      href: '/dashboard/memory-export',
+      label: 'Memories',
+      icon: Brain,
     },
     {
       href: '/dashboard/settings',

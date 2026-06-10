@@ -1,16 +1,41 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import type { PlanType, RelationshipPreset } from '@agentgram/shared';
-import { Award, Bot, Lock, ShieldAlert, Sparkles } from 'lucide-react';
+import type {
+  PlanType,
+  RelationshipGoalFacet,
+  RelationshipPreset,
+  WorldbuildingFacet,
+} from '@agentgram/shared';
+import {
+  Award,
+  Bot,
+  Globe,
+  Image as ImageIcon,
+  Lock,
+  Mic,
+  ShieldAlert,
+  Sparkles,
+  Video,
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatExternalToolAccess } from '@/lib/agents/external-tool-access';
+import {
+  getRelationshipGoalLabel,
+  getWorldbuildingLabel,
+} from '@/lib/agents/discovery-facets';
 import { getRelationshipModeLabel } from '@/lib/agents/relationship-mode';
 import { cn } from '@/lib/utils';
 import {
+  AGENT_MODALITY_KEYS,
+  AGENT_MODALITY_LABELS,
   DIRECTORY_CAPABILITY_KEYS,
   DIRECTORY_CAPABILITY_LABELS,
+  type AgentModalityKey,
   type DirectoryCapabilities,
 } from '@/lib/agents/capabilities';
+import { CreatorProvenanceStrip } from './CreatorProvenanceStrip';
+import { CreatorVoiceCallPreview } from './CreatorVoiceCallPreview';
+import { VoiceLatencyBadge } from './VoiceLatencyBadge';
 
 type AgentCardAgent = {
   id: string;
@@ -30,10 +55,56 @@ type AgentCardAgent = {
   permissionScope?: string | null;
   capabilities?: Partial<DirectoryCapabilities>;
   relationshipPreset?: RelationshipPreset | null;
+  relationshipGoal?: RelationshipGoalFacet | null;
+  worldbuilding?: WorldbuildingFacet | null;
   operatorTier?: PlanType | null;
   matureContent?: boolean;
   remixCount?: number | null;
+  email?: string | null;
+  publicKey?: string | null;
+  identityCard?: {
+    claimStatus?: 'claimed_verified' | 'pending_review' | 'unclaimed';
+    apiSafeHandle?: string;
+    apiSafeProfileUrl?: string;
+    ownerProofLabel?: string;
+  } | null;
+  remixSource?: {
+    id: string;
+    name: string;
+    displayName?: string | null;
+  } | null;
+  creatorHandle?: string | null;
+  voiceSampleUrl?: string | null;
+  voiceLatencyMs?: number | null;
 };
+
+const AGENTGRAM_PUBLIC_ORIGIN = 'https://agentgram.ai';
+
+function getApiSafeHandle(name: string) {
+  const normalized = name
+    .trim()
+    .replace(/[^A-Za-z0-9_-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^[-_]+|[-_]+$/g, '')
+    .slice(0, 64);
+
+  return normalized || 'agent';
+}
+
+function getClaimStatusLabel(
+  verificationState?: AgentCardAgent['verificationState'],
+  claimStatus?: NonNullable<AgentCardAgent['identityCard']>['claimStatus']
+) {
+  if (claimStatus === 'claimed_verified' || verificationState === 'verified') {
+    return 'Claimed and verified';
+  }
+
+  if (claimStatus === 'pending_review' || verificationState === 'pending') {
+    return 'Claim pending review';
+  }
+
+  return 'Unclaimed';
+}
 
 function formatTokenLabel(value: string) {
   return value
@@ -97,6 +168,13 @@ function getActivityFreshness(lastActive?: string | null) {
   };
 }
 
+const MODALITY_BADGE_ICONS: Record<AgentModalityKey, typeof Mic> = {
+  voice: Mic,
+  video: Video,
+  image: ImageIcon,
+  web: Globe,
+};
+
 interface AgentCardProps {
   agent: AgentCardAgent;
   showNewBadge?: boolean;
@@ -116,16 +194,43 @@ export function AgentCard({
   const relationshipModeLabel = getRelationshipModeLabel(
     agent.relationshipPreset
   );
+  const relationshipGoalLabel = getRelationshipGoalLabel(
+    agent.relationshipGoal
+  );
+  const worldbuildingLabel = getWorldbuildingLabel(agent.worldbuilding);
   const formattedMemoryPolicy = agent.memoryPolicy?.trim()
     ? formatTokenLabel(agent.memoryPolicy)
     : undefined;
   const externalToolAccess = formatExternalToolAccess(agent.permissionScope);
   const paidTierLabel = formatOperatorTierLabel(agent.operatorTier);
+  const identityApiSafeHandle =
+    agent.identityCard?.apiSafeHandle ?? '@' + getApiSafeHandle(agent.name);
+  const identityApiSafeProfileUrl =
+    agent.identityCard?.apiSafeProfileUrl ??
+    AGENTGRAM_PUBLIC_ORIGIN +
+      '/agents/' +
+      encodeURIComponent(agent.name);
+  const identityDisplayUrl = identityApiSafeProfileUrl.replace(
+    /^https?:\/\//,
+    ''
+  );
+  const identityClaimStatusLabel = getClaimStatusLabel(
+    agent.verificationState,
+    agent.identityCard?.claimStatus
+  );
+  const identityOwnerProofLabel =
+    agent.identityCard?.ownerProofLabel?.trim() || publicOwnerLabel;
   const shouldShowPublicTrustBundle =
     agent.verificationState === 'verified' &&
     Boolean(publicOwnerLabel || formattedMemoryPolicy || activityFreshness);
   const shouldShowPremiumTrustStrip = Boolean(
     paidTierLabel || agent.matureContent
+  );
+  const enabledReplyModalities = AGENT_MODALITY_KEYS.filter(
+    (key) => agent.capabilities?.[key] === true
+  );
+  const enabledDiscoveryCapabilities = DIRECTORY_CAPABILITY_KEYS.filter(
+    (key) => key !== 'voice' && agent.capabilities?.[key] === true
   );
 
   const isNew =
@@ -140,7 +245,7 @@ export function AgentCard({
 
   return (
     <Link
-      href={`/agents/${agent.name}`}
+      href={'/agents/' + encodeURIComponent(agent.name)}
       data-testid="agent-card"
       className={cn(
         'group block rounded-lg border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
@@ -185,6 +290,24 @@ export function AgentCard({
                   {relationshipModeLabel}
                 </Badge>
               )}
+              {relationshipGoalLabel && (
+                <Badge
+                  variant="outline"
+                  className="text-[10px] font-medium"
+                  data-testid="agent-relationship-goal-badge"
+                >
+                  Goal: {relationshipGoalLabel}
+                </Badge>
+              )}
+              {worldbuildingLabel && (
+                <Badge
+                  variant="outline"
+                  className="text-[10px] font-medium"
+                  data-testid="agent-worldbuilding-badge"
+                >
+                  World: {worldbuildingLabel}
+                </Badge>
+              )}
               {activityFreshness && !shouldShowPublicTrustBundle && (
                 <span
                   data-testid="agent-card-freshness-badge"
@@ -201,6 +324,51 @@ export function AgentCard({
         </div>
       </div>
 
+      <div
+        className="mt-3 flex flex-wrap items-center gap-2"
+        data-testid="agent-card-identity-row"
+      >
+        <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+          AI-agent identity
+        </span>
+        <span
+          className={cn(
+            'inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]',
+            agent.verificationState === 'verified'
+              ? 'border-green-500/20 bg-green-500/10 text-green-700 dark:text-green-300'
+              : agent.verificationState === 'pending'
+                ? 'border-yellow-500/20 bg-yellow-500/10 text-yellow-700 dark:text-yellow-300'
+                : 'border-border/70 bg-muted/40 text-muted-foreground'
+          )}
+          data-testid="agent-card-claim-status"
+        >
+          {identityClaimStatusLabel}
+        </span>
+        <code
+          className="max-w-full truncate rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-[10px] text-foreground"
+          data-testid="agent-card-api-domain"
+        >
+          {identityDisplayUrl}
+        </code>
+        <code
+          className="rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-[10px] text-foreground"
+          data-testid="agent-card-api-handle"
+        >
+          {identityApiSafeHandle}
+        </code>
+        <span
+          className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[10px] font-medium text-foreground/80"
+          data-testid={
+            identityOwnerProofLabel
+              ? 'agent-card-owner-proof'
+              : 'agent-card-owner-proof-status'
+          }
+        >
+          {identityOwnerProofLabel
+            ? 'Owner proof: ' + identityOwnerProofLabel
+            : 'Owner proof not published'}
+        </span>
+      </div>
       <div
         className="mt-3 flex flex-wrap items-center gap-2"
         data-testid="agent-card-external-tool-access"
@@ -252,6 +420,48 @@ export function AgentCard({
           )}
         </div>
       )}
+
+      {enabledReplyModalities.length > 0 && (
+        <div
+          className="mt-3 flex flex-wrap items-center gap-2"
+          data-testid="agent-card-modality-badges"
+        >
+          <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            Replies with
+          </span>
+          {enabledReplyModalities.map((key) => {
+            const Icon = MODALITY_BADGE_ICONS[key];
+
+            return (
+              <Badge
+                key={key}
+                variant="secondary"
+                className="gap-1.5 border border-primary/15 bg-primary/5 text-[10px] font-semibold uppercase tracking-wide text-foreground/85"
+                data-testid={`agent-card-modality-badge-${key}`}
+              >
+                <Icon className="h-3 w-3 text-primary" />
+                {AGENT_MODALITY_LABELS[key]}
+              </Badge>
+            );
+          })}
+          {agent.capabilities?.voice === true &&
+            agent.voiceLatencyMs != null && (
+              <VoiceLatencyBadge latencyMs={agent.voiceLatencyMs} />
+            )}
+        </div>
+      )}
+
+      <CreatorVoiceCallPreview
+        className="mt-3"
+        availability={{
+          text: true,
+          voice: agent.capabilities?.voice === true,
+        }}
+        voiceSampleUrl={agent.voiceSampleUrl ?? undefined}
+        voiceSampleLabel={
+          agent.display_name ?? agent.displayName ?? agent.name
+        }
+      />
 
       <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
@@ -320,11 +530,9 @@ export function AgentCard({
         </div>
       )}
 
-      {agent.capabilities && (
+      {enabledDiscoveryCapabilities.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">
-          {DIRECTORY_CAPABILITY_KEYS.filter(
-            (key) => agent.capabilities?.[key]
-          ).map((key) => (
+          {enabledDiscoveryCapabilities.map((key) => (
             <Badge
               key={key}
               variant="outline"
@@ -336,6 +544,14 @@ export function AgentCard({
           ))}
         </div>
       )}
+      <CreatorProvenanceStrip
+        agentName={agent.name}
+        publicOwnerLabel={agent.publicOwnerLabel}
+        identityClaimStatus={agent.identityCard?.claimStatus}
+        remixSource={agent.remixSource}
+        creatorHandle={agent.creatorHandle}
+        variant="card"
+      />
     </Link>
   );
 }

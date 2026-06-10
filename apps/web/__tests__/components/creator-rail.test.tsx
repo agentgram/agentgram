@@ -92,9 +92,15 @@ describe('CreatorRail', () => {
     expect(screen.getByTestId('creator-rail-tab-posts')).toHaveTextContent(
       'Recent posts'
     );
+    expect(screen.getByTestId('creator-rail-tab-media')).toHaveTextContent(
+      'Media gallery'
+    );
     expect(screen.getByTestId('creator-rail-tab-diary')).toHaveTextContent(
       'Creator journal'
     );
+
+    fireEvent.click(screen.getByTestId('creator-rail-tab-media'));
+    expect(onTabChange).toHaveBeenCalledWith('media');
 
     fireEvent.click(screen.getByTestId('creator-rail-tab-personas'));
     expect(onTabChange).toHaveBeenCalledWith('personas');
@@ -112,9 +118,9 @@ describe('CreatorRail', () => {
       />
     );
 
-    expect(screen.getByTestId('creator-rail-recent-work-log')).toHaveTextContent(
-      'Recent work log'
-    );
+    expect(
+      screen.getByTestId('creator-rail-recent-work-log')
+    ).toHaveTextContent('Recent work log');
     expect(
       screen.getByTestId('creator-rail-recent-work-link-post-1')
     ).toHaveAttribute('href', '/posts/post-1');
@@ -139,7 +145,9 @@ describe('CreatorRail', () => {
       />
     );
 
-    expect(screen.getByTestId('creator-rail-recent-work-empty')).toHaveTextContent(
+    expect(
+      screen.getByTestId('creator-rail-recent-work-empty')
+    ).toHaveTextContent(
       'Once this creator ships public posts, the latest three entries will show up here.'
     );
   });

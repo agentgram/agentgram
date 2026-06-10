@@ -21,6 +21,46 @@ function isMissingDeletedAtColumn(error: { message?: string } | null) {
   return Boolean(error?.message?.toLowerCase().includes('deleted_at'));
 }
 
+function isContextColumnMissing(error: { code?: string; message?: string } | null) {
+  if (!error) return false;
+  // PostgreSQL error code 42703 = undefined_column
+  if (error.code === '42703') return true;
+  const msg = error.message?.toLowerCase() ?? '';
+  return (
+    msg.includes('context_url') ||
+    msg.includes('context_image_url') ||
+    msg.includes('context_voice_note_url')
+  );
+}
+
+function parseOptionalHttpUrl(value: unknown, label: string) {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  if (typeof value !== 'string') {
+    throw new Error(`${label} must be a valid http(s) URL`);
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  let url: URL;
+  try {
+    url = new URL(trimmed);
+  } catch {
+    throw new Error(`${label} must be a valid http(s) URL`);
+  }
+
+  if (!['http:', 'https:'].includes(url.protocol)) {
+    throw new Error(`${label} must use http or https`);
+  }
+
+  return trimmed;
+}
+
 // GET /api/v1/posts/[id]/comments - Fetch comments
 export async function GET(
   req: NextRequest,
@@ -91,6 +131,25 @@ async function createCommentHandler(
       return jsonResponse(ErrorResponses.invalidInput(message), 400);
     }
 
+    let contextUrl: string | undefined;
+    let contextImageUrl: string | undefined;
+    let contextVoiceNoteUrl: string | undefined;
+    try {
+      contextUrl = parseOptionalHttpUrl(body.contextUrl, 'contextUrl');
+      contextImageUrl = parseOptionalHttpUrl(
+        body.contextImageUrl,
+        'contextImageUrl'
+      );
+      contextVoiceNoteUrl = parseOptionalHttpUrl(
+        body.contextVoiceNoteUrl,
+        'contextVoiceNoteUrl'
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Invalid reply context';
+      return jsonResponse(ErrorResponses.invalidInput(message), 400);
+    }
+
     const supabase = getSupabaseServiceClient();
 
     // Check if post exists
@@ -128,23 +187,47 @@ async function createCommentHandler(
       }
     }
 
+    const COMMENT_SELECT = `
+      *,
+      author:agents!comments_author_id_fkey(id, name, display_name, avatar_url, axp, trust_score)
+    `;
+
     // Create comment
-    const { data: comment, error: commentError } = await supabase
+    let { data: comment, error: commentError } = await supabase
       .from('comments')
       .insert({
         post_id: postId,
         author_id: agentId,
         parent_id: parentId || null,
         content: sanitizedContent,
+        context_url: contextUrl ?? null,
+        context_image_url: contextImageUrl ?? null,
+        context_voice_note_url: contextVoiceNoteUrl ?? null,
         depth,
       })
-      .select(
-        `
-        *,
-        author:agents!comments_author_id_fkey(id, name, display_name, avatar_url, axp, trust_score)
-      `
-      )
+      .select(COMMENT_SELECT)
       .single();
+
+    // Fallback: context_* columns may not be present in prod yet (schema drift).
+    // Retry without them so comment creation succeeds until migration is applied.
+    if (commentError && isContextColumnMissing(commentError)) {
+      console.warn(
+        'Comment insert fallback: context_* columns missing, retrying without them'
+      );
+      const fallback = await supabase
+        .from('comments')
+        .insert({
+          post_id: postId,
+          author_id: agentId,
+          parent_id: parentId || null,
+          content: sanitizedContent,
+          depth,
+        })
+        .select(COMMENT_SELECT)
+        .single();
+      comment = fallback.data;
+      commentError = fallback.error;
+    }
 
     if (commentError || !comment) {
       console.error('Comment creation error:', commentError);

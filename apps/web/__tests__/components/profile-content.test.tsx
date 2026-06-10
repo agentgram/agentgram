@@ -1,6 +1,6 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
 import type { Agent, Post } from '@agentgram/shared';
 import { ProfileContent } from '../../components/agents/ProfileContent';
 
@@ -29,6 +29,9 @@ vi.mock('../../components/agents/ProfileTabs', () => ({
       <button onClick={() => onTabChange('diary')} type="button">
         switch-diary
       </button>
+      <button onClick={() => onTabChange('media')} type="button">
+        switch-media
+      </button>
     </div>
   ),
 }));
@@ -36,6 +39,12 @@ vi.mock('../../components/agents/ProfileTabs', () => ({
 vi.mock('../../components/agents/ProfilePostGrid', () => ({
   ProfilePostGrid: ({ type }: { type: string }) => (
     <div data-testid="profile-post-grid">{type}</div>
+  ),
+}));
+
+vi.mock('../../components/agents/ProfileMediaGrid', () => ({
+  ProfileMediaGrid: ({ agentId }: { agentId: string }) => (
+    <div data-testid="profile-media-grid">{agentId}</div>
   ),
 }));
 
@@ -68,9 +77,14 @@ vi.mock('../../components/agents/CreatorRail', () => ({
     recentWorkLog?: Post[];
   }) => (
     <div data-testid="creator-rail">
-      {activeTab}::{recentWorkLog?.map((post) => post.title).join(' | ') || 'none'}
+      {activeTab}::
+      {recentWorkLog?.map((post) => post.title).join(' | ') || 'none'}
     </div>
   ),
+}));
+
+vi.mock('../../components/lorebook/LorebookMatchPreview', () => ({
+  LorebookMatchPreview: () => null,
 }));
 
 const baseAgent: Agent = {
@@ -94,6 +108,22 @@ const baseAgent: Agent = {
     updatedAt: '2026-05-01T00:00:00.000Z',
   },
 };
+
+const starterPrompts: Agent['starterPrompts'] = [
+  {
+    id: 'starter-1',
+    title: 'On-call triage',
+    description: 'Use this when you need a fast incident readout.',
+    prompt:
+      'Walk me through the current incident, what is blocked, and the first safe fix to try.',
+  },
+  {
+    id: 'starter-2',
+    title: 'Launch checklist',
+    prompt:
+      'Give me a launch checklist for shipping this agent publicly today.',
+  },
+];
 
 const pinnedIntroPost: Post = {
   id: 'post-1',
@@ -123,6 +153,70 @@ describe('ProfileContent', () => {
     expect(screen.getByTestId('profile-post-grid')).toHaveTextContent(
       'authored'
     );
+  });
+
+  it('renders creator-written starter scenarios above the authored post grid', () => {
+    render(
+      <ProfileContent
+        agent={{
+          ...baseAgent,
+          starterPrompts,
+        }}
+      />
+    );
+
+    const starters = screen.getByTestId('profile-starter-scenarios');
+    const postGrid = screen.getByTestId('profile-post-grid');
+    const order = starters.compareDocumentPosition(postGrid);
+
+    expect(starters).toHaveTextContent('Creator-written starter scenarios');
+    expect(starters).toHaveTextContent('On-call triage');
+    expect(starters).toHaveTextContent(
+      'Walk me through the current incident, what is blocked, and the first safe fix to try.'
+    );
+    expect(order & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('hides the starter scenarios when a non-post tab is selected', () => {
+    render(
+      <ProfileContent
+        agent={{
+          ...baseAgent,
+          starterPrompts,
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('profile-starter-scenarios')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'switch-diary' }));
+
+    expect(
+      screen.queryByTestId('profile-starter-scenarios')
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId('profile-diary')).toBeInTheDocument();
+  });
+
+  it('shows generated public chat media when the media tab is selected', () => {
+    render(<ProfileContent agent={baseAgent} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'switch-media' }));
+
+    expect(screen.getByTestId('profile-tabs')).toHaveTextContent('media');
+    expect(screen.getByTestId('profile-media-grid')).toHaveTextContent(
+      'agent-1'
+    );
+    expect(screen.queryByTestId('profile-post-grid')).not.toBeInTheDocument();
+  });
+
+  it('can open directly on the media tab for public gallery deep links', () => {
+    render(<ProfileContent agent={baseAgent} initialTab="media" />);
+
+    expect(screen.getByTestId('profile-tabs')).toHaveTextContent('media');
+    expect(screen.getByTestId('profile-media-grid')).toHaveTextContent(
+      'agent-1'
+    );
+    expect(screen.queryByTestId('profile-post-grid')).not.toBeInTheDocument();
   });
 
   it('shows creator journal entries when the diary tab is selected', () => {
@@ -184,5 +278,47 @@ describe('ProfileContent', () => {
       screen.queryByTestId('profile-pinned-intro-post')
     ).not.toBeInTheDocument();
     expect(screen.getByTestId('profile-tabs')).toBeInTheDocument();
+  });
+
+  describe('CheckInConsentPanel error handling', () => {
+    beforeEach(() => {
+      vi.stubGlobal('fetch', vi.fn());
+    });
+
+    it('closes the modal on successful handleAllow', async () => {
+      vi.mocked(fetch).mockResolvedValueOnce(new Response(null, { status: 200 }));
+
+      render(<ProfileContent agent={baseAgent} />);
+
+      fireEvent.click(screen.getByTestId('open-check-in-consent'));
+      expect(screen.getByTestId('check-in-consent-panel')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('check-in-allow-button'));
+
+      await waitFor(() => {
+        expect(
+          screen.queryByTestId('check-in-consent-panel')
+        ).not.toBeInTheDocument();
+      });
+    });
+
+    it('shows error and keeps modal open when handleAllow API call fails', async () => {
+      vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+
+      render(<ProfileContent agent={baseAgent} />);
+
+      fireEvent.click(screen.getByTestId('open-check-in-consent'));
+      expect(screen.getByTestId('check-in-consent-panel')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('check-in-allow-button'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('check-in-error')).toHaveTextContent(
+          'Something went wrong. Please try again.'
+        );
+      });
+
+      expect(screen.getByTestId('check-in-consent-panel')).toBeInTheDocument();
+    });
   });
 });

@@ -5,6 +5,8 @@ import { ArrowRight, ArrowUpRight, BadgeCheck, Layers3 } from 'lucide-react';
 import type { Agent, Post } from '@agentgram/shared';
 import { cn } from '@/lib/utils';
 import type { ProfileTab } from './ProfileTabs';
+import { CreatorProtectedBadge } from '@/components/content-permanence-pledge';
+import { AgentBackupCTA } from '@/components/agent-backup-cta';
 
 interface CreatorRailProps {
   agent: Agent;
@@ -67,8 +69,15 @@ export function CreatorRail({
     {
       id: 'posts',
       label: 'Recent posts',
-      description: 'Public launches, prompts, and work samples from this creator.',
+      description:
+        'Public launches, prompts, and work samples from this creator.',
       count: agent.postCount,
+    },
+    {
+      id: 'media',
+      label: 'Media gallery',
+      description:
+        'Generated scenes, selfies, and visual canon pulled from public chats.',
     },
     {
       id: 'likes',
@@ -78,13 +87,15 @@ export function CreatorRail({
     {
       id: 'diary',
       label: 'Creator journal',
-      description: 'Profile diary notes, changelogs, and public operating context.',
+      description:
+        'Profile diary notes, changelogs, and public operating context.',
       count: agent.diaryEntries?.length,
     },
     {
       id: 'personas',
       label: 'Personas',
-      description: 'Alternate public voices and role setups linked to this profile.',
+      description:
+        'Alternate public voices and role setups linked to this profile.',
     },
   ];
 
@@ -118,7 +129,8 @@ export function CreatorRail({
               More from this creator
             </p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Jump between this profile&apos;s public work, journal, and persona surfaces.
+              Jump between this profile&apos;s posts, media, journal, and
+              persona surfaces.
             </p>
           </div>
           <Layers3 className="mt-0.5 h-4 w-4 text-primary" />
@@ -170,7 +182,8 @@ export function CreatorRail({
                 Recent work log
               </p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Latest public posts, demos, and shipping notes from this profile.
+                Latest public posts, demos, and shipping notes from this
+                profile.
               </p>
             </div>
             <button
@@ -215,7 +228,8 @@ export function CreatorRail({
               className="mt-4 rounded-xl border border-dashed border-border/80 bg-muted/20 px-3 py-3 text-sm leading-6 text-muted-foreground"
               data-testid="creator-rail-recent-work-empty"
             >
-              Once this creator ships public posts, the latest three entries will show up here.
+              Once this creator ships public posts, the latest three entries
+              will show up here.
             </p>
           )}
         </section>
@@ -233,10 +247,13 @@ export function CreatorRail({
               {publicOwnerLabel}
             </p>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              Public owner attribution is only shown after this creator clears AgentGram verification.
+              Public owner attribution is only shown after this creator clears
+              AgentGram verification.
             </p>
           </section>
         )}
+
+        <CreatorProtectedBadge />
 
         <section
           className="rounded-2xl border border-border/80 bg-background p-4 shadow-sm"
@@ -265,10 +282,17 @@ export function CreatorRail({
             className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary transition hover:text-primary/80"
             data-testid="creator-rail-paid-capability-link"
           >
-            {hasPaidCapabilityLayer ? 'Compare Operator tiers' : 'See paid capabilities'}
+            {hasPaidCapabilityLayer
+              ? 'Compare Operator tiers'
+              : 'See paid capabilities'}
             <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
         </section>
+
+        <AgentBackupCTA
+          agentName={agent.displayName || agent.name}
+          agentId={agent.id}
+        />
       </div>
     </aside>
   );

@@ -1,6 +1,22 @@
 export const TONE_PRESETS = ['warm', 'neutral', 'brief'] as const;
 export type TonePreset = (typeof TONE_PRESETS)[number];
 
+export const PROACTIVE_TRIGGER_SOURCES = [
+  'user_engagement',
+  'scheduled_window',
+  'milestone',
+  'memory_update',
+] as const;
+export type ProactiveTriggerSource = (typeof PROACTIVE_TRIGGER_SOURCES)[number];
+
+export const PROACTIVE_TRIGGER_LABELS: Record<ProactiveTriggerSource, string> =
+  {
+    user_engagement: 'Triggered by recent user engagement',
+    scheduled_window: 'Triggered by scheduled send window',
+    milestone: 'Triggered by relationship milestone',
+    memory_update: 'Triggered by memory update',
+  };
+
 export interface ProactiveControlsSettings {
   optIn: boolean;
   dailyLimit: number;
@@ -11,6 +27,7 @@ export interface ProactiveControlsSettings {
   tonePreset: TonePreset;
   updatedAt?: string;
   lastAutoMessageAt?: string;
+  lastAutoMessageTrigger?: ProactiveTriggerSource;
   nextEligibleSendAt?: string;
 }
 
@@ -108,6 +125,13 @@ export function normalizeProactiveControlsSettings(
 
   const lastAutoMessageAt = toIsoTimestamp(value.lastAutoMessageAt);
   const nextEligibleSendAt = toIsoTimestamp(value.nextEligibleSendAt);
+  const lastAutoMessageTrigger: ProactiveTriggerSource | undefined =
+    typeof value.lastAutoMessageTrigger === 'string' &&
+    (PROACTIVE_TRIGGER_SOURCES as readonly string[]).includes(
+      value.lastAutoMessageTrigger
+    )
+      ? (value.lastAutoMessageTrigger as ProactiveTriggerSource)
+      : undefined;
 
   return {
     optIn: value.optIn === true,
@@ -123,6 +147,7 @@ export function normalizeProactiveControlsSettings(
     updatedAt:
       typeof value.updatedAt === 'string' ? value.updatedAt : undefined,
     ...(lastAutoMessageAt ? { lastAutoMessageAt } : {}),
+    ...(lastAutoMessageTrigger ? { lastAutoMessageTrigger } : {}),
     ...(nextEligibleSendAt ? { nextEligibleSendAt } : {}),
   };
 }

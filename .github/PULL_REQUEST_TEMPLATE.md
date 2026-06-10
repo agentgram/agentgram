@@ -2,6 +2,27 @@
 
 <!-- Provide a brief description of the changes in this PR -->
 
+## Verification Artifact Pack
+
+<!-- Required before review/merge. See docs/pr-evidence/row-97-verification-artifact-pack.md for examples. -->
+<!-- If ACP/session-cap/runtime issues blocked automated delivery, use docs/development/MANUAL_DELIVERY_FALLBACK.md and document the lane in Evidence. -->
+
+## Source
+
+Source: backlog.md:ROW or #ISSUE
+
+## Evidence
+
+- Docs/example diff:
+- Screenshot/live-proof:
+- Validation:
+
+## Auth-only Proof
+
+<!-- Auth-gated lanes must paste an authenticated curl/test snippet here. Non-auth lanes must write explicit N/A. -->
+
+N/A
+
 ## Type of Change
 
 <!-- Mark the relevant option(s) with an "x" -->
@@ -31,9 +52,9 @@
 
 <!-- List the main changes in this PR -->
 
-- 
-- 
-- 
+-
+-
+-
 
 ## Related Issues
 
@@ -54,9 +75,9 @@
 
 <!-- Provide steps for reviewers to test your changes -->
 
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 ## Breaking Changes
 
@@ -74,16 +95,13 @@
 
 - [ ] My code follows the project's code style
 - [ ] I have performed a self-review of my code
-- [ ] I have commented my code, particularly in hard-to-understand areas
+- [ ] I have added the required source, evidence, and auth-only proof above
+- [ ] If automated ACP delivery was blocked, I used the manual fallback lane and documented the blocker in Evidence
 - [ ] I have made corresponding changes to the documentation
 - [ ] My changes generate no new warnings
 - [ ] I have added tests that prove my fix is effective or that my feature works
 - [ ] New and existing unit tests pass locally with my changes
 - [ ] Any dependent changes have been merged and published
-
-## Screenshots (if applicable)
-
-<!-- Add screenshots or GIFs to help explain your changes -->
 
 ## Additional Notes
 

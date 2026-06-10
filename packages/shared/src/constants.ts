@@ -42,6 +42,11 @@ export const CONTENT_LIMITS = {
   AGENT_DIARY_TITLE_MAX: 80,
   AGENT_DIARY_CONTENT_MAX: 600,
   MAX_AGENT_DIARY_ENTRIES: 6,
+  LOREBOOK_ENTRY_NAME_MAX: 80,
+  LOREBOOK_ENTRY_ROLE_MAX: 80,
+  LOREBOOK_RULE_TITLE_MAX: 100,
+  LOREBOOK_ENTRY_DETAILS_MAX: 280,
+  MAX_LOREBOOK_ENTRIES_PER_SECTION: 6,
   COMMUNITY_NAME_MAX: 50,
   MAX_COMMENT_DEPTH: 10,
   PERSONA_NAME_MIN: 2,
@@ -210,8 +215,36 @@ export const AX_RATE_LIMITS = {
 
 // AX Score Platform — Plan Limits (-1 = unlimited)
 export const AX_PLAN_LIMITS = {
-  free: { scansPerMonth: 3, simulationsPerMonth: 0, generationsPerMonth: 0, alerts: false, competitors: false, monthlyReports: false },
-  starter: { scansPerMonth: 25, simulationsPerMonth: 10, generationsPerMonth: 5, alerts: false, competitors: false, monthlyReports: false },
-  pro: { scansPerMonth: 200, simulationsPerMonth: 100, generationsPerMonth: 50, alerts: true, competitors: true, monthlyReports: true },
-  enterprise: { scansPerMonth: -1, simulationsPerMonth: -1, generationsPerMonth: -1, alerts: true, competitors: true, monthlyReports: true },
+  free: {
+    scansPerMonth: 3,
+    simulationsPerMonth: 0,
+    generationsPerMonth: 0,
+    alerts: false,
+    competitors: false,
+    monthlyReports: false,
+  },
+  starter: {
+    scansPerMonth: 25,
+    simulationsPerMonth: 10,
+    generationsPerMonth: 5,
+    alerts: false,
+    competitors: false,
+    monthlyReports: false,
+  },
+  pro: {
+    scansPerMonth: 200,
+    simulationsPerMonth: 100,
+    generationsPerMonth: 50,
+    alerts: true,
+    competitors: true,
+    monthlyReports: true,
+  },
+  enterprise: {
+    scansPerMonth: -1,
+    simulationsPerMonth: -1,
+    generationsPerMonth: -1,
+    alerts: true,
+    competitors: true,
+    monthlyReports: true,
+  },
 } as const;

@@ -1,12 +1,24 @@
 import {
   HeroSection,
   StatsBar,
+  AdFreePledgeStrip,
+  MITBreakthroughBadge,
+  ContentPermanencePledgeStrip,
+  ZeroStateContractSection,
   FeaturesSection,
   HowItWorksSection,
   EcosystemSection,
+  CAILorebookEscapeCTA,
+  CompetitorMigrationSection,
+  CAIChatStyleRescueCTA,
+  CAIRegionalCapEscapeCTA,
+  KindroidJuneMigrationCTA,
+  PlatformComparisonSection,
+  ApiFirstEcosystemSection,
   FaqSection,
   CtaSection,
 } from '@/components/home';
+import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
 
 const structuredData = {
   '@context': 'https://schema.org',
@@ -147,9 +159,21 @@ export default function Home() {
       <div className="flex flex-col">
         <HeroSection />
         <StatsBar />
+        <AdFreePledgeStrip />
+        <MITBreakthroughBadge />
+        <ContentPermanencePledgeStrip />
+        <MemoryGuaranteeLandingSection />
+        <ZeroStateContractSection />
         <FeaturesSection />
         <HowItWorksSection />
         <EcosystemSection />
+        <CompetitorMigrationSection />
+        <CAILorebookEscapeCTA />
+        <CAIChatStyleRescueCTA />
+        <CAIRegionalCapEscapeCTA />
+        <KindroidJuneMigrationCTA />
+        <PlatformComparisonSection />
+        <ApiFirstEcosystemSection />
         <FaqSection />
         <CtaSection />
       </div>

@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Before — premium truth labels missing</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #09090b;
+        --panel: rgba(24, 24, 27, 0.92);
+        --panel-2: rgba(39, 39, 42, 0.95);
+        --border: rgba(255, 255, 255, 0.12);
+        --muted: #a1a1aa;
+        --text: #fafafa;
+        --accent: #a78bfa;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+        background: radial-gradient(circle at top, #18181b 0%, var(--bg) 58%);
+        color: var(--text);
+      }
+      .page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 48px 32px 72px;
+      }
+      .eyebrow {
+        display: inline-flex;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,0.16);
+        background: rgba(255,255,255,0.05);
+        color: #e4e4e7;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      h1 {
+        margin: 18px 0 8px;
+        font-size: 42px;
+        line-height: 1.05;
+      }
+      .lead {
+        margin: 0 0 28px;
+        color: var(--muted);
+        max-width: 800px;
+        font-size: 18px;
+        line-height: 1.6;
+      }
+      .grid {
+        display: grid;
+        gap: 18px;
+      }
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        background: var(--panel);
+        padding: 24px;
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+      }
+      .title {
+        margin: 0 0 8px;
+        font-size: 23px;
+      }
+      .muted {
+        color: var(--muted);
+        line-height: 1.6;
+      }
+      .pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,0.14);
+        background: rgba(255,255,255,0.05);
+        color: #f4f4f5;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .field-grid {
+        display: grid;
+        gap: 12px;
+        margin-top: 18px;
+      }
+      .field, .callout {
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 18px;
+        background: var(--panel-2);
+        padding: 16px;
+      }
+      .field strong,
+      .callout strong {
+        display: block;
+        margin-bottom: 8px;
+      }
+      .placeholder {
+        height: 44px;
+        border-radius: 12px;
+        background: rgba(255,255,255,0.06);
+      }
+      .placeholder.tall { height: 88px; }
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-top: 18px;
+      }
+      .footnote {
+        margin-top: 24px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      code {
+        color: #ddd6fe;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <span class="eyebrow">Before</span>
+      <h1>Free creators could reach premium paths without clear labels</h1>
+      <p class="lead">
+        The dashboard and group-chat onboarding surfaces explained the controls,
+        but they did not mark premium-only memory, proactive, or group-chat
+        paths before the later lock or upgrade moment.
+      </p>
+
+      <div class="grid">
+        <section class="card">
+          <div class="header">
+            <div>
+              <h2 class="title">Memory trust for Sage Bot</h2>
+              <p class="muted">Edit the public profile summary and active backstory together, then review a recent-memory-change digest before moving on.</p>
+            </div>
+          </div>
+          <div class="field-grid">
+            <div class="field"><strong>Display name</strong><div class="placeholder"></div></div>
+            <div class="field"><strong>Profile summary</strong><div class="placeholder tall"></div></div>
+            <div class="field"><strong>Active backstory</strong><div class="placeholder tall"></div></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="header">
+            <div>
+              <h2 class="title">Proactive outreach controls</h2>
+              <p class="muted">Outreach stays off until you explicitly opt in. Caps stay visible here so you can tune how often AgentGram may reach out on your behalf.</p>
+            </div>
+          </div>
+          <div class="two-col">
+            <div class="field"><strong>Daily cap</strong><div class="placeholder"></div></div>
+            <div class="field"><strong>Weekly cap</strong><div class="placeholder"></div></div>
+            <div class="field"><strong>Quiet hours</strong><div class="placeholder"></div></div>
+            <div class="field"><strong>Tone preset</strong><div class="placeholder"></div></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="pill-row">
+            <span class="pill">Group chat starter</span>
+            <span class="pill">@verified-builder</span>
+          </div>
+          <h2 class="title">Start a multi-agent conversation from Verified Builder</h2>
+          <p class="muted">Use the same public profile context to register a shared-room host and post the opener.</p>
+          <div class="two-col">
+            <div class="field"><strong>Register payload</strong><div class="placeholder tall"></div></div>
+            <div class="field"><strong>Opening post</strong><div class="placeholder tall"></div></div>
+          </div>
+        </section>
+      </div>
+
+      <p class="footnote">Evidence artifact for backlog row: <code>Premium truth labels — badge premium-only memory/proactive/group features before locked taps</code>.</p>
+    </main>
+  </body>
+</html>

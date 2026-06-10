@@ -1,7 +1,15 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
-import { Clock, Loader2, MessageSquare, ShieldCheck } from 'lucide-react';
+import {
+  Clock,
+  Loader2,
+  Lock,
+  MessageSquare,
+  ShieldCheck,
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -14,6 +22,7 @@ import {
 import { Input } from '@/components/ui/input';
 import {
   getNextEligibleSendAt,
+  PROACTIVE_TRIGGER_LABELS,
   TONE_PRESETS,
   type ProactiveControlsSettings,
   type TonePreset,
@@ -37,6 +46,7 @@ const TONE_LABELS: Record<TonePreset, { label: string; description: string }> =
 
 interface ProactiveControlsFormProps {
   initialSettings: ProactiveControlsSettings;
+  developerPlan?: string;
 }
 
 function formatStatusTimestamp(value?: string | null): string {
@@ -56,8 +66,19 @@ function formatStatusTimestamp(value?: string | null): string {
   }).format(parsed)} KST`;
 }
 
+function formatQuietHoursWindow(start: string, end: string): string {
+  return `${start} → ${end} KST`;
+}
+
+const PAID_OPERATOR_PLANS = new Set(['starter', 'pro', 'enterprise']);
+
+function hasPaidOperatorPlan(plan?: string) {
+  return Boolean(plan && PAID_OPERATOR_PLANS.has(plan));
+}
+
 export function ProactiveControlsForm({
   initialSettings,
+  developerPlan,
 }: ProactiveControlsFormProps) {
   const [settings, setSettings] = useState(initialSettings);
   const [isSaving, setIsSaving] = useState(false);
@@ -72,10 +93,23 @@ export function ProactiveControlsForm({
   const lastAutoMessageLabel = settings.lastAutoMessageAt
     ? formatStatusTimestamp(settings.lastAutoMessageAt)
     : 'No proactive message sent yet';
+  const lastAutoMessageTriggerLabel = settings.lastAutoMessageTrigger
+    ? PROACTIVE_TRIGGER_LABELS[settings.lastAutoMessageTrigger]
+    : null;
   const nextEligibleSendAt = getNextEligibleSendAt(settings);
   const nextEligibleLabel = nextEligibleSendAt
     ? formatStatusTimestamp(nextEligibleSendAt)
     : 'Waiting for opt-in';
+  const previewNextEligibleSendAt = getNextEligibleSendAt({
+    ...settings,
+    optIn: true,
+  });
+  const previewNextEligibleLabel = previewNextEligibleSendAt
+    ? formatStatusTimestamp(previewNextEligibleSendAt)
+    : 'As soon as you opt in';
+  const quietHoursPreviewLabel = settings.quietHoursEnabled
+    ? formatQuietHoursWindow(settings.quietHoursStart, settings.quietHoursEnd)
+    : 'Quiet hours are off';
   const nextEligibleSendMs = nextEligibleSendAt
     ? new Date(nextEligibleSendAt).getTime()
     : Number.NaN;
@@ -101,8 +135,12 @@ export function ProactiveControlsForm({
       : isEligibilityDelayed
         ? `AgentGram is still waiting for the next eligible send window at ${nextEligibleLabel}. Daily and weekly usage still stay capped at ${settings.dailyLimit}/day and ${settings.weeklyLimit}/week.`
         : `AgentGram can send again as early as ${nextEligibleLabel}. Daily and weekly usage still stay capped at ${settings.dailyLimit}/day and ${settings.weeklyLimit}/week.`;
+  const shouldShowPremiumTruthLabel = !hasPaidOperatorPlan(developerPlan);
 
-  const handleSave = async () => {
+  const handleSave = async (
+    nextSettings: ProactiveControlsSettings = settings,
+    successMessage: string = 'Proactive outreach preferences saved.'
+  ) => {
     setIsSaving(true);
     setStatus({ tone: 'idle', message: '' });
 
@@ -112,7 +150,7 @@ export function ProactiveControlsForm({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(settings),
+        body: JSON.stringify(nextSettings),
       });
 
       const payload = (await response.json()) as {
@@ -127,7 +165,7 @@ export function ProactiveControlsForm({
       updateSettings(payload.data);
       setStatus({
         tone: 'success',
-        message: 'Proactive outreach preferences saved.',
+        message: successMessage,
       });
     } catch (error) {
       console.error('Error saving proactive controls:', error);
@@ -140,12 +178,31 @@ export function ProactiveControlsForm({
     }
   };
 
+  const handleKeepMuted = async () => {
+    await handleSave(
+      {
+        ...settings,
+        optIn: false,
+      },
+      'Proactive outreach will stay muted until you opt in.'
+    );
+  };
+
   return (
     <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex flex-wrap items-center gap-2">
           <ShieldCheck className="h-5 w-5 text-primary" />
           Proactive outreach controls
+          {shouldShowPremiumTruthLabel ? (
+            <Badge
+              className="gap-1 border-primary/20 bg-primary/10 text-primary"
+              variant="outline"
+            >
+              <Lock className="h-3.5 w-3.5" />
+              Paid only
+            </Badge>
+          ) : null}
         </CardTitle>
         <CardDescription>
           Outreach stays off until you explicitly opt in. Caps stay visible here
@@ -153,6 +210,31 @@ export function ProactiveControlsForm({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {shouldShowPremiumTruthLabel ? (
+          <div
+            className="rounded-xl border border-primary/20 bg-primary/5 p-4"
+            data-testid="proactive-premium-truth-label"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-foreground">
+                  Paid Operator tiers unlock proactive outreach scheduling.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Free creators should see that send windows, quiet hours, and
+                  tone controls belong to the paid proactive layer before they
+                  try to turn outreach on.
+                </p>
+              </div>
+              <Link
+                className="text-sm font-medium text-primary hover:underline"
+                href="/dashboard/billing"
+              >
+                Compare Operator tiers
+              </Link>
+            </div>
+          </div>
+        ) : null}
         <label className="flex items-start gap-3 rounded-lg border border-border/60 p-4">
           <input
             checked={settings.optIn}
@@ -333,6 +415,67 @@ export function ProactiveControlsForm({
           </div>
         </fieldset>
 
+        {!settings.optIn && (
+          <div
+            className="rounded-lg border border-border/60 bg-muted/20 p-4"
+            data-testid="proactive-opt-in-preview"
+          >
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
+                  Preview before you opt in
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Quiet hours and the first send window stay visible before you enable outreach, and you can keep everything muted with one click.
+                </p>
+              </div>
+              <Button
+                disabled={isSaving}
+                onClick={handleKeepMuted}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                Keep muted
+              </Button>
+            </div>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <div className="rounded-lg border border-border/60 bg-background/80 p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Quiet hours preview
+                </p>
+                <p
+                  className="mt-2 text-sm font-medium text-foreground"
+                  data-testid="proactive-preview-quiet-hours"
+                >
+                  {quietHoursPreviewLabel}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {settings.quietHoursEnabled
+                    ? 'AgentGram will hold outbound check-ins until this daily window ends.'
+                    : 'Set a quiet-hours window now if you want outreach to wait until a safer time.'}
+                </p>
+              </div>
+
+              <div className="rounded-lg border border-border/60 bg-background/80 p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  First send window
+                </p>
+                <p
+                  className="mt-2 text-sm font-medium text-foreground"
+                  data-testid="proactive-preview-next-window"
+                >
+                  {previewNextEligibleLabel}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  This is the earliest proactive check-in window AgentGram will use once you opt in.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div
           className="rounded-lg border border-primary/20 bg-primary/5 p-4"
           data-testid="proactive-pre-send-banner"
@@ -362,6 +505,14 @@ export function ProactiveControlsForm({
             >
               {lastAutoMessageLabel}
             </p>
+            {lastAutoMessageTriggerLabel && (
+              <p
+                className="mt-1 text-xs font-medium text-primary/80"
+                data-testid="proactive-last-auto-message-trigger"
+              >
+                {lastAutoMessageTriggerLabel}
+              </p>
+            )}
             <p className="mt-1 text-xs text-muted-foreground">
               {settings.lastAutoMessageAt
                 ? 'Updated from the latest outbound proactive message metadata.'
@@ -408,7 +559,7 @@ export function ProactiveControlsForm({
         >
           {status.message || 'Changes save only when you click Save controls.'}
         </p>
-        <Button disabled={isSaving} onClick={handleSave} type="button">
+        <Button disabled={isSaving} onClick={() => void handleSave()} type="button">
           {isSaving ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

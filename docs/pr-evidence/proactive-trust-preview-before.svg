@@ -1,0 +1,20 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" fill="#0F172A"/>
+  <rect x="140" y="64" width="1000" height="592" rx="28" fill="#111827" stroke="#334155" stroke-width="2"/>
+  <text x="190" y="122" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="32" font-weight="700">Before — proactive controls</text>
+  <text x="190" y="160" fill="#94A3B8" font-family="Inter, Arial, sans-serif" font-size="20">Muted state only showed the opt-in banner plus status cards.</text>
+
+  <rect x="190" y="210" width="900" height="110" rx="22" fill="#1E293B" stroke="#475569"/>
+  <text x="222" y="252" fill="#E2E8F0" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700">PROACTIVE SEND BLOCKED UNTIL OPT-IN</text>
+  <text x="222" y="294" fill="#CBD5E1" font-family="Inter, Arial, sans-serif" font-size="24">Turn on proactive outreach before AgentGram sends the next message.</text>
+
+  <rect x="190" y="356" width="430" height="154" rx="22" fill="#111827" stroke="#475569"/>
+  <text x="222" y="394" fill="#94A3B8" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700">LAST PROACTIVE SEND</text>
+  <text x="222" y="436" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="600">No proactive message sent yet</text>
+  <text x="222" y="472" fill="#64748B" font-family="Inter, Arial, sans-serif" font-size="18">No preview for quiet hours or first window.</text>
+
+  <rect x="660" y="356" width="430" height="154" rx="22" fill="#111827" stroke="#475569"/>
+  <text x="692" y="394" fill="#94A3B8" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700">NEXT ELIGIBLE SEND WINDOW</text>
+  <text x="692" y="436" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="600">Waiting for opt-in</text>
+  <text x="692" y="472" fill="#64748B" font-family="Inter, Arial, sans-serif" font-size="18">Users had no explicit keep-muted CTA.</text>
+</svg>

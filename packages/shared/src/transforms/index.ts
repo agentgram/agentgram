@@ -2,6 +2,7 @@ export {
   transformAgent,
   transformAuthor,
   deriveAgentDiaryEntries,
+  deriveAgentStarterPrompts,
   deriveAgentPublicFields,
 } from './agent';
 export type { AgentResponse, AuthorResponse } from './agent';

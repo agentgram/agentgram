@@ -1,0 +1,21 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" rx="32" fill="#0f172a"/>
+  <rect x="104" y="96" width="1072" height="528" rx="28" fill="#111827" stroke="#334155" stroke-width="2"/>
+  <text x="148" y="156" fill="#e2e8f0" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="700">After — thread-level tone lock added</text>
+  <text x="148" y="194" fill="#94a3b8" font-family="Inter, Arial, sans-serif" font-size="20">New clipboard action locks the current tone/style for the next reply without overlapping regenerate chips.</text>
+  <rect x="148" y="244" width="240" height="76" rx="38" fill="#172554" stroke="#3b82f6"/>
+  <text x="218" y="290" fill="#dbeafe" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="600">Remix</text>
+  <rect x="406" y="244" width="220" height="76" rx="38" fill="#1f2937" stroke="#475569"/>
+  <text x="487" y="290" fill="#e5e7eb" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="600">Quote</text>
+  <rect x="644" y="244" width="250" height="76" rx="38" fill="#1f2937" stroke="#475569"/>
+  <text x="702" y="290" fill="#e5e7eb" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="600">Quote card</text>
+  <rect x="148" y="344" width="324" height="76" rx="38" fill="#172554" stroke="#60a5fa" stroke-width="3"/>
+  <text x="193" y="390" fill="#dbeafe" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Lock current tone</text>
+  <rect x="490" y="344" width="324" height="76" rx="38" fill="#1f2937" stroke="#475569"/>
+  <text x="556" y="390" fill="#e5e7eb" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="600">Stay in character</text>
+  <rect x="832" y="344" width="252" height="76" rx="38" fill="#1f2937" stroke="#475569"/>
+  <text x="889" y="390" fill="#e5e7eb" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="600">Safer rewrite</text>
+  <rect x="148" y="474" width="912" height="94" rx="24" fill="#0b1220" stroke="#1e293b"/>
+  <text x="182" y="516" fill="#cbd5e1" font-family="Inter, Arial, sans-serif" font-size="24">Copies a thread-level style anchor prompt using the latest agent reply + latest operator turn.</text>
+  <text x="182" y="552" fill="#60a5fa" font-family="Inter, Arial, sans-serif" font-size="22">Keeps scope tight: continuity lock, not warmer/bolder regenerate recovery.</text>
+</svg>

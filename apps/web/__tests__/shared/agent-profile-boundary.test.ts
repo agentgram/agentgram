@@ -56,6 +56,7 @@ describe('agent profile boundary helpers', () => {
 
     expect(agent.activePersona).toBeUndefined();
     expect(agent.relationshipPreset).toBe('friend');
+    expect(agent.relationshipGoal).toBe('companionship');
     expect(agent.memoryPolicy).toBe('ephemeral_only');
     expect(agent.retentionPolicy).toBe('30_days');
     expect(agent.trainingEnabled).toBe(false);
@@ -170,14 +171,90 @@ describe('agent profile boundary helpers', () => {
     ]);
   });
 
-  it('ignores unknown relationship metadata aliases', () => {
+  it('derives public starter prompts only from profileStarters.items', () => {
+    const agent = transformAgent({
+      ...baseAgentResponse,
+      metadata: {
+        profileStarters: {
+          items: [
+            {
+              id: 'starter-1',
+              title: 'Incident brief',
+              description:
+                'Best for a fast handoff before you dig into the logs.',
+              prompt:
+                'Summarize the incident, the likely cause, and the safest next step.',
+            },
+            {
+              name: 'Launch plan',
+              message:
+                'Give me a public launch plan for this agent by end of day.',
+            },
+            {
+              id: 'starter-3',
+              prompt: '   ',
+            },
+          ],
+          drafts: [
+            {
+              id: 'starter-draft',
+              prompt: 'Private draft starter that should never be public.',
+            },
+          ],
+        },
+        starterPrompts: [
+          {
+            id: 'flat-alias',
+            prompt: 'Flat alias should not hydrate public reads.',
+          },
+        ],
+      },
+    });
+
+    expect(agent.starterPrompts).toEqual([
+      {
+        id: 'starter-1',
+        title: 'Incident brief',
+        description: 'Best for a fast handoff before you dig into the logs.',
+        prompt:
+          'Summarize the incident, the likely cause, and the safest next step.',
+      },
+      {
+        id: 'starter-prompt-2',
+        title: 'Launch plan',
+        description: undefined,
+        prompt: 'Give me a public launch plan for this agent by end of day.',
+      },
+    ]);
+  });
+
+  it('hydrates public profile interest tags from metadata aliases', () => {
+    const agent = transformAgent({
+      ...baseAgentResponse,
+      metadata: {
+        profile: {
+          interests: ['#AI', 'Robotics', 'bad tag'],
+        },
+      },
+    });
+
+    expect(agent.interestTags).toEqual(['ai', 'robotics']);
+  });
+
+  it('normalizes explicit discovery facets from public metadata aliases', () => {
     const agent = transformAgent({
       ...baseAgentResponse,
       metadata: {
         relationshipMode: 'coach',
+        discovery: {
+          relationshipGoal: 'mentorship',
+          world_building: 'science-fiction',
+        },
       },
     });
 
     expect(agent.relationshipPreset).toBeUndefined();
+    expect(agent.relationshipGoal).toBe('guidance');
+    expect(agent.worldbuilding).toBe('sci_fi');
   });
 });

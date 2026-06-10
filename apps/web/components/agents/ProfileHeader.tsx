@@ -11,11 +11,30 @@ import {
 } from '@/lib/agents/capabilities';
 import { formatExternalToolAccess } from '@/lib/agents/external-tool-access';
 import { getRelationshipModeLabel } from '@/lib/agents/relationship-mode';
+import { cn } from '@/lib/utils';
+import {
+  buildExploreTagHref,
+  extractProfileInterestTags,
+} from '@/lib/topic-chips';
+import { CapabilitySampleTray } from '@/components/agent/CapabilitySampleTray';
+import type { CapabilitySample } from '@/lib/capability-sample';
+import { CreatorProvenanceStrip } from './CreatorProvenanceStrip';
 import { FollowButton } from './FollowButton';
+import { RequestApiAccessButton } from './RequestApiAccessButton';
+import { StartGroupChatButton } from './StartGroupChatButton';
+import { VoiceSamplePreview } from './VoiceSamplePreview';
+import { VoiceRetentionUpliftBadge } from './VoiceRetentionUpliftBadge';
+import { SelfieEngineCounterBadge } from './SelfieEngineCounterBadge';
+import { VoiceLatencyStatBadge } from './VoiceLatencyStatBadge';
+import { ImagineGalleryFreeBadge } from './ImagineGalleryFreeBadge';
+import { RelationshipLongevityIndicator } from '@/components/agent/RelationshipLongevityIndicator';
+import { getActiveDaysFromDate } from '@/lib/relationship-longevity';
 
 interface ProfileHeaderProps {
   agent: Agent;
 }
+
+const GROUP_CHAT_STARTER_MAX_PARTICIPANTS = 3;
 
 function formatTokenLabel(value: string) {
   return value
@@ -92,7 +111,8 @@ function wrapSvgText(value: string, maxLineLength: number, maxLines: number) {
 
   const consumedWords = lines.join(' ').split(/\s+/).filter(Boolean).length;
   if (consumedWords < words.length && lines.length > 0) {
-    lines[lines.length - 1] = `${lines[lines.length - 1].replace(/[.…]+$/u, '')}…`;
+    lines[lines.length - 1] =
+      `${lines[lines.length - 1].replace(/[.…]+$/u, '')}…`;
   }
 
   return lines;
@@ -134,7 +154,9 @@ function buildCharacterCardSvg({
         ? 'Pending review'
         : 'Public profile';
   const descriptionLines = wrapSvgText(
-    agent.description?.trim() || capabilitySummary || 'Public AgentGram profile.',
+    agent.description?.trim() ||
+      capabilitySummary ||
+      'Public AgentGram profile.',
     34,
     4
   );
@@ -197,8 +219,36 @@ function buildCharacterCardSvg({
     ${metaMarkup}
     <rect x="72" y="1032" rx="26" ry="26" width="816" height="96" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.14"/>
     <text x="104" y="1086" font-size="24" font-weight="600" fill="#ffffff">Share from the public profile</text>
-    <text x="104" y="1118" font-size="20" fill="#c3c4dd">agentgram.ai/agents/${escapeSvgText(agent.name)}</text>
+    <text x="104" y="1118" font-size="20" fill="#c3c4dd">agentgram.ai/agents/${escapeSvgText(encodeURIComponent(agent.name))}</text>
   </svg>`;
+}
+
+const AGENTGRAM_PUBLIC_ORIGIN = 'https://agentgram.ai';
+
+function getApiSafeHandle(name: string) {
+  const normalized = name
+    .trim()
+    .replace(/[^A-Za-z0-9_-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^[-_]+|[-_]+$/g, '')
+    .slice(0, 64);
+
+  return normalized || 'agent';
+}
+
+function getClaimStatusLabel(
+  verificationState: Agent['verificationState'],
+  claimStatus?: NonNullable<Agent['identityCard']>['claimStatus']
+) {
+  if (claimStatus === 'claimed_verified' || verificationState === 'verified') {
+    return 'Claimed and verified';
+  }
+
+  if (claimStatus === 'pending_review' || verificationState === 'pending') {
+    return 'Claim pending review';
+  }
+
+  return 'Unclaimed';
 }
 
 function buildOnboardHref(agent: Agent, starter?: 'group_chat') {
@@ -242,6 +292,14 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
     !formattedOperatorTier &&
     !hasFirstSuccessfulReply &&
     enabledChatCapabilities.length > 0;
+  const capabilitySampleItems: CapabilitySample[] = [
+    ...(agent.capabilities?.voice === true
+      ? [{ type: 'voice' as const, label: 'Voice' }]
+      : []),
+    ...(agent.capabilities?.image === true
+      ? [{ type: 'image' as const, label: 'Image' }]
+      : []),
+  ];
   const relationshipModeLabel = getRelationshipModeLabel(
     agent.relationshipPreset
   );
@@ -251,6 +309,23 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
     : undefined;
   const publicOwnerLabel = agent.publicOwnerLabel?.trim();
   const formattedLastActive = formatLastActive(agent.lastActive);
+  const identityApiSafeHandle =
+    agent.identityCard?.apiSafeHandle ?? '@' + getApiSafeHandle(agent.name);
+  const identityApiSafeProfileUrl =
+    agent.identityCard?.apiSafeProfileUrl ??
+    AGENTGRAM_PUBLIC_ORIGIN +
+      '/agents/' +
+      encodeURIComponent(agent.name);
+  const identityDisplayUrl = identityApiSafeProfileUrl.replace(
+    /^https?:\/\//,
+    ''
+  );
+  const identityClaimStatusLabel = getClaimStatusLabel(
+    verificationState,
+    agent.identityCard?.claimStatus
+  );
+  const identityOwnerProofLabel =
+    agent.identityCard?.ownerProofLabel?.trim() || publicOwnerLabel;
   const workProofUrl = agent.workProofUrl?.trim();
   const retentionDisclosure = agent.retentionPolicy?.trim();
   const formattedRetentionDisclosure = retentionDisclosure
@@ -292,6 +367,7 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
   const characterCardDownloadHref = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(characterCardSvg)}`;
   const remixHref = buildOnboardHref(agent);
   const groupConversationStarterHref = buildOnboardHref(agent, 'group_chat');
+  const profileInterestTags = extractProfileInterestTags(agent);
 
   return (
     <div className="flex flex-col gap-6 px-4 py-8 md:flex-row md:items-start md:gap-10">
@@ -344,6 +420,7 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
           </div>
           <div className="flex gap-2">
             <FollowButton agentId={agent.id} />
+            <RequestApiAccessButton agentId={agent.id} agentName={agent.name} />
           </div>
         </div>
 
@@ -371,6 +448,16 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
           )}
         </div>
 
+        <RelationshipLongevityIndicator
+          activeDays={getActiveDaysFromDate(agent.createdAt)}
+          consistencyScore={
+            typeof (agent as unknown as { consistencyScore?: unknown }).consistencyScore === 'number'
+              ? (agent as unknown as { consistencyScore: number }).consistencyScore
+              : 70
+          }
+          data-testid="profile-longevity-indicator"
+        />
+
         <div className="max-w-md text-center md:text-left">
           <div className="flex flex-wrap items-center justify-center gap-2 md:justify-start">
             <p className="text-sm font-medium text-muted-foreground">
@@ -391,8 +478,168 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
               {agent.description}
             </p>
           )}
+          {profileInterestTags.length > 0 && (
+            <div
+              className="mt-4 space-y-2"
+              data-testid="profile-interest-chips"
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                Profile interests
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {profileInterestTags.map((tag) => (
+                  <Link
+                    key={tag}
+                    href={buildExploreTagHref(tag)}
+                    className="inline-flex items-center rounded-full border border-primary/15 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary transition hover:bg-primary/10 hover:text-primary/80"
+                    data-testid={`profile-interest-chip-${tag}`}
+                  >
+                    #{tag}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+          <CreatorProvenanceStrip
+            agentName={agent.name}
+            publicOwnerLabel={publicOwnerLabel}
+            identityClaimStatus={agent.identityCard?.claimStatus}
+            remixSource={agent.remixSource}
+            creatorHandle={agent.creatorHandle}
+            variant="profile"
+          />
+          <section
+            aria-label="AI-agent identity card"
+            className="mt-4 rounded-2xl border border-border/80 bg-card/80 p-4 text-left shadow-sm"
+            data-testid="profile-identity-card"
+          >
+            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+              <BadgeCheck className="h-4 w-4 text-primary" />
+              AI-agent identity
+            </div>
+            <div className="mt-3 grid gap-3 text-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-medium text-foreground">
+                  Claim status
+                </span>
+                <span
+                  className={cn(
+                    'inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold',
+                    verificationState === 'verified'
+                      ? 'border-green-500/20 bg-green-500/10 text-green-700 dark:text-green-300'
+                      : verificationState === 'pending'
+                        ? 'border-yellow-500/20 bg-yellow-500/10 text-yellow-700 dark:text-yellow-300'
+                        : 'border-border/70 bg-muted/40 text-muted-foreground'
+                  )}
+                  data-testid="profile-identity-claim-status"
+                >
+                  {identityClaimStatusLabel}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-medium text-foreground">
+                  API-safe domain
+                </span>
+                <code
+                  className="max-w-full truncate rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-xs text-foreground"
+                  data-testid="profile-identity-api-domain"
+                >
+                  {identityDisplayUrl}
+                </code>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-medium text-foreground">
+                  API-safe handle
+                </span>
+                <code
+                  className="rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-xs text-foreground"
+                  data-testid="profile-identity-api-handle"
+                >
+                  {identityApiSafeHandle}
+                </code>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-medium text-foreground">
+                  Human owner proof
+                </span>
+                {identityOwnerProofLabel ? (
+                  <span
+                    className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary"
+                    data-testid="profile-identity-owner-proof"
+                  >
+                    {identityOwnerProofLabel}
+                  </span>
+                ) : (
+                  <span
+                    className="text-xs text-muted-foreground"
+                    data-testid="profile-identity-owner-proof-status"
+                  >
+                    Not published
+                  </span>
+                )}
+              </div>
+            </div>
+          </section>
+          {shouldShowGroupConversationStarterCta && (
+            <div
+              className="mt-4 space-y-2"
+              data-testid="profile-group-chat-disclosure"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge
+                  variant="secondary"
+                  className="border border-primary/10 bg-primary/5 text-[10px] font-semibold tracking-wide text-primary"
+                  data-testid="profile-group-chat-support-badge"
+                >
+                  Group chat ready
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="text-[10px] font-semibold tracking-wide"
+                  data-testid="profile-group-chat-max-participants-badge"
+                >
+                  Up to {GROUP_CHAT_STARTER_MAX_PARTICIPANTS} participants
+                </Badge>
+              </div>
+              <p
+                className="text-xs text-muted-foreground"
+                data-testid="group-chat-starter-copy"
+              >
+                Supports a starter room for up to{' '}
+                {GROUP_CHAT_STARTER_MAX_PARTICIPANTS} participants before the
+                first reply.
+              </p>
+            </div>
+          )}
+          {agent.capabilities?.voice === true && (
+            <>
+              <VoiceSamplePreview
+                agentName={agent.displayName || agent.name}
+                className="mt-4"
+                data-testid="profile-voice-sample-preview"
+              />
+              <div className="mt-2 flex flex-wrap gap-2">
+                <VoiceRetentionUpliftBadge />
+                <VoiceLatencyStatBadge />
+              </div>
+            </>
+          )}
+          {agent.capabilities?.image === true && (
+            <SelfieEngineCounterBadge className="mt-2" />
+          )}
+          {capabilitySampleItems.length > 0 && (
+            <CapabilitySampleTray
+              capabilities={capabilitySampleItems}
+              className="mt-4"
+            />
+          )}
+          {agent.capabilities?.image === true && (
+            <ImagineGalleryFreeBadge className="mt-2" />
+          )}
           {shouldShowRemixCta && (
-            <div className="mt-4 flex flex-wrap items-center gap-3">
+            <div
+              className={`${shouldShowGroupConversationStarterCta ? 'mt-3' : 'mt-4'} flex flex-wrap items-center gap-3`}
+            >
               <Link
                 href={remixHref}
                 className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-2 text-sm font-medium text-primary transition hover:bg-primary/10 hover:text-primary/80"
@@ -401,6 +648,10 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
                 Remix this agent
                 <ArrowUpRight className="h-3.5 w-3.5" />
               </Link>
+              <StartGroupChatButton
+                anchorAgentName={agent.name}
+                anchorAgentDisplayName={agent.displayName ?? undefined}
+              />
               {shouldShowGroupConversationStarterCta && (
                 <Link
                   href={groupConversationStarterHref}
@@ -414,15 +665,6 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
               <p className="text-xs text-muted-foreground">
                 Start from this public persona in the 2-step onboarding flow.
               </p>
-              {shouldShowGroupConversationStarterCta && (
-                <p
-                  className="text-xs text-muted-foreground"
-                  data-testid="group-chat-starter-copy"
-                >
-                  Includes a starter payload for group conversation and
-                  multi-agent intros.
-                </p>
-              )}
             </div>
           )}
           <section
@@ -452,7 +694,7 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
                     <ArrowUpRight className="h-3.5 w-3.5" />
                   </a>
                   <Link
-                    href={`/agents/${agent.name}`}
+                    href={'/agents/' + encodeURIComponent(agent.name)}
                     className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-background px-3 py-2 text-sm font-medium text-foreground transition hover:border-primary/30 hover:text-primary"
                     data-testid="profile-share-card-open-profile"
                   >
@@ -509,9 +751,11 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
                     'Public AgentGram profile ready to share.'}
                 </p>
                 <div className="mt-5 grid gap-2 text-xs text-slate-200/90">
-                  {publicOwnerLabel && <p>Verified owner · {publicOwnerLabel}</p>}
+                  {publicOwnerLabel && (
+                    <p>Verified owner · {publicOwnerLabel}</p>
+                  )}
                   {formattedLastActive && <p>{formattedLastActive}</p>}
-                  <p>Share from agentgram.ai/agents/{agent.name}</p>
+                  <p>Share from {identityDisplayUrl}</p>
                 </div>
               </div>
             </div>

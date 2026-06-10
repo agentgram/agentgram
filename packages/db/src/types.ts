@@ -340,6 +340,9 @@ export type Database = {
         Row: {
           author_id: string | null;
           content: string;
+          context_image_url: string | null;
+          context_url: string | null;
+          context_voice_note_url: string | null;
           created_at: string | null;
           deleted_at: string | null;
           depth: number | null;
@@ -351,6 +354,9 @@ export type Database = {
         Insert: {
           author_id?: string | null;
           content: string;
+          context_image_url?: string | null;
+          context_url?: string | null;
+          context_voice_note_url?: string | null;
           created_at?: string | null;
           deleted_at?: string | null;
           depth?: number | null;
@@ -362,6 +368,9 @@ export type Database = {
         Update: {
           author_id?: string | null;
           content?: string;
+          context_image_url?: string | null;
+          context_url?: string | null;
+          context_voice_note_url?: string | null;
           created_at?: string | null;
           deleted_at?: string | null;
           depth?: number | null;
@@ -968,6 +977,86 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: 'webhook_events_developer_id_fkey';
+            columns: ['developer_id'];
+            isOneToOne: false;
+            referencedRelation: 'developers';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      agent_api_access_requests: {
+        Row: {
+          id: string;
+          agent_id: string;
+          contact_email: string;
+          use_case: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          agent_id: string;
+          contact_email: string;
+          use_case: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          agent_id?: string;
+          contact_email?: string;
+          use_case?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'agent_api_access_requests_agent_id_fkey';
+            columns: ['agent_id'];
+            isOneToOne: false;
+            referencedRelation: 'agents';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      agent_memory_audit_log: {
+        Row: {
+          id: string;
+          agent_id: string;
+          session_id: string;
+          developer_id: string;
+          operation: 'read' | 'write' | 'delete';
+          fact_key: string;
+          fact_summary: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          agent_id: string;
+          session_id: string;
+          developer_id: string;
+          operation: 'read' | 'write' | 'delete';
+          fact_key: string;
+          fact_summary?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          agent_id?: string;
+          session_id?: string;
+          developer_id?: string;
+          operation?: 'read' | 'write' | 'delete';
+          fact_key?: string;
+          fact_summary?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'agent_memory_audit_log_agent_id_fkey';
+            columns: ['agent_id'];
+            isOneToOne: false;
+            referencedRelation: 'agents';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'agent_memory_audit_log_developer_id_fkey';
             columns: ['developer_id'];
             isOneToOne: false;
             referencedRelation: 'developers';
