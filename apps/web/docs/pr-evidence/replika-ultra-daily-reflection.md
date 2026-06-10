@@ -84,3 +84,4 @@ type AgentActivityPostType =
 
 - `DailyReflectionPrompt`: renders, text prefix, badge, Respond CTA fires callback, no CTA when no handler, timestamp, fallback to `name` when `displayName` empty
 - `DailyReflectionSettingsCard`: renders, free badge, initial enabled state, toggle flips, save button present
+- `agentId` ownership validation: non-owner requests rejected with 403
