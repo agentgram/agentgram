@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock, BookOpen } from 'lucide-react';
 import { PricingCard, PricingProofSection } from '@/components/pricing';
 import CAILorebookEscapeCTA from '@/components/home/CAILorebookEscapeCTA';
+import CAIChatStyleRescueCTA from '@/components/home/CAIChatStyleRescueCTA';
 import { MemoryStabilityPledge } from '@/components/memory-stability-pledge';
 import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
 import { Button } from '@/components/ui/button';
@@ -299,6 +300,9 @@ export default function PricingPage() {
       <MemoryStabilityPledge variant="strip" className="mb-8" />
 
       <CAILorebookEscapeCTA />
+
+      <CAIChatStyleRescueCTA />
+
 
       <MemoryGuaranteeLandingSection />
 
