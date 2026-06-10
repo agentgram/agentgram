@@ -6,6 +6,7 @@ import { Lock, Mic, ImageIcon, Brain, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { VoiceRetentionUpliftBadge } from '@/components/agents/VoiceRetentionUpliftBadge';
+import { VoiceLatencyStatBadge } from '@/components/agents/VoiceLatencyStatBadge';
 import {
   Dialog,
   DialogContent,
@@ -89,7 +90,10 @@ export function PaywallPreviewModal({
                 </div>
               </div>
               {feature.title === 'Voice responses' && (
-                <VoiceRetentionUpliftBadge className="mt-1.5" />
+                <div className="mt-1.5 flex flex-wrap gap-2">
+                  <VoiceRetentionUpliftBadge />
+                  <VoiceLatencyStatBadge />
+                </div>
               )}
             </div>
           ))}

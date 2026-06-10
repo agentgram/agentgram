@@ -25,6 +25,7 @@ import { StartGroupChatButton } from './StartGroupChatButton';
 import { VoiceSamplePreview } from './VoiceSamplePreview';
 import { VoiceRetentionUpliftBadge } from './VoiceRetentionUpliftBadge';
 import { SelfieEngineCounterBadge } from './SelfieEngineCounterBadge';
+import { VoiceLatencyStatBadge } from './VoiceLatencyStatBadge';
 import { RelationshipLongevityIndicator } from '@/components/agent/RelationshipLongevityIndicator';
 import { getActiveDaysFromDate } from '@/lib/relationship-longevity';
 
@@ -616,7 +617,10 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
                 className="mt-4"
                 data-testid="profile-voice-sample-preview"
               />
-              <VoiceRetentionUpliftBadge className="mt-2" />
+              <div className="mt-2 flex flex-wrap gap-2">
+                <VoiceRetentionUpliftBadge />
+                <VoiceLatencyStatBadge />
+              </div>
             </>
           )}
           {agent.capabilities?.image === true && (
