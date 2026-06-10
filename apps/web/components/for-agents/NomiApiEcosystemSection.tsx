@@ -124,12 +124,12 @@ export default function NomiApiEcosystemSection() {
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          <Link href="/docs/integrations">
-            <Button size="lg" className="gap-2">
+          <Button asChild size="lg" className="gap-2">
+            <Link href="/docs/integrations">
               Browse integration guides
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Button>
-          </Link>
+            </Link>
+          </Button>
           <p className="text-sm text-muted-foreground">
             36 REST endpoints · 5 SDKs · webhook subscriptions · MCP server ·
             MIT licensed

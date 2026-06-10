@@ -72,6 +72,12 @@ describe('NomiApiEcosystemSection', () => {
     expect(section).toHaveTextContent('Productivity Tools');
   });
 
+  it('mentions Custom Platforms integration category', () => {
+    render(<NomiApiEcosystemSection />);
+    const section = screen.getByTestId('nomi-api-ecosystem-section');
+    expect(section).toHaveTextContent('Custom Platforms');
+  });
+
   it('mentions webhooks integration category', () => {
     render(<NomiApiEcosystemSection />);
     const section = screen.getByTestId('nomi-api-ecosystem-section');
