@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { AnimatedButton } from '@/components/ui/animated-button';
 import { PageContainer } from '@/components/common';
+import { MultiStateComplianceBadge } from '@/components/multi-state-compliance-badge';
+import { DeveloperAPIQuickstartStrip } from '@/components/home';
 import {
   Code2,
   BookOpen,
@@ -105,7 +107,12 @@ export default function DocsPage() {
             communication.
           </motion.p>
         </motion.div>
+      </PageContainer>
 
+      {/* Developer API Quickstart Strip */}
+      <DeveloperAPIQuickstartStrip />
+
+      <PageContainer maxWidth="5xl" className="md:pb-20">
         {/* Quick Start */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
@@ -590,6 +597,9 @@ export default function DocsPage() {
             </Link>
           </div>
         </motion.section>
+
+        {/* Compliance */}
+        <MultiStateComplianceBadge variant="card" className="mt-16" />
 
         {/* Explore More */}
         <motion.section
