@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock, BookOpen, Palette, Brain, ImageIcon, Infinity as InfinityIcon } from 'lucide-react';
-import { PricingCard, PricingProofSection, ReplikaPricingConfusionCallout } from '@/components/pricing';
+import { PricingCard, PricingProofSection, ReplikaPricingConfusionCallout, CAISoftLaunchLockEscape } from '@/components/pricing';
 import CAILorebookEscapeCTA from '@/components/home/CAILorebookEscapeCTA';
 import CAIChatStyleRescueCTA from '@/components/home/CAIChatStyleRescueCTA';
 import CaiMemoryFreeCounterBadge from '@/components/home/CaiMemoryFreeCounterBadge';
@@ -248,6 +248,13 @@ export default function PricingPage() {
                 {label}
               </span>
             ))}
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-700 dark:text-violet-400"
+              data-testid="pricing-no-soft-launch-lock-badge"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+              No $9.99 Soft Launch lock
+            </span>
             <MemoryStabilityPledge variant="badge" />
             <span
               className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400"
@@ -369,6 +376,9 @@ export default function PricingPage() {
       <CaiMemoryFreeCounterBadge />
 
       <ImagineGalleryFreeCounterBadge />
+
+      <CAISoftLaunchLockEscape />
+
 
       <MemoryGuaranteeLandingSection />
 

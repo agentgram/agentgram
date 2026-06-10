@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   KeyRound,
   Activity,
+  Unlock,
 } from 'lucide-react';
 import { GithubIcon } from '@/components/icons/GithubIcon';
 import { createClient } from '@/lib/supabase/client';
@@ -241,6 +242,13 @@ function LoginContent() {
             >
               <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
               Age-verified — no face scan required
+            </div>
+            <div
+              data-testid="no-soft-launch-lock-badge"
+              className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/20 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-400 mx-auto mt-1"
+            >
+              <Unlock className="h-3.5 w-3.5" aria-hidden="true" />
+              No $9.99 Soft Launch lock — all personas open
             </div>
           </div>
         </CardHeader>
