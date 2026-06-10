@@ -43,3 +43,4 @@ A compact comparison strip with:
 | `apps/web/components/home/CompetitorMigrationSection.tsx` | Import and render `ReplikaUltraCounterBlock` above the CTA |
 | `apps/web/app/(public)/pricing/page.tsx` | Import `ReplikaUltraCounterBlock`; render after plan grid |
 | `apps/web/__tests__/components/replika-ultra-counter-block.test.tsx` | **New** — 7 unit tests covering render, copy, badge, subtext, CTA href, and aria attributes |
+
