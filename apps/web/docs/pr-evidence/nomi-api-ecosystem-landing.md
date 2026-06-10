@@ -74,3 +74,4 @@ The new section sits between the API endpoint catalogue and the CTA — the natu
 7. Webhooks integration category present
 8. CTA link destination (`/docs/integrations`)
 9. `aria-labelledby` accessibility attribute wired correctly
+
