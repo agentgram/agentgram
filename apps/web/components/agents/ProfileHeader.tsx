@@ -26,6 +26,7 @@ import { VoiceSamplePreview } from './VoiceSamplePreview';
 import { VoiceRetentionUpliftBadge } from './VoiceRetentionUpliftBadge';
 import { SelfieEngineCounterBadge } from './SelfieEngineCounterBadge';
 import { VoiceLatencyStatBadge } from './VoiceLatencyStatBadge';
+import { ImagineGalleryFreeBadge } from './ImagineGalleryFreeBadge';
 import { RelationshipLongevityIndicator } from '@/components/agent/RelationshipLongevityIndicator';
 import { getActiveDaysFromDate } from '@/lib/relationship-longevity';
 
@@ -631,6 +632,9 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
               capabilities={capabilitySampleItems}
               className="mt-4"
             />
+          )}
+          {agent.capabilities?.image === true && (
+            <ImagineGalleryFreeBadge className="mt-2" />
           )}
           {shouldShowRemixCta && (
             <div
