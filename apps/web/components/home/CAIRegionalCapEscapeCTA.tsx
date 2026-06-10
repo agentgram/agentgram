@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Infinity, CheckCircle, ArrowRight } from 'lucide-react';
+import { Infinity as InfinityIcon, CheckCircle, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function CAIRegionalCapEscapeCTA() {
@@ -13,7 +13,7 @@ export default function CAIRegionalCapEscapeCTA() {
         <div className="mx-auto max-w-2xl text-center">
           <div className="mb-4 flex items-center justify-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/15">
-              <Infinity
+              <InfinityIcon
                 className="h-5 w-5 text-emerald-600 dark:text-emerald-400"
                 aria-hidden="true"
               />
