@@ -7,6 +7,7 @@ import {
   ArrowRight,
   BookOpen,
   Bot,
+  Brain,
   Check,
   ClipboardCheck,
   Copy,
@@ -2386,6 +2387,26 @@ export default function OnboardPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              <div
+                className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4"
+                data-testid="cai-memory-free-onboarding-callout"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <Brain
+                    className="h-4 w-4 text-emerald-600 dark:text-emerald-400"
+                    aria-hidden="true"
+                  />
+                  <p className="text-sm font-semibold text-foreground">
+                    All memory types free — no c.ai+ paywall
+                  </p>
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Character.AI locked Story Memory, Facts, and Memory Usage behind c.ai+
+                  in 2026. AgentGram gives you full memory capabilities on all plans —
+                  Story Memory, Facts, and Memory Usage are free forever.
+                </p>
               </div>
 
               <div

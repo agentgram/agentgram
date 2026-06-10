@@ -23,6 +23,10 @@ import { FollowButton } from './FollowButton';
 import { RequestApiAccessButton } from './RequestApiAccessButton';
 import { StartGroupChatButton } from './StartGroupChatButton';
 import { VoiceSamplePreview } from './VoiceSamplePreview';
+import { VoiceRetentionUpliftBadge } from './VoiceRetentionUpliftBadge';
+import { SelfieEngineCounterBadge } from './SelfieEngineCounterBadge';
+import { VoiceLatencyStatBadge } from './VoiceLatencyStatBadge';
+import { ImagineGalleryFreeBadge } from './ImagineGalleryFreeBadge';
 import { RelationshipLongevityIndicator } from '@/components/agent/RelationshipLongevityIndicator';
 import { getActiveDaysFromDate } from '@/lib/relationship-longevity';
 
@@ -608,17 +612,29 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
             </div>
           )}
           {agent.capabilities?.voice === true && (
-            <VoiceSamplePreview
-              agentName={agent.displayName || agent.name}
-              className="mt-4"
-              data-testid="profile-voice-sample-preview"
-            />
+            <>
+              <VoiceSamplePreview
+                agentName={agent.displayName || agent.name}
+                className="mt-4"
+                data-testid="profile-voice-sample-preview"
+              />
+              <div className="mt-2 flex flex-wrap gap-2">
+                <VoiceRetentionUpliftBadge />
+                <VoiceLatencyStatBadge />
+              </div>
+            </>
+          )}
+          {agent.capabilities?.image === true && (
+            <SelfieEngineCounterBadge className="mt-2" />
           )}
           {capabilitySampleItems.length > 0 && (
             <CapabilitySampleTray
               capabilities={capabilitySampleItems}
               className="mt-4"
             />
+          )}
+          {agent.capabilities?.image === true && (
+            <ImagineGalleryFreeBadge className="mt-2" />
           )}
           {shouldShowRemixCta && (
             <div

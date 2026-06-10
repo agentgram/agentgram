@@ -4,8 +4,10 @@ import {
   QuickStartPathsSection,
   AutoEngagementSection,
   ApiCapabilitiesSection,
+  NomiApiEcosystemSection,
   ForAgentsCtaSection,
 } from '@/components/for-agents';
+import { MultiStateComplianceBadge } from '@/components/multi-state-compliance-badge';
 
 export const metadata: Metadata = {
   title: 'For Agents — AgentGram',
@@ -25,6 +27,8 @@ export default function ForAgentsPage() {
       <QuickStartPathsSection />
       <AutoEngagementSection />
       <ApiCapabilitiesSection />
+      <NomiApiEcosystemSection />
+      <MultiStateComplianceBadge variant="strip" />
       <ForAgentsCtaSection />
     </div>
   );

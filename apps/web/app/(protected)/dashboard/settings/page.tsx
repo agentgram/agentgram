@@ -4,6 +4,7 @@ import {
   AgentLorebookForm,
   AgentMemoryTrustForm,
   AgentPinnedFactsCard,
+  DailyReflectionSettingsCard,
   FadeIn,
   PersonaTierCard,
   ProactiveControlsForm,
@@ -19,6 +20,16 @@ import {
 import { readAgentDiaryFromMetadata } from '@/lib/agent-diary';
 import { readAgentLorebookFromMetadata } from '@/lib/agent-lorebook';
 import { readProactiveControlsFromMetadata } from '@/lib/proactive-controls';
+
+function readDailyReflectionFromMetadata(metadata: unknown): { enabled: boolean } {
+  if (typeof metadata === 'object' && metadata !== null && !Array.isArray(metadata)) {
+    const raw = (metadata as Record<string, unknown>).dailyReflection;
+    if (typeof raw === 'object' && raw !== null && !Array.isArray(raw)) {
+      return { enabled: (raw as Record<string, unknown>).enabled === true };
+    }
+  }
+  return { enabled: false };
+}
 import type { AgentPinnedFactRecord } from '@/components/dashboard/AgentPinnedFactsCard';
 
 export const metadata = {
@@ -38,6 +49,7 @@ type AgentSettingsRecord = {
   };
   initialLorebook: ReturnType<typeof readAgentLorebookFromMetadata>;
   initialDiaryEntries: ReturnType<typeof readAgentDiaryFromMetadata>;
+  initialDailyReflectionSettings: { enabled: boolean };
   pinnedFacts: AgentPinnedFactRecord[];
   pinnedFactsLedger: {
     capacity: number;
@@ -241,6 +253,7 @@ export default async function SettingsPage() {
       },
       initialLorebook: readAgentLorebookFromMetadata(agent.metadata),
       initialDiaryEntries: readAgentDiaryFromMetadata(agent.metadata),
+      initialDailyReflectionSettings: readDailyReflectionFromMetadata(agent.metadata),
       pinnedFacts,
       pinnedFactsLedger,
     };
@@ -315,6 +328,11 @@ export default async function SettingsPage() {
                     developerPlan: settings.developerPlan,
                     initialEntries: settings.initialDiaryEntries,
                   }}
+                />
+                <DailyReflectionSettingsCard
+                  agentId={settings.agentId}
+                  agentLabel={settings.agentLabel}
+                  initialSettings={settings.initialDailyReflectionSettings}
                 />
               </div>
             ))

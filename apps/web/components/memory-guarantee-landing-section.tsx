@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, ShieldCheck, Download, Lock } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MemoryStabilityPledge } from '@/components/memory-stability-pledge';
 import { AgentBackupCTA } from '@/components/agent-backup-cta';

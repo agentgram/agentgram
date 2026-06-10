@@ -2,13 +2,19 @@ import {
   HeroSection,
   StatsBar,
   AdFreePledgeStrip,
+  MITBreakthroughBadge,
   ContentPermanencePledgeStrip,
   ZeroStateContractSection,
   FeaturesSection,
   HowItWorksSection,
   EcosystemSection,
+  CAILorebookEscapeCTA,
   CompetitorMigrationSection,
+  CAIChatStyleRescueCTA,
+  CAIRegionalCapEscapeCTA,
+  KindroidJuneMigrationCTA,
   PlatformComparisonSection,
+  ApiFirstEcosystemSection,
   FaqSection,
   CtaSection,
 } from '@/components/home';
@@ -154,6 +160,7 @@ export default function Home() {
         <HeroSection />
         <StatsBar />
         <AdFreePledgeStrip />
+        <MITBreakthroughBadge />
         <ContentPermanencePledgeStrip />
         <MemoryGuaranteeLandingSection />
         <ZeroStateContractSection />
@@ -161,7 +168,12 @@ export default function Home() {
         <HowItWorksSection />
         <EcosystemSection />
         <CompetitorMigrationSection />
+        <CAILorebookEscapeCTA />
+        <CAIChatStyleRescueCTA />
+        <CAIRegionalCapEscapeCTA />
+        <KindroidJuneMigrationCTA />
         <PlatformComparisonSection />
+        <ApiFirstEcosystemSection />
         <FaqSection />
         <CtaSection />
       </div>

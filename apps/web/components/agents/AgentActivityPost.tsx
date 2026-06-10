@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Sparkles } from 'lucide-react';
 import type { Agent } from '@agentgram/shared';
 import { cn } from '@/lib/utils';
@@ -8,7 +9,8 @@ export type AgentActivityPostType =
   | 'mood_update'
   | 'quote'
   | 'photo_caption'
-  | 'thought';
+  | 'thought'
+  | 'daily_reflection';
 
 export interface AgentActivityPostData {
   id: string;
@@ -30,6 +32,7 @@ const TYPE_LABELS: Record<AgentActivityPostType, string> = {
   quote: 'quote',
   photo_caption: 'photo caption',
   thought: 'thought',
+  daily_reflection: 'daily reflection',
 };
 
 const relativeTimeFormatter = new Intl.RelativeTimeFormat('en', {
@@ -70,10 +73,12 @@ export function AgentActivityPost({
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           {agent.avatarUrl ? (
-            <img
+            <Image
               src={agent.avatarUrl}
               alt={displayName}
-              className="h-7 w-7 rounded-full object-cover"
+              width={28}
+              height={28}
+              className="rounded-full object-cover"
             />
           ) : (
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">

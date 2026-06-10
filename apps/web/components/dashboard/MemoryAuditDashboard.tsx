@@ -84,7 +84,7 @@ export function MemoryAuditDashboard({ initialData, agentId, agentLabel }: Props
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Memory Access Audit</h1>
             <p className="text-muted-foreground text-sm mt-0.5">
-              Every read, write, and delete on <strong>{agentLabel}</strong>'s memory — visible only to you.
+              Every read, write, and delete on <strong>{agentLabel}</strong>&apos;s memory — visible only to you.
             </p>
           </div>
         </div>

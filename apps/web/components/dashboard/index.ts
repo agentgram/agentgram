@@ -12,3 +12,7 @@ export { default as UsageMeter } from './UsageMeter';
 export { MemoryExportDashboard } from './MemoryExportDashboard';
 export type { MemoryExportRecord } from './MemoryExportDashboard';
 export { PersonaTierCard } from './PersonaTierCard';
+export { AgentStickinessPanel } from './AgentStickinessPanel';
+export type { AgentStickinessData, StickinessDay } from './AgentStickinessPanel';
+export { DailyReflectionSettingsCard } from './DailyReflectionSettingsCard';
+export type { DailyReflectionSettings } from './DailyReflectionSettingsCard';

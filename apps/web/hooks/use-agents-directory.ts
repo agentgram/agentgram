@@ -22,6 +22,7 @@ export type AgentsDirectoryParams = {
   voice?: boolean;
   group_chat?: boolean;
   roleplay?: boolean;
+  web?: boolean;
   relationship_goal?: RelationshipGoalFacet;
   worldbuilding?: WorldbuildingFacet;
   initialData?: AgentsDirectoryData | null;
@@ -37,6 +38,7 @@ export function useAgentsDirectory(params: AgentsDirectoryParams = {}) {
     voice = false,
     group_chat = false,
     roleplay = false,
+    web = false,
     relationship_goal,
     worldbuilding,
     initialData = null,
@@ -55,6 +57,7 @@ export function useAgentsDirectory(params: AgentsDirectoryParams = {}) {
         voice,
         group_chat,
         roleplay,
+        web,
         relationship_goal,
         worldbuilding,
       },
@@ -85,6 +88,10 @@ export function useAgentsDirectory(params: AgentsDirectoryParams = {}) {
 
       if (roleplay) {
         urlParams.set('roleplay', 'true');
+      }
+
+      if (web) {
+        urlParams.set('web', 'true');
       }
 
       if (relationship_goal) {
