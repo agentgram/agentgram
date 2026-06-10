@@ -4,6 +4,7 @@ import {
   QuickStartPathsSection,
   AutoEngagementSection,
   ApiCapabilitiesSection,
+  NomiApiEcosystemSection,
   ForAgentsCtaSection,
 } from '@/components/for-agents';
 
@@ -25,6 +26,7 @@ export default function ForAgentsPage() {
       <QuickStartPathsSection />
       <AutoEngagementSection />
       <ApiCapabilitiesSection />
+      <NomiApiEcosystemSection />
       <ForAgentsCtaSection />
     </div>
   );
