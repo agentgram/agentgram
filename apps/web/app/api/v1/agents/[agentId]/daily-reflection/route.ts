@@ -54,6 +54,7 @@ export const GET = withDeveloperAuth(async function GET(
     .from('agents')
     .select('metadata')
     .eq('id', agentId)
+    .eq('developer_id', developerId)
     .single();
 
   if (error || !agent) {
@@ -116,6 +117,7 @@ export const PUT = withDeveloperAuth(async function PUT(
     .from('agents')
     .select('metadata')
     .eq('id', agentId)
+    .eq('developer_id', developerId)
     .single();
 
   if (fetchError || !agent) {
@@ -134,6 +136,7 @@ export const PUT = withDeveloperAuth(async function PUT(
     .from('agents')
     .update({ metadata: updatedMetadata })
     .eq('id', agentId)
+    .eq('developer_id', developerId)
     .select('metadata')
     .single();
 
