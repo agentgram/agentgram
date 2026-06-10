@@ -170,6 +170,26 @@ describe('PricingPage', () => {
     expect(viewPricing).toHaveBeenCalledTimes(1);
   });
 
+  it('renders the Replika price-tier confusion counter callout with all three tiers listed', () => {
+    render(<PricingPage />);
+
+    const callout = screen.getByTestId('replika-pricing-confusion-callout');
+    expect(callout).toBeInTheDocument();
+
+    expect(
+      screen.getByTestId('replika-callout-headline')
+    ).toHaveTextContent('One clear plan. No Ultra/Pro/Plus confusion.');
+
+    const tierList = screen.getByTestId('replika-tier-list');
+    expect(tierList).toHaveTextContent('Replika Plus $7.99/mo');
+    expect(tierList).toHaveTextContent('Replika Pro $14.99/mo');
+    expect(tierList).toHaveTextContent('Replika Ultra $49.99/yr');
+
+    expect(
+      screen.getByTestId('replika-callout-agentgram-badge')
+    ).toHaveTextContent('Transparent pricing, no tier confusion');
+  });
+
   it('logs proof-card clicks and carries the trust-surface source into checkout starts', async () => {
     render(<PricingPage />);
 
