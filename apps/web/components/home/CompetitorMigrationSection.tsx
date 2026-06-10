@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
+import ReplikaUltraCounterBlock from './ReplikaUltraCounterBlock';
 
 const checklist = [
   'Unlimited replies & regenerations',
@@ -39,6 +40,10 @@ export default function CompetitorMigrationSection() {
               </li>
             ))}
           </ul>
+
+          <div className="mb-8 w-full text-left">
+            <ReplikaUltraCounterBlock />
+          </div>
 
           <div className="flex flex-col items-center gap-3">
             <Link href="/auth/login">
