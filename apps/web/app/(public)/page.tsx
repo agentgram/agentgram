@@ -10,6 +10,7 @@ import {
   EcosystemSection,
   CAILorebookEscapeCTA,
   CompetitorMigrationSection,
+  CAIChatStyleRescueCTA,
   PlatformComparisonSection,
   ApiFirstEcosystemSection,
   FaqSection,
@@ -166,6 +167,7 @@ export default function Home() {
         <EcosystemSection />
         <CompetitorMigrationSection />
         <CAILorebookEscapeCTA />
+        <CAIChatStyleRescueCTA />
         <PlatformComparisonSection />
         <ApiFirstEcosystemSection />
         <FaqSection />

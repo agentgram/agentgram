@@ -13,3 +13,4 @@ export { default as PlatformComparisonSection } from './PlatformComparisonSectio
 export { default as ApiFirstEcosystemSection } from './ApiFirstEcosystemSection';
 export { default as FaqSection } from './FaqSection';
 export { default as CtaSection } from './CtaSection';
+export { default as CAIChatStyleRescueCTA } from './CAIChatStyleRescueCTA';
