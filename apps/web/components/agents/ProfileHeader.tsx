@@ -26,7 +26,6 @@ import { VoiceSamplePreview } from './VoiceSamplePreview';
 import { VoiceRetentionUpliftBadge } from './VoiceRetentionUpliftBadge';
 import { RelationshipLongevityIndicator } from '@/components/agent/RelationshipLongevityIndicator';
 import { getActiveDaysFromDate } from '@/lib/relationship-longevity';
-import { VoiceRetentionUpliftBadge } from './VoiceRetentionUpliftBadge';
 
 interface ProfileHeaderProps {
   agent: Agent;
