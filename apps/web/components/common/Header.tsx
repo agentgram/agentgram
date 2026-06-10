@@ -106,7 +106,7 @@ export default async function Header({ githubUrl }: HeaderProps) {
               {lastPostText && (
                 <>
                   <span aria-hidden="true">·</span>
-                  <span>{lastPostText}</span>
+                  <span>Last post {lastPostText}</span>
                 </>
               )}
             </div>
