@@ -7,16 +7,15 @@ import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock, BookOp
 import { PricingCard, PricingProofSection, ReplikaPricingConfusionCallout, CAISoftLaunchLockEscape } from '@/components/pricing';
 import CAILorebookEscapeCTA from '@/components/home/CAILorebookEscapeCTA';
 import CAIChatStyleRescueCTA from '@/components/home/CAIChatStyleRescueCTA';
-import ReplikaUltraDailyReflectionCTA from '@/components/home/ReplikaUltraDailyReflectionCTA';
 import CaiMemoryFreeCounterBadge from '@/components/home/CaiMemoryFreeCounterBadge';
 import ImagineGalleryFreeCounterBadge from '@/components/home/ImagineGalleryFreeCounterBadge';
 import { MemoryStabilityPledge } from '@/components/memory-stability-pledge';
-import ReplikaUltraCounterBlock from '@/components/home/ReplikaUltraCounterBlock';
 import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
 import { NomiV5ImageParityBadge } from '@/components/agents/NomiV5ImageParityBadge';
 import ReplikaCredentialTrustBadge from '@/components/trust/ReplikaCredentialTrustBadge';
 import { Button } from '@/components/ui/button';
 import { analytics } from '@/lib/analytics';
+import NoChatIsolationBadge from '@/components/home/NoChatIsolationBadge';
 
 function getPlans(billingEnabled: boolean) {
   return [
@@ -377,21 +376,13 @@ export default function PricingPage() {
         <ReplikaPricingConfusionCallout />
       </section>
 
-      <section className="container pb-10">
-        <div
-          className="max-w-2xl mx-auto"
-          data-testid="pricing-replika-ultra-counter"
-        >
-          <ReplikaUltraCounterBlock />
-        </div>
-      </section>
+      <NoChatIsolationBadge />
+
       <MemoryStabilityPledge variant="strip" className="mb-8" />
 
       <CAILorebookEscapeCTA />
 
       <CAIChatStyleRescueCTA />
-
-      <ReplikaUltraDailyReflectionCTA />
 
       <CaiMemoryFreeCounterBadge />
 
