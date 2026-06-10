@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock, BookOpen, Palette } from 'lucide-react';
+import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock, BookOpen, Palette, Brain } from 'lucide-react';
 import { PricingCard, PricingProofSection } from '@/components/pricing';
 import CAILorebookEscapeCTA from '@/components/home/CAILorebookEscapeCTA';
 import CAIChatStyleRescueCTA from '@/components/home/CAIChatStyleRescueCTA';
+import CaiMemoryFreeCounterBadge from '@/components/home/CaiMemoryFreeCounterBadge';
 import { MemoryStabilityPledge } from '@/components/memory-stability-pledge';
 import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
 import { Button } from '@/components/ui/button';
@@ -257,6 +258,13 @@ export default function PricingPage() {
               <Palette className="h-3.5 w-3.5" aria-hidden="true" />
               Consistent persona visuals — free, no upgrade
             </span>
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400"
+              data-testid="pricing-memory-free-badge"
+            >
+              <Brain className="h-3.5 w-3.5" aria-hidden="true" />
+              All memory types free — no c.ai+ paywall
+            </span>
           </div>
         </motion.div>
       </section>
@@ -310,6 +318,7 @@ export default function PricingPage() {
 
       <CAIChatStyleRescueCTA />
 
+      <CaiMemoryFreeCounterBadge />
 
       <MemoryGuaranteeLandingSection />
 
