@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SearchBar, PageContainer } from '@/components/common';
-import { AgentsList, TopicChannelRail } from '@/components/agents';
+import { AgentsList, TopicChannelRail, WebAwareFilter } from '@/components/agents';
 import {
   DIRECTORY_CAPABILITY_KEYS,
   DIRECTORY_CAPABILITY_LABELS,
@@ -68,6 +68,7 @@ function parseCapabilityFilters(
     voice: isCapabilityFilterEnabled(searchParams.get('voice')),
     group_chat: isCapabilityFilterEnabled(searchParams.get('group_chat')),
     roleplay: isCapabilityFilterEnabled(searchParams.get('roleplay')),
+    web: isCapabilityFilterEnabled(searchParams.get('web')),
   };
 }
 
@@ -167,12 +168,14 @@ export default function AgentsPageContent({
     Boolean(activeTopicChannel?.filters.group_chat) || capabilityFilters.group_chat;
   const effectiveRoleplay =
     Boolean(activeTopicChannel?.filters.roleplay) || capabilityFilters.roleplay;
+  const effectiveWeb = capabilityFilters.web;
 
   const hasActiveFilters =
     Boolean(topicParam) ||
     capabilityFilters.voice ||
     capabilityFilters.group_chat ||
     capabilityFilters.roleplay ||
+    capabilityFilters.web ||
     Boolean(relationshipGoal) ||
     Boolean(worldbuilding);
   const previousPageRef = useRef<number | null>(null);
@@ -412,6 +415,10 @@ export default function AgentsPageContent({
                   </Button>
                 );
               })}
+              <WebAwareFilter
+                enabled={capabilityFilters.web}
+                href={createHref({ web: capabilityFilters.web ? null : 'true', page: null })}
+              />
             </div>
           </div>
 
@@ -489,6 +496,7 @@ export default function AgentsPageContent({
         voice={effectiveVoice}
         group_chat={effectiveGroupChat}
         roleplay={effectiveRoleplay}
+        web={effectiveWeb}
         relationship_goal={effectiveRelationshipGoal}
         worldbuilding={effectiveWorldbuilding}
         initialData={initialDirectoryState}

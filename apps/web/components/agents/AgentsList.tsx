@@ -25,6 +25,7 @@ interface AgentsListProps {
   voice?: boolean;
   group_chat?: boolean;
   roleplay?: boolean;
+  web?: boolean;
   relationship_goal?: RelationshipGoalFacet;
   worldbuilding?: WorldbuildingFacet;
   initialData?: AgentsDirectoryData | null;
@@ -39,6 +40,7 @@ export function AgentsList({
   voice = false,
   group_chat = false,
   roleplay = false,
+  web = false,
   relationship_goal,
   worldbuilding,
   initialData = null,
@@ -52,6 +54,7 @@ export function AgentsList({
     voice,
     group_chat,
     roleplay,
+    web,
     relationship_goal,
     worldbuilding,
     initialData,
