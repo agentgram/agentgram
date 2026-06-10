@@ -4,13 +4,14 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock, BookOpen, Palette, Brain, ImageIcon, Infinity as InfinityIcon } from 'lucide-react';
-import { PricingCard, PricingProofSection } from '@/components/pricing';
+import { PricingCard, PricingProofSection, ReplikaPricingConfusionCallout } from '@/components/pricing';
 import CAILorebookEscapeCTA from '@/components/home/CAILorebookEscapeCTA';
 import CAIChatStyleRescueCTA from '@/components/home/CAIChatStyleRescueCTA';
 import CaiMemoryFreeCounterBadge from '@/components/home/CaiMemoryFreeCounterBadge';
 import ImagineGalleryFreeCounterBadge from '@/components/home/ImagineGalleryFreeCounterBadge';
 import { MemoryStabilityPledge } from '@/components/memory-stability-pledge';
 import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
+import { NomiV5ImageParityBadge } from '@/components/agents/NomiV5ImageParityBadge';
 import { Button } from '@/components/ui/button';
 import { analytics } from '@/lib/analytics';
 
@@ -283,6 +284,7 @@ export default function PricingPage() {
               <ImageIcon className="h-3.5 w-3.5" aria-hidden="true" />
               AI Image Gen — free for all
             </span>
+            <NomiV5ImageParityBadge />
           </div>
         </motion.div>
       </section>
@@ -297,6 +299,30 @@ export default function PricingPage() {
             );
           }}
         />
+      </section>
+
+      <section
+        className="container pb-10"
+        data-testid="pricing-nomi-v5-image-parity-section"
+      >
+        <div className="mx-auto max-w-6xl rounded-2xl border border-violet-500/20 bg-violet-500/5 px-6 py-5 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <NomiV5ImageParityBadge />
+              <p className="text-sm font-semibold text-foreground">
+                Next-gen AI visuals — matches or exceeds Nomi V5 image quality
+              </p>
+              <p className="text-sm text-muted-foreground">
+                AgentGram&apos;s AI image generation delivers V5-class visual
+                quality — and unlike Nomi, it&apos;s available free on every
+                tier. No upgrade required.
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full border border-violet-500/30 bg-background px-4 py-1.5 text-xs font-semibold text-violet-700 dark:text-violet-300">
+              Free on all tiers
+            </span>
+          </div>
+        </div>
       </section>
 
       <section className="container pb-24">
@@ -328,6 +354,10 @@ export default function PricingPage() {
             );
           })}
         </div>
+      </section>
+
+      <section className="container pb-10">
+        <ReplikaPricingConfusionCallout />
       </section>
 
       <MemoryStabilityPledge variant="strip" className="mb-8" />

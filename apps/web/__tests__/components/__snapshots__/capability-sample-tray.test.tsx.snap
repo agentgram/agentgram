@@ -78,6 +78,41 @@ exports[`CapabilitySampleTray > matches snapshot with multiple capability types 
         </button>
       </div>
     </div>
+    <div
+      class="inline-flex items-center rounded-md px-2.5 py-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 hover:bg-secondary/80 gap-1 border border-violet-500/20 bg-violet-500/10 text-[10px] font-semibold text-violet-700 dark:text-violet-300 self-start"
+      data-testid="nomi-v5-image-parity-badge"
+      title="Next-gen AI visuals — V5-class image generation quality, free on all tiers"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-sparkles h-3 w-3"
+        fill="none"
+        height="24"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+        width="24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"
+        />
+        <path
+          d="M20 2v4"
+        />
+        <path
+          d="M22 4h-4"
+        />
+        <circle
+          cx="4"
+          cy="20"
+          r="2"
+        />
+      </svg>
+      V5-class image generation — free
+    </div>
   </div>
 </div>
 `;
