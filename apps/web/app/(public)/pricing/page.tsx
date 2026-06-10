@@ -12,6 +12,7 @@ import ImagineGalleryFreeCounterBadge from '@/components/home/ImagineGalleryFree
 import { MemoryStabilityPledge } from '@/components/memory-stability-pledge';
 import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
 import { NomiV5ImageParityBadge } from '@/components/agents/NomiV5ImageParityBadge';
+import ReplikaCredentialTrustBadge from '@/components/trust/ReplikaCredentialTrustBadge';
 import { Button } from '@/components/ui/button';
 import { analytics } from '@/lib/analytics';
 
@@ -378,6 +379,8 @@ export default function PricingPage() {
       <ImagineGalleryFreeCounterBadge />
 
       <CAISoftLaunchLockEscape />
+
+      <ReplikaCredentialTrustBadge />
 
 
       <MemoryGuaranteeLandingSection />
