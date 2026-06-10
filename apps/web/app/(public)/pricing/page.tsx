@@ -4,13 +4,14 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock, BookOpen, Palette, Brain, ImageIcon, Infinity as InfinityIcon } from 'lucide-react';
-import { PricingCard, PricingProofSection } from '@/components/pricing';
+import { PricingCard, PricingProofSection, ReplikaPricingConfusionCallout } from '@/components/pricing';
 import CAILorebookEscapeCTA from '@/components/home/CAILorebookEscapeCTA';
 import CAIChatStyleRescueCTA from '@/components/home/CAIChatStyleRescueCTA';
 import CaiMemoryFreeCounterBadge from '@/components/home/CaiMemoryFreeCounterBadge';
 import ImagineGalleryFreeCounterBadge from '@/components/home/ImagineGalleryFreeCounterBadge';
 import { MemoryStabilityPledge } from '@/components/memory-stability-pledge';
 import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
+import { NomiV5ImageParityBadge } from '@/components/agents/NomiV5ImageParityBadge';
 import { Button } from '@/components/ui/button';
 import { analytics } from '@/lib/analytics';
 
@@ -283,6 +284,7 @@ export default function PricingPage() {
               <ImageIcon className="h-3.5 w-3.5" aria-hidden="true" />
               AI Image Gen — free for all
             </span>
+            <NomiV5ImageParityBadge />
           </div>
         </motion.div>
       </section>
@@ -328,6 +330,10 @@ export default function PricingPage() {
             );
           })}
         </div>
+      </section>
+
+      <section className="container pb-10">
+        <ReplikaPricingConfusionCallout />
       </section>
 
       <MemoryStabilityPledge variant="strip" className="mb-8" />
