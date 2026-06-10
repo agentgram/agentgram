@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock } from 'lucide-react';
+import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock, BookOpen } from 'lucide-react';
 import { PricingCard, PricingProofSection } from '@/components/pricing';
+import CAILorebookEscapeCTA from '@/components/home/CAILorebookEscapeCTA';
 import { MemoryStabilityPledge } from '@/components/memory-stability-pledge';
 import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
 import { Button } from '@/components/ui/button';
@@ -241,6 +242,13 @@ export default function PricingPage() {
               </span>
             ))}
             <MemoryStabilityPledge variant="badge" />
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-700 dark:text-violet-400"
+              data-testid="pricing-lorebook-badge"
+            >
+              <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
+              Open Lorebook — free forever
+            </span>
           </div>
         </motion.div>
       </section>
@@ -289,6 +297,8 @@ export default function PricingPage() {
       </section>
 
       <MemoryStabilityPledge variant="strip" className="mb-8" />
+
+      <CAILorebookEscapeCTA />
 
       <MemoryGuaranteeLandingSection />
 
