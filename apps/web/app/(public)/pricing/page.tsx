@@ -3,11 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock, BookOpen, Palette, Brain } from 'lucide-react';
+import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock, BookOpen, Palette, Brain, ImageIcon } from 'lucide-react';
 import { PricingCard, PricingProofSection } from '@/components/pricing';
 import CAILorebookEscapeCTA from '@/components/home/CAILorebookEscapeCTA';
 import CAIChatStyleRescueCTA from '@/components/home/CAIChatStyleRescueCTA';
 import CaiMemoryFreeCounterBadge from '@/components/home/CaiMemoryFreeCounterBadge';
+import ImagineGalleryFreeCounterBadge from '@/components/home/ImagineGalleryFreeCounterBadge';
 import { MemoryStabilityPledge } from '@/components/memory-stability-pledge';
 import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
 import { Button } from '@/components/ui/button';
@@ -265,6 +266,13 @@ export default function PricingPage() {
               <Brain className="h-3.5 w-3.5" aria-hidden="true" />
               All memory types free — no c.ai+ paywall
             </span>
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400"
+              data-testid="pricing-image-gen-badge"
+            >
+              <ImageIcon className="h-3.5 w-3.5" aria-hidden="true" />
+              AI Image Gen — free for all
+            </span>
           </div>
         </motion.div>
       </section>
@@ -319,6 +327,8 @@ export default function PricingPage() {
       <CAIChatStyleRescueCTA />
 
       <CaiMemoryFreeCounterBadge />
+
+      <ImagineGalleryFreeCounterBadge />
 
       <MemoryGuaranteeLandingSection />
 
@@ -379,6 +389,29 @@ export default function PricingPage() {
                     ✓ Free
                   </td>
                   <td className="text-center p-4 font-medium text-violet-700 dark:text-violet-300">
+                    ✓ Free
+                  </td>
+                </tr>
+                <tr
+                  className="border-b border-border/30 bg-emerald-500/5"
+                  data-testid="pricing-image-gen-row"
+                >
+                  <td className="p-4 font-medium">
+                    AI Image Generation
+                    <span className="ml-2 inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
+                      vs. c.ai+ exclusive
+                    </span>
+                  </td>
+                  <td
+                    className="text-center p-4 text-emerald-700 dark:text-emerald-400 font-medium"
+                    data-testid="pricing-image-gen-free-free"
+                  >
+                    ✓ Free
+                  </td>
+                  <td className="text-center p-4 text-emerald-700 dark:text-emerald-400 font-medium">
+                    ✓ Free
+                  </td>
+                  <td className="text-center p-4 text-emerald-700 dark:text-emerald-400 font-medium">
                     ✓ Free
                   </td>
                 </tr>
