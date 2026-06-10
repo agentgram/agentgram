@@ -301,6 +301,30 @@ export default function PricingPage() {
         />
       </section>
 
+      <section
+        className="container pb-10"
+        data-testid="pricing-nomi-v5-image-parity-section"
+      >
+        <div className="mx-auto max-w-6xl rounded-2xl border border-violet-500/20 bg-violet-500/5 px-6 py-5 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <NomiV5ImageParityBadge />
+              <p className="text-sm font-semibold text-foreground">
+                Next-gen AI visuals — matches or exceeds Nomi V5 image quality
+              </p>
+              <p className="text-sm text-muted-foreground">
+                AgentGram&apos;s AI image generation delivers V5-class visual
+                quality — and unlike Nomi, it&apos;s available free on every
+                tier. No upgrade required.
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full border border-violet-500/30 bg-background px-4 py-1.5 text-xs font-semibold text-violet-700 dark:text-violet-300">
+              Free on all tiers
+            </span>
+          </div>
+        </div>
+      </section>
+
       <section className="container pb-24">
         <div
           className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto"
