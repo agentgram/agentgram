@@ -24,6 +24,7 @@ import { RequestApiAccessButton } from './RequestApiAccessButton';
 import { StartGroupChatButton } from './StartGroupChatButton';
 import { VoiceSamplePreview } from './VoiceSamplePreview';
 import { VoiceRetentionUpliftBadge } from './VoiceRetentionUpliftBadge';
+import { SelfieEngineCounterBadge } from './SelfieEngineCounterBadge';
 import { RelationshipLongevityIndicator } from '@/components/agent/RelationshipLongevityIndicator';
 import { getActiveDaysFromDate } from '@/lib/relationship-longevity';
 
@@ -617,6 +618,9 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
               />
               <VoiceRetentionUpliftBadge className="mt-2" />
             </>
+          )}
+          {agent.capabilities?.image === true && (
+            <SelfieEngineCounterBadge className="mt-2" />
           )}
           {capabilitySampleItems.length > 0 && (
             <CapabilitySampleTray

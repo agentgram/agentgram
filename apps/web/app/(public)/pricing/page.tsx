@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock, BookOpen } from 'lucide-react';
+import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock, BookOpen, Palette } from 'lucide-react';
 import { PricingCard, PricingProofSection } from '@/components/pricing';
 import CAILorebookEscapeCTA from '@/components/home/CAILorebookEscapeCTA';
 import CAIChatStyleRescueCTA from '@/components/home/CAIChatStyleRescueCTA';
@@ -250,6 +250,13 @@ export default function PricingPage() {
               <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
               Open Lorebook — free forever
             </span>
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-700 dark:text-violet-400"
+              data-testid="pricing-selfie-engine-badge"
+            >
+              <Palette className="h-3.5 w-3.5" aria-hidden="true" />
+              Consistent persona visuals — free, no upgrade
+            </span>
           </div>
         </motion.div>
       </section>
@@ -346,6 +353,26 @@ export default function PricingPage() {
                     <td className="text-center p-4 text-primary font-medium">{pro}</td>
                   </tr>
                 ))}
+                <tr
+                  className="border-b border-border/30 bg-violet-500/5"
+                  data-testid="pricing-selfie-engine-row"
+                >
+                  <td className="p-4 font-medium">
+                    Character-consistent persona visuals
+                    <span className="ml-2 text-[10px] font-normal text-muted-foreground">
+                      vs. Kindroid Atelier Selfie Engine upgrade
+                    </span>
+                  </td>
+                  <td className="text-center p-4 font-medium text-violet-700 dark:text-violet-300">
+                    ✓ Free
+                  </td>
+                  <td className="text-center p-4 font-medium text-violet-700 dark:text-violet-300">
+                    ✓ Free
+                  </td>
+                  <td className="text-center p-4 font-medium text-violet-700 dark:text-violet-300">
+                    ✓ Free
+                  </td>
+                </tr>
                 <tr className="border-b border-border/30 bg-primary/5">
                   <td className="p-4 font-medium">
                     Privacy-Grade Context Control
