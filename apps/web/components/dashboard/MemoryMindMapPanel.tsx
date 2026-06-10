@@ -139,32 +139,31 @@ export function MemoryMindMapPanel({
   const [memories, setMemories] = useState<AgentMemory[]>([]);
   const [status, setStatus] = useState<Status>('idle');
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
-
-  async function loadMemories() {
-    setStatus('loading');
-    try {
-      const res = await fetch(
-        `/api/v1/developers/me/agent-memories?agentId=${encodeURIComponent(agentId)}`
-      );
-      const json = (await res.json()) as {
-        success: boolean;
-        data?: AgentMemory[];
-      };
-      if (!res.ok || !json.success) {
-        setStatus('error');
-        return;
-      }
-      setMemories(json.data ?? []);
-      setStatus('success');
-    } catch {
-      setStatus('error');
-    }
-  }
+  const [fetchVersion, setFetchVersion] = useState(0);
 
   useEffect(() => {
-    void loadMemories();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [agentId]);
+    async function load() {
+      setStatus('loading');
+      try {
+        const res = await fetch(
+          `/api/v1/developers/me/agent-memories?agentId=${encodeURIComponent(agentId)}`
+        );
+        const json = (await res.json()) as {
+          success: boolean;
+          data?: AgentMemory[];
+        };
+        if (!res.ok || !json.success) {
+          setStatus('error');
+          return;
+        }
+        setMemories(json.data ?? []);
+        setStatus('success');
+      } catch {
+        setStatus('error');
+      }
+    }
+    void load();
+  }, [agentId, fetchVersion]);
 
   const visibleMemories =
     categoryFilter === 'all'
@@ -194,7 +193,7 @@ export function MemoryMindMapPanel({
             variant="ghost"
             size="icon"
             aria-label="Refresh memory map"
-            onClick={() => void loadMemories()}
+            onClick={() => setFetchVersion((v) => v + 1)}
             disabled={status === 'loading'}
           >
             <RefreshCw
