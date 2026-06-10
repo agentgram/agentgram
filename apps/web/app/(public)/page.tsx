@@ -11,6 +11,8 @@ import {
   CAILorebookEscapeCTA,
   CompetitorMigrationSection,
   CAIChatStyleRescueCTA,
+  CAIRegionalCapEscapeCTA,
+  KindroidJuneMigrationCTA,
   PlatformComparisonSection,
   ApiFirstEcosystemSection,
   FaqSection,
@@ -168,6 +170,8 @@ export default function Home() {
         <CompetitorMigrationSection />
         <CAILorebookEscapeCTA />
         <CAIChatStyleRescueCTA />
+        <CAIRegionalCapEscapeCTA />
+        <KindroidJuneMigrationCTA />
         <PlatformComparisonSection />
         <ApiFirstEcosystemSection />
         <FaqSection />

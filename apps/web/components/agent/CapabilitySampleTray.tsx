@@ -8,6 +8,7 @@ import {
   getCapabilityIcon,
 } from '@/lib/capability-sample';
 import { VoiceSamplePreview } from '@/components/agents/VoiceSamplePreview';
+import { NomiV5ImageParityBadge } from '@/components/agents/NomiV5ImageParityBadge';
 
 export type { CapabilitySample };
 
@@ -52,6 +53,10 @@ export function CapabilitySampleTray({
   if (capabilities.length === 0) {
     return null;
   }
+
+  const hasImageCapability = capabilities.some(
+    (cap) => cap.type === 'image' || cap.type === 'selfie'
+  );
 
   return (
     <div
@@ -130,6 +135,9 @@ export function CapabilitySampleTray({
           );
         })}
       </div>
+      {hasImageCapability && (
+        <NomiV5ImageParityBadge className="self-start" />
+      )}
     </div>
   );
 }

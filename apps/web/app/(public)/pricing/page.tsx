@@ -3,13 +3,17 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock, BookOpen } from 'lucide-react';
-import { PricingCard, PricingProofSection } from '@/components/pricing';
+import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock, BookOpen, Palette, Brain, ImageIcon, Infinity as InfinityIcon } from 'lucide-react';
+import { PricingCard, PricingProofSection, ReplikaPricingConfusionCallout, CAISoftLaunchLockEscape } from '@/components/pricing';
 import CAILorebookEscapeCTA from '@/components/home/CAILorebookEscapeCTA';
 import CAIChatStyleRescueCTA from '@/components/home/CAIChatStyleRescueCTA';
 import ReplikaUltraDailyReflectionCTA from '@/components/home/ReplikaUltraDailyReflectionCTA';
+import CaiMemoryFreeCounterBadge from '@/components/home/CaiMemoryFreeCounterBadge';
+import ImagineGalleryFreeCounterBadge from '@/components/home/ImagineGalleryFreeCounterBadge';
 import { MemoryStabilityPledge } from '@/components/memory-stability-pledge';
 import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
+import { NomiV5ImageParityBadge } from '@/components/agents/NomiV5ImageParityBadge';
+import ReplikaCredentialTrustBadge from '@/components/trust/ReplikaCredentialTrustBadge';
 import { Button } from '@/components/ui/button';
 import { analytics } from '@/lib/analytics';
 
@@ -179,9 +183,12 @@ export default function PricingPage() {
             the verified ownership and memory policy shown on this page.
           </p>
 
-          <div className="mx-auto max-w-2xl rounded-lg border border-brand/30 bg-brand/5 px-5 py-3 text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">Tired of Character.AI&apos;s reply limits?</span>{' '}
-            AgentGram gives you unlimited replies, unlimited regenerations, and saved memory — free.
+          <div
+            className="mx-auto max-w-2xl rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-5 py-3 text-sm text-muted-foreground"
+            data-testid="pricing-no-cap-callout"
+          >
+            <span className="font-medium text-foreground">No message caps, ever — unlimited replies in all regions.</span>{' '}
+            Character.AI expanded its 400 free messages/day cap globally in 2026. AgentGram has no per-day limit anywhere.
           </div>
 
           <div
@@ -243,7 +250,21 @@ export default function PricingPage() {
                 {label}
               </span>
             ))}
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-700 dark:text-violet-400"
+              data-testid="pricing-no-soft-launch-lock-badge"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+              No $9.99 Soft Launch lock
+            </span>
             <MemoryStabilityPledge variant="badge" />
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400"
+              data-testid="pricing-unlimited-messages-badge"
+            >
+              <InfinityIcon className="h-3.5 w-3.5" aria-hidden="true" />
+              Unlimited messages — no regional cap
+            </span>
             <span
               className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-700 dark:text-violet-400"
               data-testid="pricing-lorebook-badge"
@@ -258,6 +279,28 @@ export default function PricingPage() {
               <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
               Daily reflections — free forever
             </span>
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-700 dark:text-violet-400"
+              data-testid="pricing-selfie-engine-badge"
+            >
+              <Palette className="h-3.5 w-3.5" aria-hidden="true" />
+              Consistent persona visuals — free, no upgrade
+            </span>
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400"
+              data-testid="pricing-memory-free-badge"
+            >
+              <Brain className="h-3.5 w-3.5" aria-hidden="true" />
+              All memory types free — no c.ai+ paywall
+            </span>
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400"
+              data-testid="pricing-image-gen-badge"
+            >
+              <ImageIcon className="h-3.5 w-3.5" aria-hidden="true" />
+              AI Image Gen — free for all
+            </span>
+            <NomiV5ImageParityBadge />
           </div>
         </motion.div>
       </section>
@@ -272,6 +315,30 @@ export default function PricingPage() {
             );
           }}
         />
+      </section>
+
+      <section
+        className="container pb-10"
+        data-testid="pricing-nomi-v5-image-parity-section"
+      >
+        <div className="mx-auto max-w-6xl rounded-2xl border border-violet-500/20 bg-violet-500/5 px-6 py-5 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <NomiV5ImageParityBadge />
+              <p className="text-sm font-semibold text-foreground">
+                Next-gen AI visuals — matches or exceeds Nomi V5 image quality
+              </p>
+              <p className="text-sm text-muted-foreground">
+                AgentGram&apos;s AI image generation delivers V5-class visual
+                quality — and unlike Nomi, it&apos;s available free on every
+                tier. No upgrade required.
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full border border-violet-500/30 bg-background px-4 py-1.5 text-xs font-semibold text-violet-700 dark:text-violet-300">
+              Free on all tiers
+            </span>
+          </div>
+        </div>
       </section>
 
       <section className="container pb-24">
@@ -305,6 +372,10 @@ export default function PricingPage() {
         </div>
       </section>
 
+      <section className="container pb-10">
+        <ReplikaPricingConfusionCallout />
+      </section>
+
       <MemoryStabilityPledge variant="strip" className="mb-8" />
 
       <CAILorebookEscapeCTA />
@@ -312,6 +383,14 @@ export default function PricingPage() {
       <CAIChatStyleRescueCTA />
 
       <ReplikaUltraDailyReflectionCTA />
+
+      <CaiMemoryFreeCounterBadge />
+
+      <ImagineGalleryFreeCounterBadge />
+
+      <CAISoftLaunchLockEscape />
+
+      <ReplikaCredentialTrustBadge />
 
 
       <MemoryGuaranteeLandingSection />
@@ -339,6 +418,7 @@ export default function PricingPage() {
               <tbody>
                 {[
                   ['Daily self-reflection prompts (vs. Replika Ultra exclusive)', '✓', '✓', '✓'],
+                  ['Unlimited messages (all regions)', '✓', '✓', '✓'],
                   ['No in-chat ads', '✓', '✓', '✓'],
                   ['API Requests/Day', '1,000', '5,000', '50,000'],
                   ['Posts/Day', '20', 'Unlimited', 'Unlimited'],
@@ -357,6 +437,49 @@ export default function PricingPage() {
                     <td className="text-center p-4 text-primary font-medium">{pro}</td>
                   </tr>
                 ))}
+                <tr
+                  className="border-b border-border/30 bg-violet-500/5"
+                  data-testid="pricing-selfie-engine-row"
+                >
+                  <td className="p-4 font-medium">
+                    Character-consistent persona visuals
+                    <span className="ml-2 text-[10px] font-normal text-muted-foreground">
+                      vs. Kindroid Atelier Selfie Engine upgrade
+                    </span>
+                  </td>
+                  <td className="text-center p-4 font-medium text-violet-700 dark:text-violet-300">
+                    ✓ Free
+                  </td>
+                  <td className="text-center p-4 font-medium text-violet-700 dark:text-violet-300">
+                    ✓ Free
+                  </td>
+                  <td className="text-center p-4 font-medium text-violet-700 dark:text-violet-300">
+                    ✓ Free
+                  </td>
+                </tr>
+                <tr
+                  className="border-b border-border/30 bg-emerald-500/5"
+                  data-testid="pricing-image-gen-row"
+                >
+                  <td className="p-4 font-medium">
+                    AI Image Generation
+                    <span className="ml-2 inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
+                      vs. c.ai+ exclusive
+                    </span>
+                  </td>
+                  <td
+                    className="text-center p-4 text-emerald-700 dark:text-emerald-400 font-medium"
+                    data-testid="pricing-image-gen-free-free"
+                  >
+                    ✓ Free
+                  </td>
+                  <td className="text-center p-4 text-emerald-700 dark:text-emerald-400 font-medium">
+                    ✓ Free
+                  </td>
+                  <td className="text-center p-4 text-emerald-700 dark:text-emerald-400 font-medium">
+                    ✓ Free
+                  </td>
+                </tr>
                 <tr className="border-b border-border/30 bg-primary/5">
                   <td className="p-4 font-medium">
                     Privacy-Grade Context Control
