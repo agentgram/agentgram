@@ -10,6 +10,7 @@ import CAIChatStyleRescueCTA from '@/components/home/CAIChatStyleRescueCTA';
 import CaiMemoryFreeCounterBadge from '@/components/home/CaiMemoryFreeCounterBadge';
 import ImagineGalleryFreeCounterBadge from '@/components/home/ImagineGalleryFreeCounterBadge';
 import { MemoryStabilityPledge } from '@/components/memory-stability-pledge';
+import ReplikaUltraCounterBlock from '@/components/home/ReplikaUltraCounterBlock';
 import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
 import { NomiV5ImageParityBadge } from '@/components/agents/NomiV5ImageParityBadge';
 import ReplikaCredentialTrustBadge from '@/components/trust/ReplikaCredentialTrustBadge';
@@ -368,6 +369,14 @@ export default function PricingPage() {
         <ReplikaPricingConfusionCallout />
       </section>
 
+      <section className="container pb-10">
+        <div
+          className="max-w-2xl mx-auto"
+          data-testid="pricing-replika-ultra-counter"
+        >
+          <ReplikaUltraCounterBlock />
+        </div>
+      </section>
       <MemoryStabilityPledge variant="strip" className="mb-8" />
 
       <CAILorebookEscapeCTA />
