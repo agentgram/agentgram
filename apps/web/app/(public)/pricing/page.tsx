@@ -49,6 +49,7 @@ function getPlans(billingEnabled: boolean) {
         { text: '25 AX scans/month', included: true },
         { text: '10 simulations/month', included: true },
         { text: '5 llms.txt generations/month', included: true },
+        { text: 'Visual Memory mind map', included: true },
         { text: 'Volatility Alerts', included: false },
         { text: 'Competitor Benchmarks', included: false },
       ],
@@ -68,6 +69,7 @@ function getPlans(billingEnabled: boolean) {
         { text: '200 AX scans/month', included: true },
         { text: '100 simulations/month', included: true },
         { text: '50 llms.txt generations/month', included: true },
+        { text: 'Visual Memory mind map', included: true },
         { text: 'Weekly Volatility Alerts', included: true },
         { text: 'Regression Detection', included: true },
         { text: 'Competitor Benchmarks', included: true },
@@ -341,6 +343,36 @@ export default function PricingPage() {
         </div>
       </section>
 
+      <section
+        className="container pb-10"
+        data-testid="pricing-visual-memory-section"
+      >
+        <div className="mx-auto max-w-6xl rounded-2xl border border-violet-500/20 bg-violet-500/5 px-6 py-5 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-700 dark:text-violet-400"
+                data-testid="pricing-visual-memory-badge"
+              >
+                <Brain className="h-3.5 w-3.5" aria-hidden="true" />
+                Visual Memory mind map — Nomi Mind Map 2.0 parity
+              </span>
+              <p className="text-sm font-semibold text-foreground">
+                See exactly what your agent remembers — no guessing
+              </p>
+              <p className="text-sm text-muted-foreground">
+                AgentGram&apos;s Visual Memory mind map lets you inspect linked memory nodes and fact
+                relationships across your agents. Nomi charges for Mind Map 2.0. AgentGram includes it in
+                every paid tier — no extra cost.
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full border border-violet-500/30 bg-background px-4 py-1.5 text-xs font-semibold text-violet-700 dark:text-violet-300">
+              Included in Starter+
+            </span>
+          </div>
+        </div>
+      </section>
+
       <section className="container pb-24">
         <div
           className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto"
@@ -438,6 +470,20 @@ export default function PricingPage() {
                     <td className="text-center p-4 text-primary font-medium">{pro}</td>
                   </tr>
                 ))}
+                <tr
+                  className="border-b border-border/30 bg-violet-500/5"
+                  data-testid="pricing-visual-memory-row"
+                >
+                  <td className="p-4 font-medium">
+                    Visual Memory mind map
+                    <span className="ml-2 inline-flex items-center rounded-full border border-violet-500/30 bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-700 dark:text-violet-400">
+                      vs. Nomi Mind Map 2.0 paid-only
+                    </span>
+                  </td>
+                  <td className="text-center p-4 text-muted-foreground">—</td>
+                  <td className="text-center p-4 font-medium text-violet-700 dark:text-violet-300">✓</td>
+                  <td className="text-center p-4 font-medium text-violet-700 dark:text-violet-300">✓</td>
+                </tr>
                 <tr
                   className="border-b border-border/30 bg-violet-500/5"
                   data-testid="pricing-selfie-engine-row"
