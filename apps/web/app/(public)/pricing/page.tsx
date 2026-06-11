@@ -30,6 +30,7 @@ function getPlans(billingEnabled: boolean) {
         { text: '3 AX scans/month', included: true },
         { text: 'AI simulation', included: false },
         { text: 'llms.txt generation', included: false },
+        { text: 'Visual Memory mind map', included: false },
         { text: 'Volatility Alerts', included: false },
         { text: 'Competitor Benchmarks', included: false },
       ],
