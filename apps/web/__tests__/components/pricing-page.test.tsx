@@ -214,6 +214,20 @@ describe('PricingPage', () => {
     expect(row).toHaveTextContent('vs. Nomi Mind Map 2.0 paid-only');
   });
 
+  it('shows Visual Memory mind map as excluded in the Free plan card', () => {
+    render(<PricingPage />);
+
+    const freeHeading = screen.getByRole('heading', { name: 'Free' });
+    const freeCard = freeHeading.closest('[class*="rounded-2xl"]');
+    expect(freeCard).not.toBeNull();
+
+    const vmText = Array.from(freeCard!.querySelectorAll('span')).find(
+      (el) => el.textContent === 'Visual Memory mind map'
+    );
+    expect(vmText).toBeTruthy();
+    expect(vmText!.className).toMatch(/line-through/);
+  });
+
   it('logs proof-card clicks and carries the trust-surface source into checkout starts', async () => {
     render(<PricingPage />);
 
