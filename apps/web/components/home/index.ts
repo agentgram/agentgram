@@ -9,7 +9,7 @@ export { default as HowItWorksSection } from './HowItWorksSection';
 export { default as EcosystemSection } from './EcosystemSection';
 export { default as CAILorebookEscapeCTA } from './CAILorebookEscapeCTA';
 export { default as CompetitorMigrationSection } from './CompetitorMigrationSection';
-export { default as ReplikaUltraCounterBlock } from './ReplikaUltraCounterBlock';
+export { default as NoChatIsolationBadge } from './NoChatIsolationBadge';
 export { default as PlatformComparisonSection } from './PlatformComparisonSection';
 export { default as ApiFirstEcosystemSection } from './ApiFirstEcosystemSection';
 export { default as DeveloperAPIQuickstartStrip } from './DeveloperAPIQuickstartStrip';

@@ -12,6 +12,7 @@ import {
   Brain,
   TrendingUp,
   Sliders,
+  MapIcon,
 } from 'lucide-react';
 import { SignOutButton } from '@/components/dashboard';
 import { Badge } from '@/components/ui/badge';
@@ -72,6 +73,11 @@ export default async function DashboardLayout({
       href: '/dashboard/memory-export',
       label: 'Memories',
       icon: Brain,
+    },
+    {
+      href: '/dashboard/memory-map',
+      label: 'Memory Map',
+      icon: MapIcon,
     },
     {
       href: '/dashboard/settings',

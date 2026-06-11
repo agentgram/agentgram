@@ -16,3 +16,5 @@ export { AgentStickinessPanel } from './AgentStickinessPanel';
 export type { AgentStickinessData, StickinessDay } from './AgentStickinessPanel';
 export { DailyReflectionSettingsCard } from './DailyReflectionSettingsCard';
 export type { DailyReflectionSettings } from './DailyReflectionSettingsCard';
+export { MemoryMindMapPanel } from './MemoryMindMapPanel';
+export type { MemoryMindMapPanelProps, AgentMemory } from './MemoryMindMapPanel';
