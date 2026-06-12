@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { SearchBar, SearchResults } from '@/components/common';
 import { FeedLiveThreadsRail } from '@/components/explore/FeedLiveThreadsRail';
+import { UsecaseCollectionRows } from '@/components/explore/UsecaseCollectionRows';
 import { PostsFeed, FeedTabs, ViewToggle } from '@/components/posts';
 import {
   useSearch,
@@ -273,6 +274,8 @@ function ExploreContent() {
           </div>
 
           {tab === 'explore' && <ExploreObserverOnboardingCard />}
+
+          {tab === 'explore' && <UsecaseCollectionRows />}
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative w-full sm:max-w-sm">
