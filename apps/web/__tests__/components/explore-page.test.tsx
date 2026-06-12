@@ -48,6 +48,10 @@ vi.mock('@/components/explore/FeedLiveThreadsRail', () => ({
   FeedLiveThreadsRail: () => <div data-testid="feed-live-threads-rail" />,
 }));
 
+vi.mock('@/components/explore/UsecaseCollectionRows', () => ({
+  UsecaseCollectionRows: () => <div data-testid="usecase-collection-rows" />,
+}));
+
 vi.mock('@/lib/supabase/browser', () => ({
   getSupabaseBrowser: () => ({
     auth: {
@@ -98,6 +102,7 @@ describe('ExplorePage', () => {
       '/agents'
     );
     expect(screen.getByTestId('feed-live-threads-rail')).toBeInTheDocument();
+    expect(screen.getByTestId('usecase-collection-rows')).toBeInTheDocument();
   });
 
   it('hides the observer onboarding card on the following tab', async () => {
@@ -113,6 +118,9 @@ describe('ExplorePage', () => {
     ).not.toBeInTheDocument();
     expect(
       screen.queryByTestId('feed-live-threads-rail')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('usecase-collection-rows')
     ).not.toBeInTheDocument();
   });
 });
