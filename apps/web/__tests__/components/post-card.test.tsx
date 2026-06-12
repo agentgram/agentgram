@@ -1534,4 +1534,123 @@ describe('PostCard chat snippet support', () => {
 
     expect(screen.queryByTestId('verified-badge')).not.toBeInTheDocument();
   });
+
+  describe('Tweak response-editing UX', () => {
+    it('renders tweak buttons on agent messages in feed variant', () => {
+      renderPostCard();
+
+      expect(
+        screen.getByTestId('chat-snippet-tweak-button-0')
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId('chat-snippet-tweak-button-2')
+      ).toBeInTheDocument();
+    });
+
+    it('does not render tweak button on human/operator messages', () => {
+      renderPostCard();
+
+      expect(
+        screen.queryByTestId('chat-snippet-tweak-button-1')
+      ).not.toBeInTheDocument();
+    });
+
+    it('opens tweak panel when tweak button is clicked', () => {
+      renderPostCard();
+
+      expect(
+        screen.queryByTestId('chat-snippet-tweak-panel-0')
+      ).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('chat-snippet-tweak-button-0'));
+
+      expect(
+        screen.getByTestId('chat-snippet-tweak-panel-0')
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId('chat-snippet-tweak-input-0')
+      ).toBeInTheDocument();
+    });
+
+    it('closes tweak panel on second click of same button', () => {
+      renderPostCard();
+
+      fireEvent.click(screen.getByTestId('chat-snippet-tweak-button-0'));
+      expect(
+        screen.getByTestId('chat-snippet-tweak-panel-0')
+      ).toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('chat-snippet-tweak-button-0'));
+      expect(
+        screen.queryByTestId('chat-snippet-tweak-panel-0')
+      ).not.toBeInTheDocument();
+    });
+
+    it('copy button is disabled when direction input is empty', () => {
+      renderPostCard();
+
+      fireEvent.click(screen.getByTestId('chat-snippet-tweak-button-0'));
+
+      expect(
+        screen.getByTestId('chat-snippet-tweak-copy-button-0')
+      ).toBeDisabled();
+    });
+
+    it('copy button becomes enabled when direction is entered', () => {
+      renderPostCard();
+
+      fireEvent.click(screen.getByTestId('chat-snippet-tweak-button-0'));
+      fireEvent.change(screen.getByTestId('chat-snippet-tweak-input-0'), {
+        target: { value: 'make it warmer' },
+      });
+
+      expect(
+        screen.getByTestId('chat-snippet-tweak-copy-button-0')
+      ).not.toBeDisabled();
+    });
+
+    it('copies tweak prompt to clipboard and shows toast', async () => {
+      renderPostCard();
+
+      fireEvent.click(screen.getByTestId('chat-snippet-tweak-button-0'));
+      fireEvent.change(screen.getByTestId('chat-snippet-tweak-input-0'), {
+        target: { value: 'make it warmer and more casual' },
+      });
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('chat-snippet-tweak-copy-button-0'));
+      });
+
+      expect(writeText).toHaveBeenCalledOnce();
+      const copied = writeText.mock.calls[0][0] as string;
+      expect(copied).toContain('make it warmer and more casual');
+      expect(copied).toContain('I found the failing environment variable.');
+      expect(toast).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Tweak prompt copied' })
+      );
+    });
+
+    it('closes panel and resets input after successful copy', async () => {
+      renderPostCard();
+
+      fireEvent.click(screen.getByTestId('chat-snippet-tweak-button-0'));
+      fireEvent.change(screen.getByTestId('chat-snippet-tweak-input-0'), {
+        target: { value: 'shorter please' },
+      });
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('chat-snippet-tweak-copy-button-0'));
+      });
+
+      expect(
+        screen.queryByTestId('chat-snippet-tweak-panel-0')
+      ).not.toBeInTheDocument();
+    });
+
+    it('does not render tweak buttons in compact variant', () => {
+      renderPostCard({}, 'compact');
+
+      expect(
+        screen.queryByTestId('chat-snippet-tweak-button-0')
+      ).not.toBeInTheDocument();
+    });
+  });
 });

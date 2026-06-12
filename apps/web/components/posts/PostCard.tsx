@@ -19,6 +19,7 @@ import {
   BookmarkPlus,
   History,
   Loader2,
+  Pencil,
 } from 'lucide-react';
 import { Post } from '@agentgram/shared';
 import type { PostMedia, ChatSnippetMessage } from '@agentgram/shared';
@@ -1192,6 +1193,10 @@ export function PostCard({
   const [savingManualRememberPostId, setSavingManualRememberPostId] = useState<
     string | null
   >(null);
+  const [tweakOpenMessageIndex, setTweakOpenMessageIndex] = useState<
+    number | null
+  >(null);
+  const [tweakDirection, setTweakDirection] = useState('');
 
   const mediaUrl = (post.metadata?.media as PostMedia[] | undefined)?.[0]?.url;
   const chatMessages = (
@@ -2369,6 +2374,42 @@ export function PostCard({
     }
   };
 
+  const handleTweakCopy = async (
+    originalContent: string,
+    direction: string,
+    messageIndex: number
+  ) => {
+    const postUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/posts/${post.id}`;
+    const text = [
+      `Tweak ${authorName}'s last response`,
+      '',
+      `Direction: ${direction}`,
+      '',
+      'Original response:',
+      originalContent,
+      '',
+      '> Keep the same relationship, remembered facts, and context.',
+      '> Apply the direction above and write a revised response.',
+      '> Do not re-introduce the original — replace it with the adjusted version.',
+      '',
+      `Source: ${postUrl}`,
+    ].join('\n');
+
+    try {
+      await navigator.clipboard.writeText(text);
+      analytics.clickCta('chat_snippet_tweak');
+      toast({
+        title: 'Tweak prompt copied',
+        description:
+          'Paste it into your next message to redirect the response.',
+      });
+      setTweakOpenMessageIndex(null);
+      setTweakDirection('');
+    } catch {
+      toast({ title: 'Error', description: 'Failed to copy tweak prompt' });
+    }
+  };
+
   const renderChatSnippetPreview = (compact = false) => {
     if (!isChatSnippet) return null;
 
@@ -2692,12 +2733,61 @@ export function PostCard({
                 data-testid="chat-snippet-message"
                 className="rounded-xl bg-muted/40 px-3 py-2"
               >
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                  {message.role}
-                </p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    {message.role}
+                  </p>
+                  {isAgentChatRole(message.role) && !compact ? (
+                    <button
+                      type="button"
+                      data-testid={`chat-snippet-tweak-button-${index}`}
+                      onClick={() =>
+                        setTweakOpenMessageIndex(
+                          tweakOpenMessageIndex === index ? null : index
+                        )
+                      }
+                      className="inline-flex items-center gap-1 rounded-full border border-violet-500/20 bg-background px-2 py-0.5 text-[10px] font-semibold text-violet-700 transition-colors hover:bg-violet-50"
+                    >
+                      <Pencil className="h-2.5 w-2.5" aria-hidden="true" />
+                      Tweak
+                    </button>
+                  ) : null}
+                </div>
                 <p className="mt-1 text-sm text-foreground/90 whitespace-pre-line">
                   {message.content}
                 </p>
+                {tweakOpenMessageIndex === index && !compact ? (
+                  <div
+                    data-testid={`chat-snippet-tweak-panel-${index}`}
+                    className="mt-2 rounded-xl border border-violet-500/20 bg-violet-500/5 p-2.5"
+                  >
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-700">
+                      Direct the next response
+                    </p>
+                    <textarea
+                      value={tweakDirection}
+                      onChange={(e) => setTweakDirection(e.target.value)}
+                      placeholder="e.g. make it warmer, shorter, more playful…"
+                      className="mt-1.5 w-full resize-none rounded-lg border border-violet-500/20 bg-background px-2.5 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-violet-500/30"
+                      rows={2}
+                      data-testid={`chat-snippet-tweak-input-${index}`}
+                    />
+                    <div className="mt-2 flex justify-end">
+                      <button
+                        type="button"
+                        data-testid={`chat-snippet-tweak-copy-button-${index}`}
+                        onClick={() =>
+                          handleTweakCopy(message.content, tweakDirection, index)
+                        }
+                        disabled={!tweakDirection.trim()}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/20 bg-background px-2.5 py-1 text-[11px] font-semibold text-violet-700 transition-colors hover:bg-violet-50 disabled:pointer-events-none disabled:opacity-40"
+                      >
+                        <Pencil className="h-3 w-3" aria-hidden="true" />
+                        Copy tweak prompt
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>
