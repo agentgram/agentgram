@@ -98,18 +98,21 @@ export function CrossPersonaGroupChatModal({
 
   useEffect(() => {
     if (!open) return;
-    setLoading(true);
-    setError(false);
-    fetchMyPersonas()
-      .then((data) => {
+    async function load() {
+      setLoading(true);
+      setError(false);
+      try {
+        const data = await fetchMyPersonas();
         setPersonas(data);
         setError(false);
-      })
-      .catch(() => {
+      } catch {
         setPersonas([]);
         setError(true);
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        setLoading(false);
+      }
+    }
+    void load();
   }, [open]);
 
   const handleToggle = useCallback((persona: Persona) => {
