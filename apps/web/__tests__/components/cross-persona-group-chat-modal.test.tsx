@@ -121,6 +121,20 @@ describe('CrossPersonaGroupChatModal', () => {
     });
   });
 
+  it('shows error state (not empty state) when fetch fails', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false })
+    );
+    render(
+      <CrossPersonaGroupChatModal open={true} onOpenChange={vi.fn()} />
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId('cross-persona-error')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('cross-persona-empty')).not.toBeInTheDocument();
+  });
+
   it('Start button is disabled until 2 personas are selected', async () => {
     render(
       <CrossPersonaGroupChatModal open={true} onOpenChange={vi.fn()} />
@@ -205,51 +219,60 @@ describe('CrossPersonaGroupChatModal', () => {
 });
 
 describe('CrossPersonaGroupChatButton', () => {
-  it('renders the trigger button', () => {
+  it('renders the trigger button once auth + persona count resolve (≥2 personas)', async () => {
     render(<CrossPersonaGroupChatButton />);
-    expect(
-      screen.getByTestId('cross-persona-group-chat-trigger')
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.getByTestId('cross-persona-group-chat-trigger')
+      ).toBeInTheDocument();
+    });
     expect(
       screen.getByTestId('cross-persona-group-chat-trigger')
     ).toHaveTextContent('Start group chat with your companions');
   });
 
-  it('redirects to login when unauthenticated', async () => {
+  it('renders nothing when user has fewer than 2 personas', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: [{ id: 'p1', name: 'Solo', agentId: 'a1', isActive: true, createdAt: '', updatedAt: '' }] }),
+      })
+    );
+    render(<CrossPersonaGroupChatButton />);
+    // Wait for async resolution then assert button is absent
+    await new Promise((r) => setTimeout(r, 50));
+    expect(
+      screen.queryByTestId('cross-persona-group-chat-trigger')
+    ).not.toBeInTheDocument();
+  });
+
+  it('does not redirect to login while auth state is loading (null)', () => {
+    // getSession never resolves — auth stays null
     vi.mock('@/lib/supabase/client', () => ({
       createClient: () => ({
         auth: {
-          getSession: vi
-            .fn()
-            .mockResolvedValue({ data: { session: null } }),
+          getSession: vi.fn().mockReturnValue(new Promise(() => {})),
         },
       }),
     }));
-
     render(<CrossPersonaGroupChatButton />);
-    await waitFor(() => {
-      fireEvent.click(screen.getByTestId('cross-persona-group-chat-trigger'));
-    });
+    // Button should not be in the DOM (hasEnoughPersonas still null)
+    expect(
+      screen.queryByTestId('cross-persona-group-chat-trigger')
+    ).not.toBeInTheDocument();
+    expect(mockPush).not.toHaveBeenCalled();
   });
 
-  it('opens modal when trigger is clicked (authenticated)', async () => {
+  it('opens modal when trigger is clicked (authenticated, ≥2 personas)', async () => {
     render(<CrossPersonaGroupChatButton />);
-    // Allow auth effect (getSession) to resolve before asserting
+    await waitFor(() =>
+      expect(screen.getByTestId('cross-persona-group-chat-trigger')).toBeInTheDocument()
+    );
+    fireEvent.click(screen.getByTestId('cross-persona-group-chat-trigger'));
     await waitFor(() => {
-      // By the time getSession resolves, the trigger should still be present
-      expect(
-        screen.getByTestId('cross-persona-group-chat-trigger')
-      ).toBeInTheDocument();
+      expect(screen.getByTestId('cross-persona-group-chat-modal')).toBeInTheDocument();
     });
-    // Click after auth has resolved
-    await waitFor(async () => {
-      fireEvent.click(screen.getByTestId('cross-persona-group-chat-trigger'));
-    });
-    // If auth is settled as true, modal should open; if not, login redirect
-    // We just assert the trigger was clickable without erroring
-    expect(
-      screen.getByTestId('cross-persona-group-chat-trigger')
-    ).toBeInTheDocument();
   });
 });
 

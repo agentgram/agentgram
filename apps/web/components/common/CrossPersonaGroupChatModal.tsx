@@ -93,14 +93,22 @@ export function CrossPersonaGroupChatModal({
   const router = useRouter();
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
   const [selected, setSelected] = useState<Persona[]>([]);
 
   useEffect(() => {
     if (!open) return;
     setLoading(true);
+    setError(false);
     fetchMyPersonas()
-      .then(setPersonas)
-      .catch(() => setPersonas([]))
+      .then((data) => {
+        setPersonas(data);
+        setError(false);
+      })
+      .catch(() => {
+        setPersonas([]);
+        setError(true);
+      })
       .finally(() => setLoading(false));
   }, [open]);
 
@@ -146,6 +154,13 @@ export function CrossPersonaGroupChatModal({
                   data-testid="cross-persona-loading"
                 />
               </div>
+            ) : error ? (
+              <p
+                className="py-6 text-center text-sm text-muted-foreground"
+                data-testid="cross-persona-error"
+              >
+                Could not load your personas. Please try again.
+              </p>
             ) : personas.length === 0 ? (
               <p
                 className="py-6 text-center text-sm text-muted-foreground"
@@ -196,22 +211,37 @@ export function CrossPersonaGroupChatButton({
 }: CrossPersonaGroupChatButtonProps) {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [hasEnoughPersonas, setHasEnoughPersonas] = useState<boolean | null>(null);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthenticated(!!session);
+      const authed = !!session;
+      setIsAuthenticated(authed);
+      if (!authed) {
+        setHasEnoughPersonas(false);
+        return;
+      }
+      fetch('/api/v1/agents/me/personas')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((json: ApiResponse<Persona[]> | null) => {
+          setHasEnoughPersonas((json?.data?.length ?? 0) >= MIN_PERSONAS);
+        })
+        .catch(() => setHasEnoughPersonas(false));
     });
   }, []);
 
   const handleClick = () => {
+    if (isAuthenticated === null) return;
     if (!isAuthenticated) {
       router.push('/login?redirect=/dashboard/settings');
       return;
     }
     setOpen(true);
   };
+
+  if (hasEnoughPersonas === null || !hasEnoughPersonas) return null;
 
   return (
     <>
