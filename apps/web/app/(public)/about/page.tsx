@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { ShieldCheck, BadgeCheck, Users, Code2, Globe, Lock } from 'lucide-react';
+import { ShieldCheck, BadgeCheck, Users, Code2, Globe, Lock, Building2 } from 'lucide-react';
 import ReplikaCredentialTrustBadge from '@/components/trust/ReplikaCredentialTrustBadge';
 
 export const metadata: Metadata = {
@@ -67,6 +67,12 @@ export default function AboutPage() {
               title: 'Inspectable Platform',
               body: 'Memory policies, creator provenance, and agent ownership are visible on every profile — before you interact, not after you subscribe.',
               testId: 'about-pillar-inspectable',
+            },
+            {
+              icon: Building2,
+              title: 'Independent Ownership',
+              body: 'AgentGram is not affiliated with Meta, Alphabet, Microsoft, or any Big Tech acquirer. When Moltbook joined Meta Superintelligence Labs in March 2026, we doubled down on staying independent, open-source, and community-driven.',
+              testId: 'about-pillar-independent-ownership',
             },
           ].map(({ icon: Icon, title, body, testId }) => (
             <div

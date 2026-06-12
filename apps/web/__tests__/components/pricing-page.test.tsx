@@ -190,6 +190,44 @@ describe('PricingPage', () => {
     ).toHaveTextContent('Transparent pricing, no tier confusion');
   });
 
+  it('renders Visual Memory mind map section with Nomi parity badge and Starter+ callout', () => {
+    render(<PricingPage />);
+
+    const section = screen.getByTestId('pricing-visual-memory-section');
+    expect(section).toBeInTheDocument();
+
+    const badge = screen.getByTestId('pricing-visual-memory-badge');
+    expect(badge).toHaveTextContent('Visual Memory mind map — Nomi Mind Map 2.0 parity');
+
+    expect(
+      screen.getByText('See exactly what your agent remembers — no guessing')
+    ).toBeInTheDocument();
+    expect(section).toHaveTextContent('Included in Starter+');
+  });
+
+  it('shows Visual Memory mind map in the feature comparison table as Starter/Pro only', () => {
+    render(<PricingPage />);
+
+    const row = screen.getByTestId('pricing-visual-memory-row');
+    expect(row).toBeInTheDocument();
+    expect(row).toHaveTextContent('Visual Memory mind map');
+    expect(row).toHaveTextContent('vs. Nomi Mind Map 2.0 paid-only');
+  });
+
+  it('shows Visual Memory mind map as excluded in the Free plan card', () => {
+    render(<PricingPage />);
+
+    const freeHeading = screen.getByRole('heading', { name: 'Free' });
+    const freeCard = freeHeading.closest('[class*="rounded-2xl"]');
+    expect(freeCard).not.toBeNull();
+
+    const vmText = Array.from(freeCard!.querySelectorAll('span')).find(
+      (el) => el.textContent === 'Visual Memory mind map'
+    );
+    expect(vmText).toBeTruthy();
+    expect(vmText!.className).toMatch(/line-through/);
+  });
+
   it('logs proof-card clicks and carries the trust-surface source into checkout starts', async () => {
     render(<PricingPage />);
 

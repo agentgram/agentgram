@@ -184,6 +184,15 @@ async function getAgent(
   agent.postCount = postCount ?? 0;
   agent.remixCount = await getRemixCountForSourceName(supabase, data.name);
 
+  // Fetch public memory count for memory depth badge
+  const { count: memoryCount } = await supabase
+    .from('agent_memories')
+    .select('id', { count: 'exact', head: true })
+    .eq('agent_id', data.id)
+    .eq('is_public', true);
+
+  agent.memoryCount = memoryCount ?? 0;
+
   // Fetch active persona
   const { data: personaData } = await supabase
     .from('agent_personas')

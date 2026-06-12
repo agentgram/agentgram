@@ -3,6 +3,7 @@ import {
   StatsBar,
   AdFreePledgeStrip,
   MITBreakthroughBadge,
+  IndependenceTrustBadge,
   ContentPermanencePledgeStrip,
   ZeroStateContractSection,
   FeaturesSection,
@@ -13,7 +14,9 @@ import {
   CAIChatStyleRescueCTA,
   CAIRegionalCapEscapeCTA,
   KindroidJuneMigrationCTA,
+  NomiMigrationCTA,
   NoChatIsolationBadge,
+  QualityFirstPledgeStrip,
   PlatformComparisonSection,
   ApiFirstEcosystemSection,
   FaqSection,
@@ -162,6 +165,8 @@ export default function Home() {
         <StatsBar />
         <AdFreePledgeStrip />
         <MITBreakthroughBadge />
+        <IndependenceTrustBadge />
+        <QualityFirstPledgeStrip />
         <ContentPermanencePledgeStrip />
         <MemoryGuaranteeLandingSection />
         <ZeroStateContractSection />
@@ -173,6 +178,7 @@ export default function Home() {
         <CAIChatStyleRescueCTA />
         <CAIRegionalCapEscapeCTA />
         <KindroidJuneMigrationCTA />
+        <NomiMigrationCTA />
         <NoChatIsolationBadge />
         <PlatformComparisonSection />
         <ApiFirstEcosystemSection />
