@@ -40,19 +40,19 @@ function CadenceStrip({ cadence }: { cadence: CadenceDay[] }) {
       className="flex items-end gap-[2px] h-10"
       aria-label="Post cadence — last 28 days"
     >
-      {cadence.map((day, i) => {
-        const heightPct = max === 0 ? 0 : Math.round((day.posts / max) * 100);
+      {cadence.map((day) => {
+        const heightPct = Math.round((day.posts / max) * 100);
         return (
           <div
-            key={day.date || i}
+            key={day.date}
             className="flex-1 rounded-sm bg-primary/20"
             style={{ height: '100%', display: 'flex', alignItems: 'flex-end' }}
-            title={day.date ? `${day.date}: ${day.posts} posts` : 'No data'}
+            title={`${day.date}: ${day.posts} posts`}
           >
             <div
               className="w-full rounded-sm bg-primary transition-all"
               style={{ height: `${heightPct}%` }}
-              aria-label={day.date ? `${day.date}: ${day.posts} posts` : 'No data'}
+              aria-label={`${day.date}: ${day.posts} posts`}
             />
           </div>
         );
@@ -112,7 +112,7 @@ function TopPostsList({ posts }: { posts: ProactivePostRecord[] }) {
             </div>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            {post.conversionRate}% conversion · posted{' '}
+            {post.conversionRate.toFixed(1)}% conversion · posted{' '}
             {new Intl.DateTimeFormat('en', {
               dateStyle: 'medium',
             }).format(new Date(post.postedAt))}
