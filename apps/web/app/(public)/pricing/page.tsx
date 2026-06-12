@@ -12,6 +12,7 @@ import ImagineGalleryFreeCounterBadge from '@/components/home/ImagineGalleryFree
 import { MemoryStabilityPledge } from '@/components/memory-stability-pledge';
 import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
 import { NomiV5ImageParityBadge } from '@/components/agents/NomiV5ImageParityBadge';
+import { VoiceLongSessionBadge } from '@/components/agents/VoiceLongSessionBadge';
 import ReplikaCredentialTrustBadge from '@/components/trust/ReplikaCredentialTrustBadge';
 import { Button } from '@/components/ui/button';
 import { analytics } from '@/lib/analytics';
@@ -340,6 +341,35 @@ export default function PricingPage() {
             <span className="shrink-0 rounded-full border border-violet-500/30 bg-background px-4 py-1.5 text-xs font-semibold text-violet-700 dark:text-violet-300">
               Free on all tiers
             </span>
+          </div>
+        </div>
+      </section>
+
+      <section
+        className="container pb-10"
+        data-testid="pricing-voice-long-session-section"
+      >
+        <div className="mx-auto max-w-6xl rounded-2xl border border-primary/20 bg-primary/5 px-6 py-5 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <VoiceLongSessionBadge />
+              <p className="text-sm font-semibold text-foreground">
+                Voice plans keep users talking 53% longer per session
+              </p>
+              <p className="text-sm text-muted-foreground">
+                ElevenLabs engagement data shows users on voice-enabled plans
+                average 53% longer call sessions. Upgrade to a voice plan and
+                turn every conversation into a longer, deeper connection.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              className="shrink-0"
+              onClick={() => handleSubscribe('Pro')}
+              data-testid="pricing-voice-long-session-upgrade-cta"
+            >
+              Upgrade to voice
+            </Button>
           </div>
         </div>
       </section>
