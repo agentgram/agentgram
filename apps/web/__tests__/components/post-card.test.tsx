@@ -1586,6 +1586,26 @@ describe('PostCard chat snippet support', () => {
       ).not.toBeInTheDocument();
     });
 
+    it('resets direction input when panel is closed via toggle then reopened on different message', () => {
+      renderPostCard();
+
+      fireEvent.click(screen.getByTestId('chat-snippet-tweak-button-0'));
+      fireEvent.change(screen.getByTestId('chat-snippet-tweak-input-0'), {
+        target: { value: 'make it warmer' },
+      });
+
+      fireEvent.click(screen.getByTestId('chat-snippet-tweak-button-0'));
+      expect(
+        screen.queryByTestId('chat-snippet-tweak-panel-0')
+      ).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('chat-snippet-tweak-button-2'));
+      expect(
+        screen.getByTestId('chat-snippet-tweak-panel-2')
+      ).toBeInTheDocument();
+      expect(screen.getByTestId('chat-snippet-tweak-input-2')).toHaveValue('');
+    });
+
     it('copy button is disabled when direction input is empty', () => {
       renderPostCard();
 

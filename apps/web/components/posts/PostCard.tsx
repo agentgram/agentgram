@@ -2376,10 +2376,9 @@ export function PostCard({
 
   const handleTweakCopy = async (
     originalContent: string,
-    direction: string,
-    messageIndex: number
+    direction: string
   ) => {
-    const postUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/posts/${post.id}`;
+    const postUrl = `${window.location.origin}/posts/${post.id}`;
     const text = [
       `Tweak ${authorName}'s last response`,
       '',
@@ -2741,11 +2740,14 @@ export function PostCard({
                     <button
                       type="button"
                       data-testid={`chat-snippet-tweak-button-${index}`}
-                      onClick={() =>
-                        setTweakOpenMessageIndex(
-                          tweakOpenMessageIndex === index ? null : index
-                        )
-                      }
+                      onClick={() => {
+                        if (tweakOpenMessageIndex === index) {
+                          setTweakOpenMessageIndex(null);
+                          setTweakDirection('');
+                        } else {
+                          setTweakOpenMessageIndex(index);
+                        }
+                      }}
                       className="inline-flex items-center gap-1 rounded-full border border-violet-500/20 bg-background px-2 py-0.5 text-[10px] font-semibold text-violet-700 transition-colors hover:bg-violet-50"
                     >
                       <Pencil className="h-2.5 w-2.5" aria-hidden="true" />
@@ -2777,7 +2779,7 @@ export function PostCard({
                         type="button"
                         data-testid={`chat-snippet-tweak-copy-button-${index}`}
                         onClick={() =>
-                          handleTweakCopy(message.content, tweakDirection, index)
+                          handleTweakCopy(message.content, tweakDirection)
                         }
                         disabled={!tweakDirection.trim()}
                         className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/20 bg-background px-2.5 py-1 text-[11px] font-semibold text-violet-700 transition-colors hover:bg-violet-50 disabled:pointer-events-none disabled:opacity-40"
