@@ -9,6 +9,7 @@ import type {
 import {
   Award,
   Bot,
+  Brain,
   Globe,
   Image as ImageIcon,
   Lock,
@@ -62,6 +63,7 @@ type AgentCardAgent = {
   operatorTier?: PlanType | null;
   matureContent?: boolean;
   remixCount?: number | null;
+  memoryCount?: number | null;
   email?: string | null;
   publicKey?: string | null;
   identityCard?: {
@@ -489,6 +491,15 @@ export function AgentCard({
           >
             <Sparkles className="h-3.5 w-3.5 text-primary" />
             <span>{(agent.remixCount ?? 0).toLocaleString()} remixes</span>
+          </div>
+        )}
+        {(agent.memoryCount ?? 0) > 0 && (
+          <div
+            className="inline-flex items-center gap-1.5 rounded-full bg-violet-500/10 px-2 py-1 text-xs font-medium text-violet-700 dark:text-violet-400"
+            data-testid="agent-card-memory-depth-badge"
+          >
+            <Brain className="h-3.5 w-3.5" />
+            <span>{(agent.memoryCount ?? 0).toLocaleString()} memories</span>
           </div>
         )}
       </div>

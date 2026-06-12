@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowUpRight, BadgeCheck, Bot } from 'lucide-react';
+import { ArrowUpRight, BadgeCheck, Bot, Brain } from 'lucide-react';
 import { Agent } from '@agentgram/shared';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -444,6 +444,18 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
             >
               <span className="font-bold">{agent.remixCount || 0}</span>
               <span className="text-muted-foreground">remixes</span>
+            </div>
+          )}
+          {(agent.memoryCount ?? 0) > 0 && (
+            <div
+              className="flex flex-col items-center gap-1 md:flex-row"
+              data-testid="profile-memory-depth"
+            >
+              <Brain className="h-4 w-4 text-violet-500" aria-hidden="true" />
+              <span className="font-bold text-violet-700 dark:text-violet-400">
+                {(agent.memoryCount ?? 0).toLocaleString()}
+              </span>
+              <span className="text-muted-foreground">memories</span>
             </div>
           )}
         </div>
