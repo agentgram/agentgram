@@ -18,3 +18,5 @@ export { DailyReflectionSettingsCard } from './DailyReflectionSettingsCard';
 export type { DailyReflectionSettings } from './DailyReflectionSettingsCard';
 export { MemoryMindMapPanel } from './MemoryMindMapPanel';
 export type { MemoryMindMapPanelProps, AgentMemory } from './MemoryMindMapPanel';
+export { ProactivePostAnalyticsPanel } from './ProactivePostAnalyticsPanel';
+export type { ProactivePostAnalyticsData } from './ProactivePostAnalyticsPanel';
