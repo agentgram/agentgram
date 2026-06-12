@@ -17,6 +17,7 @@ import ReplikaCredentialTrustBadge from '@/components/trust/ReplikaCredentialTru
 import { Button } from '@/components/ui/button';
 import { analytics } from '@/lib/analytics';
 import NoChatIsolationBadge from '@/components/home/NoChatIsolationBadge';
+import { QualityFirstPledgeBadge } from '@/components/home/QualityFirstPledge';
 
 function getPlans(billingEnabled: boolean) {
   return [
@@ -305,8 +306,24 @@ export default function PricingPage() {
               AI Image Gen — free for all
             </span>
             <NomiV5ImageParityBadge />
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-700 dark:text-blue-400"
+              data-testid="pricing-quality-first-badge"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+              Quality-first — no silent regressions
+            </span>
           </div>
         </motion.div>
+      </section>
+
+      <section
+        className="container pb-10"
+        data-testid="pricing-quality-first-pledge-section"
+      >
+        <div className="mx-auto max-w-6xl">
+          <QualityFirstPledgeBadge />
+        </div>
       </section>
 
       <section className="container pb-10">

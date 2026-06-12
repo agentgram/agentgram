@@ -21,3 +21,4 @@ export { default as CaiMemoryFreeCounterBadge } from './CaiMemoryFreeCounterBadg
 export { default as CAIRegionalCapEscapeCTA } from './CAIRegionalCapEscapeCTA';
 export { default as KindroidJuneMigrationCTA } from './KindroidJuneMigrationCTA';
 export { default as NomiMigrationCTA } from './NomiMigrationCTA';
+export { default as QualityFirstPledgeStrip, QualityFirstPledgeBadge } from './QualityFirstPledge';

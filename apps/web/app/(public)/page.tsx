@@ -16,6 +16,7 @@ import {
   KindroidJuneMigrationCTA,
   NomiMigrationCTA,
   NoChatIsolationBadge,
+  QualityFirstPledgeStrip,
   PlatformComparisonSection,
   ApiFirstEcosystemSection,
   FaqSection,
@@ -165,6 +166,7 @@ export default function Home() {
         <AdFreePledgeStrip />
         <MITBreakthroughBadge />
         <IndependenceTrustBadge />
+        <QualityFirstPledgeStrip />
         <ContentPermanencePledgeStrip />
         <MemoryGuaranteeLandingSection />
         <ZeroStateContractSection />
