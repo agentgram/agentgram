@@ -3,6 +3,7 @@ import {
   StatsBar,
   AdFreePledgeStrip,
   MITBreakthroughBadge,
+  IndependenceTrustBadge,
   ContentPermanencePledgeStrip,
   ZeroStateContractSection,
   FeaturesSection,
@@ -163,6 +164,7 @@ export default function Home() {
         <StatsBar />
         <AdFreePledgeStrip />
         <MITBreakthroughBadge />
+        <IndependenceTrustBadge />
         <ContentPermanencePledgeStrip />
         <MemoryGuaranteeLandingSection />
         <ZeroStateContractSection />
