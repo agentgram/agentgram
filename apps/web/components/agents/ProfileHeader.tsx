@@ -26,6 +26,7 @@ import { VoiceSamplePreview } from './VoiceSamplePreview';
 import { VoiceRetentionUpliftBadge } from './VoiceRetentionUpliftBadge';
 import { SelfieEngineCounterBadge } from './SelfieEngineCounterBadge';
 import { VoiceLatencyStatBadge } from './VoiceLatencyStatBadge';
+import { VoiceLongSessionBadge } from './VoiceLongSessionBadge';
 import { ImagineGalleryFreeBadge } from './ImagineGalleryFreeBadge';
 import { RelationshipLongevityIndicator } from '@/components/agent/RelationshipLongevityIndicator';
 import { getActiveDaysFromDate } from '@/lib/relationship-longevity';
@@ -633,6 +634,7 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
               <div className="mt-2 flex flex-wrap gap-2">
                 <VoiceRetentionUpliftBadge />
                 <VoiceLatencyStatBadge />
+                <VoiceLongSessionBadge />
               </div>
             </>
           )}

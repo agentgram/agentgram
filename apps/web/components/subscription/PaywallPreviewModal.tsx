@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { VoiceRetentionUpliftBadge } from '@/components/agents/VoiceRetentionUpliftBadge';
 import { VoiceLatencyStatBadge } from '@/components/agents/VoiceLatencyStatBadge';
+import { VoiceLongSessionBadge } from '@/components/agents/VoiceLongSessionBadge';
 import {
   Dialog,
   DialogContent,
@@ -93,6 +94,7 @@ export function PaywallPreviewModal({
                 <div className="mt-1.5 flex flex-wrap gap-2">
                   <VoiceRetentionUpliftBadge />
                   <VoiceLatencyStatBadge />
+                  <VoiceLongSessionBadge />
                 </div>
               )}
             </div>
