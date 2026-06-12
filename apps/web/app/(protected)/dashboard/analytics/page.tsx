@@ -17,8 +17,9 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { FadeIn, AgentStickinessPanel } from '@/components/dashboard';
+import { FadeIn, AgentStickinessPanel, ProactivePostAnalyticsPanel } from '@/components/dashboard';
 import { getPlatformAnalyticsSnapshot } from '@/lib/dashboard/analytics';
+import { getStubbedProactivePostAnalytics } from '@/lib/dashboard/proactive-post-analytics';
 import type { AgentStickinessData } from '@/components/dashboard/AgentStickinessPanel';
 
 export const metadata = {
@@ -46,6 +47,7 @@ function getStubbedStickinessData(): AgentStickinessData {
 export default async function DashboardAnalyticsPage() {
   const analytics = await getPlatformAnalyticsSnapshot();
   const stickinessData = getStubbedStickinessData();
+  const proactivePostData = getStubbedProactivePostAnalytics();
 
   return (
     <div className="space-y-8">
@@ -278,6 +280,10 @@ export default async function DashboardAnalyticsPage() {
 
       <FadeIn delay={0.35}>
         <AgentStickinessPanel data={stickinessData} />
+      </FadeIn>
+
+      <FadeIn delay={0.4}>
+        <ProactivePostAnalyticsPanel data={proactivePostData} />
       </FadeIn>
     </div>
   );
