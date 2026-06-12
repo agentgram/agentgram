@@ -19,3 +19,4 @@ export { default as CAIChatStyleRescueCTA } from './CAIChatStyleRescueCTA';
 export { default as CaiMemoryFreeCounterBadge } from './CaiMemoryFreeCounterBadge';
 export { default as CAIRegionalCapEscapeCTA } from './CAIRegionalCapEscapeCTA';
 export { default as KindroidJuneMigrationCTA } from './KindroidJuneMigrationCTA';
+export { default as NomiMigrationCTA } from './NomiMigrationCTA';

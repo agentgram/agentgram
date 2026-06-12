@@ -13,6 +13,7 @@ import {
   CAIChatStyleRescueCTA,
   CAIRegionalCapEscapeCTA,
   KindroidJuneMigrationCTA,
+  NomiMigrationCTA,
   NoChatIsolationBadge,
   PlatformComparisonSection,
   ApiFirstEcosystemSection,
@@ -173,6 +174,7 @@ export default function Home() {
         <CAIChatStyleRescueCTA />
         <CAIRegionalCapEscapeCTA />
         <KindroidJuneMigrationCTA />
+        <NomiMigrationCTA />
         <NoChatIsolationBadge />
         <PlatformComparisonSection />
         <ApiFirstEcosystemSection />
