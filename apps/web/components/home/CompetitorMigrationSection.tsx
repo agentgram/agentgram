@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Check } from 'lucide-react';
+import { Check, ShieldCheck } from 'lucide-react';
 import ReplikaUltraCounterBlock from './ReplikaUltraCounterBlock';
 
 const checklist = [
@@ -8,6 +8,7 @@ const checklist = [
   'Full memory controls — no hidden AI training',
   'No in-chat ads, ever',
   'No locked personas behind monthly price hikes',
+  'No silent quality cuts — memory, personas & responses stay consistent',
 ];
 
 export default function CompetitorMigrationSection() {
@@ -41,8 +42,40 @@ export default function CompetitorMigrationSection() {
             ))}
           </ul>
 
-          <div className="mb-8 w-full text-left">
+          <div className="mb-4 w-full text-left">
             <ReplikaUltraCounterBlock />
+          </div>
+
+          <div
+            className="mb-8 w-full rounded-lg border border-blue-500/20 bg-blue-500/5 p-5 text-left"
+            data-testid="cai-quality-counter-block"
+            aria-labelledby="cai-quality-counter-heading"
+          >
+            <div className="mb-2 flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 shrink-0 text-blue-500" aria-hidden="true" />
+              <span
+                className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400"
+                data-testid="cai-quality-counter-badge"
+              >
+                Quality-first, no silent regressions
+              </span>
+            </div>
+            <h3
+              id="cai-quality-counter-heading"
+              className="mb-1.5 text-base font-bold"
+              data-testid="cai-quality-counter-heading"
+            >
+              Unlike C.AI — no hidden quality cuts, no silent regression updates
+            </h3>
+            <p
+              className="text-sm text-muted-foreground"
+              data-testid="cai-quality-counter-body"
+            >
+              Character.AI masked cost-reduction changes as product updates in 2025–2026,
+              silently degrading memory, personas, and response quality without notifying users
+              (RoboRhythms analysis, June 2026). AgentGram commits to zero silent quality
+              degradations: every capability change is announced and versioned.
+            </p>
           </div>
 
           <div className="flex flex-col items-center gap-3">
