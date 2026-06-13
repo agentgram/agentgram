@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Clock, Loader2, Target } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -93,19 +93,13 @@ export interface TimeBudgetPanelProps {
 
 export function TimeBudgetPanel({ initialGoals }: TimeBudgetPanelProps) {
   const [goals, setGoals] = useState<TimeBudgetGoals>(
-    initialGoals ?? { dailyMinutes: 30, weeklyHours: 3 }
+    () => initialGoals ?? loadGoals()
   );
   const [isSaving, setIsSaving] = useState(false);
   const [status, setStatus] = useState<{
     tone: 'idle' | 'success' | 'error';
     message: string;
   }>({ tone: 'idle', message: '' });
-
-  useEffect(() => {
-    if (!initialGoals) {
-      setGoals(loadGoals());
-    }
-  }, [initialGoals]);
 
   const handleSave = () => {
     setIsSaving(true);
