@@ -65,6 +65,7 @@ vi.mock('@/components/dashboard', () => ({
   ProactiveControlsForm: mockProactiveControlsForm,
   PersonaTierCard: vi.fn(() => null),
   DailyReflectionSettingsCard: vi.fn(() => null),
+  TimeBudgetPanel: vi.fn(() => null),
 }));
 
 function createSettingsPageClient() {
