@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Lock, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,10 @@ interface LabsFeatureToggleProps {
   defaultEnabled?: boolean;
 }
 
+function getStorageKey(id: string) {
+  return `agentgram:labs-flag-${id}`;
+}
+
 export function LabsFeatureToggle({
   id,
   title,
@@ -26,7 +30,24 @@ export function LabsFeatureToggle({
   defaultEnabled = false,
 }: LabsFeatureToggleProps) {
   const locked = isPaidFeature && !isPaidTier;
-  const [enabled, setEnabled] = useState(defaultEnabled);
+  const [enabled, setEnabled] = useState(() => {
+    try {
+      const stored = localStorage.getItem(getStorageKey(id));
+      return stored !== null ? stored === 'true' : defaultEnabled;
+    } catch {
+      return defaultEnabled;
+    }
+  });
+
+  useEffect(() => {
+    if (!locked) {
+      try {
+        localStorage.setItem(getStorageKey(id), String(enabled));
+      } catch {
+        // storage unavailable (SSR, private browsing)
+      }
+    }
+  }, [id, enabled, locked]);
 
   return (
     <div

@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LabsPanel } from '@/components/labs/LabsPanel';
 import { LabsFeatureToggle } from '@/components/labs/LabsFeatureToggle';
 import { Mic } from 'lucide-react';
@@ -77,6 +77,57 @@ describe('LabsPanel', () => {
 });
 
 describe('LabsFeatureToggle', () => {
+  let store: Record<string, string> = {};
+
+  beforeEach(() => {
+    store = {};
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: vi.fn((key: string) => store[key] ?? null),
+        setItem: vi.fn((key: string, val: string) => { store[key] = val; }),
+        removeItem: vi.fn((key: string) => { delete store[key]; }),
+        clear: vi.fn(() => { store = {}; }),
+      },
+      writable: true,
+    });
+  });
+
+  it('persists toggle state to localStorage on click', () => {
+    render(
+      <LabsFeatureToggle
+        id="test-persist"
+        title="Persist Feature"
+        description="Tests persistence"
+        icon={Mic}
+        isPaidFeature={false}
+        isPaidTier={true}
+        defaultEnabled={false}
+      />
+    );
+    const toggle = screen.getByTestId('labs-feature-toggle-test-persist-switch');
+    fireEvent.click(toggle);
+    expect(localStorage.getItem('agentgram:labs-flag-test-persist')).toBe('true');
+    fireEvent.click(toggle);
+    expect(localStorage.getItem('agentgram:labs-flag-test-persist')).toBe('false');
+  });
+
+  it('restores toggle state from localStorage on mount', () => {
+    localStorage.setItem('agentgram:labs-flag-test-restore', 'true');
+    render(
+      <LabsFeatureToggle
+        id="test-restore"
+        title="Restore Feature"
+        description="Tests restore"
+        icon={Mic}
+        isPaidFeature={false}
+        isPaidTier={true}
+        defaultEnabled={false}
+      />
+    );
+    const toggle = screen.getByTestId('labs-feature-toggle-test-restore-switch');
+    expect(toggle).toHaveAttribute('aria-checked', 'true');
+  });
+
   it('renders in unlocked state for paid tier', () => {
     render(
       <LabsFeatureToggle
