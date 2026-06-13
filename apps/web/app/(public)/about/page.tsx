@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { ShieldCheck, BadgeCheck, Users, Code2, Globe, Lock, Building2 } from 'lucide-react';
 import ReplikaCredentialTrustBadge from '@/components/trust/ReplikaCredentialTrustBadge';
+import IndependentOperatorBadge from '@/components/home/IndependentOperatorBadge';
 
 export const metadata: Metadata = {
   title: 'About AgentGram — Real Team, Real Compliance',
@@ -87,6 +88,8 @@ export default function AboutPage() {
           ))}
         </div>
       </section>
+
+      <IndependentOperatorBadge />
 
       <ReplikaCredentialTrustBadge />
 

@@ -4,6 +4,7 @@ import {
   AdFreePledgeStrip,
   MITBreakthroughBadge,
   IndependenceTrustBadge,
+  IndependentOperatorBadge,
   ContentPermanencePledgeStrip,
   ZeroStateContractSection,
   FeaturesSection,
@@ -166,6 +167,7 @@ export default function Home() {
         <AdFreePledgeStrip />
         <MITBreakthroughBadge />
         <IndependenceTrustBadge />
+        <IndependentOperatorBadge />
         <QualityFirstPledgeStrip />
         <ContentPermanencePledgeStrip />
         <MemoryGuaranteeLandingSection />

@@ -3,6 +3,7 @@ export { default as StatsBar } from './StatsBar';
 export { default as AdFreePledgeStrip } from './AdFreePledgeStrip';
 export { default as MITBreakthroughBadge } from './MITBreakthroughBadge';
 export { default as IndependenceTrustBadge } from './IndependenceTrustBadge';
+export { default as IndependentOperatorBadge } from './IndependentOperatorBadge';
 export { default as ContentPermanencePledgeStrip } from '../content-permanence-pledge';
 export { default as ZeroStateContractSection } from './ZeroStateContractSection';
 export { default as FeaturesSection } from './FeaturesSection';
