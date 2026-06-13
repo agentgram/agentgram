@@ -8,17 +8,18 @@ import {
 
 const mockPush = vi.fn();
 
+// vi.hoisted ensures this is available inside vi.mock factories (which are hoisted)
+const mockGetSession = vi.hoisted(() =>
+  vi.fn().mockResolvedValue({ data: { session: { user: { id: 'u1' } } } })
+);
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
 }));
 
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
-    auth: {
-      getSession: vi
-        .fn()
-        .mockResolvedValue({ data: { session: { user: { id: 'u1' } } } }),
-    },
+    auth: { getSession: mockGetSession },
   }),
 }));
 
@@ -53,6 +54,7 @@ const fakePersonas = [
 ];
 
 beforeEach(() => {
+  mockGetSession.mockResolvedValue({ data: { session: { user: { id: 'u1' } } } });
   vi.stubGlobal(
     'fetch',
     vi.fn().mockResolvedValue({
@@ -63,7 +65,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks();
   vi.unstubAllGlobals();
 });
 
@@ -248,20 +250,23 @@ describe('CrossPersonaGroupChatButton', () => {
   });
 
   it('does not redirect to login while auth state is loading (null)', () => {
-    // getSession never resolves — auth stays null
-    vi.mock('@/lib/supabase/client', () => ({
-      createClient: () => ({
-        auth: {
-          getSession: vi.fn().mockReturnValue(new Promise(() => {})),
-        },
-      }),
-    }));
+    // Override getSession to never resolve — auth stays null
+    mockGetSession.mockReturnValue(new Promise(() => {}));
     render(<CrossPersonaGroupChatButton />);
     // Button should not be in the DOM (hasEnoughPersonas still null)
     expect(
       screen.queryByTestId('cross-persona-group-chat-trigger')
     ).not.toBeInTheDocument();
     expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('shows button optimistically when persona count fetch fails after retries', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network error')));
+    render(<CrossPersonaGroupChatButton />);
+    await waitFor(
+      () => expect(screen.getByTestId('cross-persona-group-chat-trigger')).toBeInTheDocument(),
+      { timeout: 2000 }
+    );
   });
 
   it('opens modal when trigger is clicked (authenticated, ≥2 personas)', async () => {

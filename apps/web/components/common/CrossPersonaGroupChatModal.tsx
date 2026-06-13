@@ -24,6 +24,25 @@ async function fetchMyPersonas(): Promise<Persona[]> {
   return json.data ?? [];
 }
 
+async function fetchPersonaCountWithRetry(maxRetries = 2): Promise<number> {
+  const delays = [200, 400];
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const r = await fetch('/api/v1/agents/me/personas');
+      if (!r.ok) throw new Error('fetch failed');
+      const json = (await r.json()) as ApiResponse<Persona[]>;
+      return json.data?.length ?? 0;
+    } catch (err) {
+      lastError = err;
+      if (attempt < maxRetries) {
+        await new Promise<void>((resolve) => setTimeout(resolve, delays[attempt]));
+      }
+    }
+  }
+  throw lastError;
+}
+
 function buildCrossPersonaHref(personaIds: string[]) {
   const params = new URLSearchParams({
     starter: 'group_chat',
@@ -226,12 +245,9 @@ export function CrossPersonaGroupChatButton({
         setHasEnoughPersonas(false);
         return;
       }
-      fetch('/api/v1/agents/me/personas')
-        .then((r) => (r.ok ? r.json() : null))
-        .then((json: ApiResponse<Persona[]> | null) => {
-          setHasEnoughPersonas((json?.data?.length ?? 0) >= MIN_PERSONAS);
-        })
-        .catch(() => setHasEnoughPersonas(false));
+      fetchPersonaCountWithRetry()
+        .then((count) => setHasEnoughPersonas(count >= MIN_PERSONAS))
+        .catch(() => setHasEnoughPersonas(true)); // Optimistic: show button on network error; modal handles error state
     });
   }, []);
 
