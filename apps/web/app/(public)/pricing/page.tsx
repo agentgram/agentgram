@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { analytics } from '@/lib/analytics';
 import NoChatIsolationBadge from '@/components/home/NoChatIsolationBadge';
 import { QualityFirstPledgeBadge } from '@/components/home/QualityFirstPledge';
+import FreeToStartStrip from '@/components/home/FreeToStartStrip';
 
 function getPlans(billingEnabled: boolean) {
   return [
@@ -420,6 +421,8 @@ export default function PricingPage() {
           </div>
         </div>
       </section>
+
+      <FreeToStartStrip />
 
       <section className="container pb-24">
         <div
