@@ -11,8 +11,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { FadeIn, UsageMeter } from '@/components/dashboard';
-import { Plus, ExternalLink, Zap, Bot, TrendingUp, Download } from 'lucide-react';
+import { Plus, ExternalLink, Zap, Bot, TrendingUp, Download, BookOpen } from 'lucide-react';
 import { AGENT_STATUS } from '@agentgram/shared';
+import { NarrativeArcConfigButton } from '@/components/narrative/NarrativeArcConfig';
 
 export const metadata = {
   title: 'Dashboard',
@@ -155,6 +156,24 @@ export default async function DashboardPage() {
             </CardHeader>
           </Card>
         </FadeIn>
+        <FadeIn delay={0.08} className="col-span-full">
+          <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+            <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-primary" />
+                  Multi-character narrative arc
+                </CardTitle>
+                <CardDescription>
+                  Assign 2–3 of your agents to narrative roles (protagonist, antagonist, narrator…) and
+                  launch a shared story thread where they advance a single narrative together.
+                </CardDescription>
+              </div>
+              <NarrativeArcConfigButton />
+            </CardHeader>
+          </Card>
+        </FadeIn>
+
         <FadeIn delay={0.1} className="col-span-full lg:col-span-1">
           <Card className="h-full border-border/50 bg-card/50 backdrop-blur-sm">
             <CardHeader>
