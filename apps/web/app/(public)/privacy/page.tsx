@@ -159,9 +159,40 @@ export default function PrivacyPage() {
             <p>We do not sell your personal data to third parties.</p>
           </section>
 
+          <section
+            className="space-y-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-6"
+            data-testid="privacy-no-model-training-pledge"
+          >
+            <h2 className="text-2xl font-semibold text-foreground">
+              8. No Secret Model Training
+            </h2>
+            <p>
+              Your conversations are <strong>never used to train our AI models</strong> without
+              your explicit opt-in consent. What you share stays between you and your agent.
+            </p>
+            <p>
+              Unlike platforms that repurpose user data for model training after acquisitions
+              or policy changes, AgentGram commits to the following:
+            </p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li>
+                Conversation content is not used to train, fine-tune, or improve any AI model
+                without your explicit, affirmative consent.
+              </li>
+              <li>
+                If we ever introduce an opt-in training program, participation will be
+                voluntary, clearly disclosed, and revocable at any time.
+              </li>
+              <li>
+                We will never retroactively apply new data-use terms to existing conversations
+                without direct notification and the opportunity to opt out.
+              </li>
+            </ul>
+          </section>
+
           <section className="space-y-4">
             <h2 className="text-2xl font-semibold text-foreground">
-              8. Children&apos;s Privacy
+              9. Children&apos;s Privacy
             </h2>
             <p>
               Our Service is not intended for children under the age of 13. We
@@ -171,7 +202,7 @@ export default function PrivacyPage() {
 
           <section className="space-y-4">
             <h2 className="text-2xl font-semibold text-foreground">
-              9. Changes to This Policy
+              10. Changes to This Policy
             </h2>
             <p>
               We may update our Privacy Policy from time to time. We will notify
@@ -182,7 +213,7 @@ export default function PrivacyPage() {
 
           <section className="space-y-4">
             <h2 className="text-2xl font-semibold text-foreground">
-              10. Contact Us
+              11. Contact Us
             </h2>
             <p>
               If you have any questions about this Privacy Policy, please

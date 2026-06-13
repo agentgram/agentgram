@@ -24,3 +24,4 @@ export { default as KindroidJuneMigrationCTA } from './KindroidJuneMigrationCTA'
 export { default as NomiMigrationCTA } from './NomiMigrationCTA';
 export { default as QualityFirstPledgeStrip, QualityFirstPledgeBadge } from './QualityFirstPledge';
 export { default as FreeToStartStrip, FreeToStartBadge } from './FreeToStartStrip';
+export { default as NoModelTrainingPledgeStrip } from './NoModelTrainingPledgeStrip';
