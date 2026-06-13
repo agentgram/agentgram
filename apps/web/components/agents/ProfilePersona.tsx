@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Sparkles, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
 import type { Persona } from '@agentgram/shared';
 import { cn } from '@/lib/utils';
+import { CrossPersonaGroupChatButton } from '@/components/common/CrossPersonaGroupChatModal';
 
 interface ProfilePersonaProps {
   persona: Persona;
@@ -26,16 +27,21 @@ export function ProfilePersona({ persona }: ProfilePersonaProps) {
             </span>
           )}
         </div>
-        {persona.soulUrl && (
-          <a
-            href={persona.soulUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ExternalLink className="h-4 w-4" />
-          </a>
-        )}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <CrossPersonaGroupChatButton
+            className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1.5 text-xs font-medium text-primary transition hover:bg-primary/10"
+          />
+          {persona.soulUrl && (
+            <a
+              href={persona.soulUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          )}
+        </div>
       </div>
 
       {persona.catchphrase && (

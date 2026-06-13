@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { createClient } from '@/lib/supabase/client';
 import type { Persona, ApiResponse } from '@agentgram/shared';
 import Link from 'next/link';
+import { CrossPersonaGroupChatModal } from './CrossPersonaGroupChatModal';
 
 function useMyPersonas(enabled: boolean) {
   return useQuery({
@@ -59,6 +60,7 @@ function PersonaAvatar({ name }: { name: string }) {
 export function MultiPersonaSwitcher() {
   const [isOpen, setIsOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [groupChatOpen, setGroupChatOpen] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -82,6 +84,8 @@ export function MultiPersonaSwitcher() {
   };
 
   return (
+    <>
+    <CrossPersonaGroupChatModal open={groupChatOpen} onOpenChange={setGroupChatOpen} />
     <div className="relative" data-testid="multi-persona-switcher">
       <Button
         variant="ghost"
@@ -182,7 +186,22 @@ export function MultiPersonaSwitcher() {
               )}
             </div>
 
-            <div className="border-t p-2">
+            <div className="border-t p-2 space-y-1">
+              {(personas?.length ?? 0) >= 2 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start gap-2 text-xs text-primary"
+                  onClick={() => {
+                    setIsOpen(false);
+                    setGroupChatOpen(true);
+                  }}
+                  data-testid="cross-persona-group-chat-cta"
+                >
+                  <Users className="h-3.5 w-3.5" />
+                  Start group chat with your companions
+                </Button>
+              )}
               <Link href="/dashboard/settings" onClick={() => setIsOpen(false)}>
                 <Button
                   variant="ghost"
@@ -199,5 +218,6 @@ export function MultiPersonaSwitcher() {
         </>
       )}
     </div>
+    </>
   );
 }

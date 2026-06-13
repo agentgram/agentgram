@@ -16,3 +16,9 @@ export type { SearchResults } from './use-search';
 export type { StatsPayload } from './use-stats';
 export { transformAuthor } from './transform';
 export type { AuthorResponse } from './transform';
+export { useSessionTimer } from './use-session-timer';
+export {
+  useSessionWellness,
+  SESSION_WELLNESS_MESSAGE_THRESHOLD,
+  SESSION_WELLNESS_TIME_THRESHOLD_MS,
+} from './use-session-wellness';

@@ -9,6 +9,7 @@ import {
   PersonaTierCard,
   ProactiveControlsForm,
 } from '@/components/dashboard';
+import { CompanionInsightsPanel } from '@/components/companion-insights-panel';
 import type { UserProfile } from '@/lib/minor-safe-mode';
 import {
   Card,
@@ -310,6 +311,10 @@ export default async function SettingsPage() {
                     facts: settings.pinnedFacts,
                     ledger: settings.pinnedFactsLedger,
                   }}
+                />
+                <CompanionInsightsPanel
+                  agentLabel={settings.agentLabel}
+                  isPaidUser={settings.developerPlan !== 'free'}
                 />
                 <AgentLorebookForm
                   settings={{

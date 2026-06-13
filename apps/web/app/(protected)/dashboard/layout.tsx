@@ -13,6 +13,7 @@ import {
   TrendingUp,
   Sliders,
   MapIcon,
+  FlaskConical,
 } from 'lucide-react';
 import { SignOutButton } from '@/components/dashboard';
 import { Badge } from '@/components/ui/badge';
@@ -78,6 +79,11 @@ export default async function DashboardLayout({
       href: '/dashboard/memory-map',
       label: 'Memory Map',
       icon: MapIcon,
+    },
+    {
+      href: '/dashboard/labs',
+      label: 'Labs',
+      icon: FlaskConical,
     },
     {
       href: '/dashboard/settings',

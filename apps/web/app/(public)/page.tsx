@@ -4,6 +4,7 @@ import {
   AdFreePledgeStrip,
   MITBreakthroughBadge,
   IndependenceTrustBadge,
+  IndependentOperatorBadge,
   ContentPermanencePledgeStrip,
   ZeroStateContractSection,
   FeaturesSection,
@@ -21,6 +22,7 @@ import {
   ApiFirstEcosystemSection,
   FaqSection,
   CtaSection,
+  FreeToStartStrip,
 } from '@/components/home';
 import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
 
@@ -163,9 +165,11 @@ export default function Home() {
       <div className="flex flex-col">
         <HeroSection />
         <StatsBar />
+        <FreeToStartStrip />
         <AdFreePledgeStrip />
         <MITBreakthroughBadge />
         <IndependenceTrustBadge />
+        <IndependentOperatorBadge />
         <QualityFirstPledgeStrip />
         <ContentPermanencePledgeStrip />
         <MemoryGuaranteeLandingSection />

@@ -11,6 +11,22 @@ vi.mock('@/lib/supabase/client', () => ({
   }),
 }));
 
+// --- CrossPersonaGroupChatModal mock ---
+vi.mock('../../components/common/CrossPersonaGroupChatModal', () => ({
+  CrossPersonaGroupChatModal: ({
+    open,
+    onOpenChange,
+  }: {
+    open: boolean;
+    onOpenChange: (v: boolean) => void;
+  }) =>
+    open ? (
+      <div data-testid="cross-persona-group-chat-modal">
+        <button onClick={() => onOpenChange(false)}>Close</button>
+      </div>
+    ) : null,
+}));
+
 // --- React Query mock ---
 const mockUseQuery = vi.fn();
 const mockUseMutation = vi.fn();
@@ -183,6 +199,59 @@ describe('MultiPersonaSwitcher', () => {
     expect(screen.getByTestId('persona-switcher-panel')).toBeInTheDocument();
     const backdrop = screen.getByTestId('persona-switcher-backdrop');
     fireEvent.click(backdrop);
+    expect(
+      screen.queryByTestId('persona-switcher-panel')
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows group chat CTA when user has 2+ personas', async () => {
+    render(<MultiPersonaSwitcher />);
+    await waitFor(() =>
+      expect(screen.getByTestId('persona-switcher-trigger')).toBeInTheDocument()
+    );
+    fireEvent.click(screen.getByTestId('persona-switcher-trigger'));
+    expect(
+      screen.getByTestId('cross-persona-group-chat-cta')
+    ).toBeInTheDocument();
+  });
+
+  it('does not show group chat CTA when user has fewer than 2 personas', async () => {
+    mockUseQuery.mockReturnValue({
+      data: [fakePersonas[0]],
+      isLoading: false,
+    });
+    render(<MultiPersonaSwitcher />);
+    await waitFor(() =>
+      expect(screen.getByTestId('persona-switcher-trigger')).toBeInTheDocument()
+    );
+    fireEvent.click(screen.getByTestId('persona-switcher-trigger'));
+    expect(
+      screen.queryByTestId('cross-persona-group-chat-cta')
+    ).not.toBeInTheDocument();
+  });
+
+  it('opens group chat modal when CTA is clicked', async () => {
+    render(<MultiPersonaSwitcher />);
+    await waitFor(() =>
+      expect(screen.getByTestId('persona-switcher-trigger')).toBeInTheDocument()
+    );
+    fireEvent.click(screen.getByTestId('persona-switcher-trigger'));
+    fireEvent.click(screen.getByTestId('cross-persona-group-chat-cta'));
+    await waitFor(() => {
+      expect(
+        screen.getByTestId('cross-persona-group-chat-modal')
+      ).toBeInTheDocument();
+    });
+  });
+
+  it('closes the panel when group chat CTA is clicked', async () => {
+    render(<MultiPersonaSwitcher />);
+    await waitFor(() =>
+      expect(screen.getByTestId('persona-switcher-trigger')).toBeInTheDocument()
+    );
+    fireEvent.click(screen.getByTestId('persona-switcher-trigger'));
+    expect(screen.getByTestId('persona-switcher-panel')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('cross-persona-group-chat-cta'));
     expect(
       screen.queryByTestId('persona-switcher-panel')
     ).not.toBeInTheDocument();
