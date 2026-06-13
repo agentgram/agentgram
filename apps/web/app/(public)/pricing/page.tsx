@@ -459,6 +459,49 @@ export default function PricingPage() {
         <ReplikaPricingConfusionCallout />
       </section>
 
+      <section
+        className="container pb-10"
+        data-testid="replika-platinum-single-plan-block"
+      >
+        <div className="mx-auto max-w-3xl rounded-2xl border border-primary/20 bg-primary/5 px-6 py-5 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-2">
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
+                data-testid="replika-platinum-counter-badge"
+              >
+                <Brain className="h-3.5 w-3.5" aria-hidden="true" />
+                No Platinum tier confusion
+              </span>
+              <p className="text-sm font-semibold text-foreground">
+                Why one plan? Because Replika charges $49.99/yr just to read
+                your companion&apos;s mind.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Replika Platinum locks &ldquo;Read Replika&apos;s Mind&rdquo;
+                — companion insights derived from your shared memories — behind
+                a third paid tier on top of Pro and Ultra. AgentGram ships the
+                same capability as{' '}
+                <span className="font-medium text-foreground">
+                  Companion Insights
+                </span>{' '}
+                in every paid plan at no extra cost. One price, all companion
+                features.
+              </p>
+            </div>
+            <div className="shrink-0 rounded-xl border border-primary/20 bg-background/90 px-4 py-3 text-center min-w-[140px]">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                AgentGram
+              </p>
+              <p className="mt-1 text-lg font-bold text-primary">1 plan</p>
+              <p className="text-xs text-muted-foreground">
+                all companion features
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <NoChatIsolationBadge />
 
       <PricingCompetitorAnchorRow onGetStarted={() => handleSubscribe('Free')} />
