@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ThumbsUp, Mic, Users, BookOpen, GitBranch, Bell } from 'lucide-react';
 import {
   Card,
@@ -72,18 +72,15 @@ function saveVotes(votes: Record<string, number>) {
 }
 
 export function LabsFeatureVotePanel() {
-  const [votes, setVotes] = useState<Record<string, number>>({});
-  const [voted, setVoted] = useState<Record<string, boolean>>({});
-
-  useEffect(() => {
+  const [votes, setVotes] = useState<Record<string, number>>(loadVotes);
+  const [voted, setVoted] = useState<Record<string, boolean>>(() => {
     const stored = loadVotes();
-    setVotes(stored);
     const votedMap: Record<string, boolean> = {};
     for (const id of Object.keys(stored)) {
       if ((stored[id] ?? 0) > 0) votedMap[id] = true;
     }
-    setVoted(votedMap);
-  }, []);
+    return votedMap;
+  });
 
   function handleVote(id: string) {
     if (voted[id]) return;
