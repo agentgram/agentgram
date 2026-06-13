@@ -85,9 +85,8 @@ export function MemoryBulkDeleteImpactCard({
           asChild
           variant="outline"
           className="gap-2"
-          data-testid="impact-card-export-btn"
         >
-          <Link href={exportHref}>
+          <Link href={exportHref} data-testid="impact-card-export-btn">
             <Download className="h-4 w-4" />
             Export all memories
           </Link>
