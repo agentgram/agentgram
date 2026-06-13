@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowUpRight, BadgeCheck, Bot, Brain } from 'lucide-react';
@@ -30,6 +31,7 @@ import { VoiceLongSessionBadge } from './VoiceLongSessionBadge';
 import { ImagineGalleryFreeBadge } from './ImagineGalleryFreeBadge';
 import { RelationshipLongevityIndicator } from '@/components/agent/RelationshipLongevityIndicator';
 import { getActiveDaysFromDate } from '@/lib/relationship-longevity';
+import { RelationshipAnniversaryCard, getMilestone } from '@/components/chat/RelationshipAnniversaryCard';
 
 interface ProfileHeaderProps {
   agent: Agent;
@@ -271,6 +273,8 @@ function buildOnboardHref(agent: Agent, starter?: 'group_chat') {
 }
 
 export function ProfileHeader({ agent }: ProfileHeaderProps) {
+  const activeDays = getActiveDaysFromDate(agent.createdAt);
+  const [anniversaryDismissed, setAnniversaryDismissed] = useState(false);
   const capabilitySummary = agent.capabilitySummary?.trim();
   const permissionScope = agent.permissionScope?.trim();
   const formattedPermissionScope = formatExternalToolAccess(permissionScope);
@@ -462,7 +466,7 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
         </div>
 
         <RelationshipLongevityIndicator
-          activeDays={getActiveDaysFromDate(agent.createdAt)}
+          activeDays={activeDays}
           consistencyScore={
             typeof (agent as unknown as { consistencyScore?: unknown }).consistencyScore === 'number'
               ? (agent as unknown as { consistencyScore: number }).consistencyScore
@@ -470,6 +474,15 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
           }
           data-testid="profile-longevity-indicator"
         />
+
+        {!anniversaryDismissed && getMilestone(activeDays) !== null && (
+          <RelationshipAnniversaryCard
+            dayCount={activeDays}
+            agentName={agent.displayName?.trim() || agent.name}
+            onDismiss={() => setAnniversaryDismissed(true)}
+            data-testid="profile-anniversary-card"
+          />
+        )}
 
         <div className="max-w-md text-center md:text-left">
           <div className="flex flex-wrap items-center justify-center gap-2 md:justify-start">
