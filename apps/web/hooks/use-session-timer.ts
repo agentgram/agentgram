@@ -25,7 +25,8 @@ export function useSessionTimer({
   thresholdMs = WELLBEING_NUDGE_THRESHOLD_MS,
   sessionStartedAt,
 }: UseSessionTimerOptions = {}): UseSessionTimerResult {
-  const startRef = useRef<number>(sessionStartedAt ?? Date.now());
+  const [startTime] = useState<number>(() => sessionStartedAt ?? Date.now());
+  const startRef = useRef<number>(startTime);
   const [shouldShowNudge, setShouldShowNudge] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
