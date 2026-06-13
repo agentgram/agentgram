@@ -18,6 +18,7 @@ import {
   NomiMigrationCTA,
   NoChatIsolationBadge,
   QualityFirstPledgeStrip,
+  NoModelTrainingPledgeStrip,
   PlatformComparisonSection,
   ApiFirstEcosystemSection,
   FaqSection,
@@ -171,6 +172,7 @@ export default function Home() {
         <IndependenceTrustBadge />
         <IndependentOperatorBadge />
         <QualityFirstPledgeStrip />
+        <NoModelTrainingPledgeStrip />
         <ContentPermanencePledgeStrip />
         <MemoryGuaranteeLandingSection />
         <ZeroStateContractSection />
