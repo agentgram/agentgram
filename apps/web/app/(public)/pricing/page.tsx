@@ -20,6 +20,7 @@ import { analytics } from '@/lib/analytics';
 import NoChatIsolationBadge from '@/components/home/NoChatIsolationBadge';
 import { QualityFirstPledgeBadge } from '@/components/home/QualityFirstPledge';
 import FreeToStartStrip from '@/components/home/FreeToStartStrip';
+import { AvatarConsistencyGuaranteeStrip, AvatarConsistencyComparisonGallery } from '@/components/avatar-consistency-guarantee';
 
 function getPlans(billingEnabled: boolean) {
   return [
@@ -309,6 +310,7 @@ export default function PricingPage() {
             </span>
             <NomiV5ImageParityBadge />
             <MultilingualMemoryBadge className="rounded-full px-3 py-1 text-xs" />
+            <AvatarConsistencyGuaranteeStrip variant="badge" />
             <span
               className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-700 dark:text-blue-400"
               data-testid="pricing-quality-first-badge"
@@ -448,6 +450,33 @@ export default function PricingPage() {
         </div>
       </section>
 
+      <section
+        className="container pb-10"
+        data-testid="pricing-avatar-consistency-section"
+      >
+        <div className="mx-auto max-w-6xl rounded-2xl border border-violet-500/20 bg-violet-500/5 px-6 py-5 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <AvatarConsistencyGuaranteeStrip variant="badge" />
+              <p className="text-sm font-semibold text-foreground">
+                Your persona always looks exactly as designed — every session
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Nomi&apos;s #1 App Store complaint in 2026 (4.6★, 5K+ reviews)
+                is avatar rendering inconsistency. AgentGram locks every visual
+                attribute — hair, eyes, style — at creation. No rendering drift,
+                no surprise look changes, no &ldquo;who is this?&rdquo; moments.
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full border border-violet-500/30 bg-background px-4 py-1.5 text-xs font-semibold text-violet-700 dark:text-violet-300">
+              All tiers
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <AvatarConsistencyGuaranteeStrip variant="strip" className="mb-8" />
+
       <FreeToStartStrip />
 
       <section className="container pb-24">
@@ -561,6 +590,15 @@ export default function PricingPage() {
 
 
       <MemoryGuaranteeLandingSection />
+
+      <section
+        className="container pb-10"
+        data-testid="pricing-avatar-consistency-gallery-section"
+      >
+        <div className="mx-auto max-w-6xl">
+          <AvatarConsistencyComparisonGallery />
+        </div>
+      </section>
 
       <section className="container pb-24">
         <motion.div

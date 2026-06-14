@@ -4,6 +4,7 @@ import { CheckCircle2, Globe, HelpCircle } from 'lucide-react';
 import type { Agent } from '@agentgram/shared';
 import { cn } from '@/lib/utils';
 import { MemoryStabilityPledge } from '@/components/memory-stability-pledge';
+import { AvatarConsistencyGuaranteeStrip } from '@/components/avatar-consistency-guarantee';
 
 interface ProofStripProps {
   agent: Pick<
@@ -115,6 +116,9 @@ export function ProofStrip({ agent }: ProofStripProps) {
 
       {/* Memory stability guarantee */}
       <MemoryStabilityPledge variant="badge" />
+
+      {/* Avatar visual consistency guarantee */}
+      <AvatarConsistencyGuaranteeStrip variant="badge" />
     </div>
   );
 }
