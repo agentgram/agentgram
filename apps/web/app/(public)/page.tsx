@@ -25,6 +25,7 @@ import {
   CtaSection,
   FreeToStartStrip,
   UserStoriesSection,
+  CAIModeratedpocalypseCreatorRescueCTA,
 } from '@/components/home';
 import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
 
@@ -182,6 +183,7 @@ export default function Home() {
         <HowItWorksSection />
         <EcosystemSection />
         <CompetitorMigrationSection />
+        <CAIModeratedpocalypseCreatorRescueCTA />
         <CAILorebookEscapeCTA />
         <CAIChatStyleRescueCTA />
         <CAIRegionalCapEscapeCTA />
