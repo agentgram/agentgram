@@ -109,9 +109,9 @@ export function MemoryTransparencyPanel({ agentId, agentLabel }: MemoryTranspare
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setFetchError(null);
     void (async () => {
+      setLoading(true);
+      setFetchError(null);
       try {
         const res = await fetch(
           `/api/v1/developers/me/agent-memories?agentId=${encodeURIComponent(agentId)}`
