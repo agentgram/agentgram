@@ -22,6 +22,7 @@ import { QualityFirstPledgeBadge } from '@/components/home/QualityFirstPledge';
 import FreeToStartStrip from '@/components/home/FreeToStartStrip';
 import { AvatarConsistencyGuaranteeStrip, AvatarConsistencyComparisonGallery } from '@/components/avatar-consistency-guarantee';
 import { FreeTrial7DayCTA } from '@/components/free-trial-cta';
+import { RepetitionFreeMemoryBadge } from '@/components/repetition-free-memory-badge';
 
 function getPlans(billingEnabled: boolean) {
   return [
@@ -269,6 +270,7 @@ export default function PricingPage() {
               No $9.99 Soft Launch lock
             </span>
             <MemoryStabilityPledge variant="badge" />
+            <RepetitionFreeMemoryBadge variant="badge" />
             <span
               className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400"
               data-testid="pricing-unlimited-messages-badge"
@@ -455,6 +457,32 @@ export default function PricingPage() {
 
       <section
         className="container pb-10"
+        data-testid="pricing-repetition-free-memory-section"
+      >
+        <div className="mx-auto max-w-6xl rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-6 py-5 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <RepetitionFreeMemoryBadge variant="badge" />
+              <p className="text-sm font-semibold text-foreground">
+                Zero repetitive replies — memory-coherent from session one
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Replika&apos;s own data shows repetitive replies dropped ~30%
+                only after their Memory Dashboard launched (aicompanionpick.com,
+                May 2026). AgentGram ships always-on memory coherence — no
+                dashboard upgrade required, no pre-launch baseline to recover
+                from.
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full border border-emerald-500/30 bg-background px-4 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+              Always-on
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section
+        className="container pb-10"
         data-testid="pricing-avatar-consistency-section"
       >
         <div className="mx-auto max-w-6xl rounded-2xl border border-violet-500/20 bg-violet-500/5 px-6 py-5 shadow-sm">
@@ -578,6 +606,7 @@ export default function PricingPage() {
 
       <PricingCompetitorAnchorRow onGetStarted={() => handleSubscribe('Free')} />
       <MemoryStabilityPledge variant="strip" className="mb-8" />
+      <RepetitionFreeMemoryBadge variant="strip" className="mb-8" />
 
       <CAILorebookEscapeCTA />
 
