@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   AlertCircle,
   Brain,
@@ -94,56 +94,66 @@ export function MemoryTransparencyPanel({ agentId, agentLabel }: MemoryTranspare
   const [edit, setEdit] = useState<EditState | null>(null);
   const [del, setDel] = useState<DeleteState | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [refreshTick, setRefreshTick] = useState(0);
   const toastCounter = useRef(0);
 
-  const pushToast = useCallback((text: string, variant: 'success' | 'error') => {
+  function pushToast(text: string, variant: 'success' | 'error') {
     const id = ++toastCounter.current;
     setToasts((prev) => [...prev, { id, text, variant }]);
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500);
-  }, []);
+  }
 
-  const loadFacts = useCallback(async () => {
-    setLoading(true);
-    setFetchError(null);
-    try {
-      const res = await fetch(
-        `/api/v1/developers/me/agent-memories?agentId=${encodeURIComponent(agentId)}`
-      );
-      const json = (await res.json()) as { success?: boolean; data?: unknown[]; error?: { message?: string } };
-      if (!res.ok) {
-        setFetchError(json.error?.message ?? 'Failed to load memories.');
-        return;
-      }
-      const rows = (json.data ?? []) as Array<{
-        id: string;
-        key: string;
-        value: string;
-        category: string;
-        is_public: boolean;
-        created_at?: string;
-        updated_at?: string;
-      }>;
-      setFacts(
-        rows.map((r) => ({
-          id: r.id,
-          key: r.key,
-          value: r.value,
-          category: r.category,
-          isPublic: r.is_public,
-          updatedAt: r.updated_at ?? r.created_at ?? new Date().toISOString(),
-          createdAt: r.created_at,
-        }))
-      );
-    } catch {
-      setFetchError('Network error. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, [agentId]);
+  function handleRefresh() {
+    setRefreshTick((n) => n + 1);
+  }
 
   useEffect(() => {
-    void loadFacts();
-  }, [loadFacts]);
+    let cancelled = false;
+    setLoading(true);
+    setFetchError(null);
+    void (async () => {
+      try {
+        const res = await fetch(
+          `/api/v1/developers/me/agent-memories?agentId=${encodeURIComponent(agentId)}`
+        );
+        const json = (await res.json()) as { success?: boolean; data?: unknown[]; error?: { message?: string } };
+        if (cancelled) return;
+        if (!res.ok) {
+          setFetchError(json.error?.message ?? 'Failed to load memories.');
+          return;
+        }
+        const rows = (json.data ?? []) as Array<{
+          id: string;
+          key: string;
+          value: string;
+          category: string;
+          is_public: boolean;
+          created_at?: string;
+          updated_at?: string;
+        }>;
+        if (!cancelled) {
+          setFacts(
+            rows.map((r) => ({
+              id: r.id,
+              key: r.key,
+              value: r.value,
+              category: r.category,
+              isPublic: r.is_public,
+              updatedAt: r.updated_at ?? r.created_at ?? new Date().toISOString(),
+              createdAt: r.created_at,
+            }))
+          );
+        }
+      } catch {
+        if (!cancelled) setFetchError('Network error. Please try again.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [agentId, refreshTick]);
 
   function startEdit(fact: MemoryFact) {
     setDel(null);
@@ -256,7 +266,7 @@ export function MemoryTransparencyPanel({ agentId, agentLabel }: MemoryTranspare
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => void loadFacts()}
+            onClick={handleRefresh}
             disabled={loading}
             aria-label="Refresh memories"
             data-testid="refresh-button"

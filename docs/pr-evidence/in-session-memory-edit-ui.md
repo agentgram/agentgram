@@ -39,3 +39,8 @@ A new `MemoryTransparencyPanel` card appears below `AgentPinnedFactsCard` in the
 PASS (12) FAIL (0)
 ```
 Tests cover: loading state, successful render, empty state, fetch error, edit open/cancel/save, optimistic update, delete confirmation/cancel/confirm, category badges, refresh.
+
+## Evidence
+
+### Auth-only Proof
+All three API endpoints used by `MemoryTransparencyPanel` (`GET /api/v1/developers/me/agent-memories`, `PATCH /api/v1/developers/me/agent-memories/:id`, `DELETE /api/v1/developers/me/agent-memories/:id`) are scoped to the `/developers/me/` namespace, which requires an authenticated session cookie. Unauthenticated requests return `401 Unauthorized` before reaching the handler. The panel itself is rendered exclusively inside the authenticated `(protected)/dashboard/settings` route, which redirects unauthenticated visitors to `/login` via Next.js middleware. No memory data is exposed to public routes.
