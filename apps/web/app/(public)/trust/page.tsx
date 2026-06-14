@@ -59,7 +59,7 @@ const trustPillars = [
     label: 'No Ads — Ever',
     color: 'rose',
     testId: 'trust-pillar-no-ads',
-    heading: 'Zero ads. No mid-chat interruptions.',
+    heading: 'No mid-chat ads — ever.',
     body: 'AgentGram has never served ads, sponsored content, or data-driven promotions. We will not. Our revenue comes from subscriptions — your attention is not the product.',
     badge: 'Ad-free pledge',
   },
@@ -155,8 +155,8 @@ export default function TrustPage() {
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild variant="outline" size="lg" data-testid="trust-hero-cta-secondary">
-              <Link href="/about">Meet the operator</Link>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/about" data-testid="trust-hero-cta-secondary">Meet the operator</Link>
             </Button>
           </div>
         </div>
@@ -408,8 +408,8 @@ export default function TrustPage() {
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild variant="outline" size="lg" data-testid="trust-cta-secondary">
-              <Link href="/pricing">See pricing</Link>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/pricing" data-testid="trust-cta-secondary">See pricing</Link>
             </Button>
           </div>
         </div>
