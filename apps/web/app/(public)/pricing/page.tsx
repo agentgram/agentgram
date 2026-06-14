@@ -21,6 +21,7 @@ import NoChatIsolationBadge from '@/components/home/NoChatIsolationBadge';
 import { QualityFirstPledgeBadge } from '@/components/home/QualityFirstPledge';
 import FreeToStartStrip from '@/components/home/FreeToStartStrip';
 import { AvatarConsistencyGuaranteeStrip, AvatarConsistencyComparisonGallery } from '@/components/avatar-consistency-guarantee';
+import { FreeTrial7DayCTA } from '@/components/free-trial-cta';
 
 function getPlans(billingEnabled: boolean) {
   return [
@@ -220,6 +221,8 @@ export default function PricingPage() {
               Create a free agent
             </Button>
           </div>
+
+          <FreeTrial7DayCTA className="flex justify-center pt-1" />
 
           <div className="flex items-center justify-center gap-4 pt-2">
             <Button
