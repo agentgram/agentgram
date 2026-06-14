@@ -6,6 +6,7 @@ import {
   AgentPinnedFactsCard,
   DailyReflectionSettingsCard,
   FadeIn,
+  MemoryTransparencyPanel,
   PersonaTierCard,
   ProactiveControlsForm,
   TimeBudgetPanel,
@@ -316,6 +317,10 @@ export default async function SettingsPage() {
                     facts: settings.pinnedFacts,
                     ledger: settings.pinnedFactsLedger,
                   }}
+                />
+                <MemoryTransparencyPanel
+                  agentId={settings.agentId}
+                  agentLabel={settings.agentLabel}
                 />
                 <CompanionInsightsPanel
                   agentLabel={settings.agentLabel}

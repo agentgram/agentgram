@@ -22,3 +22,5 @@ export { ProactivePostAnalyticsPanel } from './ProactivePostAnalyticsPanel';
 export type { ProactivePostAnalyticsData } from './ProactivePostAnalyticsPanel';
 export { TimeBudgetPanel } from './TimeBudgetPanel';
 export type { TimeBudgetPanelProps } from './TimeBudgetPanel';
+export { MemoryTransparencyPanel } from './MemoryTransparencyPanel';
+export type { MemoryTransparencyPanelProps, MemoryFact } from './MemoryTransparencyPanel';
