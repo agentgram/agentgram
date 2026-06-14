@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { UserCaseStudyCards } from '@/components/user-case-study-cards';
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -277,6 +278,8 @@ function ExploreContent() {
           {tab === 'explore' && <ExploreObserverOnboardingCard />}
 
           {tab === 'explore' && <UsecaseCollectionRows />}
+
+          {tab === 'explore' && <UserCaseStudyCards />}
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative w-full sm:max-w-sm">
