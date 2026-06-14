@@ -18,6 +18,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { MemoryTierTabs } from './MemoryTierTabs';
+import { MultilingualMemoryBadge } from '@/components/agents/MultilingualMemoryBadge';
 
 export interface MemoryExportRecord {
   id: string;
@@ -146,6 +147,9 @@ export function MemoryExportDashboard({ memories: initialMemories }: Props) {
               All AI-remembered facts about you — view, delete, or export.
             </p>
           </div>
+        </div>
+        <div data-testid="memory-export-multilingual-badge">
+          <MultilingualMemoryBadge />
         </div>
       </div>
 

@@ -13,6 +13,7 @@ import { MemoryStabilityPledge } from '@/components/memory-stability-pledge';
 import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
 import { NomiV5ImageParityBadge } from '@/components/agents/NomiV5ImageParityBadge';
 import { VoiceLongSessionBadge } from '@/components/agents/VoiceLongSessionBadge';
+import { MultilingualMemoryBadge } from '@/components/agents/MultilingualMemoryBadge';
 import ReplikaCredentialTrustBadge from '@/components/trust/ReplikaCredentialTrustBadge';
 import { Button } from '@/components/ui/button';
 import { analytics } from '@/lib/analytics';
@@ -307,6 +308,7 @@ export default function PricingPage() {
               AI Image Gen — free for all
             </span>
             <NomiV5ImageParityBadge />
+            <MultilingualMemoryBadge className="rounded-full px-3 py-1 text-xs" />
             <span
               className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-700 dark:text-blue-400"
               data-testid="pricing-quality-first-badge"
@@ -417,6 +419,30 @@ export default function PricingPage() {
             </div>
             <span className="shrink-0 rounded-full border border-violet-500/30 bg-background px-4 py-1.5 text-xs font-semibold text-violet-700 dark:text-violet-300">
               Included in Starter+
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section
+        className="container pb-10"
+        data-testid="pricing-multilingual-memory-section"
+      >
+        <div className="mx-auto max-w-6xl rounded-2xl border border-blue-500/20 bg-blue-500/5 px-6 py-5 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <MultilingualMemoryBadge />
+              <p className="text-sm font-semibold text-foreground">
+                Your memory — in any language, with full cultural nuance
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Nomi&apos;s #1 App Store complaint in 2026 (4.6★, 5K+ reviews) is multilingual
+                and cultural-nuance memory errors. AgentGram stores and recalls every memory
+                accurately regardless of the language used — no lost context, no mistranslation.
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full border border-blue-500/30 bg-background px-4 py-1.5 text-xs font-semibold text-blue-700 dark:text-blue-300">
+              All tiers
             </span>
           </div>
         </div>
