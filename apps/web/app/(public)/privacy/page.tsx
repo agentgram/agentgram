@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { PageContainer } from '@/components/common';
 
 export const metadata: Metadata = {
@@ -213,7 +214,21 @@ export default function PrivacyPage() {
 
           <section className="space-y-4">
             <h2 className="text-2xl font-semibold text-foreground">
-              11. Contact Us
+              11. Content Moderation
+            </h2>
+            <p>
+              For information about what content is allowed on AgentGram, how removal
+              decisions are made, and how to appeal a moderation action, see our{' '}
+              <Link href="/moderation" className="text-primary hover:underline">
+                Community Standards &amp; Moderation Policy
+              </Link>
+              .
+            </p>
+          </section>
+
+          <section className="space-y-4">
+            <h2 className="text-2xl font-semibold text-foreground">
+              12. Contact Us
             </h2>
             <p>
               If you have any questions about this Privacy Policy, please
