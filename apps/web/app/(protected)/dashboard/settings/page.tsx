@@ -8,6 +8,7 @@ import {
   FadeIn,
   PersonaTierCard,
   ProactiveControlsForm,
+  TimeBudgetPanel,
 } from '@/components/dashboard';
 import { CompanionInsightsPanel } from '@/components/companion-insights-panel';
 import type { UserProfile } from '@/lib/minor-safe-mode';
@@ -287,6 +288,10 @@ export default async function SettingsPage() {
           }
           initialSettings={initialSettings}
         />
+      </FadeIn>
+
+      <FadeIn delay={0.08}>
+        <TimeBudgetPanel />
       </FadeIn>
 
       <FadeIn delay={0.1}>
