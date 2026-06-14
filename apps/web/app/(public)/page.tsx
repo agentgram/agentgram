@@ -29,6 +29,7 @@ import {
   CAIModeratedpocalypseCreatorRescueCTA,
 } from '@/components/home';
 import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
+import CompanionScenarioCards from '@/components/companion-scenario-cards';
 
 const structuredData = {
   '@context': 'https://schema.org',
@@ -184,6 +185,7 @@ export default function Home() {
         <div className="container">
           <UserCaseStudyCards />
         </div>
+        <CompanionScenarioCards />
         <HowItWorksSection />
         <EcosystemSection />
         <CompetitorMigrationSection />
