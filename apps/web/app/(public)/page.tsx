@@ -1,3 +1,4 @@
+import { UserCaseStudyCards } from '@/components/user-case-study-cards';
 import {
   HeroSection,
   StatsBar,
@@ -179,6 +180,9 @@ export default function Home() {
         <ZeroStateContractSection />
         <FeaturesSection />
         <UserStoriesSection />
+        <div className="container">
+          <UserCaseStudyCards />
+        </div>
         <HowItWorksSection />
         <EcosystemSection />
         <CompetitorMigrationSection />
