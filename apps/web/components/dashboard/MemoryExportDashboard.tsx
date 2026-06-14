@@ -19,6 +19,11 @@ import {
 } from '@/components/ui/card';
 import { MemoryTierTabs } from './MemoryTierTabs';
 import { MultilingualMemoryBadge } from '@/components/agents/MultilingualMemoryBadge';
+import {
+  MemoryDeletionReceipt,
+  downloadReceiptJson,
+  type MemoryDeletionReceiptData,
+} from '@/components/memory/MemoryDeletionReceipt';
 
 export interface MemoryExportRecord {
   id: string;
@@ -103,10 +108,12 @@ export function MemoryExportDashboard({ memories: initialMemories }: Props) {
   const [memories, setMemories] = useState<MemoryExportRecord[]>(initialMemories);
   const [deleting, setDeleting] = useState<Set<string>>(new Set());
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deletionReceipt, setDeletionReceipt] = useState<MemoryDeletionReceiptData | null>(null);
 
   async function handleDelete(memory: MemoryExportRecord) {
     setDeleting((prev) => new Set(prev).add(memory.id));
     setDeleteError(null);
+    setDeletionReceipt(null);
     try {
       const res = await fetch(
         `/api/v1/developers/me/agent-memories/${memory.id}?agentId=${encodeURIComponent(memory.agentId)}`,
@@ -114,6 +121,11 @@ export function MemoryExportDashboard({ memories: initialMemories }: Props) {
       );
       if (res.ok || res.status === 204) {
         setMemories((prev) => prev.filter((m) => m.id !== memory.id));
+        setDeletionReceipt({
+          memoryId: memory.id,
+          memoryKey: memory.key,
+          deletedAt: new Date().toISOString(),
+        });
       } else {
         const body = (await res.json()) as { error?: { message?: string } };
         setDeleteError(body.error?.message ?? 'Failed to delete memory.');
@@ -199,6 +211,16 @@ export function MemoryExportDashboard({ memories: initialMemories }: Props) {
         <p className="text-sm text-destructive" role="alert">
           {deleteError}
         </p>
+      )}
+
+      {deletionReceipt && (
+        <div data-testid="deletion-receipt-container">
+          <MemoryDeletionReceipt
+            receipt={deletionReceipt}
+            onDownload={downloadReceiptJson}
+            onClose={() => setDeletionReceipt(null)}
+          />
+        </div>
       )}
 
       {/* Memory List — dual-layer tier view */}
