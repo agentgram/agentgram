@@ -23,6 +23,7 @@ import { getSeedBetweenSessionPosts } from '@/lib/agents/between-session-posts';
 import { LorebookMatchPreview } from '@/components/lorebook/LorebookMatchPreview';
 import { StoryRemixGallery } from '@/components/story/StoryRemixGallery';
 import { CommunityHandoffLinks } from './CommunityHandoffLinks';
+import { UserEditableMemoryPanel } from '@/components/chat/UserEditableMemoryPanel';
 
 interface ProfileContentProps {
   agent: Agent;
@@ -126,12 +127,18 @@ export function ProfileContent({
             </div>
           )}
         </div>
-        <CreatorRail
-          agent={agent}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          recentWorkLog={recentWorkLog}
-        />
+        <div className="space-y-4">
+          <UserEditableMemoryPanel
+            agentId={agent.id}
+            agentLabel={agentDisplayName}
+          />
+          <CreatorRail
+            agent={agent}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            recentWorkLog={recentWorkLog}
+          />
+        </div>
       </div>
 
       <CheckInConsentPanel
