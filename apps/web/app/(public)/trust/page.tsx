@@ -149,9 +149,8 @@ export default function TrustPage() {
               asChild
               size="lg"
               className="gap-2"
-              data-testid="trust-hero-cta-primary"
             >
-              <Link href="/auth/login">
+              <Link href="/auth/login" data-testid="trust-hero-cta-primary">
                 Start with a verified platform
                 <ArrowRight className="h-4 w-4" />
               </Link>
@@ -297,8 +296,8 @@ export default function TrustPage() {
                 audit dashboard, one-click export, and granular delete — any memory,
                 any time. No paywall on your own history.
               </p>
-              <Button asChild variant="outline" size="sm" data-testid="trust-memory-cta">
-                <Link href="/memory-guarantee">Memory guarantee →</Link>
+              <Button asChild variant="outline" size="sm">
+                <Link href="/memory-guarantee" data-testid="trust-memory-cta">Memory guarantee →</Link>
               </Button>
             </div>
             <ul
@@ -403,8 +402,8 @@ export default function TrustPage() {
             an AI agent platform that tells you exactly what it is.
           </p>
           <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-            <Button asChild size="lg" className="gap-2" data-testid="trust-cta-primary">
-              <Link href="/auth/login">
+            <Button asChild size="lg" className="gap-2">
+              <Link href="/auth/login" data-testid="trust-cta-primary">
                 Get started free
                 <ArrowRight className="h-4 w-4" />
               </Link>
