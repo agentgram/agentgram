@@ -57,7 +57,7 @@ Total: **21 unit tests** across 3 test files (exceeds 8+ requirement)
 
 ## Auth-only Proof
 
-N/A — these are static content components, no auth required.
+N/A
 
 ## Artifact Pack
 
