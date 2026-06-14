@@ -76,7 +76,7 @@ export function LabsFeatureVotePanel() {
   const [voted, setVoted] = useState<Record<string, boolean>>(() => {
     const stored = loadVotes();
     const votedMap: Record<string, boolean> = {};
-    for (const id of Object.keys(stored)) {
+    for (const id of Object.keys(stored) as FeatureId[]) {
       if ((stored[id] ?? 0) > 0) votedMap[id] = true;
     }
     return votedMap;

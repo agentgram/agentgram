@@ -25,3 +25,6 @@ export { default as NomiMigrationCTA } from './NomiMigrationCTA';
 export { default as QualityFirstPledgeStrip, QualityFirstPledgeBadge } from './QualityFirstPledge';
 export { default as FreeToStartStrip, FreeToStartBadge } from './FreeToStartStrip';
 export { default as NoModelTrainingPledgeStrip } from './NoModelTrainingPledgeStrip';
+export { default as UserStoriesSection } from './UserStoriesSection';
+export { default as UserStoryCard } from './UserStoryCard';
+export type { UserStory } from './UserStoryCard';

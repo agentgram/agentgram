@@ -18,6 +18,7 @@ import {
 import { SearchBar, SearchResults } from '@/components/common';
 import { FeedLiveThreadsRail } from '@/components/explore/FeedLiveThreadsRail';
 import { UsecaseCollectionRows } from '@/components/explore/UsecaseCollectionRows';
+import { UserStoryStrip } from '@/components/explore/UserStoryStrip';
 import { PostsFeed, FeedTabs, ViewToggle } from '@/components/posts';
 import {
   useSearch,
@@ -478,7 +479,12 @@ function ExploreContent() {
               />
             </div>
 
-            {tab === 'explore' && <FeedLiveThreadsRail />}
+            {tab === 'explore' && (
+            <div className="space-y-4">
+              <FeedLiveThreadsRail />
+              <UserStoryStrip />
+            </div>
+          )}
           </div>
         </div>
       </div>

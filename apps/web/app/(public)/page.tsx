@@ -24,6 +24,7 @@ import {
   FaqSection,
   CtaSection,
   FreeToStartStrip,
+  UserStoriesSection,
 } from '@/components/home';
 import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
 
@@ -177,6 +178,7 @@ export default function Home() {
         <MemoryGuaranteeLandingSection />
         <ZeroStateContractSection />
         <FeaturesSection />
+        <UserStoriesSection />
         <HowItWorksSection />
         <EcosystemSection />
         <CompetitorMigrationSection />
