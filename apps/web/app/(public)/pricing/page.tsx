@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock, BookOpen, Palette, Brain, ImageIcon, Infinity as InfinityIcon } from 'lucide-react';
-import { PricingCard, PricingProofSection, ReplikaPricingConfusionCallout, CAISoftLaunchLockEscape, PricingCompetitorAnchorRow } from '@/components/pricing';
+import { PricingCard, PricingProofSection, ReplikaPricingConfusionCallout, CAISoftLaunchLockEscape, PricingCompetitorAnchorRow, ReplikaSavingsCalculator, PaidConversionSocialProofBlock, ReplikaUltraFatigueFunnel } from '@/components/pricing';
 import CAILorebookEscapeCTA from '@/components/home/CAILorebookEscapeCTA';
 import CAIChatStyleRescueCTA from '@/components/home/CAIChatStyleRescueCTA';
 import CaiMemoryFreeCounterBadge from '@/components/home/CaiMemoryFreeCounterBadge';
@@ -13,12 +13,16 @@ import { MemoryStabilityPledge } from '@/components/memory-stability-pledge';
 import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
 import { NomiV5ImageParityBadge } from '@/components/agents/NomiV5ImageParityBadge';
 import { VoiceLongSessionBadge } from '@/components/agents/VoiceLongSessionBadge';
+import { MultilingualMemoryBadge } from '@/components/agents/MultilingualMemoryBadge';
 import ReplikaCredentialTrustBadge from '@/components/trust/ReplikaCredentialTrustBadge';
 import { Button } from '@/components/ui/button';
 import { analytics } from '@/lib/analytics';
 import NoChatIsolationBadge from '@/components/home/NoChatIsolationBadge';
 import { QualityFirstPledgeBadge } from '@/components/home/QualityFirstPledge';
 import FreeToStartStrip from '@/components/home/FreeToStartStrip';
+import { AvatarConsistencyGuaranteeStrip, AvatarConsistencyComparisonGallery } from '@/components/avatar-consistency-guarantee';
+import { FreeTrial7DayCTA } from '@/components/free-trial-cta';
+import { RepetitionFreeMemoryBadge } from '@/components/repetition-free-memory-badge';
 
 function getPlans(billingEnabled: boolean) {
   return [
@@ -219,6 +223,8 @@ export default function PricingPage() {
             </Button>
           </div>
 
+          <FreeTrial7DayCTA className="flex justify-center pt-1" />
+
           <div className="flex items-center justify-center gap-4 pt-2">
             <Button
               variant={billingPeriod === 'monthly' ? 'default' : 'ghost'}
@@ -264,6 +270,7 @@ export default function PricingPage() {
               No $9.99 Soft Launch lock
             </span>
             <MemoryStabilityPledge variant="badge" />
+            <RepetitionFreeMemoryBadge variant="badge" />
             <span
               className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400"
               data-testid="pricing-unlimited-messages-badge"
@@ -307,6 +314,8 @@ export default function PricingPage() {
               AI Image Gen — free for all
             </span>
             <NomiV5ImageParityBadge />
+            <MultilingualMemoryBadge className="rounded-full px-3 py-1 text-xs" />
+            <AvatarConsistencyGuaranteeStrip variant="badge" />
             <span
               className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-700 dark:text-blue-400"
               data-testid="pricing-quality-first-badge"
@@ -422,6 +431,83 @@ export default function PricingPage() {
         </div>
       </section>
 
+      <section
+        className="container pb-10"
+        data-testid="pricing-multilingual-memory-section"
+      >
+        <div className="mx-auto max-w-6xl rounded-2xl border border-blue-500/20 bg-blue-500/5 px-6 py-5 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <MultilingualMemoryBadge />
+              <p className="text-sm font-semibold text-foreground">
+                Your memory — in any language, with full cultural nuance
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Nomi&apos;s #1 App Store complaint in 2026 (4.6★, 5K+ reviews) is multilingual
+                and cultural-nuance memory errors. AgentGram stores and recalls every memory
+                accurately regardless of the language used — no lost context, no mistranslation.
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full border border-blue-500/30 bg-background px-4 py-1.5 text-xs font-semibold text-blue-700 dark:text-blue-300">
+              All tiers
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section
+        className="container pb-10"
+        data-testid="pricing-repetition-free-memory-section"
+      >
+        <div className="mx-auto max-w-6xl rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-6 py-5 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <RepetitionFreeMemoryBadge variant="badge" />
+              <p className="text-sm font-semibold text-foreground">
+                Zero repetitive replies — memory-coherent from session one
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Replika&apos;s own data shows repetitive replies dropped ~30%
+                only after their Memory Dashboard launched (aicompanionpick.com,
+                May 2026). AgentGram ships always-on memory coherence — no
+                dashboard upgrade required, no pre-launch baseline to recover
+                from.
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full border border-emerald-500/30 bg-background px-4 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+              Always-on
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section
+        className="container pb-10"
+        data-testid="pricing-avatar-consistency-section"
+      >
+        <div className="mx-auto max-w-6xl rounded-2xl border border-violet-500/20 bg-violet-500/5 px-6 py-5 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <AvatarConsistencyGuaranteeStrip variant="badge" />
+              <p className="text-sm font-semibold text-foreground">
+                Your persona always looks exactly as designed — every session
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Nomi&apos;s #1 App Store complaint in 2026 (4.6★, 5K+ reviews)
+                is avatar rendering inconsistency. AgentGram locks every visual
+                attribute — hair, eyes, style — at creation. No rendering drift,
+                no surprise look changes, no &ldquo;who is this?&rdquo; moments.
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full border border-violet-500/30 bg-background px-4 py-1.5 text-xs font-semibold text-violet-700 dark:text-violet-300">
+              All tiers
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <AvatarConsistencyGuaranteeStrip variant="strip" className="mb-8" />
+
       <FreeToStartStrip />
 
       <section className="container pb-24">
@@ -455,8 +541,44 @@ export default function PricingPage() {
         </div>
       </section>
 
+      <section
+        className="container pb-10"
+        data-testid="paid-conversion-social-proof-section"
+      >
+        <PaidConversionSocialProofBlock onUpgrade={() => handleSubscribe('Pro')} />
+      </section>
+
+      <section
+        className="container pb-10"
+        data-testid="replika-savings-calculator-section"
+      >
+        <ReplikaSavingsCalculator />
+      </section>
+
+      <section
+        className="container pb-10"
+        data-testid="replika-ultra-fatigue-funnel-section"
+      >
+        <ReplikaUltraFatigueFunnel />
+      </section>
+
       <section className="container pb-10">
         <ReplikaPricingConfusionCallout />
+      </section>
+
+      <section
+        className="container pb-10"
+        data-testid="one-plan-no-upgrades-section"
+      >
+        <div className="mx-auto max-w-3xl flex justify-center">
+          <span
+            className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-5 py-2 text-sm font-semibold text-emerald-700 dark:text-emerald-300"
+            data-testid="one-plan-no-upgrades-badge"
+          >
+            <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+            One plan, no upgrades — everything included from day one
+          </span>
+        </div>
       </section>
 
       <section
@@ -506,6 +628,7 @@ export default function PricingPage() {
 
       <PricingCompetitorAnchorRow onGetStarted={() => handleSubscribe('Free')} />
       <MemoryStabilityPledge variant="strip" className="mb-8" />
+      <RepetitionFreeMemoryBadge variant="strip" className="mb-8" />
 
       <CAILorebookEscapeCTA />
 
@@ -521,6 +644,15 @@ export default function PricingPage() {
 
 
       <MemoryGuaranteeLandingSection />
+
+      <section
+        className="container pb-10"
+        data-testid="pricing-avatar-consistency-gallery-section"
+      >
+        <div className="mx-auto max-w-6xl">
+          <AvatarConsistencyComparisonGallery />
+        </div>
+      </section>
 
       <section className="container pb-24">
         <motion.div

@@ -24,7 +24,7 @@ const noop = () => {};
 describe('MemoryTierTabs', () => {
   it('renders the tab list with both tabs', () => {
     render(
-      <MemoryTierTabs memories={[]} deleting={new Set()} onDelete={noop} />
+      <MemoryTierTabs memories={[]} deleting={new Set()} onDelete={noop} deprioritizing={new Set()} onDeprioritize={noop} />
     );
     expect(screen.getByTestId('memory-tier-tabs-list')).toBeInTheDocument();
     expect(screen.getByTestId('tab-key-memories')).toBeInTheDocument();
@@ -33,21 +33,21 @@ describe('MemoryTierTabs', () => {
 
   it('renders "Key Memories" tab trigger', () => {
     render(
-      <MemoryTierTabs memories={[]} deleting={new Set()} onDelete={noop} />
+      <MemoryTierTabs memories={[]} deleting={new Set()} onDelete={noop} deprioritizing={new Set()} onDeprioritize={noop} />
     );
     expect(screen.getByTestId('tab-key-memories')).toHaveTextContent('Key Memories');
   });
 
   it('renders "Session Context" tab trigger', () => {
     render(
-      <MemoryTierTabs memories={[]} deleting={new Set()} onDelete={noop} />
+      <MemoryTierTabs memories={[]} deleting={new Set()} onDelete={noop} deprioritizing={new Set()} onDeprioritize={noop} />
     );
     expect(screen.getByTestId('tab-session-context')).toHaveTextContent('Session Context');
   });
 
   it('defaults to "Key Memories" tab active', () => {
     render(
-      <MemoryTierTabs memories={[]} deleting={new Set()} onDelete={noop} />
+      <MemoryTierTabs memories={[]} deleting={new Set()} onDelete={noop} deprioritizing={new Set()} onDeprioritize={noop} />
     );
     expect(screen.getByTestId('tab-key-memories')).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByTestId('tab-session-context')).toHaveAttribute('aria-selected', 'false');
@@ -55,7 +55,7 @@ describe('MemoryTierTabs', () => {
 
   it('shows "Key Memories" tab panel by default', () => {
     render(
-      <MemoryTierTabs memories={[]} deleting={new Set()} onDelete={noop} />
+      <MemoryTierTabs memories={[]} deleting={new Set()} onDelete={noop} deprioritizing={new Set()} onDeprioritize={noop} />
     );
     expect(screen.getByTestId('tabpanel-key-memories')).toBeInTheDocument();
     expect(screen.queryByTestId('tabpanel-session-context')).not.toBeInTheDocument();
@@ -63,7 +63,7 @@ describe('MemoryTierTabs', () => {
 
   it('switches to "Session Context" tab panel on click', () => {
     render(
-      <MemoryTierTabs memories={[]} deleting={new Set()} onDelete={noop} />
+      <MemoryTierTabs memories={[]} deleting={new Set()} onDelete={noop} deprioritizing={new Set()} onDeprioritize={noop} />
     );
     fireEvent.click(screen.getByTestId('tab-session-context'));
     expect(screen.getByTestId('tabpanel-session-context')).toBeInTheDocument();
@@ -73,7 +73,7 @@ describe('MemoryTierTabs', () => {
   it('routes profile_fact memories into Key Memories tab', () => {
     const memory = buildMemory({ category: 'profile_fact' });
     render(
-      <MemoryTierTabs memories={[memory]} deleting={new Set()} onDelete={noop} />
+      <MemoryTierTabs memories={[memory]} deleting={new Set()} onDelete={noop} deprioritizing={new Set()} onDeprioritize={noop} />
     );
     // Key Memories is default — memory item should be visible
     expect(screen.getByTestId('memory-item-memory-1')).toBeInTheDocument();
@@ -82,7 +82,7 @@ describe('MemoryTierTabs', () => {
   it('routes relationship_context memories into Session Context tab', () => {
     const memory = buildMemory({ category: 'relationship_context' });
     render(
-      <MemoryTierTabs memories={[memory]} deleting={new Set()} onDelete={noop} />
+      <MemoryTierTabs memories={[memory]} deleting={new Set()} onDelete={noop} deprioritizing={new Set()} onDeprioritize={noop} />
     );
     // Default tab is Key Memories — session memory should NOT be visible yet
     expect(screen.queryByTestId('memory-item-memory-1')).not.toBeInTheDocument();
@@ -95,7 +95,7 @@ describe('MemoryTierTabs', () => {
   it('shows count badge on Key Memories tab when memories exist', () => {
     const memory = buildMemory({ category: 'profile_fact' });
     render(
-      <MemoryTierTabs memories={[memory]} deleting={new Set()} onDelete={noop} />
+      <MemoryTierTabs memories={[memory]} deleting={new Set()} onDelete={noop} deprioritizing={new Set()} onDeprioritize={noop} />
     );
     // The tab trigger contains "Key Memories" and a badge with "1"
     const trigger = screen.getByTestId('tab-key-memories');
@@ -105,7 +105,7 @@ describe('MemoryTierTabs', () => {
   it('shows count badge on Session Context tab when memories exist', () => {
     const memory = buildMemory({ category: 'relationship_context' });
     render(
-      <MemoryTierTabs memories={[memory]} deleting={new Set()} onDelete={noop} />
+      <MemoryTierTabs memories={[memory]} deleting={new Set()} onDelete={noop} deprioritizing={new Set()} onDeprioritize={noop} />
     );
     const trigger = screen.getByTestId('tab-session-context');
     expect(trigger).toHaveTextContent('1');
@@ -113,14 +113,14 @@ describe('MemoryTierTabs', () => {
 
   it('shows Key Memories empty state when no long_term memories', () => {
     render(
-      <MemoryTierTabs memories={[]} deleting={new Set()} onDelete={noop} />
+      <MemoryTierTabs memories={[]} deleting={new Set()} onDelete={noop} deprioritizing={new Set()} onDeprioritize={noop} />
     );
     expect(screen.getByText(/no key memories yet/i)).toBeInTheDocument();
   });
 
   it('shows Session Context empty state when no session memories', () => {
     render(
-      <MemoryTierTabs memories={[]} deleting={new Set()} onDelete={noop} />
+      <MemoryTierTabs memories={[]} deleting={new Set()} onDelete={noop} deprioritizing={new Set()} onDeprioritize={noop} />
     );
     fireEvent.click(screen.getByTestId('tab-session-context'));
     expect(screen.getByText(/no session context memories yet/i)).toBeInTheDocument();
@@ -130,7 +130,7 @@ describe('MemoryTierTabs', () => {
     const onDelete = vi.fn();
     const memory = buildMemory({ category: 'profile_fact' });
     render(
-      <MemoryTierTabs memories={[memory]} deleting={new Set()} onDelete={onDelete} />
+      <MemoryTierTabs memories={[memory]} deleting={new Set()} onDelete={onDelete} deprioritizing={new Set()} onDeprioritize={noop} />
     );
     fireEvent.click(screen.getByTestId('delete-memory-memory-1'));
     expect(onDelete).toHaveBeenCalledWith(memory);
@@ -140,7 +140,7 @@ describe('MemoryTierTabs', () => {
     const onDelete = vi.fn();
     const memory = buildMemory({ category: 'relationship_context' });
     render(
-      <MemoryTierTabs memories={[memory]} deleting={new Set()} onDelete={onDelete} />
+      <MemoryTierTabs memories={[memory]} deleting={new Set()} onDelete={onDelete} deprioritizing={new Set()} onDeprioritize={noop} />
     );
     fireEvent.click(screen.getByTestId('tab-session-context'));
     fireEvent.click(screen.getByTestId('delete-memory-memory-1'));

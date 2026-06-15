@@ -18,6 +18,12 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { MemoryTierTabs } from './MemoryTierTabs';
+import { MultilingualMemoryBadge } from '@/components/agents/MultilingualMemoryBadge';
+import {
+  MemoryDeletionReceipt,
+  downloadReceiptJson,
+  type MemoryDeletionReceiptData,
+} from '@/components/memory/MemoryDeletionReceipt';
 
 export interface MemoryExportRecord {
   id: string;
@@ -27,6 +33,7 @@ export interface MemoryExportRecord {
   value: string;
   category: string;
   isPublic: boolean;
+  priority?: 'normal' | 'low';
   createdAt: string;
   updatedAt: string;
 }
@@ -102,10 +109,43 @@ export function MemoryExportDashboard({ memories: initialMemories }: Props) {
   const [memories, setMemories] = useState<MemoryExportRecord[]>(initialMemories);
   const [deleting, setDeleting] = useState<Set<string>>(new Set());
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deletionReceipt, setDeletionReceipt] = useState<MemoryDeletionReceiptData | null>(null);
+  const [deprioritizing, setDeprioritizing] = useState<Set<string>>(new Set());
+
+  async function handleDeprioritize(memory: MemoryExportRecord) {
+    setDeprioritizing((prev) => new Set(prev).add(memory.id));
+    const willBeDeprioritized = memory.priority !== 'low';
+    try {
+      await fetch(
+        `/api/v1/agents/me/memories/${memory.id}/deprioritize`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ agentId: memory.agentId, deprioritized: willBeDeprioritized }),
+        }
+      );
+      setMemories((prev) =>
+        prev.map((m) =>
+          m.id === memory.id
+            ? { ...m, priority: willBeDeprioritized ? 'low' : 'normal' }
+            : m
+        )
+      );
+    } catch {
+      // best-effort: network errors are silently ignored for deprioritize
+    } finally {
+      setDeprioritizing((prev) => {
+        const next = new Set(prev);
+        next.delete(memory.id);
+        return next;
+      });
+    }
+  }
 
   async function handleDelete(memory: MemoryExportRecord) {
     setDeleting((prev) => new Set(prev).add(memory.id));
     setDeleteError(null);
+    setDeletionReceipt(null);
     try {
       const res = await fetch(
         `/api/v1/developers/me/agent-memories/${memory.id}?agentId=${encodeURIComponent(memory.agentId)}`,
@@ -113,6 +153,11 @@ export function MemoryExportDashboard({ memories: initialMemories }: Props) {
       );
       if (res.ok || res.status === 204) {
         setMemories((prev) => prev.filter((m) => m.id !== memory.id));
+        setDeletionReceipt({
+          memoryId: memory.id,
+          memoryKey: memory.key,
+          deletedAt: new Date().toISOString(),
+        });
       } else {
         const body = (await res.json()) as { error?: { message?: string } };
         setDeleteError(body.error?.message ?? 'Failed to delete memory.');
@@ -146,6 +191,9 @@ export function MemoryExportDashboard({ memories: initialMemories }: Props) {
               All AI-remembered facts about you — view, delete, or export.
             </p>
           </div>
+        </div>
+        <div data-testid="memory-export-multilingual-badge">
+          <MultilingualMemoryBadge />
         </div>
       </div>
 
@@ -197,12 +245,24 @@ export function MemoryExportDashboard({ memories: initialMemories }: Props) {
         </p>
       )}
 
+      {deletionReceipt && (
+        <div data-testid="deletion-receipt-container">
+          <MemoryDeletionReceipt
+            receipt={deletionReceipt}
+            onDownload={downloadReceiptJson}
+            onClose={() => setDeletionReceipt(null)}
+          />
+        </div>
+      )}
+
       {/* Memory List — dual-layer tier view */}
       <div data-testid="memory-list">
         <MemoryTierTabs
           memories={memories}
           deleting={deleting}
           onDelete={handleDelete}
+          deprioritizing={deprioritizing}
+          onDeprioritize={handleDeprioritize}
         />
       </div>
 

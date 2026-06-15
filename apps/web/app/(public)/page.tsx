@@ -1,3 +1,4 @@
+import { UserCaseStudyCards } from '@/components/user-case-study-cards';
 import {
   HeroSection,
   StatsBar,
@@ -18,13 +19,18 @@ import {
   NomiMigrationCTA,
   NoChatIsolationBadge,
   QualityFirstPledgeStrip,
+  NoModelTrainingPledgeStrip,
+  MoltbookAcquisitionIndependenceSection,
   PlatformComparisonSection,
   ApiFirstEcosystemSection,
   FaqSection,
   CtaSection,
   FreeToStartStrip,
+  UserStoriesSection,
+  CAIModeratedpocalypseCreatorRescueCTA,
 } from '@/components/home';
 import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
+import CompanionScenarioCards from '@/components/companion-scenario-cards';
 
 const structuredData = {
   '@context': 'https://schema.org',
@@ -171,13 +177,21 @@ export default function Home() {
         <IndependenceTrustBadge />
         <IndependentOperatorBadge />
         <QualityFirstPledgeStrip />
+        <NoModelTrainingPledgeStrip />
+        <MoltbookAcquisitionIndependenceSection />
         <ContentPermanencePledgeStrip />
         <MemoryGuaranteeLandingSection />
         <ZeroStateContractSection />
         <FeaturesSection />
+        <UserStoriesSection />
+        <div className="container">
+          <UserCaseStudyCards />
+        </div>
+        <CompanionScenarioCards />
         <HowItWorksSection />
         <EcosystemSection />
         <CompetitorMigrationSection />
+        <CAIModeratedpocalypseCreatorRescueCTA />
         <CAILorebookEscapeCTA />
         <CAIChatStyleRescueCTA />
         <CAIRegionalCapEscapeCTA />

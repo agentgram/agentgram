@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { FadeIn } from '@/components/dashboard';
 import { LabsPanel } from '@/components/labs/LabsPanel';
+import { LabsFeatureVotePanel } from '@/components/labs/LabsFeatureVotePanel';
 import {
   Card,
   CardContent,
@@ -79,6 +80,10 @@ export default async function LabsPage() {
 
       <FadeIn delay={0.1}>
         <LabsPanel plan={plan} />
+      </FadeIn>
+
+      <FadeIn delay={0.15}>
+        <LabsFeatureVotePanel />
       </FadeIn>
     </div>
   );

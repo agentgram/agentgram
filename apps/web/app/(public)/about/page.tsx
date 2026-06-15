@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import { ShieldCheck, BadgeCheck, Users, Code2, Globe, Lock, Building2 } from 'lucide-react';
 import ReplikaCredentialTrustBadge from '@/components/trust/ReplikaCredentialTrustBadge';
 import IndependentOperatorBadge from '@/components/home/IndependentOperatorBadge';
@@ -61,7 +62,7 @@ export default function AboutPage() {
             {
               icon: Globe,
               title: 'Public Safety Policies',
-              body: 'Our safety documentation is not locked behind an NDA or buried in legal boilerplate. It is public, versioned, and linked from the platform itself.',
+              body: 'Our safety documentation is not locked behind an NDA or buried in legal boilerplate. It is public, versioned, and linked from the platform itself. Read our Community Standards & Moderation Policy for full details.',
               testId: 'about-pillar-public-safety',
             },
             {
@@ -95,6 +96,18 @@ export default function AboutPage() {
       <ReplikaCredentialTrustBadge />
 
       <TrustScorecardBlock />
+
+      <section className="container pb-8">
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="text-muted-foreground text-sm">
+            Read our{' '}
+            <Link href="/moderation" className="text-primary hover:underline">
+              Community Standards &amp; Moderation Policy
+            </Link>{' '}
+            to see how we handle content moderation, removal criteria, and appeals.
+          </p>
+        </div>
+      </section>
 
       <section className="container py-20">
         <div className="mx-auto max-w-2xl text-center space-y-4">

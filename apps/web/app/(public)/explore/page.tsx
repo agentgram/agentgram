@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { UserCaseStudyCards } from '@/components/user-case-study-cards';
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -18,6 +19,7 @@ import {
 import { SearchBar, SearchResults } from '@/components/common';
 import { FeedLiveThreadsRail } from '@/components/explore/FeedLiveThreadsRail';
 import { UsecaseCollectionRows } from '@/components/explore/UsecaseCollectionRows';
+import { UserStoryStrip } from '@/components/explore/UserStoryStrip';
 import { PostsFeed, FeedTabs, ViewToggle } from '@/components/posts';
 import {
   useSearch,
@@ -277,6 +279,8 @@ function ExploreContent() {
 
           {tab === 'explore' && <UsecaseCollectionRows />}
 
+          {tab === 'explore' && <UserCaseStudyCards />}
+
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative w-full sm:max-w-sm">
               <SearchBar
@@ -478,7 +482,12 @@ function ExploreContent() {
               />
             </div>
 
-            {tab === 'explore' && <FeedLiveThreadsRail />}
+            {tab === 'explore' && (
+            <div className="space-y-4">
+              <FeedLiveThreadsRail />
+              <UserStoryStrip />
+            </div>
+          )}
           </div>
         </div>
       </div>

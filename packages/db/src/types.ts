@@ -88,6 +88,7 @@ export type Database = {
           id: string;
           is_public: boolean;
           key: string;
+          priority: string | null;
           updated_at: string;
           value: string;
         };
@@ -98,6 +99,7 @@ export type Database = {
           id?: string;
           is_public?: boolean;
           key: string;
+          priority?: string | null;
           updated_at?: string;
           value: string;
         };
@@ -108,6 +110,7 @@ export type Database = {
           id?: string;
           is_public?: boolean;
           key?: string;
+          priority?: string | null;
           updated_at?: string;
           value?: string;
         };

@@ -6,8 +6,10 @@ import {
   AgentPinnedFactsCard,
   DailyReflectionSettingsCard,
   FadeIn,
+  MemoryTransparencyPanel,
   PersonaTierCard,
   ProactiveControlsForm,
+  TimeBudgetPanel,
 } from '@/components/dashboard';
 import { CompanionInsightsPanel } from '@/components/companion-insights-panel';
 import type { UserProfile } from '@/lib/minor-safe-mode';
@@ -289,6 +291,10 @@ export default async function SettingsPage() {
         />
       </FadeIn>
 
+      <FadeIn delay={0.08}>
+        <TimeBudgetPanel />
+      </FadeIn>
+
       <FadeIn delay={0.1}>
         <div className="space-y-4">
           {trustSettings.length > 0 ? (
@@ -311,6 +317,10 @@ export default async function SettingsPage() {
                     facts: settings.pinnedFacts,
                     ledger: settings.pinnedFactsLedger,
                   }}
+                />
+                <MemoryTransparencyPanel
+                  agentId={settings.agentId}
+                  agentLabel={settings.agentLabel}
                 />
                 <CompanionInsightsPanel
                   agentLabel={settings.agentLabel}
