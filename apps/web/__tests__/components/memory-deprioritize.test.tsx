@@ -200,4 +200,36 @@ describe('Deprioritize toggle — MemoryExportDashboard', () => {
       );
     });
   });
+
+  it('rolls back optimistic state when deprioritize API fails', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false, status: 500 })
+    );
+
+    render(<MemoryExportDashboard memories={[buildMemory({ priority: 'normal' })]} />);
+
+    fireEvent.click(screen.getByTestId('deprioritize-memory-memory-1'));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('deprioritized-badge-memory-1')).not.toBeInTheDocument();
+    });
+  });
+
+  it('rolls back optimistic restore when API fails', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false, status: 500 })
+    );
+
+    render(<MemoryExportDashboard memories={[buildMemory({ priority: 'low' })]} />);
+
+    expect(screen.getByTestId('deprioritized-badge-memory-1')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('deprioritize-memory-memory-1'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('deprioritized-badge-memory-1')).toBeInTheDocument();
+    });
+  });
 });

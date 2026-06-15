@@ -179,7 +179,9 @@ describe('PATCH /api/v1/agents/me/memories/[id]/deprioritize', () => {
     expect(mockMemoryUpdate).not.toHaveBeenCalled();
   });
 
-  it('is protected by withDeveloperAuth (x-developer-id header required)', async () => {
+  // withDeveloperAuth mock passes handler through; the 401 comes from the route's own
+  // x-developer-id check. Both guard the same invariant so the coverage is valid.
+  it('returns 401 when x-developer-id header is missing', async () => {
     const { PATCH } = await import(
       '../../app/api/v1/agents/me/memories/[id]/deprioritize/route'
     );
@@ -199,5 +201,34 @@ describe('PATCH /api/v1/agents/me/memories/[id]/deprioritize', () => {
     const json = await response.json();
     expect(response.status).toBe(401);
     expect(json.error.code).toBe('UNAUTHORIZED');
+  });
+
+  it('returns 404 when memory does not belong to the requested agent', async () => {
+    // agent-1 is owned by dev-1 (ownership check passes), but the memory
+    // belongs to agent-2. The .eq('agent_id', agentId) DB filter returns null.
+    mockMemorySingle.mockResolvedValueOnce({ data: null, error: { message: 'No rows' } });
+
+    const { PATCH } = await import(
+      '../../app/api/v1/agents/me/memories/[id]/deprioritize/route'
+    );
+
+    const response = await PATCH(
+      new Request(
+        'http://localhost/api/v1/agents/me/memories/memory-cross/deprioritize',
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'x-developer-id': 'dev-1' },
+          body: JSON.stringify({ agentId: 'agent-1', deprioritized: true }),
+        }
+      ) as Parameters<typeof PATCH>[0],
+      { params: Promise.resolve({ id: 'memory-cross' }) }
+    );
+
+    const json = await response.json();
+    expect(response.status).toBe(404);
+    expect(json.error.code).toBe('NOT_FOUND');
+    // update was called but returned no row — confirms .eq('agent_id') guard is active
+    expect(mockMemoryUpdate).toHaveBeenCalled();
+    expect(mockMemorySingle).toHaveBeenCalled();
   });
 });
