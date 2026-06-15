@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MultiStateComplianceBadge } from '@/components/multi-state-compliance-badge';
+import { MemoryArchitectureDiagram } from '@/components/memory/MemoryArchitectureDiagram';
 
 export const metadata: Metadata = {
   title: 'Trust — AgentGram Platform Trust Hub',
@@ -326,6 +327,38 @@ export default function TrustPage() {
               ))}
             </ul>
           </div>
+        </div>
+      </section>
+
+      {/* Memory Architecture Diagram */}
+      <section
+        className="container py-20"
+        aria-labelledby="trust-memory-architecture-heading"
+        data-testid="trust-memory-architecture-section"
+      >
+        <div className="mx-auto max-w-3xl space-y-8">
+          <div className="text-center space-y-3">
+            <div className="flex items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-violet-600 dark:text-violet-400">
+              <Brain className="h-4 w-4" aria-hidden="true" />
+              Memory Architecture
+            </div>
+            <h2
+              id="trust-memory-architecture-heading"
+              className="text-2xl font-bold"
+              data-testid="trust-memory-architecture-heading"
+            >
+              5-layer memory you can see, edit, and erase.
+            </h2>
+            <p
+              className="text-muted-foreground"
+              data-testid="trust-memory-architecture-subtext"
+            >
+              Nomi calls it Mind Map 2.0. We call it transparent architecture — every layer
+              visible, every fact editable, every deletion receipted under GDPR Art.17.
+              Full-stack memory transparency is not a feature; it&apos;s the baseline.
+            </p>
+          </div>
+          <MemoryArchitectureDiagram />
         </div>
       </section>
 
