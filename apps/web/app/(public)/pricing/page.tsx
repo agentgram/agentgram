@@ -561,6 +561,21 @@ export default function PricingPage() {
 
       <section
         className="container pb-10"
+        data-testid="one-plan-no-upgrades-section"
+      >
+        <div className="mx-auto max-w-3xl flex justify-center">
+          <span
+            className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-5 py-2 text-sm font-semibold text-emerald-700 dark:text-emerald-300"
+            data-testid="one-plan-no-upgrades-badge"
+          >
+            <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+            One plan, no upgrades — everything included from day one
+          </span>
+        </div>
+      </section>
+
+      <section
+        className="container pb-10"
         data-testid="replika-platinum-single-plan-block"
       >
         <div className="mx-auto max-w-3xl rounded-2xl border border-primary/20 bg-primary/5 px-6 py-5 shadow-sm">

@@ -182,8 +182,8 @@ describe('PricingPage', () => {
 
     const tierList = screen.getByTestId('replika-tier-list');
     expect(tierList).toHaveTextContent('Replika Plus $7.99/mo');
-    expect(tierList).toHaveTextContent('Replika Pro $14.99/mo');
-    expect(tierList).toHaveTextContent('Replika Ultra $49.99/yr');
+    expect(tierList).toHaveTextContent('Replika Pro $9.99/mo');
+    expect(tierList).toHaveTextContent('Replika Ultra $29.99/mo');
 
     expect(
       screen.getByTestId('replika-callout-agentgram-badge')
