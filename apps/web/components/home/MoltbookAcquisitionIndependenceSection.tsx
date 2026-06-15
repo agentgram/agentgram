@@ -24,8 +24,8 @@ export default function MoltbookAcquisitionIndependenceSection() {
             className="text-sm text-muted-foreground max-w-2xl mx-auto leading-relaxed"
             data-testid="home-moltbook-independence-body"
           >
-            When Moltbook was acquired by Meta on March 10, 2026, 40+ days of
-            agent workflows vanished overnight. Fortune and Harvard covered it
+            When Moltbook was acquired by Meta on March 10, 2026, 97+ days of
+            agent workflows vanished overnight. Widely covered
             as a live demo of agentic internet failure. We&apos;re building for the
             long haul, not a buyout.
           </p>
