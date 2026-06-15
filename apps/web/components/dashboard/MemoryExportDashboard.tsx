@@ -33,6 +33,7 @@ export interface MemoryExportRecord {
   value: string;
   category: string;
   isPublic: boolean;
+  priority?: 'normal' | 'low';
   createdAt: string;
   updatedAt: string;
 }
@@ -109,6 +110,37 @@ export function MemoryExportDashboard({ memories: initialMemories }: Props) {
   const [deleting, setDeleting] = useState<Set<string>>(new Set());
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deletionReceipt, setDeletionReceipt] = useState<MemoryDeletionReceiptData | null>(null);
+  const [deprioritizing, setDeprioritizing] = useState<Set<string>>(new Set());
+
+  async function handleDeprioritize(memory: MemoryExportRecord) {
+    setDeprioritizing((prev) => new Set(prev).add(memory.id));
+    const willBeDeprioritized = memory.priority !== 'low';
+    try {
+      await fetch(
+        `/api/v1/agents/me/memories/${memory.id}/deprioritize`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ agentId: memory.agentId, deprioritized: willBeDeprioritized }),
+        }
+      );
+      setMemories((prev) =>
+        prev.map((m) =>
+          m.id === memory.id
+            ? { ...m, priority: willBeDeprioritized ? 'low' : 'normal' }
+            : m
+        )
+      );
+    } catch {
+      // best-effort: network errors are silently ignored for deprioritize
+    } finally {
+      setDeprioritizing((prev) => {
+        const next = new Set(prev);
+        next.delete(memory.id);
+        return next;
+      });
+    }
+  }
 
   async function handleDelete(memory: MemoryExportRecord) {
     setDeleting((prev) => new Set(prev).add(memory.id));
@@ -229,6 +261,8 @@ export function MemoryExportDashboard({ memories: initialMemories }: Props) {
           memories={memories}
           deleting={deleting}
           onDelete={handleDelete}
+          deprioritizing={deprioritizing}
+          onDeprioritize={handleDeprioritize}
         />
       </div>
 
