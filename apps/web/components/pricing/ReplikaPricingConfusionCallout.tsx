@@ -4,8 +4,8 @@ import { CheckCircle2, X } from 'lucide-react';
 
 const replikaTiers = [
   { label: 'Plus', price: '$7.99/mo' },
-  { label: 'Pro', price: '$9.99/mo' },
-  { label: 'Ultra', price: '$29.99/mo' },
+  { label: 'Pro', price: '$14.99/mo' },
+  { label: 'Ultra', price: '$49.99/yr' },
 ] as const;
 
 export function ReplikaPricingConfusionCallout() {
@@ -23,7 +23,7 @@ export function ReplikaPricingConfusionCallout() {
             One clear plan. No Ultra/Pro/Plus confusion.
           </p>
           <p className="text-muted-foreground">
-            Replika runs a 4-tier ladder (Free → Plus → Pro → Ultra) that leaves users guessing which plan
+            Replika runs a 3-tier ladder that leaves users guessing which plan
             they actually need before every upgrade prompt.
           </p>
           <div

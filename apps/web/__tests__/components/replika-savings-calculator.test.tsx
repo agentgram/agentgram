@@ -11,9 +11,9 @@ describe('ReplikaSavingsCalculator', () => {
 
   it('renders three Replika tier rows', () => {
     render(<ReplikaSavingsCalculator />);
-    expect(screen.getByTestId('savings-row-replika-plus')).toBeInTheDocument();
     expect(screen.getByTestId('savings-row-replika-pro')).toBeInTheDocument();
     expect(screen.getByTestId('savings-row-replika-ultra')).toBeInTheDocument();
+    expect(screen.getByTestId('savings-row-replika-platinum')).toBeInTheDocument();
   });
 
   it('defaults to 12 months and shows correct AgentGram cost', () => {
@@ -45,12 +45,12 @@ describe('ReplikaSavingsCalculator', () => {
     });
   });
 
-  it('shows savings for Replika Ultra at 12 months', () => {
+  it('shows savings for Replika Platinum at 12 months', () => {
     render(<ReplikaSavingsCalculator />);
-    // Replika Ultra $29.99×12=$359.88 vs AgentGram $348 → save $11.88
-    const ultraRow = screen.getByTestId('savings-row-replika-ultra');
-    const savingsCell = ultraRow.querySelector('[data-testid="savings-amount"]');
-    expect(savingsCell).toHaveTextContent('$11.88');
+    // Replika Platinum $39.99×12=$479.88 vs AgentGram $348 → save $131.88
+    const platinumRow = screen.getByTestId('savings-row-replika-platinum');
+    const savingsCell = platinumRow.querySelector('[data-testid="savings-amount"]');
+    expect(savingsCell).toHaveTextContent('$131.88');
   });
 
   it('shows max savings callout at 12 months', () => {
@@ -73,11 +73,11 @@ describe('ReplikaSavingsCalculator', () => {
     ).toBeInTheDocument();
   });
 
-  it('Replika Ultra cost at 12 months is correct', () => {
+  it('Replika Platinum cost at 12 months is correct', () => {
     render(<ReplikaSavingsCalculator />);
-    const ultraRow = screen.getByTestId('savings-row-replika-ultra');
-    const replikaCell = ultraRow.querySelector('[data-testid="replika-cost"]');
-    // $29.99 × 12 = $359.88
-    expect(replikaCell).toHaveTextContent('$359.88');
+    const platinumRow = screen.getByTestId('savings-row-replika-platinum');
+    const replikaCell = platinumRow.querySelector('[data-testid="replika-cost"]');
+    // $39.99 × 12 = $479.88
+    expect(replikaCell).toHaveTextContent('$479.88');
   });
 });
