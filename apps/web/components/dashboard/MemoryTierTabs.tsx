@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Loader2, Trash2 } from 'lucide-react';
 import type { MemoryExportRecord } from './MemoryExportDashboard';
 
 // Key Memories: long-term pinned facts that persist across sessions (Kindroid "Key Memories" tier)
@@ -46,10 +46,12 @@ interface MemoryListProps {
   memories: MemoryExportRecord[];
   deleting: Set<string>;
   onDelete: (memory: MemoryExportRecord) => void;
+  deprioritizing: Set<string>;
+  onDeprioritize: (memory: MemoryExportRecord) => void;
   emptyLabel: string;
 }
 
-function MemoryGroupList({ memories, deleting, onDelete, emptyLabel }: MemoryListProps) {
+function MemoryGroupList({ memories, deleting, onDelete, deprioritizing, onDeprioritize, emptyLabel }: MemoryListProps) {
   if (memories.length === 0) {
     return (
       <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
@@ -88,7 +90,7 @@ function MemoryGroupList({ memories, deleting, onDelete, emptyLabel }: MemoryLis
                 <div key={memory.id}>
                   {idx > 0 && <Separator />}
                   <div
-                    className="flex items-start justify-between gap-4 px-6 py-4"
+                    className={`flex items-start justify-between gap-4 px-6 py-4 transition-opacity${memory.priority === 'low' ? ' opacity-50' : ''}`}
                     data-testid={`memory-item-${memory.id}`}
                   >
                     <div className="flex-1 min-w-0 space-y-1">
@@ -111,6 +113,15 @@ function MemoryGroupList({ memories, deleting, onDelete, emptyLabel }: MemoryLis
                             Public
                           </Badge>
                         )}
+                        {memory.priority === 'low' && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] h-5 shrink-0 text-muted-foreground"
+                            data-testid={`deprioritized-badge-${memory.id}`}
+                          >
+                            Low priority
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-sm text-foreground break-words">
                         {memory.value}
@@ -122,21 +133,44 @@ function MemoryGroupList({ memories, deleting, onDelete, emptyLabel }: MemoryLis
                         Captured {formatDate(memory.createdAt)}
                       </p>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="shrink-0 text-muted-foreground hover:text-destructive"
-                      onClick={() => onDelete(memory)}
-                      disabled={deleting.has(memory.id)}
-                      aria-label={`Delete memory: ${memory.key}`}
-                      data-testid={`delete-memory-${memory.id}`}
-                    >
-                      {deleting.has(memory.id) ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
-                      )}
-                    </Button>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-foreground"
+                        onClick={() => onDeprioritize(memory)}
+                        disabled={deprioritizing.has(memory.id)}
+                        aria-label={
+                          memory.priority === 'low'
+                            ? `Restore priority: ${memory.key}`
+                            : `Deprioritize: ${memory.key}`
+                        }
+                        data-testid={`deprioritize-memory-${memory.id}`}
+                      >
+                        {deprioritizing.has(memory.id) ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : memory.priority === 'low' ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-destructive"
+                        onClick={() => onDelete(memory)}
+                        disabled={deleting.has(memory.id)}
+                        aria-label={`Delete memory: ${memory.key}`}
+                        data-testid={`delete-memory-${memory.id}`}
+                      >
+                        {deleting.has(memory.id) ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -152,9 +186,11 @@ interface MemoryTierTabsProps {
   memories: MemoryExportRecord[];
   deleting: Set<string>;
   onDelete: (memory: MemoryExportRecord) => void;
+  deprioritizing: Set<string>;
+  onDeprioritize: (memory: MemoryExportRecord) => void;
 }
 
-export function MemoryTierTabs({ memories, deleting, onDelete }: MemoryTierTabsProps) {
+export function MemoryTierTabs({ memories, deleting, onDelete, deprioritizing, onDeprioritize }: MemoryTierTabsProps) {
   const keyMemories = memories.filter((m) => getMemoryTier(m) === 'long_term');
   const sessionMemories = memories.filter((m) => getMemoryTier(m) === 'session');
 
@@ -187,6 +223,8 @@ export function MemoryTierTabs({ memories, deleting, onDelete }: MemoryTierTabsP
           memories={keyMemories}
           deleting={deleting}
           onDelete={onDelete}
+          deprioritizing={deprioritizing}
+          onDeprioritize={onDeprioritize}
           emptyLabel="No key memories yet. Profile facts will appear here."
         />
       </TabsContent>
@@ -199,6 +237,8 @@ export function MemoryTierTabs({ memories, deleting, onDelete }: MemoryTierTabsP
           memories={sessionMemories}
           deleting={deleting}
           onDelete={onDelete}
+          deprioritizing={deprioritizing}
+          onDeprioritize={onDeprioritize}
           emptyLabel="No session context memories yet."
         />
       </TabsContent>
