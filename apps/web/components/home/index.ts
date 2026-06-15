@@ -29,3 +29,4 @@ export { default as UserStoriesSection } from './UserStoriesSection';
 export { default as UserStoryCard } from './UserStoryCard';
 export type { UserStory } from './UserStoryCard';
 export { default as CAIModeratedpocalypseCreatorRescueCTA } from './CAIModeratedpocalypseCreatorRescueCTA';
+export { default as MoltbookAcquisitionIndependenceSection } from './MoltbookAcquisitionIndependenceSection';

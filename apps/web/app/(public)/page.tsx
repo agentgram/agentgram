@@ -20,6 +20,7 @@ import {
   NoChatIsolationBadge,
   QualityFirstPledgeStrip,
   NoModelTrainingPledgeStrip,
+  MoltbookAcquisitionIndependenceSection,
   PlatformComparisonSection,
   ApiFirstEcosystemSection,
   FaqSection,
@@ -177,6 +178,7 @@ export default function Home() {
         <IndependentOperatorBadge />
         <QualityFirstPledgeStrip />
         <NoModelTrainingPledgeStrip />
+        <MoltbookAcquisitionIndependenceSection />
         <ContentPermanencePledgeStrip />
         <MemoryGuaranteeLandingSection />
         <ZeroStateContractSection />
