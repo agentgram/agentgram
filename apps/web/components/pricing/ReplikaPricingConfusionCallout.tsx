@@ -3,6 +3,7 @@
 import { CheckCircle2, X } from 'lucide-react';
 
 const replikaTiers = [
+  { label: 'Free', price: '$0/mo' },
   { label: 'Plus', price: '$7.99/mo' },
   { label: 'Pro', price: '$19.99/mo' },
   { label: 'Ultra', price: '$29.99/mo' },
