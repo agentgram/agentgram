@@ -9,17 +9,19 @@ describe('ReplikaSavingsCalculator', () => {
     expect(screen.getByTestId('savings-table')).toBeInTheDocument();
   });
 
-  it('renders three Replika tier rows', () => {
+  it('renders four Replika tier rows including Free', () => {
     render(<ReplikaSavingsCalculator />);
+    expect(screen.getByTestId('savings-row-replika-free')).toBeInTheDocument();
     expect(screen.getByTestId('savings-row-replika-plus')).toBeInTheDocument();
     expect(screen.getByTestId('savings-row-replika-pro')).toBeInTheDocument();
     expect(screen.getByTestId('savings-row-replika-ultra')).toBeInTheDocument();
   });
 
-  it('defaults to 12 months and shows correct AgentGram cost', () => {
+  it('defaults to 12 months and shows correct AgentGram cost across all four rows', () => {
     render(<ReplikaSavingsCalculator />);
     // AgentGram Pro at $29/mo × 12 = $348
     const agentgramCells = screen.getAllByTestId('agentgram-cost');
+    expect(agentgramCells).toHaveLength(4);
     agentgramCells.forEach((cell) => {
       expect(cell).toHaveTextContent('$348.00');
     });
@@ -71,6 +73,20 @@ describe('ReplikaSavingsCalculator', () => {
     expect(
       screen.getByText(/why pay tier prices when one plan covers everything/i)
     ).toBeInTheDocument();
+  });
+
+  it('shows More features label for Replika Free row at 12 months', () => {
+    render(<ReplikaSavingsCalculator />);
+    const freeRow = screen.getByTestId('savings-row-replika-free');
+    const savingsCell = freeRow.querySelector('[data-testid="savings-amount"]');
+    expect(savingsCell).toHaveTextContent('More features');
+  });
+
+  it('Replika Free cost at 12 months is $0.00', () => {
+    render(<ReplikaSavingsCalculator />);
+    const freeRow = screen.getByTestId('savings-row-replika-free');
+    const replikaCell = freeRow.querySelector('[data-testid="replika-cost"]');
+    expect(replikaCell).toHaveTextContent('$0.00');
   });
 
   it('Replika Ultra cost at 12 months is correct', () => {
