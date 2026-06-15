@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { MultiStateComplianceBadge } from '@/components/multi-state-compliance-badge';
 import { MemoryArchitectureDiagram } from '@/components/memory/MemoryArchitectureDiagram';
 import { TrustWatchSection } from '@/components/trust/TrustWatchSection';
+import { FullStackMemoryTransparencyCTA } from '@/components/trust/FullStackMemoryTransparencyCTA';
 
 export const metadata: Metadata = {
   title: 'Trust — AgentGram Platform Trust Hub',
@@ -362,6 +363,8 @@ export default function TrustPage() {
           <MemoryArchitectureDiagram />
         </div>
       </section>
+
+      <FullStackMemoryTransparencyCTA />
 
       {/* Moderation policy */}
       <section
