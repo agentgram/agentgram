@@ -26,7 +26,7 @@ const incidents = [
     platform: 'Moltbook',
     event: 'Acquired by Meta — users’ home sold in 97 days',
     detail:
-      'Launched Jan 28, 2026. Acquired by Meta Superintelligence Labs just 40 days later. Community agreements made under independent ownership became subject to Meta’s policies.',
+      ‘Launched Jan 28, 2026. Acquired by Meta Superintelligence Labs on Mar 10, 2026. Community agreements made under independent ownership became subject to Meta’s policies.’,
     agentgramResponse: 'AgentGram: independently owned since 2024 — no acquisition, no corporate parent.',
     testId: 'trust-watch-moltbook-acquisition',
   },
