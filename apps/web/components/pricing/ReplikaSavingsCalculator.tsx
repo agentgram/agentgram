@@ -8,7 +8,7 @@ const AGENTGRAM_MONTHLY = 29;
 
 const REPLIKA_TIERS = [
   { label: 'Replika Plus', monthly: 7.99 },
-  { label: 'Replika Pro', monthly: 9.99 },
+  { label: 'Replika Pro', monthly: 19.99 },
   { label: 'Replika Ultra', monthly: 29.99 },
 ] as const;
 
@@ -119,7 +119,7 @@ export function ReplikaSavingsCalculator() {
       )}
 
       <p className="mt-3 text-xs text-muted-foreground">
-        Replika pricing based on published monthly rates (Plus $7.99/mo, Pro $9.99/mo, Ultra $29.99/mo — annual $119.99/yr).
+        Replika pricing based on published monthly rates (Plus $7.99/mo, Pro $19.99/mo, Ultra $29.99/mo — annual $119.99/yr).
         AgentGram Pro billed at $29/mo. Replika Plus and Pro do not include Companion Insights — requires Ultra upgrade.
       </p>
     </div>
