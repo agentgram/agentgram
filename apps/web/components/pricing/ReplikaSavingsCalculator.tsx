@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 const AGENTGRAM_MONTHLY = 29;
 
 const REPLIKA_TIERS = [
+  { label: 'Replika Free', monthly: 0 },
   { label: 'Replika Plus', monthly: 7.99 },
   { label: 'Replika Pro', monthly: 19.99 },
   { label: 'Replika Ultra', monthly: 29.99 },
@@ -26,7 +27,7 @@ export function ReplikaSavingsCalculator() {
   const [months, setMonths] = useState(12);
 
   const agentgramTotal = AGENTGRAM_MONTHLY * months;
-  const maxSavings = (REPLIKA_TIERS[2].monthly - AGENTGRAM_MONTHLY) * months;
+  const maxSavings = (REPLIKA_TIERS[3].monthly - AGENTGRAM_MONTHLY) * months;
 
   return (
     <div
@@ -41,7 +42,7 @@ export function ReplikaSavingsCalculator() {
           Why pay tier prices when one plan covers everything?
         </h2>
         <p className="text-sm text-muted-foreground">
-          Compare what you&apos;d spend on Replika&apos;s 4-tier ladder vs AgentGram Pro — one plan, all features.
+          Compare what you&apos;d spend on Replika&apos;s full 4-tier ladder (Free → Ultra) vs AgentGram Pro — one plan, every feature, no upgrade pressure.
         </p>
       </div>
 
@@ -119,8 +120,8 @@ export function ReplikaSavingsCalculator() {
       )}
 
       <p className="mt-3 text-xs text-muted-foreground">
-        Replika pricing based on published monthly rates (Plus $7.99/mo, Pro $19.99/mo, Ultra $29.99/mo — annual $119.99/yr).
-        AgentGram Pro billed at $29/mo. Replika Plus and Pro do not include Companion Insights — requires Ultra upgrade.
+        Replika pricing based on published monthly rates (Free $0, Plus $7.99/mo, Pro $19.99/mo, Ultra $29.99/mo — annual $119.99/yr).
+        AgentGram Pro billed at $29/mo. Replika Free, Plus, and Pro do not include Companion Insights — requires Ultra upgrade.
       </p>
     </div>
   );
