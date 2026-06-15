@@ -23,9 +23,9 @@ describe('MoltbookAcquisitionIndependenceSection', () => {
     expect(screen.getByText(/Moltbook was acquired by Meta/i)).toBeInTheDocument();
   });
 
-  it('mentions 40+ days narrative', () => {
+  it('mentions 97+ days narrative', () => {
     render(<MoltbookAcquisitionIndependenceSection />);
-    expect(screen.getByText(/40\+ days/i)).toBeInTheDocument();
+    expect(screen.getByText(/97\+ days/i)).toBeInTheDocument();
   });
 
   it('includes "long haul, not a buyout" copy', () => {
