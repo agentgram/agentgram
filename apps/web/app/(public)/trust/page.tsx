@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { MultiStateComplianceBadge } from '@/components/multi-state-compliance-badge';
 import { MemoryArchitectureDiagram } from '@/components/memory/MemoryArchitectureDiagram';
+import { TrustWatchSection } from '@/components/trust/TrustWatchSection';
 
 export const metadata: Metadata = {
   title: 'Trust — AgentGram Platform Trust Hub',
@@ -420,6 +421,9 @@ export default function TrustPage() {
           </div>
         </div>
       </section>
+
+      {/* Trust Watch */}
+      <TrustWatchSection />
 
       {/* CTA */}
       <section
