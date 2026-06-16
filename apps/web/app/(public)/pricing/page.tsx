@@ -23,6 +23,7 @@ import FreeToStartStrip from '@/components/home/FreeToStartStrip';
 import { AvatarConsistencyGuaranteeStrip, AvatarConsistencyComparisonGallery } from '@/components/avatar-consistency-guarantee';
 import { FreeTrial7DayCTA } from '@/components/free-trial-cta';
 import { RepetitionFreeMemoryBadge } from '@/components/repetition-free-memory-badge';
+import { MemoryIntegrityBadge } from '@/components/shared/MemoryIntegrityBadge';
 
 function getPlans(billingEnabled: boolean) {
   return [
@@ -478,6 +479,15 @@ export default function PricingPage() {
               Always-on
             </span>
           </div>
+        </div>
+      </section>
+
+      <section
+        className="container pb-10"
+        data-testid="pricing-memory-integrity-section"
+      >
+        <div className="mx-auto max-w-6xl">
+          <MemoryIntegrityBadge variant="full" />
         </div>
       </section>
 
