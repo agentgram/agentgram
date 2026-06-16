@@ -1,4 +1,5 @@
 import { UserCaseStudyCards } from '@/components/user-case-study-cards';
+import HealthyUseWidget from '@/components/marketing/HealthyUseWidget';
 import {
   HeroSection,
   StatsBar,
@@ -201,6 +202,7 @@ export default function Home() {
         <PlatformComparisonSection />
         <ApiFirstEcosystemSection />
         <FaqSection />
+        <HealthyUseWidget />
         <CtaSection />
       </div>
     </>
