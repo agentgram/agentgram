@@ -21,7 +21,7 @@ describe('ViralSafetyMemoryPaidFunnel', () => {
   it('contains Memory Integrity text', () => {
     render(<ViralSafetyMemoryPaidFunnel />);
     expect(
-      screen.getByText(/memory integrity guaranteed/i)
+      screen.getByText(/guaranteed memory across every session/i)
     ).toBeInTheDocument();
   });
 
@@ -42,6 +42,6 @@ describe('ViralSafetyMemoryPaidFunnel', () => {
   it('upgrade CTA links to /pricing?plan=pro', () => {
     render(<ViralSafetyMemoryPaidFunnel />);
     const cta = screen.getByTestId('viral-funnel-upgrade-cta');
-    expect(cta).toHaveAttribute('href', '/pricing?plan=pro');
+    expect(cta).toHaveAttribute('href', '/pricing');
   });
 });

@@ -80,7 +80,7 @@ export function ViralSafetyMemoryPaidFunnel() {
         {/* Bottom CTA */}
         <div className="mt-8 text-center">
           <Link
-            href="/pricing?plan=pro"
+            href="/pricing"
             className="inline-flex items-center gap-2 rounded-full bg-violet-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-500/20 hover:bg-violet-700"
             data-testid="viral-funnel-upgrade-cta"
           >
