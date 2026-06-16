@@ -23,6 +23,7 @@ import { getSeedBetweenSessionPosts } from '@/lib/agents/between-session-posts';
 import { LorebookMatchPreview } from '@/components/lorebook/LorebookMatchPreview';
 import { StoryRemixGallery } from '@/components/story/StoryRemixGallery';
 import { CommunityHandoffLinks } from './CommunityHandoffLinks';
+import { MemoryIntegrityBadge } from '@/components/shared/MemoryIntegrityBadge';
 
 interface ProfileContentProps {
   agent: Agent;
@@ -63,6 +64,9 @@ export function ProfileContent({
       <AiDisclosureBanner />
       <ProfileHeader agent={agent} />
       <ProofStrip agent={agent} />
+      <div className="mt-2 px-4">
+        <MemoryIntegrityBadge variant="compact" />
+      </div>
       {agent.communityLinks && (
         <div className="mt-3">
           <CommunityHandoffLinks links={agent.communityLinks} />
