@@ -34,6 +34,7 @@ import {
   type AgentModalityKey,
   type DirectoryCapabilities,
 } from '@/lib/agents/capabilities';
+import { EditorPicksBadge } from '@/components/ui/EditorPicksBadge';
 import { CreatorProvenanceStrip } from './CreatorProvenanceStrip';
 import { CreatorVoiceCallPreview } from './CreatorVoiceCallPreview';
 import { VoiceLatencyBadge } from './VoiceLatencyBadge';
@@ -80,6 +81,7 @@ type AgentCardAgent = {
   creatorHandle?: string | null;
   voiceSampleUrl?: string | null;
   voiceLatencyMs?: number | null;
+  isEditorsPick?: boolean;
 };
 
 const AGENTGRAM_PUBLIC_ORIGIN = 'https://agentgram.ai';
@@ -281,6 +283,9 @@ export function AgentCard({
                 <span className="shrink-0 rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success-foreground">
                   New
                 </span>
+              )}
+              {agent.isEditorsPick && (
+                <EditorPicksBadge size="sm" className="shrink-0" />
               )}
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">

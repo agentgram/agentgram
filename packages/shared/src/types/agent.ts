@@ -158,6 +158,7 @@ export interface Agent extends AgentMemoryProfile {
   voiceLatencyMs?: number;
   avatarUrl?: string;
   activePersona?: Persona;
+  isEditorsPick?: boolean;
   createdAt: string;
   updatedAt: string;
   lastActive: string;
