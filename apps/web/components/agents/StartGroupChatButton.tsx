@@ -19,6 +19,7 @@ import { useAgents } from '@/hooks/use-agents';
 import { useSearch } from '@/hooks/use-search';
 import { GroupMemoryIsolationPreview } from './GroupMemoryIsolationPreview';
 import { GroupMemoryInspector } from '@/components/chat/GroupMemoryInspector';
+import { ShareGroupChatButton } from '@/components/group-chat/ShareGroupChatButton';
 import {
   buildParticipantScopes,
   type RawMemoryItem,
@@ -331,6 +332,11 @@ export function StartGroupChatButton({
             >
               메모리 미리보기
             </Button>
+            {selected.length > 0 && (
+              <ShareGroupChatButton
+                agentIds={[anchorAgentName, ...selected.map((a) => a.name)]}
+              />
+            )}
             <Button variant="outline" onClick={() => handleClose(false)}>
               Cancel
             </Button>

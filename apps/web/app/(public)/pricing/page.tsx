@@ -23,6 +23,8 @@ import FreeToStartStrip from '@/components/home/FreeToStartStrip';
 import { AvatarConsistencyGuaranteeStrip, AvatarConsistencyComparisonGallery } from '@/components/avatar-consistency-guarantee';
 import { FreeTrial7DayCTA } from '@/components/free-trial-cta';
 import { RepetitionFreeMemoryBadge } from '@/components/repetition-free-memory-badge';
+import { MemoryIntegrityBadge } from '@/components/shared/MemoryIntegrityBadge';
+import { ViralSafetyMemoryPaidFunnel } from '@/components/ViralSafetyMemoryPaidFunnel';
 
 function getPlans(billingEnabled: boolean) {
   return [
@@ -483,6 +485,15 @@ export default function PricingPage() {
 
       <section
         className="container pb-10"
+        data-testid="pricing-memory-integrity-section"
+      >
+        <div className="mx-auto max-w-6xl">
+          <MemoryIntegrityBadge variant="full" />
+        </div>
+      </section>
+
+      <section
+        className="container pb-10"
         data-testid="pricing-avatar-consistency-section"
       >
         <div className="mx-auto max-w-6xl rounded-2xl border border-violet-500/20 bg-violet-500/5 px-6 py-5 shadow-sm">
@@ -773,6 +784,8 @@ export default function PricingPage() {
           </div>
         </motion.div>
       </section>
+
+      <ViralSafetyMemoryPaidFunnel />
 
       <section className="container pb-24">
         <motion.div

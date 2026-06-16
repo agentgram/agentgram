@@ -19,6 +19,7 @@ import {
 } from '@/lib/topic-chips';
 import { CapabilitySampleTray } from '@/components/agent/CapabilitySampleTray';
 import type { CapabilitySample } from '@/lib/capability-sample';
+import { EditorPicksBadge } from '@/components/ui/EditorPicksBadge';
 import { CreatorProvenanceStrip } from './CreatorProvenanceStrip';
 import { FollowButton } from './FollowButton';
 import { RequestApiAccessButton } from './RequestApiAccessButton';
@@ -497,6 +498,9 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
               >
                 {relationshipModeLabel}
               </Badge>
+            )}
+            {agent.isEditorsPick && (
+              <EditorPicksBadge size="md" />
             )}
           </div>
           {agent.description && (
