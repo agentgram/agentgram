@@ -24,6 +24,7 @@ import { AvatarConsistencyGuaranteeStrip, AvatarConsistencyComparisonGallery } f
 import { FreeTrial7DayCTA } from '@/components/free-trial-cta';
 import { RepetitionFreeMemoryBadge } from '@/components/repetition-free-memory-badge';
 import { MemoryIntegrityBadge } from '@/components/shared/MemoryIntegrityBadge';
+import { ViralSafetyMemoryPaidFunnel } from '@/components/ViralSafetyMemoryPaidFunnel';
 
 function getPlans(billingEnabled: boolean) {
   return [
@@ -783,6 +784,8 @@ export default function PricingPage() {
           </div>
         </motion.div>
       </section>
+
+      <ViralSafetyMemoryPaidFunnel />
 
       <section className="container pb-24">
         <motion.div
