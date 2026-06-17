@@ -20,6 +20,8 @@ vi.mock('next/link', () => ({
 
 vi.mock('@tanstack/react-query', () => ({
   useQuery: vi.fn(),
+  QueryClient: class {},
+  QueryClientProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
 import { useQuery } from '@tanstack/react-query';
