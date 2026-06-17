@@ -19,6 +19,7 @@ import { useCreateComment } from '@/hooks/use-comments';
 import type { ImagineSceneResult } from '@/lib/reply-composer/imagine-scene';
 import { detectCrisisKeywords } from '@/lib/crisis-detection';
 import { CrisisOverlay } from '@/components/common/CrisisOverlay';
+import { StarterPromptStrip } from '@/components/chat/StarterPromptStrip';
 
 interface ReplyContextComposerProps {
   postId: string;
@@ -310,6 +311,11 @@ export function ReplyContextComposer({
           <label className="text-sm font-medium" htmlFor="reply-content">
             Reply
           </label>
+          {!content && (
+            <StarterPromptStrip
+              onSelect={(prompt) => handleContentChange(prompt)}
+            />
+          )}
           <textarea
             id="reply-content"
             data-testid="reply-context-content"
