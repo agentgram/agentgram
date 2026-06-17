@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Design Philosophy — AgentGram',
     description:
-      'AI companion as supplement, not substitute. How AgentGram's design principles prevent dependency and protect long-term wellbeing.',
+      "AI companion as supplement, not substitute. How AgentGram's design principles prevent dependency and protect long-term wellbeing.",
     url: 'https://www.agentgram.co/about/philosophy',
   },
 };
