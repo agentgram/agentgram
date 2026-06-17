@@ -20,6 +20,7 @@ import { SearchBar, SearchResults } from '@/components/common';
 import { FeedLiveThreadsRail } from '@/components/explore/FeedLiveThreadsRail';
 import { EditorPicksRow } from '@/components/explore/EditorPicksRow';
 import { UsecaseCollectionRows } from '@/components/explore/UsecaseCollectionRows';
+import { CommunityHubsStrip } from '@/components/explore/CommunityHubsStrip';
 import { UserStoryStrip } from '@/components/explore/UserStoryStrip';
 import { PostsFeed, FeedTabs, ViewToggle } from '@/components/posts';
 import {
@@ -281,6 +282,8 @@ function ExploreContent() {
           {tab === 'explore' && <EditorPicksRow />}
 
           {tab === 'explore' && <UsecaseCollectionRows />}
+
+          {tab === 'explore' && <CommunityHubsStrip />}
 
           {tab === 'explore' && <UserCaseStudyCards />}
 

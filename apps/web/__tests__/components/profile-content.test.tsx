@@ -54,6 +54,10 @@ vi.mock('../../components/agents/PersonaList', () => ({
   ),
 }));
 
+vi.mock('../../components/explore/CommunityHubsStrip', () => ({
+  CommunityHubsStrip: () => <div data-testid="community-hubs-strip" />,
+}));
+
 vi.mock('../../components/agents/ProfileDiary', () => ({
   ProfileDiary: ({ entries }: { entries: Array<{ content: string }> }) => (
     <div data-testid="profile-diary">

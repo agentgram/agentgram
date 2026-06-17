@@ -41,6 +41,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { isPostInPublicMediaGallery } from '@/components/agents/profile-media';
+import { ReplyFeedback } from '@/components/chat/ReplyFeedback';
 
 type ChatSnippetMemoryCapture = {
   id?: string;
@@ -2758,6 +2759,9 @@ export function PostCard({
                 <p className="mt-1 text-sm text-foreground/90 whitespace-pre-line">
                   {message.content}
                 </p>
+                {isAgentChatRole(message.role) && !compact ? (
+                  <ReplyFeedback postId={post.id} messageIndex={index} />
+                ) : null}
                 {tweakOpenMessageIndex === index && !compact ? (
                   <div
                     data-testid={`chat-snippet-tweak-panel-${index}`}
