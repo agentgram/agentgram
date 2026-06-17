@@ -19,6 +19,7 @@ import {
 } from '@/lib/topic-chips';
 import { CapabilitySampleTray } from '@/components/agent/CapabilitySampleTray';
 import type { CapabilitySample } from '@/lib/capability-sample';
+import { MemoryUsageMeter, type MemoryUsageData } from '@/components/memory/MemoryUsageMeter';
 import { EditorPicksBadge } from '@/components/ui/EditorPicksBadge';
 import { CreatorProvenanceStrip } from './CreatorProvenanceStrip';
 import { FollowButton } from './FollowButton';
@@ -36,6 +37,7 @@ import { RelationshipAnniversaryCard, getMilestone } from '@/components/chat/Rel
 
 interface ProfileHeaderProps {
   agent: Agent;
+  memoryUsage?: MemoryUsageData;
 }
 
 const GROUP_CHAT_STARTER_MAX_PARTICIPANTS = 3;
@@ -273,7 +275,7 @@ function buildOnboardHref(agent: Agent, starter?: 'group_chat') {
   return `/dashboard/onboard?${params.toString()}`;
 }
 
-export function ProfileHeader({ agent }: ProfileHeaderProps) {
+export function ProfileHeader({ agent, memoryUsage }: ProfileHeaderProps) {
   const activeDays = getActiveDaysFromDate(agent.createdAt);
   const [anniversaryDismissed, setAnniversaryDismissed] = useState(false);
   const capabilitySummary = agent.capabilitySummary?.trim();
@@ -465,6 +467,14 @@ export function ProfileHeader({ agent }: ProfileHeaderProps) {
             </div>
           )}
         </div>
+
+        {memoryUsage && (
+          <MemoryUsageMeter
+            data={memoryUsage}
+            variant="full"
+            className="w-full max-w-sm"
+          />
+        )}
 
         <RelationshipLongevityIndicator
           activeDays={activeDays}

@@ -19,6 +19,7 @@ import { useCreateComment } from '@/hooks/use-comments';
 import type { ImagineSceneResult } from '@/lib/reply-composer/imagine-scene';
 import { detectCrisisKeywords } from '@/lib/crisis-detection';
 import { CrisisOverlay } from '@/components/common/CrisisOverlay';
+import { MemoryUsageMeter, type MemoryUsageData } from '@/components/memory/MemoryUsageMeter';
 import { StarterPromptStrip } from '@/components/chat/StarterPromptStrip';
 import { AnchorControlsPreset } from '@/components/image-gen/AnchorControlsPreset';
 import type { AnchorControlsState } from '@/lib/image-gen/anchor-controls';
@@ -37,6 +38,7 @@ interface ReplyContextComposerProps {
     authorName?: string;
     messages?: ChatSnippetMessage[];
   };
+  memoryUsage?: MemoryUsageData;
 }
 
 function formatContextHost(value: string) {
@@ -50,6 +52,7 @@ function formatContextHost(value: string) {
 export function ReplyContextComposer({
   postId,
   source,
+  memoryUsage,
 }: ReplyContextComposerProps) {
   const [apiKey, setApiKey] = useState('');
   const [content, setContent] = useState('');
@@ -566,6 +569,13 @@ export function ReplyContextComposer({
             </div>
           )}
         </div>
+
+        {memoryUsage && (
+          <MemoryUsageMeter
+            data={memoryUsage}
+            variant="compact"
+          />
+        )}
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-muted-foreground">
