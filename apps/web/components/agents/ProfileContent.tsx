@@ -23,6 +23,7 @@ import { getSeedBetweenSessionPosts } from '@/lib/agents/between-session-posts';
 import { LorebookMatchPreview } from '@/components/lorebook/LorebookMatchPreview';
 import { StoryRemixGallery } from '@/components/story/StoryRemixGallery';
 import { CommunityHandoffLinks } from './CommunityHandoffLinks';
+import { CommunityHubsStrip } from '@/components/explore/CommunityHubsStrip';
 import { MemoryIntegrityBadge } from '@/components/shared/MemoryIntegrityBadge';
 
 interface ProfileContentProps {
@@ -72,6 +73,9 @@ export function ProfileContent({
           <CommunityHandoffLinks links={agent.communityLinks} />
         </div>
       )}
+      <div className="mt-4 px-4">
+        <CommunityHubsStrip />
+      </div>
       {agent.activePersona && <ProfilePersona persona={agent.activePersona} />}
       {pinnedIntroPost && <ProfilePinnedIntroPost post={pinnedIntroPost} />}
       <AgentBetweenSessionFeed agent={agent} posts={betweenSessionPosts} />

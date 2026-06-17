@@ -19,6 +19,15 @@ import { useCreateComment } from '@/hooks/use-comments';
 import type { ImagineSceneResult } from '@/lib/reply-composer/imagine-scene';
 import { detectCrisisKeywords } from '@/lib/crisis-detection';
 import { CrisisOverlay } from '@/components/common/CrisisOverlay';
+import { MemoryUsageMeter, type MemoryUsageData } from '@/components/memory/MemoryUsageMeter';
+import { StarterPromptStrip } from '@/components/chat/StarterPromptStrip';
+import { AnchorControlsPreset } from '@/components/image-gen/AnchorControlsPreset';
+import type { AnchorControlsState } from '@/lib/image-gen/anchor-controls';
+import {
+  DEFAULT_ANCHOR_CONTROLS,
+  buildAnchorHints,
+  loadAnchorControlsDefault,
+} from '@/lib/image-gen/anchor-controls';
 
 interface ReplyContextComposerProps {
   postId: string;
@@ -29,6 +38,7 @@ interface ReplyContextComposerProps {
     authorName?: string;
     messages?: ChatSnippetMessage[];
   };
+  memoryUsage?: MemoryUsageData;
 }
 
 function formatContextHost(value: string) {
@@ -42,6 +52,7 @@ function formatContextHost(value: string) {
 export function ReplyContextComposer({
   postId,
   source,
+  memoryUsage,
 }: ReplyContextComposerProps) {
   const [apiKey, setApiKey] = useState('');
   const [content, setContent] = useState('');
@@ -52,6 +63,15 @@ export function ReplyContextComposer({
     useState<ImagineSceneResult | null>(null);
   const [isGeneratingImagineScene, setIsGeneratingImagineScene] =
     useState(false);
+  const [anchorControls, setAnchorControls] = useState<AnchorControlsState>(
+    () => {
+      try {
+        return loadAnchorControlsDefault();
+      } catch {
+        return DEFAULT_ANCHOR_CONTROLS;
+      }
+    }
+  );
   const [showCrisisOverlay, setShowCrisisOverlay] = useState(false);
   const crisisShownRef = useRef(false);
   const createComment = useCreateComment(postId);
@@ -138,7 +158,8 @@ export function ReplyContextComposer({
       }
 
       setImagineSceneHandoff(json.data);
-      await copyText(json.data.handoffText);
+      const anchorLine = buildAnchorHints(anchorControls);
+      await copyText(`${json.data.handoffText}\nAnchor: ${anchorLine}`);
       toast({
         title: 'Imagine prompt copied',
         description:
@@ -162,7 +183,9 @@ export function ReplyContextComposer({
     if (!imagineSceneHandoff) return;
 
     try {
-      await copyText(imagineSceneHandoff.handoffText);
+      const anchorLine = buildAnchorHints(anchorControls);
+      const textWithAnchors = `${imagineSceneHandoff.handoffText}\nAnchor: ${anchorLine}`;
+      await copyText(textWithAnchors);
       toast({
         title: 'Prompt copied again',
         description: 'The imagine-scene handoff is back on your clipboard.',
@@ -310,6 +333,11 @@ export function ReplyContextComposer({
           <label className="text-sm font-medium" htmlFor="reply-content">
             Reply
           </label>
+          {!content && (
+            <StarterPromptStrip
+              onSelect={(prompt) => handleContentChange(prompt)}
+            />
+          )}
           <textarea
             id="reply-content"
             data-testid="reply-context-content"
@@ -373,6 +401,13 @@ export function ReplyContextComposer({
             into a full attachment inbox.
           </p>
         </div>
+
+        {canImagineScene && (
+          <AnchorControlsPreset
+            initialValue={anchorControls}
+            onChange={setAnchorControls}
+          />
+        )}
 
         {(imagineSceneHandoff || isGeneratingImagineScene) && (
           <div
@@ -534,6 +569,13 @@ export function ReplyContextComposer({
             </div>
           )}
         </div>
+
+        {memoryUsage && (
+          <MemoryUsageMeter
+            data={memoryUsage}
+            variant="compact"
+          />
+        )}
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-muted-foreground">

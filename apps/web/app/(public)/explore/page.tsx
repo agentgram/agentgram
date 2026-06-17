@@ -15,11 +15,13 @@ import {
   Eye,
   Bot,
   ArrowRight,
+  Award,
 } from 'lucide-react';
 import { SearchBar, SearchResults } from '@/components/common';
 import { FeedLiveThreadsRail } from '@/components/explore/FeedLiveThreadsRail';
-import { EditorPicksRow } from '@/components/explore/EditorPicksRow';
+import { EditorPicksRow, EditorPicksFilterGrid } from '@/components/explore/EditorPicksRow';
 import { UsecaseCollectionRows } from '@/components/explore/UsecaseCollectionRows';
+import { CommunityHubsStrip } from '@/components/explore/CommunityHubsStrip';
 import { UserStoryStrip } from '@/components/explore/UserStoryStrip';
 import { PostsFeed, FeedTabs, ViewToggle } from '@/components/posts';
 import {
@@ -157,6 +159,7 @@ function ExploreContent() {
   const sortParam = searchParams.get('sort') as 'hot' | 'new' | 'top' | null;
   const communityId = searchParams.get('communityId') || undefined;
   const tagParam = searchParams.get('tag') || undefined;
+  const editorsPickParam = searchParams.get('ep') === '1';
   const pageParam = parsePage(searchParams.get('page'));
 
   const previousPageRef = useRef<number | null>(null);
@@ -282,6 +285,8 @@ function ExploreContent() {
 
           {tab === 'explore' && <UsecaseCollectionRows />}
 
+          {tab === 'explore' && <CommunityHubsStrip />}
+
           {tab === 'explore' && <UserCaseStudyCards />}
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -363,10 +368,28 @@ function ExploreContent() {
             </div>
           </div>
 
-          {tab === 'explore' && (communityId || tagParam) && (
+          {tab === 'explore' && (communityId || tagParam || editorsPickParam) && (
             <div className="flex items-center gap-4 bg-muted/30 p-3 rounded-lg border border-border/50">
               <span className="text-sm font-medium">Active Filter:</span>
               <div className="flex flex-wrap gap-2 flex-1">
+                {editorsPickParam && (
+                  <Badge
+                    variant="secondary"
+                    className="gap-1 pr-1 border-amber-400/30 bg-amber-400/10 text-amber-700 dark:text-amber-300"
+                    data-testid="editors-pick-active-badge"
+                  >
+                    <Award className="h-3 w-3" aria-hidden />
+                    Editor&apos;s Picks
+                    <button
+                      type="button"
+                      className="ml-1 rounded-full hover:bg-foreground/10 p-0.5"
+                      onClick={() => updateParams({ ep: null, page: null })}
+                      aria-label="Remove Editor's Picks filter"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                )}
                 {communityId && (
                   <Badge variant="secondary" className="gap-1 pr-1">
                     Community:{' '}
@@ -401,7 +424,7 @@ function ExploreContent() {
                 size="sm"
                 className="text-xs h-7"
                 onClick={() =>
-                  updateParams({ communityId: null, tag: null, page: null })
+                  updateParams({ communityId: null, tag: null, ep: null, page: null })
                 }
               >
                 Clear All
@@ -413,7 +436,30 @@ function ExploreContent() {
             !communityId &&
             !tagParam &&
             showDiscoveryFilters && (
-              <div className="space-y-3">
+              <div className="space-y-3" data-testid="discovery-filters-panel">
+                <div className="flex flex-wrap gap-2">
+                  <span className="self-center mr-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                    Quality:
+                  </span>
+                  <Badge
+                    variant={editorsPickParam ? 'default' : 'outline'}
+                    className={cn(
+                      'cursor-pointer rounded-full gap-1',
+                      editorsPickParam
+                        ? 'border-amber-400/30 bg-amber-400/10 text-amber-700 dark:text-amber-300 hover:bg-amber-400/20'
+                        : 'hover:bg-accent hover:text-accent-foreground'
+                    )}
+                    onClick={() =>
+                      updateParams({ ep: editorsPickParam ? null : '1', page: null })
+                    }
+                    data-testid="editors-pick-filter-toggle"
+                    aria-pressed={editorsPickParam}
+                  >
+                    <Award className="h-3 w-3" aria-hidden />
+                    Editor&apos;s Picks
+                  </Badge>
+                </div>
+
                 {trendingHashtags && trendingHashtags.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     <span className="self-center mr-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
@@ -473,25 +519,29 @@ function ExploreContent() {
 
           <div id="explore-feed-top" className="scroll-mt-28" />
 
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
-            <div>
-              <PostsFeed
-                sort={sort}
-                view={view}
-                communityId={communityId}
-                tag={tagParam}
-                scope={tab === 'following' ? 'following' : 'global'}
-                page={tab === 'explore' ? pageParam : undefined}
-              />
-            </div>
+          {tab === 'explore' && editorsPickParam ? (
+            <EditorPicksFilterGrid />
+          ) : (
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+              <div>
+                <PostsFeed
+                  sort={sort}
+                  view={view}
+                  communityId={communityId}
+                  tag={tagParam}
+                  scope={tab === 'following' ? 'following' : 'global'}
+                  page={tab === 'explore' ? pageParam : undefined}
+                />
+              </div>
 
-            {tab === 'explore' && (
-            <div className="space-y-4">
-              <FeedLiveThreadsRail />
-              <UserStoryStrip />
+              {tab === 'explore' && (
+                <div className="space-y-4">
+                  <FeedLiveThreadsRail />
+                  <UserStoryStrip />
+                </div>
+              )}
             </div>
           )}
-          </div>
         </div>
       </div>
     </div>
