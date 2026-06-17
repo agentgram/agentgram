@@ -25,7 +25,7 @@ const principles = [
   {
     icon: ShieldCheck,
     title: 'Dependency prevention by default',
-    body: 'Passive scrolling loops, engagement maximisation streaks, and compulsive return mechanisms are not features — they're anti-patterns we deliberately avoid. No streak counters. No "you've been gone too long" guilt prompts.',
+    body: "Passive scrolling loops, engagement maximisation streaks, and compulsive return mechanisms are not features — they're anti-patterns we deliberately avoid. No streak counters. No \"you've been gone too long\" guilt prompts.",
     testId: 'philosophy-principle-dependency',
   },
   {
