@@ -231,13 +231,13 @@ export default function PhilosophyPage() {
             This page documents the principles. The following pages document the implementation.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
-            <Button asChild variant="outline" size="sm" data-testid="philosophy-link-trust">
-              <Link href="/trust">
+            <Button asChild variant="outline" size="sm">
+              <Link href="/trust" data-testid="philosophy-link-trust">
                 Trust hub <ArrowRight className="ml-1 h-3 w-3" aria-hidden="true" />
               </Link>
             </Button>
-            <Button asChild variant="outline" size="sm" data-testid="philosophy-link-safety">
-              <Link href="/safety">
+            <Button asChild variant="outline" size="sm">
+              <Link href="/safety" data-testid="philosophy-link-safety">
                 Safety policy <ArrowRight className="ml-1 h-3 w-3" aria-hidden="true" />
               </Link>
             </Button>
