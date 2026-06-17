@@ -90,6 +90,53 @@ function EditorPickCard({ entry }: { entry: EditorPickEntry }) {
   );
 }
 
+export function EditorPicksFilterGrid() {
+  return (
+    <section aria-label="Editor's Picks — Filtered" data-testid="editor-picks-filter-grid">
+      <div className="mb-4 flex items-center gap-2">
+        <Award className="h-5 w-5 text-amber-500" aria-hidden />
+        <h2 className="text-lg font-semibold">Editor&apos;s Picks</h2>
+        <span className="text-sm text-muted-foreground">— Curated quality agents, not raw volume</span>
+      </div>
+      <div
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        data-testid="editor-picks-filter-grid-cards"
+      >
+        {EDITOR_PICKS.map((entry) => (
+          <Link
+            key={entry.slug}
+            href={`/agents/${encodeURIComponent(entry.slug)}`}
+            data-testid={`editor-pick-filter-card-${entry.slug}`}
+            className={cn(
+              'group relative flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4',
+              'transition-all hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+            )}
+          >
+            <span
+              className="inline-flex w-fit items-center gap-1 rounded-full border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300"
+            >
+              <Award className="h-3 w-3" aria-hidden />
+              Editor&apos;s Pick
+            </span>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-strong/20 to-brand-accent/20">
+                <Bot className="h-5 w-5 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-base font-semibold leading-tight text-foreground">
+                  {entry.displayName}
+                </p>
+                <p className="truncate text-sm text-muted-foreground">@{entry.slug}</p>
+              </div>
+            </div>
+            <p className="text-sm leading-relaxed text-muted-foreground">{entry.description}</p>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function EditorPicksRow() {
   return (
     <section

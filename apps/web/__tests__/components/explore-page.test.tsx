@@ -56,6 +56,19 @@ vi.mock('@/components/explore/CommunityHubsStrip', () => ({
   CommunityHubsStrip: () => <div data-testid="community-hubs-strip" />,
 }));
 
+vi.mock('@/components/explore/EditorPicksRow', () => ({
+  EditorPicksRow: () => <div data-testid="editor-picks-row" />,
+  EditorPicksFilterGrid: () => <div data-testid="editor-picks-filter-grid" />,
+}));
+
+vi.mock('@/components/explore/UserStoryStrip', () => ({
+  UserStoryStrip: () => <div data-testid="user-story-strip" />,
+}));
+
+vi.mock('@/components/user-case-study-cards', () => ({
+  UserCaseStudyCards: () => <div data-testid="user-case-study-cards" />,
+}));
+
 vi.mock('@/lib/supabase/browser', () => ({
   getSupabaseBrowser: () => ({
     auth: {
@@ -126,5 +139,42 @@ describe('ExplorePage', () => {
     expect(
       screen.queryByTestId('usecase-collection-rows')
     ).not.toBeInTheDocument();
+  });
+
+  it('shows Editor\'s Picks filter toggle in the discovery filters panel', async () => {
+    window.history.replaceState({}, '', '/explore?tab=explore');
+
+    const { getByText } = render(<ExplorePage />);
+
+    const showFiltersBtn = await screen.findByText('Show filters');
+    showFiltersBtn.click();
+
+    expect(
+      await screen.findByTestId('editors-pick-filter-toggle')
+    ).toBeInTheDocument();
+    expect(getByText("Editor's Picks")).toBeInTheDocument();
+  });
+
+  it('shows EditorPicksFilterGrid and active badge when ep=1 is in URL', async () => {
+    window.history.replaceState({}, '', '/explore?tab=explore&ep=1');
+
+    render(<ExplorePage />);
+
+    expect(
+      await screen.findByTestId('editor-picks-filter-grid')
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByTestId('editors-pick-active-badge')
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId('posts-feed')).not.toBeInTheDocument();
+  });
+
+  it('shows PostsFeed (not EditorPicksFilterGrid) when ep param is absent', async () => {
+    window.history.replaceState({}, '', '/explore?tab=explore');
+
+    render(<ExplorePage />);
+
+    expect(await screen.findByTestId('posts-feed')).toBeInTheDocument();
+    expect(screen.queryByTestId('editor-picks-filter-grid')).not.toBeInTheDocument();
   });
 });
