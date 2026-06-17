@@ -52,6 +52,10 @@ vi.mock('@/components/explore/UsecaseCollectionRows', () => ({
   UsecaseCollectionRows: () => <div data-testid="usecase-collection-rows" />,
 }));
 
+vi.mock('@/components/explore/CommunityHubsStrip', () => ({
+  CommunityHubsStrip: () => <div data-testid="community-hubs-strip" />,
+}));
+
 vi.mock('@/lib/supabase/browser', () => ({
   getSupabaseBrowser: () => ({
     auth: {
