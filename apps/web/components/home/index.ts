@@ -30,3 +30,5 @@ export { default as UserStoryCard } from './UserStoryCard';
 export type { UserStory } from './UserStoryCard';
 export { default as CAIModeratedpocalypseCreatorRescueCTA } from './CAIModeratedpocalypseCreatorRescueCTA';
 export { default as MoltbookAcquisitionIndependenceSection } from './MoltbookAcquisitionIndependenceSection';
+export { default as StoryContinuityResumeChip } from './StoryContinuityResumeChip';
+export type { LastStorySession } from './StoryContinuityResumeChip';

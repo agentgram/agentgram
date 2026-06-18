@@ -11,6 +11,7 @@ import {
   ProactiveControlsForm,
   TimeBudgetPanel,
 } from '@/components/dashboard';
+import MemoryModeDisclosureCard from '@/components/memory/MemoryModeDisclosureCard';
 import { CompanionInsightsPanel } from '@/components/companion-insights-panel';
 import type { UserProfile } from '@/lib/minor-safe-mode';
 import {
@@ -310,6 +311,9 @@ export default async function SettingsPage() {
                     initialSnapshot: settings.initialSnapshot,
                   }}
                 />
+                {settings.developerPlan === 'free' && (
+                  <MemoryModeDisclosureCard />
+                )}
                 <AgentPinnedFactsCard
                   settings={{
                     agentId: settings.agentId,
