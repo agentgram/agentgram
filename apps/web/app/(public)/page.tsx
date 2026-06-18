@@ -29,9 +29,11 @@ import {
   FreeToStartStrip,
   UserStoriesSection,
   CAIModeratedpocalypseCreatorRescueCTA,
+  StoryContinuityResumeChip,
 } from '@/components/home';
 import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
 import CompanionScenarioCards from '@/components/companion-scenario-cards';
+import MemoryModeDisclosureCard from '@/components/memory/MemoryModeDisclosureCard';
 
 const structuredData = {
   '@context': 'https://schema.org',
@@ -189,6 +191,21 @@ export default function Home() {
           <UserCaseStudyCards />
         </div>
         <CompanionScenarioCards />
+        <section className="py-8 border-t border-border" data-testid="story-resume-home-section">
+          <div className="container max-w-xl">
+            <p className="mb-3 text-sm font-medium text-muted-foreground text-center">
+              Pick up exactly where you left off
+            </p>
+            <StoryContinuityResumeChip
+              lastSession={{
+                worldName: 'The Silver Realm Chronicles',
+                agentName: 'Aria — your story companion',
+                resumeHref: '/auth/login',
+                chapterLabel: 'Chapter 12 · The Convergence',
+              }}
+            />
+          </div>
+        </section>
         <HowItWorksSection />
         <EcosystemSection />
         <CompetitorMigrationSection />
@@ -197,6 +214,11 @@ export default function Home() {
         <CAIChatStyleRescueCTA />
         <CAIRegionalCapEscapeCTA />
         <KindroidJuneMigrationCTA />
+        <section className="py-8 border-t border-border" data-testid="memory-disclosure-home-section">
+          <div className="container max-w-2xl">
+            <MemoryModeDisclosureCard />
+          </div>
+        </section>
         <NomiMigrationCTA />
         <NoChatIsolationBadge />
         <PlatformComparisonSection />
