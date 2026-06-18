@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { Brain, MapIcon } from 'lucide-react';
 import { FadeIn } from '@/components/dashboard';
 import { MemoryMindMapPanel } from '@/components/dashboard/MemoryMindMapPanel';
+import { MemoryFreshnessTimeline, type MemoryFact } from '@/components/memory/MemoryFreshnessTimeline';
 import {
   Card,
   CardContent,
@@ -47,6 +48,23 @@ export default async function MemoryMapPage() {
     .order('created_at', { ascending: false });
 
   const agentList = agents ?? [];
+  const agentIds = agentList.map((a) => a.id);
+
+  const { data: rawFacts } =
+    agentIds.length > 0
+      ? await supabase
+          .from('agent_memories')
+          .select('id, key, value, updated_at')
+          .in('agent_id', agentIds)
+          .order('updated_at', { ascending: false })
+          .limit(50)
+      : { data: [] };
+
+  const memoryFacts: MemoryFact[] = (rawFacts ?? []).map((m) => ({
+    id: m.id,
+    content: `${m.key}: ${m.value}`,
+    lastUsedAt: new Date(m.updated_at),
+  }));
 
   return (
     <div className="space-y-8">
@@ -96,6 +114,18 @@ export default async function MemoryMapPage() {
               />
             </FadeIn>
           ))}
+          <FadeIn delay={0.05 + agentList.length * 0.05}>
+            <div className="rounded-xl border border-border/50 bg-card/50 p-6 space-y-4">
+              <div>
+                <h2 className="text-lg font-semibold tracking-tight">Memory Freshness</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  See when each stored fact was last used in a conversation. Prune stale
+                  memories to keep your agent&apos;s recall sharp.
+                </p>
+              </div>
+              <MemoryFreshnessTimeline facts={memoryFacts} />
+            </div>
+          </FadeIn>
         </div>
       )}
     </div>
