@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { Brain, MapIcon } from 'lucide-react';
 import { FadeIn } from '@/components/dashboard';
 import { MemoryMindMapPanel } from '@/components/dashboard/MemoryMindMapPanel';
-import { MemoryFreshnessTimeline } from '@/components/memory/MemoryFreshnessTimeline';
+import { MemoryFreshnessTimeline, type MemoryFact } from '@/components/memory/MemoryFreshnessTimeline';
 import {
   Card,
   CardContent,
@@ -48,6 +48,23 @@ export default async function MemoryMapPage() {
     .order('created_at', { ascending: false });
 
   const agentList = agents ?? [];
+  const agentIds = agentList.map((a) => a.id);
+
+  const { data: rawFacts } =
+    agentIds.length > 0
+      ? await supabase
+          .from('agent_memories')
+          .select('id, key, value, updated_at')
+          .in('agent_id', agentIds)
+          .order('updated_at', { ascending: false })
+          .limit(50)
+      : { data: [] };
+
+  const memoryFacts: MemoryFact[] = (rawFacts ?? []).map((m) => ({
+    id: m.id,
+    content: `${m.key}: ${m.value}`,
+    lastUsedAt: new Date(m.updated_at),
+  }));
 
   return (
     <div className="space-y-8">
@@ -106,7 +123,7 @@ export default async function MemoryMapPage() {
                   memories to keep your agent&apos;s recall sharp.
                 </p>
               </div>
-              <MemoryFreshnessTimeline facts={[]} />
+              <MemoryFreshnessTimeline facts={memoryFacts} />
             </div>
           </FadeIn>
         </div>
