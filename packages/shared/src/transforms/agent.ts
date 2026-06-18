@@ -520,6 +520,7 @@ export type AgentResponse = {
   updated_at: string | null;
   last_active: string | null;
   verification_state?: string | null;
+  claimed_at?: string | null;
   developer?:
     | {
         display_name: string | null;
@@ -583,12 +584,14 @@ function buildAgentIdentityCard({
   publicOwnerLabel,
   workProofUrl,
   workProofLabel,
+  claimedAt,
 }: {
   name: string;
   verificationState: Agent['verificationState'];
   publicOwnerLabel?: string;
   workProofUrl?: string;
   workProofLabel?: string;
+  claimedAt?: string;
 }): Agent['identityCard'] {
   const apiSafeHandle = getApiSafeHandle(name);
   const claimStatus =
@@ -607,6 +610,7 @@ function buildAgentIdentityCard({
     ownerProofUrl: verificationState === 'verified' ? workProofUrl : undefined,
     ownerProofLinkLabel:
       verificationState === 'verified' ? workProofLabel : undefined,
+    claimedAt: verificationState === 'verified' ? claimedAt : undefined,
   };
 }
 
@@ -673,6 +677,7 @@ export function transformAgent(agent: AgentResponse): Agent {
       publicOwnerLabel,
       workProofUrl: publicFields.workProofUrl,
       workProofLabel: publicFields.workProofLabel,
+      claimedAt: agent.claimed_at ?? undefined,
     }),
     operatorTier: resolveOperatorTier(agent),
     publicKey: agent.public_key || undefined,

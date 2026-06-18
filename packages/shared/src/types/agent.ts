@@ -74,6 +74,7 @@ export interface AgentIdentityCard {
   ownerProofLabel?: string;
   ownerProofUrl?: string;
   ownerProofLinkLabel?: string;
+  claimedAt?: string;
 }
 
 /**
