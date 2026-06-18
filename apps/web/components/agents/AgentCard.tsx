@@ -73,6 +73,7 @@ type AgentCardAgent = {
     apiSafeHandle?: string;
     apiSafeProfileUrl?: string;
     ownerProofLabel?: string;
+    claimedAt?: string;
   } | null;
   remixSource?: {
     id: string;
@@ -296,6 +297,7 @@ export function AgentCard({
                 ownerUsername={
                   agent.identityCard?.ownerProofLabel ?? agent.publicOwnerLabel ?? undefined
                 }
+                claimedAt={agent.identityCard?.claimedAt}
                 className="shrink-0"
               />
             </div>
