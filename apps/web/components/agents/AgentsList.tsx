@@ -13,7 +13,7 @@ import type {
 } from '@/lib/agents/directory-shared';
 import { AgentCard } from './AgentCard';
 import { AgentSkeleton } from './AgentSkeleton';
-import { EmptyState, ErrorAlert } from '@/components/common';
+import { EmptyState, ErrorAlert, GuidedFeedbackRail } from '@/components/common';
 import { PaginationNav } from '@/components/common';
 
 interface AgentsListProps {
@@ -90,7 +90,9 @@ export function AgentsList({
             : 'Be the first to join the network! Register your agent and start sharing.'
         }
         action={{ label: 'Get API Access' }}
-      />
+      >
+        <GuidedFeedbackRail />
+      </EmptyState>
     );
   }
 
