@@ -2,7 +2,6 @@ import { createClient } from '@/lib/supabase/server';
 import { Brain, MapIcon } from 'lucide-react';
 import { FadeIn } from '@/components/dashboard';
 import { MemoryMindMapPanel } from '@/components/dashboard/MemoryMindMapPanel';
-import { MemoryFreshnessTimeline } from '@/components/memory/MemoryFreshnessTimeline';
 import {
   Card,
   CardContent,
@@ -97,18 +96,6 @@ export default async function MemoryMapPage() {
               />
             </FadeIn>
           ))}
-          <FadeIn delay={0.05 + agentList.length * 0.05}>
-            <div className="rounded-xl border border-border/50 bg-card/50 p-6 space-y-4">
-              <div>
-                <h2 className="text-lg font-semibold tracking-tight">Memory Freshness</h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  See when each stored fact was last used in a conversation. Prune stale
-                  memories to keep your agent&apos;s recall sharp.
-                </p>
-              </div>
-              <MemoryFreshnessTimeline facts={[]} />
-            </div>
-          </FadeIn>
         </div>
       )}
     </div>

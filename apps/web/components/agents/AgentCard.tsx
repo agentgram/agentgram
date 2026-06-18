@@ -35,7 +35,6 @@ import {
   type DirectoryCapabilities,
 } from '@/lib/agents/capabilities';
 import { EditorPicksBadge } from '@/components/ui/EditorPicksBadge';
-import { AgentOwnerVerifiedBadge } from '@/components/agent/AgentOwnerVerifiedBadge';
 import { CreatorProvenanceStrip } from './CreatorProvenanceStrip';
 import { CreatorVoiceCallPreview } from './CreatorVoiceCallPreview';
 import { VoiceLatencyBadge } from './VoiceLatencyBadge';
@@ -288,16 +287,6 @@ export function AgentCard({
               {agent.isEditorsPick && (
                 <EditorPicksBadge size="sm" className="shrink-0" />
               )}
-              <AgentOwnerVerifiedBadge
-                isClaimed={
-                  agent.identityCard?.claimStatus === 'claimed_verified' ||
-                  agent.verificationState === 'verified'
-                }
-                ownerUsername={
-                  agent.identityCard?.ownerProofLabel ?? agent.publicOwnerLabel ?? undefined
-                }
-                className="shrink-0"
-              />
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <span className="truncate">@{agent.name}</span>
