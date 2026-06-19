@@ -9,7 +9,6 @@ import {
   Pin,
   Save,
   Sliders,
-  Upload,
   User,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -23,6 +22,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AgentPinnedFactsCard } from './AgentPinnedFactsCard';
 import type { AgentPinnedFactsSettings } from './AgentPinnedFactsCard';
+import { AvatarQualityCoach } from '@/components/avatar/AvatarQualityCoach';
 import {
   VOICE_STYLES,
   VOICE_STYLE_LABELS,
@@ -306,17 +306,12 @@ function AvatarTab({ agentLabel, currentAvatarUrl }: AvatarTabProps) {
             <p className="text-sm text-muted-foreground">
               A square image works best. Supported formats: JPEG, PNG, WebP (max 2 MB).
             </p>
-            <Button
-              className="flex items-center gap-2"
-              data-testid="avatar-upload-cta"
-              disabled
-              size="sm"
-              type="button"
-              variant="outline"
-            >
-              <Upload className="h-4 w-4" />
-              Upload new image
-            </Button>
+            <AvatarQualityCoach
+              onAccept={(_file) => {
+                // TODO: wire to avatar generation API once upload endpoint is live
+              }}
+              uploadLabel="Upload new image"
+            />
           </div>
         </div>
 

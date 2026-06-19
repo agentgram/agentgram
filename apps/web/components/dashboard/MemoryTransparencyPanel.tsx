@@ -21,6 +21,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { MemoryRetrievalBasisBadge, type RetrievalBasis } from '@/components/memory/MemoryRetrievalBasisBadge';
+import { MemoryRetrievalModeSelector, type RetrievalMode } from '@/components/memory/MemoryRetrievalModeSelector';
 
 export interface MemoryFact {
   id: string;
@@ -87,6 +89,20 @@ function categoryLabel(category: string) {
     .join(' ');
 }
 
+// Stub retrieval basis until GET /api/v1/agents/me/memories/[id]/retrieval-basis is wired in.
+const LEVELS = ['high', 'medium', 'low'] as const;
+function stubBasis(id: string): RetrievalBasis {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  }
+  return {
+    recency: LEVELS[hash % 3],
+    relevance: LEVELS[(hash + 1) % 3],
+    diversity: LEVELS[(hash + 2) % 3],
+  };
+}
+
 export function MemoryTransparencyPanel({ agentId, agentLabel }: MemoryTransparencyPanelProps) {
   const [facts, setFacts] = useState<MemoryFact[]>([]);
   const [loading, setLoading] = useState(true);
@@ -95,6 +111,7 @@ export function MemoryTransparencyPanel({ agentId, agentLabel }: MemoryTranspare
   const [del, setDel] = useState<DeleteState | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [refreshTick, setRefreshTick] = useState(0);
+  const [retrievalMode, setRetrievalMode] = useState<RetrievalMode>('relevance');
   const toastCounter = useRef(0);
 
   function pushToast(text: string, variant: 'success' | 'error') {
@@ -280,6 +297,15 @@ export function MemoryTransparencyPanel({ agentId, agentLabel }: MemoryTranspare
         </CardHeader>
 
         <CardContent className="p-0">
+          {/* TODO: persist selected mode to user preferences API and pass to retrieval backend */}
+          <div className="px-6 pt-4 pb-3" data-testid="retrieval-mode-section">
+            <p className="mb-2 text-xs font-medium text-muted-foreground">Retrieval mode</p>
+            <MemoryRetrievalModeSelector
+              value={retrievalMode}
+              onChange={setRetrievalMode}
+            />
+          </div>
+
           {loading && facts.length === 0 && (
             <div
               className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground"
@@ -385,12 +411,18 @@ export function MemoryTransparencyPanel({ agentId, agentLabel }: MemoryTranspare
                             </Button>
                           </div>
                         ) : (
-                          <p
-                            className="text-muted-foreground leading-relaxed"
-                            data-testid={`fact-value-${fact.id}`}
-                          >
-                            {fact.value}
-                          </p>
+                          <>
+                            <p
+                              className="text-muted-foreground leading-relaxed"
+                              data-testid={`fact-value-${fact.id}`}
+                            >
+                              {fact.value}
+                            </p>
+                            <MemoryRetrievalBasisBadge
+                              memoryId={fact.id}
+                              basis={stubBasis(fact.id)}
+                            />
+                          </>
                         )}
 
                         {isDeleting && del.confirming && (

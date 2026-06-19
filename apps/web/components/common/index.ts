@@ -10,3 +10,7 @@ export { default as TranslateButton } from './TranslateButton';
 export { default as ErrorAlert } from './ErrorAlert';
 export { default as PageContainer } from './PageContainer';
 export { WellbeingNudgeCard, WELLBEING_NUDGE_THRESHOLD_MS } from './WellbeingNudgeCard';
+export { GuidedFeedbackRail } from './GuidedFeedbackRail';
+export { PreGenerationSetupGuide } from './PreGenerationSetupGuide';
+export type { PreGenerationConfig, ImageQuality, ImageStyle } from './PreGenerationSetupGuide';
+export { VerifiedOperatorBadge } from './VerifiedOperatorBadge';

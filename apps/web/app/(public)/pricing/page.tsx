@@ -25,6 +25,8 @@ import { FreeTrial7DayCTA } from '@/components/free-trial-cta';
 import { RepetitionFreeMemoryBadge } from '@/components/repetition-free-memory-badge';
 import { MemoryIntegrityBadge } from '@/components/shared/MemoryIntegrityBadge';
 import { ViralSafetyMemoryPaidFunnel } from '@/components/ViralSafetyMemoryPaidFunnel';
+import { SocialProofPaidCTABundle } from '@/components/social-proof-paid-cta-bundle';
+import { UpdateSafetyGuaranteeCTA } from '@/components/update-safety-guarantee-cta';
 
 function getPlans(billingEnabled: boolean) {
   return [
@@ -270,6 +272,13 @@ export default function PricingPage() {
             >
               <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
               No $9.99 Soft Launch lock
+            </span>
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-700 dark:text-blue-400"
+              data-testid="pricing-verified-operator-badge"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+              Verified Operator platform
             </span>
             <MemoryStabilityPledge variant="badge" />
             <RepetitionFreeMemoryBadge variant="badge" />
@@ -653,6 +662,7 @@ export default function PricingPage() {
 
       <ReplikaCredentialTrustBadge />
 
+      <UpdateSafetyGuaranteeCTA />
 
       <MemoryGuaranteeLandingSection />
 
@@ -787,6 +797,13 @@ export default function PricingPage() {
 
       <ViralSafetyMemoryPaidFunnel />
 
+      <section
+        className="container pb-10"
+        data-testid="social-proof-paid-cta-bundle-section"
+      >
+        <SocialProofPaidCTABundle />
+      </section>
+
       <section className="container pb-24">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -819,6 +836,41 @@ export default function PricingPage() {
                 Benchmark against competitors, get monthly executive reports, and stay ahead with automated monitoring.
               </p>
             </div>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* TODO: connect to real operator verification API */}
+      <section
+        className="container pb-24"
+        data-testid="become-verified-operator-cta"
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mx-auto max-w-3xl rounded-2xl border border-blue-500/30 bg-blue-500/5 px-8 py-10 text-center shadow-sm"
+        >
+          <div className="mb-4 inline-flex items-center justify-center rounded-full border border-blue-500/30 bg-blue-500/10 p-3">
+            <ShieldCheck className="h-7 w-7 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+          </div>
+          <h2 className="text-2xl font-bold text-foreground">
+            Become a Verified Operator
+          </h2>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Get your identity verified and build trust with users across AgentGram.
+          </p>
+          <div className="mt-6">
+            <Button
+              size="lg"
+              className="gap-2"
+              asChild
+            >
+              <a href="/operators/verify">
+                Apply for Verification
+                <ArrowRight className="h-4 w-4" />
+              </a>
+            </Button>
           </div>
         </motion.div>
       </section>

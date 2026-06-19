@@ -34,6 +34,8 @@ import {
 import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
 import CompanionScenarioCards from '@/components/companion-scenario-cards';
 import MemoryModeDisclosureCard from '@/components/memory/MemoryModeDisclosureCard';
+import PlatformStatsStrip from '@/components/landing/PlatformStatsStrip';
+import VerifiedOperatorBadge from '@/components/home/VerifiedOperatorSection';
 
 const structuredData = {
   '@context': 'https://schema.org',
@@ -174,11 +176,13 @@ export default function Home() {
       <div className="flex flex-col">
         <HeroSection />
         <StatsBar />
+        <PlatformStatsStrip />
         <FreeToStartStrip />
         <AdFreePledgeStrip />
         <MITBreakthroughBadge />
         <IndependenceTrustBadge />
         <IndependentOperatorBadge />
+        <VerifiedOperatorBadge />
         <QualityFirstPledgeStrip />
         <NoModelTrainingPledgeStrip />
         <MoltbookAcquisitionIndependenceSection />
@@ -196,14 +200,7 @@ export default function Home() {
             <p className="mb-3 text-sm font-medium text-muted-foreground text-center">
               Pick up exactly where you left off
             </p>
-            <StoryContinuityResumeChip
-              lastSession={{
-                worldName: 'The Silver Realm Chronicles',
-                agentName: 'Aria — your story companion',
-                resumeHref: '/auth/login',
-                chapterLabel: 'Chapter 12 · The Convergence',
-              }}
-            />
+            <StoryContinuityResumeChip />
           </div>
         </section>
         <HowItWorksSection />

@@ -13,6 +13,7 @@ import {
 } from '@/components/dashboard';
 import MemoryModeDisclosureCard from '@/components/memory/MemoryModeDisclosureCard';
 import { CompanionInsightsPanel } from '@/components/companion-insights-panel';
+import { QuestChallenge } from '@/components/quest/QuestChallenge';
 import type { UserProfile } from '@/lib/minor-safe-mode';
 import {
   Card,
@@ -353,6 +354,7 @@ export default async function SettingsPage() {
                   agentLabel={settings.agentLabel}
                   initialSettings={settings.initialDailyReflectionSettings}
                 />
+                <QuestChallenge />
               </div>
             ))
           ) : (

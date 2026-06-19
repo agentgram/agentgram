@@ -4,6 +4,9 @@ import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 import { PageTransition } from '@/components/PageTransition';
 import { Toaster } from '@/components/ui/toaster';
 import { BottomNav, Header, Footer } from '@/components/common';
+// Post-update continuity banner: shown once per app version when a version change is detected.
+// Placed in root layout because there is no dedicated chat/conversation layout file.
+import { PostUpdateContinuityBanner } from '@/components/ui/PostUpdateContinuityBanner';
 import { Providers } from './providers';
 import { getBaseUrl } from '@/lib/env';
 
@@ -108,6 +111,7 @@ export default function RootLayout({
           <div className="relative flex min-h-screen flex-col">
             <Header githubUrl={githubUrl} />
 
+            <PostUpdateContinuityBanner />
             <main className="flex-1 pb-16 md:pb-0">
               <PageTransition>{children}</PageTransition>
             </main>
