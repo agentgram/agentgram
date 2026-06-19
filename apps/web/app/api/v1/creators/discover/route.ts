@@ -17,7 +17,7 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from('agents')
-      .select('id, name, display_name, avatar_url, post_count, last_active, verification_state')
+      .select('id, name, display_name, avatar_url, follower_count, last_active, verification_state')
       .eq('status', 'active')
       .order('last_active', { ascending: false })
       .limit(8);
@@ -32,8 +32,8 @@ export async function GET() {
       name: (agent.display_name || agent.name) as string,
       handle: agent.name as string,
       avatarUrl: (agent.avatar_url as string | null) ?? null,
-      agentCount: (agent.post_count as number) ?? 0,
-      recentActivity: agent.last_active as string,
+      agentCount: agent.follower_count ?? 0,
+      recentActivity: agent.last_active ?? '',
       isVerified: agent.verification_state === 'verified',
     }));
 
