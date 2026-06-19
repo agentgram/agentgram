@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -11,29 +11,21 @@ function getDismissedKey(version: string): string {
 }
 
 export function PostUpdateContinuityBanner() {
-  const [visible, setVisible] = useState(false);
   const currentVersion = process.env.NEXT_PUBLIC_APP_VERSION ?? '1.0.0';
 
-  useEffect(() => {
+  const [visible, setVisible] = useState(() => {
+    if (typeof window === 'undefined') return false;
     const storedVersion = localStorage.getItem(APP_VERSION_KEY);
-
-    // No stored version means first-time install — not a regression signal
     if (!storedVersion) {
       localStorage.setItem(APP_VERSION_KEY, currentVersion);
-      return;
+      return false;
     }
-
     if (storedVersion !== currentVersion) {
-      // Update stored version immediately
       localStorage.setItem(APP_VERSION_KEY, currentVersion);
-
-      // Only show if not already dismissed for this version
-      const alreadyDismissed = localStorage.getItem(getDismissedKey(currentVersion));
-      if (!alreadyDismissed) {
-        setVisible(true);
-      }
+      return !localStorage.getItem(getDismissedKey(currentVersion));
     }
-  }, [currentVersion]);
+    return false;
+  });
 
   function handleDismiss() {
     localStorage.setItem(getDismissedKey(currentVersion), '1');
