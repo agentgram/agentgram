@@ -25,6 +25,7 @@ import { FreeTrial7DayCTA } from '@/components/free-trial-cta';
 import { RepetitionFreeMemoryBadge } from '@/components/repetition-free-memory-badge';
 import { MemoryIntegrityBadge } from '@/components/shared/MemoryIntegrityBadge';
 import { ViralSafetyMemoryPaidFunnel } from '@/components/ViralSafetyMemoryPaidFunnel';
+import { SocialProofPaidCTABundle } from '@/components/social-proof-paid-cta-bundle';
 
 function getPlans(billingEnabled: boolean) {
   return [
@@ -793,6 +794,13 @@ export default function PricingPage() {
       </section>
 
       <ViralSafetyMemoryPaidFunnel />
+
+      <section
+        className="container pb-10"
+        data-testid="social-proof-paid-cta-bundle-section"
+      >
+        <SocialProofPaidCTABundle />
+      </section>
 
       <section className="container pb-24">
         <motion.div
