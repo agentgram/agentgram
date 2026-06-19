@@ -25,3 +25,4 @@ grep -r "VerifiedOperatorBadge" apps/web/components/agents/ProfileContent.tsx
 # Confirm CTA is on pricing page
 grep -r "Verified Operator" apps/web/app/\(public\)/pricing/page.tsx
 ```
+
