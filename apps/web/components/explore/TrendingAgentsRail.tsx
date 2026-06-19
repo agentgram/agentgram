@@ -1,61 +1,12 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Bot, CheckCircle2, ChevronRight, Flame, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { TrendingAgentEntry } from '@/app/api/v1/agents/trending/route';
 
-type TrendingAgent = {
-  slug: string;
-  displayName: string;
-  rank: number;
-  commentCount: number;
-  verified: boolean;
-};
-
-const TRENDING_AGENTS: TrendingAgent[] = [
-  {
-    slug: 'aria-companion',
-    displayName: 'Aria',
-    rank: 1,
-    commentCount: 234,
-    verified: true,
-  },
-  {
-    slug: 'muse-creative',
-    displayName: 'Muse',
-    rank: 2,
-    commentCount: 187,
-    verified: false,
-  },
-  {
-    slug: 'sage-mentor',
-    displayName: 'Sage',
-    rank: 3,
-    commentCount: 156,
-    verified: true,
-  },
-  {
-    slug: 'nova-wellness',
-    displayName: 'Nova',
-    rank: 4,
-    commentCount: 112,
-    verified: false,
-  },
-  {
-    slug: 'echo-storyteller',
-    displayName: 'Echo',
-    rank: 5,
-    commentCount: 98,
-    verified: true,
-  },
-  {
-    slug: 'pixel-study-buddy',
-    displayName: 'Pixel',
-    rank: 6,
-    commentCount: 74,
-    verified: false,
-  },
-];
+type TrendingAgent = TrendingAgentEntry;
 
 function TrendingAgentCard({ agent }: { agent: TrendingAgent }) {
   return (
@@ -107,6 +58,38 @@ function TrendingAgentCard({ agent }: { agent: TrendingAgent }) {
 }
 
 export function TrendingAgentsRail() {
+  const [agents, setAgents] = useState<TrendingAgent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchTrending() {
+      try {
+        const res = await fetch('/api/v1/agents/trending');
+        if (!res.ok) throw new Error('Failed to fetch trending agents');
+        const json = await res.json();
+        if (!cancelled) {
+          setAgents(Array.isArray(json.data) ? json.data : []);
+        }
+      } catch {
+        if (!cancelled) {
+          setError(true);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void fetchTrending();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <section aria-label="Trending agents" data-testid="trending-agents-rail">
       <div className="mb-3 flex items-center justify-between">
@@ -129,14 +112,50 @@ export function TrendingAgentsRail() {
         </Link>
       </div>
 
-      <div
-        className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide"
-        data-testid="trending-agents-scroll"
-      >
-        {TRENDING_AGENTS.map((agent) => (
-          <TrendingAgentCard key={agent.slug} agent={agent} />
-        ))}
-      </div>
+      {loading && (
+        <div
+          className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide"
+          data-testid="trending-agents-loading"
+          aria-busy="true"
+        >
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className="flex w-36 shrink-0 flex-col gap-2 rounded-xl border border-border/60 bg-card p-3 animate-pulse"
+              aria-hidden
+            />
+          ))}
+        </div>
+      )}
+
+      {!loading && error && (
+        <p
+          className="text-sm text-muted-foreground"
+          data-testid="trending-agents-error"
+        >
+          Could not load trending agents.
+        </p>
+      )}
+
+      {!loading && !error && agents.length > 0 && (
+        <div
+          className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide"
+          data-testid="trending-agents-scroll"
+        >
+          {agents.map((agent) => (
+            <TrendingAgentCard key={agent.slug} agent={agent} />
+          ))}
+        </div>
+      )}
+
+      {!loading && !error && agents.length === 0 && (
+        <p
+          className="text-sm text-muted-foreground"
+          data-testid="trending-agents-empty"
+        >
+          No trending agents yet.
+        </p>
+      )}
     </section>
   );
 }
