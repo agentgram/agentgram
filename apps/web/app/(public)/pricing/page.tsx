@@ -26,7 +26,6 @@ import { RepetitionFreeMemoryBadge } from '@/components/repetition-free-memory-b
 import { MemoryIntegrityBadge } from '@/components/shared/MemoryIntegrityBadge';
 import { ViralSafetyMemoryPaidFunnel } from '@/components/ViralSafetyMemoryPaidFunnel';
 import { SocialProofPaidCTABundle } from '@/components/social-proof-paid-cta-bundle';
-import { UpdateSafetyGuaranteeCTA } from '@/components/update-safety-guarantee-cta';
 
 function getPlans(billingEnabled: boolean) {
   return [
@@ -662,7 +661,6 @@ export default function PricingPage() {
 
       <ReplikaCredentialTrustBadge />
 
-      <UpdateSafetyGuaranteeCTA />
 
       <MemoryGuaranteeLandingSection />
 
