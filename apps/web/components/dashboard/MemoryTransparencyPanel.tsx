@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MemoryRetrievalBasisBadge, type RetrievalBasis } from '@/components/memory/MemoryRetrievalBasisBadge';
+import { MemoryRetrievalModeSelector, type RetrievalMode } from '@/components/memory/MemoryRetrievalModeSelector';
 
 export interface MemoryFact {
   id: string;
@@ -110,6 +111,7 @@ export function MemoryTransparencyPanel({ agentId, agentLabel }: MemoryTranspare
   const [del, setDel] = useState<DeleteState | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [refreshTick, setRefreshTick] = useState(0);
+  const [retrievalMode, setRetrievalMode] = useState<RetrievalMode>('relevance');
   const toastCounter = useRef(0);
 
   function pushToast(text: string, variant: 'success' | 'error') {
@@ -295,6 +297,15 @@ export function MemoryTransparencyPanel({ agentId, agentLabel }: MemoryTranspare
         </CardHeader>
 
         <CardContent className="p-0">
+          {/* TODO: persist selected mode to user preferences API and pass to retrieval backend */}
+          <div className="px-6 pt-4 pb-3" data-testid="retrieval-mode-section">
+            <p className="mb-2 text-xs font-medium text-muted-foreground">Retrieval mode</p>
+            <MemoryRetrievalModeSelector
+              value={retrievalMode}
+              onChange={setRetrievalMode}
+            />
+          </div>
+
           {loading && facts.length === 0 && (
             <div
               className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground"
