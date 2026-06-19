@@ -188,7 +188,7 @@ describe('MemoryPersonalityTuningPanel', () => {
     fireEvent.click(screen.getByTestId('tab-trigger-avatar'));
 
     expect(screen.getByTestId('avatar-section')).toBeInTheDocument();
-    expect(screen.getByTestId('avatar-upload-cta')).toHaveTextContent('Upload new image');
+    expect(screen.getByTestId('quality-coach-upload-btn')).toHaveTextContent('Upload new image');
     expect(screen.getByTestId('avatar-coming-soon')).toBeInTheDocument();
   });
 
