@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { BookOpen, ArrowRight, Sparkles, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,16 +13,32 @@ export interface LastStorySession {
 }
 
 interface StoryContinuityResumeChipProps {
+  /** Pass a session directly (e.g. SSR or tests). When omitted, the component
+   *  fetches /api/v1/sessions/last-story automatically. */
   lastSession?: LastStorySession | null;
 }
 
-export default function StoryContinuityResumeChip({
-  lastSession,
-}: StoryContinuityResumeChipProps) {
-  if (!lastSession) return null;
+function ChipSkeleton() {
+  return (
+    <div
+      data-testid="story-resume-chip-skeleton"
+      className="rounded-xl border border-violet-500/25 bg-violet-500/6 p-4 animate-pulse"
+    >
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 h-9 w-9 shrink-0 rounded-lg bg-violet-500/15" />
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="h-3 w-24 rounded bg-violet-500/15" />
+          <div className="h-4 w-40 rounded bg-muted" />
+          <div className="h-3 w-32 rounded bg-muted" />
+        </div>
+        <div className="h-8 w-20 shrink-0 rounded-md bg-violet-500/15" />
+      </div>
+    </div>
+  );
+}
 
-  const { worldName, agentName, resumeHref, chapterLabel } = lastSession;
-
+function Chip({ session }: { session: LastStorySession }) {
+  const { worldName, agentName, resumeHref, chapterLabel } = session;
   return (
     <div
       data-testid="story-continuity-resume-chip"
@@ -90,4 +109,40 @@ export default function StoryContinuityResumeChip({
       </div>
     </div>
   );
+}
+
+export default function StoryContinuityResumeChip({
+  lastSession: lastSessionProp,
+}: StoryContinuityResumeChipProps) {
+  // fetchedSession: undefined = not yet fetched, null = fetched with no result
+  const [fetchedSession, setFetchedSession] = useState<
+    LastStorySession | null | undefined
+  >(undefined);
+
+  useEffect(() => {
+    // If a session was provided as a prop, skip the fetch entirely.
+    if (lastSessionProp !== undefined) return;
+
+    fetch('/api/v1/sessions/last-story')
+      .then((res) => res.json())
+      .then((data: { success: boolean; data: LastStorySession | null }) => {
+        setFetchedSession(data.success ? (data.data ?? null) : null);
+      })
+      .catch(() => {
+        setFetchedSession(null);
+      });
+  }, [lastSessionProp]);
+
+  const loading = lastSessionProp === undefined && fetchedSession === undefined;
+
+  // Prop-driven path: render immediately from prop (no loading state)
+  if (lastSessionProp !== undefined) {
+    if (!lastSessionProp) return null;
+    return <Chip session={lastSessionProp} />;
+  }
+
+  // Fetch-driven path
+  if (loading) return <ChipSkeleton />;
+  if (!fetchedSession) return null;
+  return <Chip session={fetchedSession} />;
 }

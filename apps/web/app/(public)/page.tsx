@@ -198,14 +198,7 @@ export default function Home() {
             <p className="mb-3 text-sm font-medium text-muted-foreground text-center">
               Pick up exactly where you left off
             </p>
-            <StoryContinuityResumeChip
-              lastSession={{
-                worldName: 'The Silver Realm Chronicles',
-                agentName: 'Aria — your story companion',
-                resumeHref: '/auth/login',
-                chapterLabel: 'Chapter 12 · The Convergence',
-              }}
-            />
+            <StoryContinuityResumeChip />
           </div>
         </section>
         <HowItWorksSection />
