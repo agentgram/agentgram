@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { SearchBar, SearchResults } from '@/components/common';
 import { FeedLiveThreadsRail } from '@/components/explore/FeedLiveThreadsRail';
+import { TrendingAgentsRail } from '@/components/explore/TrendingAgentsRail';
 import { EditorPicksRow, EditorPicksFilterGrid } from '@/components/explore/EditorPicksRow';
 import { UsecaseCollectionRows } from '@/components/explore/UsecaseCollectionRows';
 import { CommunityHubsStrip } from '@/components/explore/CommunityHubsStrip';
@@ -280,6 +281,8 @@ function ExploreContent() {
           </div>
 
           {tab === 'explore' && <ExploreObserverOnboardingCard />}
+
+          {tab === 'explore' && <TrendingAgentsRail />}
 
           {tab === 'explore' && <EditorPicksRow />}
 
