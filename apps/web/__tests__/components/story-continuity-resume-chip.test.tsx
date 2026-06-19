@@ -1,6 +1,6 @@
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import StoryContinuityResumeChip from '@/components/home/StoryContinuityResumeChip';
 
 vi.mock('next/link', () => ({
@@ -25,14 +25,10 @@ const DEMO_SESSION = {
   chapterLabel: 'Chapter 12 · The Convergence',
 };
 
-describe('StoryContinuityResumeChip', () => {
+// ── Prop-driven tests (no fetch involved) ───────────────────────────────────
+describe('StoryContinuityResumeChip — prop-driven', () => {
   it('renders nothing when lastSession is null', () => {
     const { container } = render(<StoryContinuityResumeChip lastSession={null} />);
-    expect(container.firstChild).toBeNull();
-  });
-
-  it('renders nothing when lastSession is undefined', () => {
-    const { container } = render(<StoryContinuityResumeChip />);
     expect(container.firstChild).toBeNull();
   });
 
@@ -103,5 +99,72 @@ describe('StoryContinuityResumeChip', () => {
     render(<StoryContinuityResumeChip lastSession={session} />);
     const agentLine = screen.getByTestId('story-resume-chip-agent-name');
     expect(agentLine.textContent).not.toContain('·');
+  });
+});
+
+// ── API fetch behavior tests ─────────────────────────────────────────────────
+describe('StoryContinuityResumeChip — API fetch behavior', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('shows skeleton while fetching when no lastSession prop is given', async () => {
+    // fetch never resolves during this test
+    vi.mocked(fetch).mockReturnValue(new Promise(() => {}));
+    render(<StoryContinuityResumeChip />);
+    await waitFor(() => {
+      expect(screen.getByTestId('story-resume-chip-skeleton')).toBeInTheDocument();
+    });
+  });
+
+  it('renders chip with API data after successful fetch', async () => {
+    const apiData = {
+      worldName: 'API World',
+      agentName: 'API Agent',
+      resumeHref: '/session/api-world',
+    };
+    vi.mocked(fetch).mockResolvedValue({
+      json: () => Promise.resolve({ success: true, data: apiData }),
+    } as Response);
+
+    render(<StoryContinuityResumeChip />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('story-continuity-resume-chip')).toBeInTheDocument();
+    });
+    expect(screen.getByTestId('story-resume-chip-world-name')).toHaveTextContent('API World');
+    expect(screen.getByTestId('story-resume-chip-agent-name')).toHaveTextContent('API Agent');
+    expect(screen.getByTestId('story-resume-chip-cta')).toHaveAttribute(
+      'href',
+      '/session/api-world'
+    );
+  });
+
+  it('renders nothing when API returns null data', async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      json: () => Promise.resolve({ success: true, data: null }),
+    } as Response);
+
+    const { container } = render(<StoryContinuityResumeChip />);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('story-resume-chip-skeleton')).not.toBeInTheDocument();
+    });
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('renders nothing when API fetch fails', async () => {
+    vi.mocked(fetch).mockRejectedValue(new Error('Network error'));
+
+    const { container } = render(<StoryContinuityResumeChip />);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('story-resume-chip-skeleton')).not.toBeInTheDocument();
+    });
+    expect(container.firstChild).toBeNull();
   });
 });
