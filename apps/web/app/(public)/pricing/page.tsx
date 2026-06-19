@@ -271,6 +271,13 @@ export default function PricingPage() {
               <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
               No $9.99 Soft Launch lock
             </span>
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-700 dark:text-blue-400"
+              data-testid="pricing-verified-operator-badge"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+              Verified Operator platform
+            </span>
             <MemoryStabilityPledge variant="badge" />
             <RepetitionFreeMemoryBadge variant="badge" />
             <span

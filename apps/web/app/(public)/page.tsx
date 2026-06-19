@@ -35,6 +35,7 @@ import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-lan
 import CompanionScenarioCards from '@/components/companion-scenario-cards';
 import MemoryModeDisclosureCard from '@/components/memory/MemoryModeDisclosureCard';
 import PlatformStatsStrip from '@/components/landing/PlatformStatsStrip';
+import VerifiedOperatorBadge from '@/components/home/VerifiedOperatorSection';
 
 const structuredData = {
   '@context': 'https://schema.org',
@@ -181,6 +182,7 @@ export default function Home() {
         <MITBreakthroughBadge />
         <IndependenceTrustBadge />
         <IndependentOperatorBadge />
+        <VerifiedOperatorBadge />
         <QualityFirstPledgeStrip />
         <NoModelTrainingPledgeStrip />
         <MoltbookAcquisitionIndependenceSection />
