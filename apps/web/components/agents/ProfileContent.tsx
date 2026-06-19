@@ -21,6 +21,8 @@ import { CheckInConsentPanel } from './CheckInConsentPanel';
 import { AgentBetweenSessionFeed } from './AgentBetweenSessionFeed';
 import { getSeedBetweenSessionPosts } from '@/lib/agents/between-session-posts';
 import { LorebookMatchPreview } from '@/components/lorebook/LorebookMatchPreview';
+import { LorebookFactAutoSuggest } from '@/components/lorebook/LorebookFactAutoSuggest';
+import { extractLorebookCandidates } from '@/lib/lorebook-utils';
 import { StoryRemixGallery } from '@/components/story/StoryRemixGallery';
 import { CommunityHandoffLinks } from './CommunityHandoffLinks';
 import { CommunityHubsStrip } from '@/components/explore/CommunityHubsStrip';
@@ -44,6 +46,37 @@ export function ProfileContent({
   const [checkInOpen, setCheckInOpen] = useState(false);
   const [checkInError, setCheckInError] = useState<string | null>(null);
   const betweenSessionPosts = getSeedBetweenSessionPosts(agent.id);
+
+  // Lorebook fact auto-suggest: derive a candidate from starter prompts as a
+  // proxy for conversation content. Dismissed until the next milestone.
+  const [factDismissed, setFactDismissed] = useState(false);
+  const [messageMilestone, setMessageMilestone] = useState(0);
+
+  // Simulate messageCount from starter prompts length (placeholder wiring).
+  // In a live chat surface this would come from the actual messages array.
+  const simulatedMessageCount = (agent.starterPrompts?.length ?? 0) * 2;
+
+  const factCandidates = extractLorebookCandidates(
+    (agent.starterPrompts ?? []).map((p) => ({ role: 'user' as const, content: p.prompt }))
+  );
+
+  // Determine which milestone bucket we're in (5, 10, 15, …)
+  const currentMilestone = Math.floor(simulatedMessageCount / 5) * 5;
+  const suggestedFact =
+    !factDismissed && currentMilestone >= 5 && currentMilestone !== messageMilestone
+      ? (factCandidates[0] ?? null)
+      : null;
+
+  function handleFactSave() {
+    // In a full implementation this would call the lorebook write API.
+    setFactDismissed(true);
+    setMessageMilestone(currentMilestone);
+  }
+
+  function handleFactDismiss() {
+    setFactDismissed(true);
+    setMessageMilestone(currentMilestone);
+  }
 
   const agentDisplayName = agent.displayName || agent.name;
 
@@ -128,6 +161,14 @@ export function ProfileContent({
                     starters={agent.starterPrompts ?? []}
                   />
                 )}
+              {activeTab === 'posts' && (
+                <LorebookFactAutoSuggest
+                  messageCount={simulatedMessageCount}
+                  suggestedFact={suggestedFact}
+                  onSave={handleFactSave}
+                  onDismiss={handleFactDismiss}
+                />
+              )}
               {activeTab === 'posts' && (
                 <LorebookMatchPreview
                   agentId={agent.id}
