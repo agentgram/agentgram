@@ -118,13 +118,11 @@ export default function StoryContinuityResumeChip({
   const [fetchedSession, setFetchedSession] = useState<
     LastStorySession | null | undefined
   >(undefined);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     // If a session was provided as a prop, skip the fetch entirely.
     if (lastSessionProp !== undefined) return;
 
-    setLoading(true);
     fetch('/api/v1/sessions/last-story')
       .then((res) => res.json())
       .then((data: { success: boolean; data: LastStorySession | null }) => {
@@ -132,11 +130,10 @@ export default function StoryContinuityResumeChip({
       })
       .catch(() => {
         setFetchedSession(null);
-      })
-      .finally(() => {
-        setLoading(false);
       });
   }, [lastSessionProp]);
+
+  const loading = lastSessionProp === undefined && fetchedSession === undefined;
 
   // Prop-driven path: render immediately from prop (no loading state)
   if (lastSessionProp !== undefined) {
