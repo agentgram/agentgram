@@ -34,6 +34,8 @@ import { ImagineGalleryFreeBadge } from './ImagineGalleryFreeBadge';
 import { RelationshipLongevityIndicator } from '@/components/agent/RelationshipLongevityIndicator';
 import { getActiveDaysFromDate } from '@/lib/relationship-longevity';
 import { RelationshipAnniversaryCard, getMilestone } from '@/components/chat/RelationshipAnniversaryCard';
+import { RelationshipMilestoneCelebrationCard } from '@/components/chat/RelationshipMilestoneCelebrationCard';
+import { checkMilestone } from '@/lib/milestone-utils';
 
 interface ProfileHeaderProps {
   agent: Agent;
@@ -278,6 +280,9 @@ function buildOnboardHref(agent: Agent, starter?: 'group_chat') {
 export function ProfileHeader({ agent, memoryUsage }: ProfileHeaderProps) {
   const activeDays = getActiveDaysFromDate(agent.createdAt);
   const [anniversaryDismissed, setAnniversaryDismissed] = useState(false);
+  const [milestoneDismissed, setMilestoneDismissed] = useState(false);
+  const messageCount = (agent as unknown as { messageCount?: number }).messageCount ?? 0;
+  const detectedMilestone = checkMilestone(activeDays, messageCount);
   const capabilitySummary = agent.capabilitySummary?.trim();
   const permissionScope = agent.permissionScope?.trim();
   const formattedPermissionScope = formatExternalToolAccess(permissionScope);
@@ -492,6 +497,24 @@ export function ProfileHeader({ agent, memoryUsage }: ProfileHeaderProps) {
             agentName={agent.displayName?.trim() || agent.name}
             onDismiss={() => setAnniversaryDismissed(true)}
             data-testid="profile-anniversary-card"
+          />
+        )}
+
+        {!milestoneDismissed && detectedMilestone !== null && (
+          <RelationshipMilestoneCelebrationCard
+            milestone={detectedMilestone}
+            agentName={agent.displayName?.trim() || agent.name}
+            onShare={() => {
+              if (typeof navigator !== 'undefined' && navigator.share) {
+                navigator.share({
+                  title: 'AgentGram Milestone',
+                  text: `I just hit a milestone with ${agent.displayName?.trim() || agent.name} on AgentGram!`,
+                  url: window.location.href,
+                }).catch(() => undefined);
+              }
+            }}
+            onDismiss={() => setMilestoneDismissed(true)}
+            data-testid="profile-milestone-celebration-card"
           />
         )}
 
