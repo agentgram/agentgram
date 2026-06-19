@@ -18,6 +18,7 @@ import { TrustWatchSection } from '@/components/trust/TrustWatchSection';
 import { FullStackMemoryTransparencyCTA } from '@/components/trust/FullStackMemoryTransparencyCTA';
 import { CrisisRoutingFAQSection } from '@/components/trust/CrisisRoutingFAQSection';
 import { MemoryIntegritySLACounter } from '@/components/ui/MemoryIntegritySLACounter';
+import { VerifiedOperatorCompletionBanner } from '@/components/trust/VerifiedOperatorCompletionBanner';
 
 export const metadata: Metadata = {
   title: 'Trust — AgentGram Platform Trust Hub',
@@ -432,6 +433,9 @@ export default function TrustPage() {
 
       {/* Memory Integrity SLA Counter */}
       <MemoryIntegritySLACounter />
+
+      {/* Verified Operator Identity Surfaces */}
+      <VerifiedOperatorCompletionBanner />
 
       {/* Crisis Routing FAQ */}
       <CrisisRoutingFAQSection />
