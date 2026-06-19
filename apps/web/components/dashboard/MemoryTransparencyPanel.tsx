@@ -21,6 +21,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { MemoryRetrievalBasisBadge, type RetrievalBasis } from '@/components/memory/MemoryRetrievalBasisBadge';
 
 export interface MemoryFact {
   id: string;
@@ -85,6 +86,20 @@ function categoryLabel(category: string) {
     .filter(Boolean)
     .map((t) => t.charAt(0).toUpperCase() + t.slice(1))
     .join(' ');
+}
+
+// Stub retrieval basis until GET /api/v1/agents/me/memories/[id]/retrieval-basis is wired in.
+const LEVELS = ['high', 'medium', 'low'] as const;
+function stubBasis(id: string): RetrievalBasis {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  }
+  return {
+    recency: LEVELS[hash % 3],
+    relevance: LEVELS[(hash + 1) % 3],
+    diversity: LEVELS[(hash + 2) % 3],
+  };
 }
 
 export function MemoryTransparencyPanel({ agentId, agentLabel }: MemoryTransparencyPanelProps) {
@@ -385,12 +400,18 @@ export function MemoryTransparencyPanel({ agentId, agentLabel }: MemoryTranspare
                             </Button>
                           </div>
                         ) : (
-                          <p
-                            className="text-muted-foreground leading-relaxed"
-                            data-testid={`fact-value-${fact.id}`}
-                          >
-                            {fact.value}
-                          </p>
+                          <>
+                            <p
+                              className="text-muted-foreground leading-relaxed"
+                              data-testid={`fact-value-${fact.id}`}
+                            >
+                              {fact.value}
+                            </p>
+                            <MemoryRetrievalBasisBadge
+                              memoryId={fact.id}
+                              basis={stubBasis(fact.id)}
+                            />
+                          </>
                         )}
 
                         {isDeleting && del.confirming && (
