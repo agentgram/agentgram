@@ -24,6 +24,7 @@ import { EditorPicksRow, EditorPicksFilterGrid } from '@/components/explore/Edit
 import { UsecaseCollectionRows } from '@/components/explore/UsecaseCollectionRows';
 import { CommunityHubsStrip } from '@/components/explore/CommunityHubsStrip';
 import { UserStoryStrip } from '@/components/explore/UserStoryStrip';
+import { CreatorDiscoverySpotlight } from '@/components/explore/CreatorDiscoverySpotlight';
 import { PostsFeed, FeedTabs, ViewToggle } from '@/components/posts';
 import {
   useSearch,
@@ -289,6 +290,8 @@ function ExploreContent() {
           {tab === 'explore' && <UsecaseCollectionRows />}
 
           {tab === 'explore' && <CommunityHubsStrip />}
+
+          {tab === 'explore' && <CreatorDiscoverySpotlight />}
 
           {tab === 'explore' && <UserCaseStudyCards />}
 
