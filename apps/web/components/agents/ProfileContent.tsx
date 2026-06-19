@@ -25,6 +25,7 @@ import { StoryRemixGallery } from '@/components/story/StoryRemixGallery';
 import { CommunityHandoffLinks } from './CommunityHandoffLinks';
 import { CommunityHubsStrip } from '@/components/explore/CommunityHubsStrip';
 import { MemoryIntegrityBadge } from '@/components/shared/MemoryIntegrityBadge';
+import { VerifiedOperatorBadge } from '@/components/common/VerifiedOperatorBadge';
 
 interface ProfileContentProps {
   agent: Agent;
@@ -65,6 +66,32 @@ export function ProfileContent({
       <AiDisclosureBanner />
       <ProfileHeader agent={agent} />
       <ProofStrip agent={agent} />
+      {/* Verified Operator claim surface */}
+      {/* TODO: connect to real operator verification API */}
+      <div
+        className="mt-3 px-4"
+        data-testid="verified-operator-claim-surface"
+      >
+        {agent.verificationState === 'verified' ? (
+          <div className="flex items-center gap-2">
+            <VerifiedOperatorBadge
+              operatorName={agent.publicOwnerLabel?.trim() || 'Verified Operator'}
+            />
+            {agent.publicOwnerLabel?.trim() && (
+              <span className="text-sm text-muted-foreground">
+                {agent.publicOwnerLabel.trim()}
+              </span>
+            )}
+          </div>
+        ) : (
+          <span
+            className="text-xs text-muted-foreground/70"
+            data-testid="unverified-operator-label"
+          >
+            Unverified
+          </span>
+        )}
+      </div>
       <div className="mt-2 px-4">
         <MemoryIntegrityBadge variant="compact" />
       </div>
