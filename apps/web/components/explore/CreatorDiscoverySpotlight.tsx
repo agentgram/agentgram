@@ -1,90 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Users, Globe, UserPlus, Check, ChevronRight, Sparkles } from 'lucide-react';
+import { Users, UserPlus, Check, ChevronRight, Sparkles, CheckCircle2, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
-export interface CreatorEntry {
+export interface Creator {
   id: string;
-  slug: string;
-  displayName: string;
-  tagline: string;
-  worldCount: number;
-  followerCount: number;
-  avatarInitials: string;
-  avatarColor: string;
-}
-
-export const STUB_CREATORS: CreatorEntry[] = [
-  {
-    id: 'creator-1',
-    slug: 'elena-worldsmith',
-    displayName: 'Elena Worldsmith',
-    tagline: 'Crafting immersive narrative worlds with emotionally-aware agents.',
-    worldCount: 12,
-    followerCount: 3841,
-    avatarInitials: 'EW',
-    avatarColor: 'from-violet-500/30 to-purple-600/30',
-  },
-  {
-    id: 'creator-2',
-    slug: 'kai-synth',
-    displayName: 'Kai Synth',
-    tagline: 'Music theory tutor agents that adapt to your learning pace.',
-    worldCount: 5,
-    followerCount: 1207,
-    avatarInitials: 'KS',
-    avatarColor: 'from-blue-500/30 to-cyan-600/30',
-  },
-  {
-    id: 'creator-3',
-    slug: 'nova-labs',
-    displayName: 'Nova Labs',
-    tagline: 'Open-source wellness companions. All memories stay local.',
-    worldCount: 8,
-    followerCount: 2630,
-    avatarInitials: 'NL',
-    avatarColor: 'from-emerald-500/30 to-teal-600/30',
-  },
-  {
-    id: 'creator-4',
-    slug: 'rhys-narrator',
-    displayName: 'Rhys Narrator',
-    tagline: 'Collaborative fiction — branching stories shaped by your choices.',
-    worldCount: 20,
-    followerCount: 5190,
-    avatarInitials: 'RN',
-    avatarColor: 'from-rose-500/30 to-pink-600/30',
-  },
-  {
-    id: 'creator-5',
-    slug: 'suki-mindful',
-    displayName: 'Suki Mindful',
-    tagline: 'Daily reflection agents grounded in evidence-based mindfulness.',
-    worldCount: 3,
-    followerCount: 988,
-    avatarInitials: 'SM',
-    avatarColor: 'from-amber-500/30 to-yellow-600/30',
-  },
-  {
-    id: 'creator-6',
-    slug: 'dex-codesmith',
-    displayName: 'Dex Codesmith',
-    tagline: 'Pair-programming agents for language learners and CS students.',
-    worldCount: 7,
-    followerCount: 1560,
-    avatarInitials: 'DC',
-    avatarColor: 'from-sky-500/30 to-indigo-600/30',
-  },
-];
-
-function formatFollowers(count: number): string {
-  if (count >= 1000) {
-    return `${(count / 1000).toFixed(1)}k`;
-  }
-  return String(count);
+  name: string;
+  handle: string;
+  avatarUrl: string | null;
+  agentCount: number;
+  recentActivity: string;
+  isVerified: boolean;
 }
 
 interface FollowButtonProps {
@@ -125,7 +54,7 @@ function FollowButton({ creatorId }: FollowButtonProps) {
   );
 }
 
-function CreatorCard({ creator }: { creator: CreatorEntry }) {
+function CreatorCard({ creator }: { creator: Creator }) {
   return (
     <div
       data-testid={`creator-card-${creator.id}`}
@@ -136,54 +65,65 @@ function CreatorCard({ creator }: { creator: CreatorEntry }) {
     >
       <div className="flex items-start justify-between gap-2">
         <Link
-          href={`/agents/${encodeURIComponent(creator.slug)}`}
+          href={`/agents/${encodeURIComponent(creator.handle)}`}
           data-testid={`creator-card-${creator.id}-link`}
           className="flex items-center gap-2.5 min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
         >
           <div
-            className={cn(
-              'flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-sm font-bold text-foreground',
-              creator.avatarColor
-            )}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-strong/20 to-brand-accent/20"
             aria-hidden="true"
           >
-            {creator.avatarInitials}
+            <Bot className="h-5 w-5 text-primary" />
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold leading-tight text-foreground group-hover:text-primary transition-colors">
-              {creator.displayName}
-            </p>
+            <div className="flex items-center gap-1">
+              <p className="truncate text-sm font-semibold leading-tight text-foreground group-hover:text-primary transition-colors">
+                {creator.name}
+              </p>
+              {creator.isVerified && (
+                <CheckCircle2
+                  className="h-3.5 w-3.5 shrink-0 text-primary"
+                  data-testid={`creator-verified-${creator.id}`}
+                  aria-label="Verified"
+                />
+              )}
+            </div>
             <p className="truncate text-xs text-muted-foreground">
-              @{creator.slug}
+              @{creator.handle}
             </p>
           </div>
         </Link>
         <FollowButton creatorId={creator.id} />
       </div>
 
-      <p
-        data-testid={`creator-card-${creator.id}-tagline`}
-        className="line-clamp-2 text-xs leading-relaxed text-muted-foreground"
-      >
-        {creator.tagline}
-      </p>
-
       <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
         <span
-          data-testid={`creator-card-${creator.id}-worlds`}
-          className="flex items-center gap-1"
-        >
-          <Globe className="h-3 w-3 text-primary/60" aria-hidden />
-          {creator.worldCount} {creator.worldCount === 1 ? 'world' : 'worlds'}
-        </span>
-        <span
-          data-testid={`creator-card-${creator.id}-followers`}
+          data-testid={`creator-card-${creator.id}-post-count`}
           className="flex items-center gap-1"
         >
           <Users className="h-3 w-3 text-primary/60" aria-hidden />
-          {formatFollowers(creator.followerCount)} followers
+          {creator.agentCount.toLocaleString()} posts
         </span>
       </div>
+    </div>
+  );
+}
+
+function CreatorCardSkeleton() {
+  return (
+    <div
+      data-testid="creator-card-skeleton"
+      className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4 animate-pulse"
+      aria-hidden
+    >
+      <div className="flex items-start gap-2">
+        <div className="h-10 w-10 shrink-0 rounded-full bg-muted" />
+        <div className="flex flex-col gap-2 flex-1">
+          <div className="h-3 w-28 rounded bg-muted" />
+          <div className="h-3 w-20 rounded bg-muted" />
+        </div>
+      </div>
+      <div className="h-3 w-16 rounded bg-muted" />
     </div>
   );
 }
@@ -205,23 +145,25 @@ function CreatorDiscoveryEmptyState() {
   );
 }
 
-interface CreatorDiscoverySpotlightProps {
-  creators?: CreatorEntry[];
-}
+export function CreatorDiscoverySpotlight() {
+  const [creators, setCreators] = useState<Creator[] | null>(null);
 
-export function CreatorDiscoverySpotlight({
-  creators = STUB_CREATORS,
-}: CreatorDiscoverySpotlightProps) {
-  if (creators.length === 0) {
-    return (
-      <section
-        aria-label="Creator discovery spotlight"
-        data-testid="creator-discovery-spotlight"
-      >
-        <CreatorDiscoveryEmptyState />
-      </section>
-    );
-  }
+  useEffect(() => {
+    fetch('/api/v1/creators/discover')
+      .then((res) => res.json())
+      .then((json: { success: boolean; data: Creator[] }) => {
+        if (json.success) {
+          setCreators(json.data);
+        } else {
+          setCreators([]);
+        }
+      })
+      .catch(() => {
+        setCreators([]);
+      });
+  }, []);
+
+  const isLoading = creators === null;
 
   return (
     <section
@@ -248,14 +190,27 @@ export function CreatorDiscoverySpotlight({
         </Link>
       </div>
 
-      <div
-        className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
-        data-testid="creator-discovery-grid"
-      >
-        {creators.map((creator) => (
-          <CreatorCard key={creator.id} creator={creator} />
-        ))}
-      </div>
+      {isLoading ? (
+        <div
+          className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+          data-testid="creator-discovery-loading"
+        >
+          {Array.from({ length: 6 }).map((_, i) => (
+            <CreatorCardSkeleton key={i} />
+          ))}
+        </div>
+      ) : creators.length === 0 ? (
+        <CreatorDiscoveryEmptyState />
+      ) : (
+        <div
+          className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+          data-testid="creator-discovery-grid"
+        >
+          {creators.map((creator) => (
+            <CreatorCard key={creator.id} creator={creator} />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
