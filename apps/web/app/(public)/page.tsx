@@ -34,6 +34,7 @@ import {
 import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
 import CompanionScenarioCards from '@/components/companion-scenario-cards';
 import MemoryModeDisclosureCard from '@/components/memory/MemoryModeDisclosureCard';
+import PlatformStatsStrip from '@/components/landing/PlatformStatsStrip';
 
 const structuredData = {
   '@context': 'https://schema.org',
@@ -174,6 +175,7 @@ export default function Home() {
       <div className="flex flex-col">
         <HeroSection />
         <StatsBar />
+        <PlatformStatsStrip />
         <FreeToStartStrip />
         <AdFreePledgeStrip />
         <MITBreakthroughBadge />
