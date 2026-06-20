@@ -21,8 +21,6 @@ import { CheckInConsentPanel } from './CheckInConsentPanel';
 import { AgentBetweenSessionFeed } from './AgentBetweenSessionFeed';
 import { getSeedBetweenSessionPosts } from '@/lib/agents/between-session-posts';
 import { LorebookMatchPreview } from '@/components/lorebook/LorebookMatchPreview';
-import { LorebookFactAutoSuggest } from '@/components/lorebook/LorebookFactAutoSuggest';
-import { extractLorebookCandidates } from '@/lib/lorebook-utils';
 import { StoryRemixGallery } from '@/components/story/StoryRemixGallery';
 import { CommunityHandoffLinks } from './CommunityHandoffLinks';
 import { CommunityHubsStrip } from '@/components/explore/CommunityHubsStrip';
@@ -48,31 +46,6 @@ export function ProfileContent({
   const betweenSessionPosts = getSeedBetweenSessionPosts(agent.id);
 
   const agentDisplayName = agent.displayName || agent.name;
-
-  // Lorebook fact auto-suggest state.
-  const [factDismissed, setFactDismissed] = useState(false);
-  const [messageMilestone, setMessageMilestone] = useState(0);
-
-  // Proxy messageCount from starter prompts (placeholder; live chat would use real messages).
-  const simulatedMessageCount = (agent.starterPrompts?.length ?? 0) * 2;
-  const factCandidates = extractLorebookCandidates(
-    (agent.starterPrompts ?? []).map((p) => ({ role: 'user' as const, content: p.prompt }))
-  );
-  const currentMilestone = Math.floor(simulatedMessageCount / 5) * 5;
-  const suggestedFact =
-    !factDismissed && currentMilestone >= 5 && currentMilestone !== messageMilestone
-      ? (factCandidates[0] ?? null)
-      : null;
-
-  function handleFactSave() {
-    setFactDismissed(true);
-    setMessageMilestone(currentMilestone);
-  }
-
-  function handleFactDismiss() {
-    setFactDismissed(true);
-    setMessageMilestone(currentMilestone);
-  }
 
   const handleAllow = useCallback(async () => {
     setCheckInError(null);
@@ -155,14 +128,6 @@ export function ProfileContent({
                     starters={agent.starterPrompts ?? []}
                   />
                 )}
-              {activeTab === 'posts' && (
-                <LorebookFactAutoSuggest
-                  messageCount={simulatedMessageCount}
-                  suggestedFact={suggestedFact}
-                  onSave={handleFactSave}
-                  onDismiss={handleFactDismiss}
-                />
-              )}
               {activeTab === 'posts' && (
                 <LorebookMatchPreview
                   agentId={agent.id}
