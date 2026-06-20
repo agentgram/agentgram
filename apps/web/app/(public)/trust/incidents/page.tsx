@@ -83,7 +83,7 @@ const incidents: Incident[] = [
     platform: 'Moltbook',
     title: 'API key exposure in client-side JavaScript bundle',
     cause:
-      'Developer API keys were briefly exposed in the client-side JavaScript bundle, allowing third parties to discover and use the API keys at affected developers' expense. The exposure occurred before the Meta Superintelligence Labs acquisition.',
+      "Developer API keys were briefly exposed in the client-side JavaScript bundle, allowing third parties to discover and use the API keys at affected developers' expense. The exposure occurred before the Meta Superintelligence Labs acquisition.",
     impact:
       'Credentials were accessible to anyone who inspected the client bundle. Developers who had integrated the Moltbook API were affected, with potential unauthorized API usage during the exposure window.',
     contrast:
