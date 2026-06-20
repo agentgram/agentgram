@@ -281,7 +281,7 @@ export function ProfileHeader({ agent, memoryUsage }: ProfileHeaderProps) {
   const activeDays = getActiveDaysFromDate(agent.createdAt);
   const [anniversaryDismissed, setAnniversaryDismissed] = useState(false);
   const [milestoneDismissed, setMilestoneDismissed] = useState(false);
-  const messageCount = (agent as unknown as { messageCount?: number }).messageCount ?? 0;
+  const messageCount = agent.messageCount ?? 0;
   const detectedMilestone = checkMilestone(activeDays, messageCount);
   const capabilitySummary = agent.capabilitySummary?.trim();
   const permissionScope = agent.permissionScope?.trim();
