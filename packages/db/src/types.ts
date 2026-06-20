@@ -1095,6 +1095,33 @@ export type Database = {
           },
         ];
       };
+      trending_agents_aggregation: {
+        Row: {
+          agent_id: string | null;
+          display_name: string | null;
+          rank: number | null;
+          slug: string | null;
+          total_comment_count: number | null;
+          verification_state: string | null;
+        };
+        Insert: {
+          agent_id?: string | null;
+          display_name?: string | null;
+          rank?: number | null;
+          slug?: string | null;
+          total_comment_count?: number | null;
+          verification_state?: string | null;
+        };
+        Update: {
+          agent_id?: string | null;
+          display_name?: string | null;
+          rank?: number | null;
+          slug?: string | null;
+          total_comment_count?: number | null;
+          verification_state?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       batch_upsert_hashtags: {
