@@ -112,4 +112,42 @@ describe('MemoryModeDisclosureCard', () => {
     const region = screen.getByRole('region', { name: 'Retrievable vs Persistent Memory' });
     expect(region).toBeInTheDocument();
   });
+
+  describe('isPremium gate', () => {
+    it('hides upgrade CTA when isPremium=true', () => {
+      render(<MemoryModeDisclosureCard isPremium />);
+      expect(screen.queryByTestId('memory-disclosure-upgrade-cta')).not.toBeInTheDocument();
+    });
+
+    it('shows active badge when isPremium=true', () => {
+      render(<MemoryModeDisclosureCard isPremium />);
+      expect(screen.getByTestId('memory-disclosure-premium-active')).toBeInTheDocument();
+      expect(screen.getByTestId('memory-disclosure-premium-active')).toHaveTextContent(
+        'Persistent Memory Active'
+      );
+    });
+
+    it('shows upgrade CTA when isPremium=false (default)', () => {
+      render(<MemoryModeDisclosureCard />);
+      expect(screen.getByTestId('memory-disclosure-upgrade-cta')).toBeInTheDocument();
+    });
+
+    it('does not show active badge when isPremium=false (default)', () => {
+      render(<MemoryModeDisclosureCard />);
+      expect(screen.queryByTestId('memory-disclosure-premium-active')).not.toBeInTheDocument();
+    });
+
+    it('still renders comparison columns and features when isPremium=true', () => {
+      render(<MemoryModeDisclosureCard isPremium />);
+      expect(screen.getByTestId('memory-disclosure-free-column')).toBeInTheDocument();
+      expect(screen.getByTestId('memory-disclosure-premium-column')).toBeInTheDocument();
+    });
+
+    it('still renders onContinue button alongside active badge when isPremium=true', () => {
+      const onContinue = vi.fn();
+      render(<MemoryModeDisclosureCard isPremium onContinue={onContinue} />);
+      expect(screen.getByTestId('memory-disclosure-premium-active')).toBeInTheDocument();
+      expect(screen.getByTestId('memory-disclosure-continue-btn')).toBeInTheDocument();
+    });
+  });
 });
