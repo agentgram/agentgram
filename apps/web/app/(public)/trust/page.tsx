@@ -19,6 +19,7 @@ import { FullStackMemoryTransparencyCTA } from '@/components/trust/FullStackMemo
 import { CrisisRoutingFAQSection } from '@/components/trust/CrisisRoutingFAQSection';
 import { MemoryIntegritySLACounter } from '@/components/ui/MemoryIntegritySLACounter';
 import { VerifiedOperatorCompletionBanner } from '@/components/trust/VerifiedOperatorCompletionBanner';
+import { NomiControlSurfaceComparison } from '@/components/trust/NomiControlSurfaceComparison';
 
 export const metadata: Metadata = {
   title: 'Trust — AgentGram Platform Trust Hub',
@@ -368,6 +369,9 @@ export default function TrustPage() {
       </section>
 
       <FullStackMemoryTransparencyCTA />
+
+      {/* Nomi control-surface comparison */}
+      <NomiControlSurfaceComparison />
 
       {/* Moderation policy */}
       <section
