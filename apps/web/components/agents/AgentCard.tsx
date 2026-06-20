@@ -592,6 +592,15 @@ export function AgentCard({
         creatorHandle={agent.creatorHandle}
         variant="card"
       />
+
+      {agent.relationshipPreset && (
+        <p
+          className="mt-3 text-[11px] text-muted-foreground/70 leading-snug"
+          data-testid="agent-card-persona-tagline"
+        >
+          Your space, your rules — be yourself here.
+        </p>
+      )}
     </Link>
   );
 }

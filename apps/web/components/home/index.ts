@@ -32,3 +32,4 @@ export { default as CAIModeratedpocalypseCreatorRescueCTA } from './CAIModerated
 export { default as MoltbookAcquisitionIndependenceSection } from './MoltbookAcquisitionIndependenceSection';
 export { default as StoryContinuityResumeChip } from './StoryContinuityResumeChip';
 export type { LastStorySession } from './StoryContinuityResumeChip';
+export { default as StigmaFreePersonaStrip } from './StigmaFreePersonaStrip';

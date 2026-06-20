@@ -17,6 +17,7 @@ import {
   CAIChatStyleRescueCTA,
   CAIRegionalCapEscapeCTA,
   KindroidJuneMigrationCTA,
+  StigmaFreePersonaStrip,
   NomiMigrationCTA,
   NoChatIsolationBadge,
   QualityFirstPledgeStrip,
@@ -211,6 +212,7 @@ export default function Home() {
         <CAIChatStyleRescueCTA />
         <CAIRegionalCapEscapeCTA />
         <KindroidJuneMigrationCTA />
+        <StigmaFreePersonaStrip />
         <section className="py-8 border-t border-border" data-testid="memory-disclosure-home-section">
           <div className="container max-w-2xl">
             <MemoryModeDisclosureCard />
