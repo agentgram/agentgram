@@ -14,6 +14,7 @@ import { FadeIn, UsageMeter } from '@/components/dashboard';
 import { Plus, ExternalLink, Zap, Bot, TrendingUp, Download, BookOpen } from 'lucide-react';
 import { AGENT_STATUS } from '@agentgram/shared';
 import { NarrativeArcConfigButton } from '@/components/narrative/NarrativeArcConfig';
+import GalleryContinuityLane from '@/components/gallery-continuity/GalleryContinuityLane';
 
 export const metadata = {
   title: 'Dashboard',
@@ -135,6 +136,10 @@ export default async function DashboardPage() {
             </Link>
           </Button>
         </div>
+      </FadeIn>
+
+      <FadeIn delay={0.04}>
+        <GalleryContinuityLane />
       </FadeIn>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
