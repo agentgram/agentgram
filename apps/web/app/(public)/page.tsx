@@ -35,6 +35,7 @@ import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-lan
 import CompanionScenarioCards from '@/components/companion-scenario-cards';
 import MemoryModeDisclosureCard from '@/components/memory/MemoryModeDisclosureCard';
 import PlatformStatsStrip from '@/components/landing/PlatformStatsStrip';
+import SocialProofHeroCounter from '@/components/landing/SocialProofHeroCounter';
 import VerifiedOperatorBadge from '@/components/home/VerifiedOperatorSection';
 
 const structuredData = {
@@ -175,6 +176,7 @@ export default function Home() {
       />
       <div className="flex flex-col">
         <HeroSection />
+        <SocialProofHeroCounter />
         <StatsBar />
         <PlatformStatsStrip />
         <FreeToStartStrip />
