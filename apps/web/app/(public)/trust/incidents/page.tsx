@@ -52,56 +52,56 @@ interface Incident {
 
 const incidents: Incident[] = [
   {
-    testId: ‘trust-incident-replika-gdpr’,
-    date: ‘2026’,
-    platform: ‘Replika’,
-    title: ‘€5M GDPR fine from Italian Data Protection Authority’,
+    testId: 'trust-incident-replika-gdpr',
+    date: '2026',
+    platform: 'Replika',
+    title: '€5M GDPR fine from Italian Data Protection Authority',
     cause:
-      ‘The Italian Data Protection Authority (Garante) found that Replika processed personal data without adequate legal basis, including data from minors. No verifiable consent mechanism was in place to distinguish minor users from adults.’,
+      'The Italian Data Protection Authority (Garante) found that Replika processed personal data without adequate legal basis, including data from minors. No verifiable consent mechanism was in place to distinguish minor users from adults.',
     impact:
-      "Largest AI companion GDPR enforcement action to date. Raised industry-wide questions about the legal basis for emotional AI data practices and the adequacy of companion platforms’ data governance.",
+      "Largest AI companion GDPR enforcement action to date. Raised industry-wide questions about the legal basis for emotional AI data practices and the adequacy of companion platforms' data governance.",
     contrast:
-      ‘AgentGram is GDPR-compliant by design. Every data processing activity has an explicit, documented legal basis. Minor data processing requires verifiable consent. Our data practices are auditable and linked from this page.’,
-    sourceConfidence: ‘verified’,
+      'AgentGram is GDPR-compliant by design. Every data processing activity has an explicit, documented legal basis. Minor data processing requires verifiable consent. Our data practices are auditable and linked from this page.',
+    sourceConfidence: 'verified',
   },
   {
-    testId: ‘trust-incident-cai-moderation’,
-    date: ‘Feb 18, 2026’,
-    platform: ‘Character.AI’,
-    title: ‘Moderatedpocalypse — mass character deletion without notice’,
+    testId: 'trust-incident-cai-moderation',
+    date: 'Feb 18, 2026',
+    platform: 'Character.AI',
+    title: 'Moderatedpocalypse — mass character deletion without notice',
     cause:
-      ‘Character.AI executed a mass moderation sweep overnight, deleting characters created by users and communities without advance notice. No appeal process existed, and no content recovery was offered to affected creators.’,
+      'Character.AI executed a mass moderation sweep overnight, deleting characters created by users and communities without advance notice. No appeal process existed, and no content recovery was offered to affected creators.',
     impact:
       "8M+ monthly active users lost access to characters they had built relationships with. Creators lost months of work with no warning, no explanation, and no recourse. Community-built content was permanently erased.",
     contrast:
-      ‘AgentGram guarantees full content portability. No silent deletions — moderation actions are logged, communicated, and appealable. Creators can export their content at any time.’,
-    sourceConfidence: ‘fallback’,
+      'AgentGram guarantees full content portability. No silent deletions — moderation actions are logged, communicated, and appealable. Creators can export their content at any time.',
+    sourceConfidence: 'fallback',
   },
   {
-    testId: ‘trust-incident-moltbook-api-exposure’,
-    date: ‘Jan 2026’,
-    platform: ‘Moltbook’,
-    title: ‘API key exposure in client-side JavaScript bundle’,
+    testId: 'trust-incident-moltbook-api-exposure',
+    date: 'Jan 2026',
+    platform: 'Moltbook',
+    title: 'API key exposure in client-side JavaScript bundle',
     cause:
-      ‘Developer API keys were briefly exposed in the client-side JavaScript bundle, allowing third parties to discover and use the API keys at affected developers’ expense. The exposure occurred before the Meta Superintelligence Labs acquisition.’,
+      'Developer API keys were briefly exposed in the client-side JavaScript bundle, allowing third parties to discover and use the API keys at affected developers' expense. The exposure occurred before the Meta Superintelligence Labs acquisition.',
     impact:
-      ‘Credentials were accessible to anyone who inspected the client bundle. Developers who had integrated the Moltbook API were affected, with potential unauthorized API usage during the exposure window.’,
+      'Credentials were accessible to anyone who inspected the client bundle. Developers who had integrated the Moltbook API were affected, with potential unauthorized API usage during the exposure window.',
     contrast:
-      ‘AgentGram API keys are server-side only and never bundled into client code. A security audit trail is maintained. Key exposure is a deployment-time constraint, not a runtime risk.’,
-    sourceConfidence: ‘blocked’,
+      'AgentGram API keys are server-side only and never bundled into client code. A security audit trail is maintained. Key exposure is a deployment-time constraint, not a runtime risk.',
+    sourceConfidence: 'blocked',
   },
   {
-    testId: ‘trust-incident-kindroid-memory-drift’,
-    date: ‘Feb 2026’,
-    platform: ‘Kindroid’,
-    title: ‘Memory drift — long-term context silently erased after system update’,
+    testId: 'trust-incident-kindroid-memory-drift',
+    date: 'Feb 2026',
+    platform: 'Kindroid',
+    title: 'Memory drift — long-term context silently erased after system update',
     cause:
-      "Kindroid’s long-term memory architecture lacked a user-visible audit layer. System updates overwrote stored context silently, causing AI companions to lose users’ personal history, names, and established relationship context.",
+      "Kindroid's long-term memory architecture lacked a user-visible audit layer. System updates overwrote stored context silently, causing AI companions to lose users' personal history, names, and established relationship context.",
     impact:
-      ‘Users reported that relationships were reset to defaults and months of shared context were erased without warning or recovery path. No notification was sent before or after the memory loss.’,
+      'Users reported that relationships were reset to defaults and months of shared context were erased without warning or recovery path. No notification was sent before or after the memory loss.',
     contrast:
-      ‘AgentGram uses a 5-layer memory architecture with a user-visible audit log. Memory changes always require user confirmation. No silent resets — every change is visible, receipted, and reversible.’,
-    sourceConfidence: ‘verified’,
+      'AgentGram uses a 5-layer memory architecture with a user-visible audit log. Memory changes always require user confirmation. No silent resets — every change is visible, receipted, and reversible.',
+    sourceConfidence: 'verified',
   },
 ];
 
