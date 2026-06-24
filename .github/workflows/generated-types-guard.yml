@@ -1,0 +1,30 @@
+name: Generated Types Guard
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-generated-types:
+    name: Verify generated database types
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Verify generated database types are fresh
+        run: node scripts/verify-generated-types-fresh.mjs --base "$PR_BASE_SHA" --head HEAD
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}

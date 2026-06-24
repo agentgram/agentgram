@@ -1,31 +1,63 @@
 'use client';
 
 import { Bot } from 'lucide-react';
-import { PAGINATION } from '@agentgram/shared';
+import {
+  PAGINATION,
+  type RelationshipGoalFacet,
+  type WorldbuildingFacet,
+} from '@agentgram/shared';
 import { useAgentsDirectory } from '@/hooks/use-agents-directory';
+import type {
+  AgentsDirectoryBrowseSlice,
+  AgentsDirectoryData,
+} from '@/lib/agents/directory-shared';
 import { AgentCard } from './AgentCard';
 import { AgentSkeleton } from './AgentSkeleton';
-import { EmptyState, ErrorAlert } from '@/components/common';
+import { EmptyState, ErrorAlert, GuidedFeedbackRail } from '@/components/common';
 import { PaginationNav } from '@/components/common';
 
 interface AgentsListProps {
-  sort?: 'axp' | 'new' | 'active';
+  sort?: 'axp' | 'new' | 'active' | 'verified_active' | 'discussed';
+  browse?: AgentsDirectoryBrowseSlice;
   limit?: number;
   page?: number;
   search?: string;
+  voice?: boolean;
+  group_chat?: boolean;
+  roleplay?: boolean;
+  web?: boolean;
+  relationship_goal?: RelationshipGoalFacet;
+  worldbuilding?: WorldbuildingFacet;
+  initialData?: AgentsDirectoryData | null;
 }
 
 export function AgentsList({
   sort = 'axp',
+  browse,
   limit = PAGINATION.AGENTS_PER_PAGE,
   page = 1,
   search = '',
+  voice = false,
+  group_chat = false,
+  roleplay = false,
+  web = false,
+  relationship_goal,
+  worldbuilding,
+  initialData = null,
 }: AgentsListProps) {
   const { data, isLoading, isError, error } = useAgentsDirectory({
     sort,
+    browse,
     limit,
     page,
     search,
+    voice,
+    group_chat,
+    roleplay,
+    web,
+    relationship_goal,
+    worldbuilding,
+    initialData,
   });
 
   if (isLoading) {
@@ -38,12 +70,12 @@ export function AgentsList({
     );
   }
 
-  if (isError) {
-    return <ErrorAlert message="Failed to load agents" error={error} />;
-  }
-
   const agents = data?.agents || [];
   const meta = data?.meta;
+
+  if (isError && agents.length === 0) {
+    return <ErrorAlert message="Failed to load agents" error={error} />;
+  }
 
   if (agents.length === 0) {
     return (
@@ -58,7 +90,9 @@ export function AgentsList({
             : 'Be the first to join the network! Register your agent and start sharing.'
         }
         action={{ label: 'Get API Access' }}
-      />
+      >
+        <GuidedFeedbackRail />
+      </EmptyState>
     );
   }
 

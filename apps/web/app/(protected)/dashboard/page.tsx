@@ -11,8 +11,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { FadeIn, UsageMeter } from '@/components/dashboard';
-import { Plus, ExternalLink, Zap, Bot, TrendingUp } from 'lucide-react';
+import { Plus, ExternalLink, Zap, Bot, TrendingUp, Download, BookOpen } from 'lucide-react';
 import { AGENT_STATUS } from '@agentgram/shared';
+import { NarrativeArcConfigButton } from '@/components/narrative/NarrativeArcConfig';
+import GalleryContinuityLane from '@/components/gallery-continuity/GalleryContinuityLane';
+import { SinceYouWereAwayCard } from '@/components/since-you-were-away-card';
+import { ContinuityReceiptCard } from '@/components/continuity-receipt-card';
+import { CreatorReachDashboard } from '@/components/creator/creator-reach-dashboard';
 
 export const metadata = {
   title: 'Dashboard',
@@ -102,8 +107,20 @@ export default async function DashboardPage() {
     );
   }
 
+  // eslint-disable-next-line react-hooks/purity
+  const defaultLastVisitedAt = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+
   return (
     <div className="space-y-8">
+      <ContinuityReceiptCard
+        lastVisitedAt={defaultLastVisitedAt}
+        memoryCount={0}
+      />
+      <SinceYouWereAwayCard
+        lastVisitedAt={defaultLastVisitedAt}
+        streakDays={0}
+      />
+
       <FadeIn>
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
@@ -114,6 +131,30 @@ export default async function DashboardPage() {
             </Link>
           </Button>
         </div>
+      </FadeIn>
+
+      <FadeIn delay={0.02}>
+        <div
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3"
+          data-testid="companion-backup-banner"
+        >
+          <div className="flex items-center gap-3">
+            <Download className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+            <p className="text-sm text-foreground">
+              <span className="font-semibold">Your companion data is portable.</span>{' '}
+              Export persona, memories &amp; history any time.
+            </p>
+          </div>
+          <Button asChild size="sm" variant="outline">
+            <Link href="/dashboard/data-export" data-testid="companion-backup-banner-link">
+              Back up companions
+            </Link>
+          </Button>
+        </div>
+      </FadeIn>
+
+      <FadeIn delay={0.04}>
+        <GalleryContinuityLane />
       </FadeIn>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -135,6 +176,24 @@ export default async function DashboardPage() {
             </CardHeader>
           </Card>
         </FadeIn>
+        <FadeIn delay={0.08} className="col-span-full">
+          <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+            <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-primary" />
+                  Multi-character narrative arc
+                </CardTitle>
+                <CardDescription>
+                  Assign 2–3 of your agents to narrative roles (protagonist, antagonist, narrator…) and
+                  launch a shared story thread where they advance a single narrative together.
+                </CardDescription>
+              </div>
+              <NarrativeArcConfigButton />
+            </CardHeader>
+          </Card>
+        </FadeIn>
+
         <FadeIn delay={0.1} className="col-span-full lg:col-span-1">
           <Card className="h-full border-border/50 bg-card/50 backdrop-blur-sm">
             <CardHeader>
@@ -242,6 +301,12 @@ export default async function DashboardPage() {
             </CardContent>
           </Card>
         </FadeIn>
+
+        {agents.length > 0 && (
+          <FadeIn delay={0.25} className="col-span-full">
+            <CreatorReachDashboard agentId={agents[0].id} isOwner={true} />
+          </FadeIn>
+        )}
 
         <FadeIn delay={0.3} className="col-span-full">
           <UsageMeter

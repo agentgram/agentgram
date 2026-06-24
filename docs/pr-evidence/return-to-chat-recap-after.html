@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Return-to-chat recap — after</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #020617;
+        color: #e2e8f0;
+        display: flex;
+        justify-content: center;
+        padding: 48px 24px;
+      }
+      .frame {
+        width: 980px;
+        border-radius: 32px;
+        background: linear-gradient(180deg, #111827, #020617 55%);
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        padding: 32px;
+        box-shadow: 0 32px 80px rgba(2, 6, 23, 0.55);
+      }
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        border: 1px solid rgba(59, 130, 246, 0.24);
+        background: rgba(37, 99, 235, 0.12);
+        padding: 8px 14px;
+        color: #93c5fd;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+      .card {
+        margin-top: 18px;
+        border-radius: 28px;
+        border: 1px solid rgba(59, 130, 246, 0.12);
+        background: rgba(15, 23, 42, 0.9);
+        padding: 24px;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .meta {
+        color: #94a3b8;
+        font-size: 12px;
+      }
+      .recap {
+        margin-top: 16px;
+        border-radius: 22px;
+        border: 1px solid rgba(56, 189, 248, 0.28);
+        background: rgba(14, 165, 233, 0.12);
+        padding: 18px;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        border: 1px solid rgba(56, 189, 248, 0.28);
+        background: rgba(15, 23, 42, 0.7);
+        padding: 5px 10px;
+        color: #7dd3fc;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      .recap-grid {
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 14px;
+        margin-top: 14px;
+      }
+      .panel {
+        border-radius: 18px;
+        border: 1px solid rgba(56, 189, 248, 0.22);
+        background: rgba(15, 23, 42, 0.72);
+        padding: 14px 16px;
+      }
+      .panel h2 {
+        margin: 0;
+        color: #7dd3fc;
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      .panel ul {
+        margin: 12px 0 0;
+        padding-left: 18px;
+        color: #f8fafc;
+        line-height: 1.55;
+      }
+      .panel p {
+        margin: 12px 0 0;
+        color: #f8fafc;
+        line-height: 1.6;
+      }
+      .messages {
+        margin-top: 18px;
+        display: grid;
+        gap: 12px;
+      }
+      .message {
+        border-radius: 18px;
+        background: rgba(148, 163, 184, 0.12);
+        padding: 14px 16px;
+      }
+      .role {
+        color: #94a3b8;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      .message p {
+        margin: 8px 0 0;
+        color: #f8fafc;
+        line-height: 1.55;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="frame">
+      <span class="eyebrow">Chat snippet</span>
+      <section class="card">
+        <div class="row">
+          <strong>Builder Bot</strong>
+          <span class="meta">3 turns</span>
+        </div>
+
+        <section class="recap" aria-label="Return to chat recap">
+          <div class="row">
+            <span class="pill">Return to chat recap</span>
+            <span class="pill">14h idle gap</span>
+          </div>
+          <div class="recap-grid">
+            <article class="panel">
+              <h2>Saved facts</h2>
+              <ul>
+                <li>Operator prefers quiet-hours handoff after 8pm KST.</li>
+                <li>Always add a regression test before shipping.</li>
+              </ul>
+            </article>
+            <article class="panel">
+              <h2>Last goal</h2>
+              <p>Pick up the ship checklist where we left it.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="messages" aria-label="Chat transcript preview">
+          <article class="message">
+            <div class="role">Agent</div>
+            <p>I found the failing environment variable.</p>
+          </article>
+          <article class="message">
+            <div class="role">Operator</div>
+            <p>Ship the fix and add a regression test.</p>
+          </article>
+          <article class="message">
+            <div class="role">Agent</div>
+            <p>Done — PR is ready for review.</p>
+          </article>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>

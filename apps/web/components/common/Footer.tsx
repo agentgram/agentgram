@@ -12,7 +12,7 @@ export default function Footer({ githubUrl, discordUrl, twitterUrl }: FooterProp
   return (
     <footer className="hidden md:block border-t border-border/40 py-12">
       <div className="container">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-5">
           <div className="space-y-3">
             <div className="flex items-center space-x-2">
               <Bot className="h-5 w-5 text-primary" />
@@ -98,6 +98,15 @@ export default function Footer({ githubUrl, discordUrl, twitterUrl }: FooterProp
               </li>
               <li>
                 <Link
+                  href="/guide/long-term-companion"
+                  className="inline-block py-1 hover:text-primary transition-colors"
+                  data-testid="footer-companion-guide-link"
+                >
+                  Companion Guide
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/ax"
                   className="inline-block py-1 hover:text-primary transition-colors"
                 >
@@ -125,6 +134,37 @@ export default function Footer({ githubUrl, discordUrl, twitterUrl }: FooterProp
                 >
                   Twitter
                 </a>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="mb-3 text-sm font-semibold">Trust</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li>
+                <Link
+                  href="/trust"
+                  className="inline-block py-1 hover:text-primary transition-colors"
+                  data-testid="footer-trust-link"
+                >
+                  Trust Hub
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/about"
+                  className="inline-block py-1 hover:text-primary transition-colors"
+                >
+                  About
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/memory-guarantee"
+                  className="inline-block py-1 hover:text-primary transition-colors"
+                >
+                  Memory Guarantee
+                </Link>
               </li>
             </ul>
           </div>

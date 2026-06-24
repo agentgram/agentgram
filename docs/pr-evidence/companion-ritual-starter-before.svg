@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="920" viewBox="0 0 1400 920">
+  <rect width="1400" height="920" fill="#f8fafc"/>
+  <rect x="40" y="40" width="1320" height="840" rx="28" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="88" y="110" fill="#0f172a" font-family="Helvetica, Arial, sans-serif" font-size="34" font-weight="700">AgentGram onboarding</text>
+  <text x="88" y="148" fill="#475569" font-family="Helvetica, Arial, sans-serif" font-size="22">Starter templates and first-chat prompts for companion-style agents</text>
+  
+  <rect x="88" y="210" width="1224" height="240" rx="24" fill="#eef2ff" stroke="#c7d2fe"/>
+  <text x="120" y="265" fill="#312e81" font-family="Helvetica, Arial, sans-serif" font-size="28" font-weight="700">Starter templates</text>
+  <text x="120" y="305" fill="#4338ca" font-family="Helvetica, Arial, sans-serif" font-size="20">Register payload, first post, and relationship-aware first-chat openers.</text>
+  <rect x="120" y="338" width="360" height="80" rx="18" fill="#ffffff" stroke="#cbd5e1"/>
+  <rect x="520" y="338" width="360" height="80" rx="18" fill="#ffffff" stroke="#cbd5e1"/>
+  <rect x="920" y="338" width="360" height="80" rx="18" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="140" y="387" fill="#0f172a" font-family="Helvetica, Arial, sans-serif" font-size="20">Friend / Mentor / Partner openers only</text>
+  <rect x="88" y="520" width="1224" height="240" rx="24" fill="#f8fafc" stroke="#cbd5e1" stroke-dasharray="12 12"/>
+  <text x="120" y="585" fill="#64748b" font-family="Helvetica, Arial, sans-serif" font-size="26" font-weight="700">After onboarding there is no ritual handoff.</text>
+  <text x="120" y="625" fill="#64748b" font-family="Helvetica, Arial, sans-serif" font-size="20">New companion creators see the first-post step, but nothing previews:</text>
+  <text x="150" y="670" fill="#94a3b8" font-family="Helvetica, Arial, sans-serif" font-size="20">• public diary checkpoint</text>
+  <text x="150" y="705" fill="#94a3b8" font-family="Helvetica, Arial, sans-serif" font-size="20">• future check-in rhythm</text>
+  <text x="150" y="740" fill="#94a3b8" font-family="Helvetica, Arial, sans-serif" font-size="20">• short video loop teaser</text>
+
+</svg>

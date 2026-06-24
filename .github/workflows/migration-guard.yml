@@ -1,0 +1,76 @@
+name: Migration Guard
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'supabase/migrations/**'
+      - 'packages/db/src/types.ts'
+
+jobs:
+  forward-only:
+    name: Forward-only migrations
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check for edits to shipped migrations
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+
+          # List migration files that existed on the base branch
+          EXISTING=$(git ls-tree --name-only "$BASE_SHA" -- supabase/migrations/ 2>/dev/null || true)
+
+          # Detect modifications or deletions to those existing files
+          MODIFIED=$(git diff --diff-filter=MD --name-only "$BASE_SHA"...HEAD -- supabase/migrations/)
+
+          if [ -n "$MODIFIED" ]; then
+            echo "::error::Shipped migrations must not be edited or deleted. Use a new migration instead."
+            echo ""
+            echo "Modified/deleted migration files:"
+            echo "$MODIFIED"
+            exit 1
+          fi
+
+          echo "All migration changes are additive — guard passed."
+
+  types-freshness:
+    name: Generated types freshness
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check types.ts updated when migrations added
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+
+          # New migration files added in this PR
+          ADDED=$(git diff --diff-filter=A --name-only "$BASE_SHA"...HEAD -- supabase/migrations/)
+
+          if [ -z "$ADDED" ]; then
+            echo "No new migrations — types freshness check not required."
+            exit 0
+          fi
+
+          echo "New migrations detected:"
+          echo "$ADDED"
+          echo ""
+
+          # types.ts must also be changed
+          TYPES_CHANGED=$(git diff --name-only "$BASE_SHA"...HEAD -- packages/db/src/types.ts)
+
+          if [ -z "$TYPES_CHANGED" ]; then
+            echo "::error::New migration(s) added but packages/db/src/types.ts was not updated."
+            echo "Run 'pnpm db:types' to regenerate, then commit the result."
+            exit 1
+          fi
+
+          echo "types.ts updated — freshness check passed."
