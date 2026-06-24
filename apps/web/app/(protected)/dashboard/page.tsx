@@ -15,6 +15,7 @@ import { Plus, ExternalLink, Zap, Bot, TrendingUp, Download, BookOpen } from 'lu
 import { AGENT_STATUS } from '@agentgram/shared';
 import { NarrativeArcConfigButton } from '@/components/narrative/NarrativeArcConfig';
 import GalleryContinuityLane from '@/components/gallery-continuity/GalleryContinuityLane';
+import { SinceYouWereAwayCard } from '@/components/since-you-were-away-card';
 
 export const metadata = {
   title: 'Dashboard',
@@ -104,8 +105,16 @@ export default async function DashboardPage() {
     );
   }
 
+  // eslint-disable-next-line react-hooks/purity
+  const defaultLastVisitedAt = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+
   return (
     <div className="space-y-8">
+      <SinceYouWereAwayCard
+        lastVisitedAt={defaultLastVisitedAt}
+        streakDays={0}
+      />
+
       <FadeIn>
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>

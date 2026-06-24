@@ -13,6 +13,7 @@ import {
 } from '@/components/dashboard';
 import MemoryModeDisclosureCard from '@/components/memory/MemoryModeDisclosureCard';
 import { CompanionInsightsPanel } from '@/components/companion-insights-panel';
+import { CompanionRelationshipHealthPanel } from '@/components/companion-relationship-health-panel';
 import { QuestChallenge } from '@/components/quest/QuestChallenge';
 import type { UserProfile } from '@/lib/minor-safe-mode';
 import {
@@ -64,6 +65,12 @@ type AgentSettingsRecord = {
       profileFact: number;
       relationshipContext: number;
     };
+  };
+  relationshipHealth: {
+    frequencyScore: number;
+    memoryDepth: number;
+    milestoneCount: number;
+    lastActiveAt: string;
   };
 };
 
@@ -170,7 +177,7 @@ export default async function SettingsPage() {
 
   const { data: agents } = await supabase
     .from('agents')
-    .select('id, name, display_name, description, metadata')
+    .select('id, name, display_name, description, metadata, last_active')
     .eq('developer_id', developer_id)
     .order('created_at', { ascending: false });
 
@@ -209,6 +216,19 @@ export default async function SettingsPage() {
   const trustSettings: AgentSettingsRecord[] = (agents ?? []).map((agent) => {
     const activePersona = activePersonaByAgentId.get(agent.id);
     const agentMemoryRows = memoryRowsByAgentId.get(agent.id) ?? [];
+    const memoryDepth = agentMemoryRows.length;
+
+    // Relationship health: compute milestone count from memory depth as a proxy.
+    // Real milestone data comes from the companion-health API once chat_sessions is available.
+    let milestoneCount = 0;
+    if (memoryDepth >= 1) milestoneCount = 1;
+    if (memoryDepth >= 3) milestoneCount = 2;
+    if (memoryDepth >= 6) milestoneCount = 3;
+    if (memoryDepth >= 10) milestoneCount = 4;
+
+    // Frequency score: stub 0 until live session data is wired from API
+    const frequencyScore = 0;
+
     const pinnedFacts = agentMemoryRows.map((memory) => ({
       id: memory.id,
       key: memory.key,
@@ -261,6 +281,12 @@ export default async function SettingsPage() {
       initialDailyReflectionSettings: readDailyReflectionFromMetadata(agent.metadata),
       pinnedFacts,
       pinnedFactsLedger,
+      relationshipHealth: {
+        frequencyScore,
+        memoryDepth,
+        milestoneCount,
+        lastActiveAt: (agent as unknown as Record<string, unknown>).last_active as string ?? new Date().toISOString(),
+      },
     };
   });
 
@@ -330,6 +356,13 @@ export default async function SettingsPage() {
                 <CompanionInsightsPanel
                   agentLabel={settings.agentLabel}
                   isPaidUser={settings.developerPlan !== 'free'}
+                />
+                <CompanionRelationshipHealthPanel
+                  agentId={settings.agentId}
+                  frequencyScore={settings.relationshipHealth.frequencyScore}
+                  memoryDepth={settings.relationshipHealth.memoryDepth}
+                  milestoneCount={settings.relationshipHealth.milestoneCount}
+                  lastActiveAt={settings.relationshipHealth.lastActiveAt}
                 />
                 <AgentLorebookForm
                   settings={{
