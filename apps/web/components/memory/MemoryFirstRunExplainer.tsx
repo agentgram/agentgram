@@ -1,7 +1,7 @@
 'use client';
 
 import { useSyncExternalStore, useState } from 'react';
-import { BookOpen, Pin, Infinity, ArrowRight, X, CheckCircle } from 'lucide-react';
+import { BookOpen, Pin, Infinity as InfinityIcon, ArrowRight, X, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const STORAGE_KEY = 'agentgram:memory-explainer-seen';
@@ -60,7 +60,7 @@ const STEPS = [
   },
   {
     id: 'memory-usage',
-    icon: Infinity,
+    icon: InfinityIcon,
     iconColor: 'text-green-500',
     iconBg: 'bg-green-500/10',
     title: 'Memory Usage — Unlimited',
