@@ -51,3 +51,11 @@ export type {
   PortalResponse,
   WebhookEvent,
 } from './billing';
+
+export type {
+  AgentMemoryProfile,
+  NoteScope,
+  MemoryAuditOperation,
+  MemoryAuditEvent,
+  MemoryAuditPage,
+} from './agent-memory';
