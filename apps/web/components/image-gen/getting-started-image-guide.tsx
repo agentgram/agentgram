@@ -54,10 +54,12 @@ export function GettingStartedImageGuide({
     }
   });
   const [manuallyOpen, setManuallyOpen] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
 
   function handleDismiss() {
     setVisible(false);
     setManuallyOpen(false);
+    setDismissed(true);
     try {
       localStorage.setItem(STORAGE_KEY, '1');
     } catch {
@@ -75,7 +77,7 @@ export function GettingStartedImageGuide({
     }
   }
 
-  const isOpen = forceVisible || visible || manuallyOpen;
+  const isOpen = !dismissed && (forceVisible || visible || manuallyOpen);
 
   return (
     <div data-testid="getting-started-image-guide">
