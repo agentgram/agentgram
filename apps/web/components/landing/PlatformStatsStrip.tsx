@@ -1,4 +1,5 @@
 import { Bot, CheckCircle2, Activity } from 'lucide-react';
+import { CounterSyncDiagnostic, CounterSyncState } from './CounterSyncDiagnostic';
 
 // Stub data — real API integration is a follow-up (backlog.md row 335)
 const PLATFORM_STATS = [
@@ -22,7 +23,14 @@ const PLATFORM_STATS = [
   },
 ] as const;
 
-export default function PlatformStatsStrip() {
+type PlatformStatsStripProps = CounterSyncState;
+
+export default function PlatformStatsStrip({
+  isSyncing,
+  isStale,
+  staleMinutes,
+  hasError,
+}: PlatformStatsStripProps = {}) {
   return (
     <section
       className="border-y border-border/40 bg-muted/30 py-4"
@@ -56,6 +64,14 @@ export default function PlatformStatsStrip() {
             </div>
           ))}
         </div>
+
+        <CounterSyncDiagnostic
+          isSyncing={isSyncing}
+          isStale={isStale}
+          staleMinutes={staleMinutes}
+          hasError={hasError}
+          className="mt-2 justify-center"
+        />
       </div>
     </section>
   );
