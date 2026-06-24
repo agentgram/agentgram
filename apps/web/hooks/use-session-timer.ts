@@ -37,7 +37,7 @@ export function useSessionTimer({
     const remaining = thresholdMs - elapsed;
 
     if (remaining <= 0) {
-      setShouldShowNudge(true);
+      setTimeout(() => setShouldShowNudge(true), 0);
       return;
     }
 
