@@ -26,6 +26,7 @@ import {
 import { readAgentDiaryFromMetadata } from '@/lib/agent-diary';
 import { readAgentLorebookFromMetadata } from '@/lib/agent-lorebook';
 import { readProactiveControlsFromMetadata } from '@/lib/proactive-controls';
+import { VoiceDiffPlayer } from '@/components/voice/VoiceDiffPlayer';
 
 function readDailyReflectionFromMetadata(metadata: unknown): { enabled: boolean } {
   if (typeof metadata === 'object' && metadata !== null && !Array.isArray(metadata)) {
@@ -321,6 +322,20 @@ export default async function SettingsPage() {
 
       <FadeIn delay={0.08}>
         <TimeBudgetPanel />
+      </FadeIn>
+
+      <FadeIn delay={0.09}>
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle>Voice Version</CardTitle>
+            <CardDescription>
+              Compare V2 Legacy and V3 Enhanced voice samples and select your preference.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <VoiceDiffPlayer />
+          </CardContent>
+        </Card>
       </FadeIn>
 
       <FadeIn delay={0.1}>
