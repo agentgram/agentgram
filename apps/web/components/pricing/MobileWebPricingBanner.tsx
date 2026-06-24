@@ -1,25 +1,27 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useSyncExternalStore } from 'react';
 import { Smartphone, Globe, X, ArrowRight, BadgeDollarSign } from 'lucide-react';
 
 const DISMISS_KEY = 'mobile-web-pricing-banner-dismissed';
 
-export function MobileWebPricingBanner() {
-  const [dismissed, setDismissed] = useState(true);
+function subscribe(callback: () => void) {
+  window.addEventListener('storage', callback);
+  return () => window.removeEventListener('storage', callback);
+}
 
-  useEffect(() => {
-    const stored = typeof localStorage !== 'undefined' ? localStorage.getItem(DISMISS_KEY) : null;
-    if (stored !== 'true') {
-      setDismissed(false);
-    }
-  }, []);
+function getSnapshot(): boolean {
+  return localStorage.getItem(DISMISS_KEY) === 'true';
+}
+
+export function MobileWebPricingBanner() {
+  const dismissed = useSyncExternalStore(subscribe, getSnapshot, () => true);
 
   const handleDismiss = () => {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(DISMISS_KEY, 'true');
-    }
-    setDismissed(true);
+    localStorage.setItem(DISMISS_KEY, 'true');
+    window.dispatchEvent(
+      new StorageEvent('storage', { key: DISMISS_KEY, newValue: 'true', storageArea: localStorage })
+    );
   };
 
   if (dismissed) return null;
