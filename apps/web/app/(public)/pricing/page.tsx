@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock, BookOpen, Palette, Brain, ImageIcon, Infinity as InfinityIcon } from 'lucide-react';
-import { PricingCard, PricingProofSection, ReplikaPricingConfusionCallout, CAISoftLaunchLockEscape, PricingCompetitorAnchorRow, ReplikaSavingsCalculator, PaidConversionSocialProofBlock, ReplikaUltraFatigueFunnel } from '@/components/pricing';
+import { PricingCard, PricingProofSection, ReplikaPricingConfusionCallout, CAISoftLaunchLockEscape, PricingCompetitorAnchorRow, ReplikaSavingsCalculator, PaidConversionSocialProofBlock, ReplikaUltraFatigueFunnel, ControlSurfacePaidFunnelSection } from '@/components/pricing';
 import CAILorebookEscapeCTA from '@/components/home/CAILorebookEscapeCTA';
 import CAIChatStyleRescueCTA from '@/components/home/CAIChatStyleRescueCTA';
 import CaiMemoryFreeCounterBadge from '@/components/home/CaiMemoryFreeCounterBadge';
@@ -794,6 +794,8 @@ export default function PricingPage() {
           </div>
         </motion.div>
       </section>
+
+      <ControlSurfacePaidFunnelSection />
 
       <ViralSafetyMemoryPaidFunnel />
 
