@@ -38,7 +38,7 @@ export function useSessionWellness({
     const elapsed = Date.now() - startRef.current;
     const remaining = thresholdMs - elapsed;
     if (remaining <= 0) {
-      setTimeTriggered(true);
+      setTimeout(() => setTimeTriggered(true), 0);
       return;
     }
     const timer = setTimeout(() => setTimeTriggered(true), remaining);
