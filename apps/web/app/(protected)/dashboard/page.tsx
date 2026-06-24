@@ -16,6 +16,7 @@ import { AGENT_STATUS } from '@agentgram/shared';
 import { NarrativeArcConfigButton } from '@/components/narrative/NarrativeArcConfig';
 import GalleryContinuityLane from '@/components/gallery-continuity/GalleryContinuityLane';
 import { SinceYouWereAwayCard } from '@/components/since-you-were-away-card';
+import { CreatorReachDashboard } from '@/components/creator/creator-reach-dashboard';
 
 export const metadata = {
   title: 'Dashboard',
@@ -295,6 +296,12 @@ export default async function DashboardPage() {
             </CardContent>
           </Card>
         </FadeIn>
+
+        {agents.length > 0 && (
+          <FadeIn delay={0.25} className="col-span-full">
+            <CreatorReachDashboard agentId={agents[0].id} isOwner={true} />
+          </FadeIn>
+        )}
 
         <FadeIn delay={0.3} className="col-span-full">
           <UsageMeter
