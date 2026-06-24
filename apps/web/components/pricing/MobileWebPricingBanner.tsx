@@ -20,7 +20,7 @@ export function MobileWebPricingBanner() {
   const handleDismiss = () => {
     localStorage.setItem(DISMISS_KEY, 'true');
     window.dispatchEvent(
-      new StorageEvent('storage', { key: DISMISS_KEY, newValue: 'true', storageArea: localStorage })
+      new StorageEvent('storage', { key: DISMISS_KEY, newValue: 'true' })
     );
   };
 
