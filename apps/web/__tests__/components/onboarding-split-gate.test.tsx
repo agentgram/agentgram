@@ -21,9 +21,27 @@ vi.mock('next/link', () => ({
 
 const GATE_KEY = 'agentgram:onboarding-gate-shown';
 
+let store: Record<string, string> = {};
+
 beforeEach(() => {
-  localStorage.clear();
   vi.clearAllMocks();
+  store = {};
+  Object.defineProperty(window, 'localStorage', {
+    value: {
+      getItem: (key: string) => store[key] ?? null,
+      setItem: (key: string, val: string) => {
+        store[key] = val;
+      },
+      removeItem: (key: string) => {
+        delete store[key];
+      },
+      clear: () => {
+        store = {};
+      },
+    },
+    writable: true,
+    configurable: true,
+  });
 });
 
 describe('OnboardingSplitGate', () => {

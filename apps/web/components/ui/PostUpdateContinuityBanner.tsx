@@ -13,18 +13,22 @@ function getDismissedKey(version: string): string {
 export function PostUpdateContinuityBanner() {
   const currentVersion = process.env.NEXT_PUBLIC_APP_VERSION ?? '1.0.0';
 
-  const [visible, setVisible] = useState(() => {
+  const [visible, setVisible] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
-    const storedVersion = localStorage.getItem(APP_VERSION_KEY);
-    if (!storedVersion) {
-      localStorage.setItem(APP_VERSION_KEY, currentVersion);
+    try {
+      const storedVersion = localStorage.getItem(APP_VERSION_KEY);
+      if (!storedVersion) {
+        localStorage.setItem(APP_VERSION_KEY, currentVersion);
+        return false;
+      }
+      if (storedVersion !== currentVersion) {
+        localStorage.setItem(APP_VERSION_KEY, currentVersion);
+        return !localStorage.getItem(getDismissedKey(currentVersion));
+      }
+      return false;
+    } catch {
       return false;
     }
-    if (storedVersion !== currentVersion) {
-      localStorage.setItem(APP_VERSION_KEY, currentVersion);
-      return !localStorage.getItem(getDismissedKey(currentVersion));
-    }
-    return false;
   });
 
   function handleDismiss() {
