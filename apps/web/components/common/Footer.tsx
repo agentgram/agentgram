@@ -98,6 +98,15 @@ export default function Footer({ githubUrl, discordUrl, twitterUrl }: FooterProp
               </li>
               <li>
                 <Link
+                  href="/guide/long-term-companion"
+                  className="inline-block py-1 hover:text-primary transition-colors"
+                  data-testid="footer-companion-guide-link"
+                >
+                  Companion Guide
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/ax"
                   className="inline-block py-1 hover:text-primary transition-colors"
                 >
