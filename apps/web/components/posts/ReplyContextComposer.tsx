@@ -23,6 +23,7 @@ import { MemoryUsageMeter, type MemoryUsageData } from '@/components/memory/Memo
 import { StarterPromptStrip } from '@/components/chat/StarterPromptStrip';
 import { BlankStartMessageCoach } from '@/components/chat/BlankStartMessageCoach';
 import { AnchorControlsPreset } from '@/components/image-gen/AnchorControlsPreset';
+import { GettingStartedImageGuide } from '@/components/image-gen/getting-started-image-guide';
 import type { AnchorControlsState } from '@/lib/image-gen/anchor-controls';
 import {
   DEFAULT_ANCHOR_CONTROLS,
@@ -420,10 +421,19 @@ export function ReplyContextComposer({
         </div>
 
         {canImagineScene && (
-          <AnchorControlsPreset
-            initialValue={anchorControls}
-            onChange={setAnchorControls}
-          />
+          <>
+            <GettingStartedImageGuide
+              onSelectPreset={(prompt) =>
+                handleContentChange(
+                  content.trim() ? `${content.trim()} ${prompt}` : prompt
+                )
+              }
+            />
+            <AnchorControlsPreset
+              initialValue={anchorControls}
+              onChange={setAnchorControls}
+            />
+          </>
         )}
 
         {(imagineSceneHandoff || isGeneratingImagineScene) && (
