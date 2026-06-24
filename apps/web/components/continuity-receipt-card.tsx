@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Brain, CheckCircle, Info, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -42,14 +42,11 @@ export function ContinuityReceiptCard({
   recentChanges = null,
   appUpdatedSince = false,
 }: ContinuityReceiptCardProps) {
-  const [dismissed, setDismissed] = useState(true);
-
-  useEffect(() => {
+  const [dismissed, setDismissed] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
     const hoursAway = getHoursAway(lastVisitedAt);
-    if (hoursAway >= 24 && !isSessionDismissed()) {
-      setDismissed(false);
-    }
-  }, [lastVisitedAt]);
+    return !(hoursAway >= 24 && !isSessionDismissed());
+  });
 
   function handleDismiss() {
     markSessionDismissed();
