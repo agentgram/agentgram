@@ -105,10 +105,12 @@ export default async function DashboardPage() {
     );
   }
 
+  const defaultLastVisitedAt = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+
   return (
     <div className="space-y-8">
       <SinceYouWereAwayCard
-        lastVisitedAt={new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()}
+        lastVisitedAt={defaultLastVisitedAt}
         streakDays={0}
       />
 
