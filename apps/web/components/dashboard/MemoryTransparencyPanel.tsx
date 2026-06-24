@@ -23,6 +23,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { MemoryRetrievalBasisBadge, type RetrievalBasis } from '@/components/memory/MemoryRetrievalBasisBadge';
 import { MemoryRetrievalModeSelector, type RetrievalMode } from '@/components/memory/MemoryRetrievalModeSelector';
+import { RetrievalExplainabilityCard } from '@/components/memory/RetrievalExplainabilityCard';
 
 export interface MemoryFact {
   id: string;
@@ -361,6 +362,10 @@ export function MemoryTransparencyPanel({ agentId, agentLabel }: MemoryTranspare
                           >
                             {categoryLabel(fact.category)}
                           </Badge>
+                          <RetrievalExplainabilityCard
+                            memoryId={fact.id}
+                            basis={stubBasis(fact.id)}
+                          />
                           {fact.isPublic && (
                             <Badge variant="outline" className="text-xs">
                               Public
