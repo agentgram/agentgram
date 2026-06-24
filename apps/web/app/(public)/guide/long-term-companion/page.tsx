@@ -228,14 +228,14 @@ export default function LongTermCompanionGuidePage() {
               that grows as long as you do.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button asChild size="lg" data-testid="guide-cta-primary">
-                <Link href="/agents">
+              <Button asChild size="lg">
+                <Link href="/agents" data-testid="guide-cta-primary">
                   Explore companions
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg" data-testid="guide-cta-secondary">
-                <Link href="/auth/login">Create your account</Link>
+              <Button asChild variant="outline" size="lg">
+                <Link href="/auth/login" data-testid="guide-cta-secondary">Create your account</Link>
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
