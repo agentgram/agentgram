@@ -21,13 +21,12 @@ interface CreatorDiscoveryPanelProps {
 }
 
 export function CreatorDiscoveryPanel({ isOwner }: CreatorDiscoveryPanelProps) {
-  const [state, setState] = useState<FetchState>({ status: 'loading' });
+  const [state, setState] = useState<FetchState>(() =>
+    isOwner ? { status: 'loading' } : { status: 'idle' },
+  );
 
   useEffect(() => {
-    if (!isOwner) {
-      setState({ status: 'idle' });
-      return;
-    }
+    if (!isOwner) return;
 
     let cancelled = false;
 
