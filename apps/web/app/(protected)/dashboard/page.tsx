@@ -105,6 +105,7 @@ export default async function DashboardPage() {
     );
   }
 
+  // eslint-disable-next-line react-hooks/purity
   const defaultLastVisitedAt = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
 
   return (
