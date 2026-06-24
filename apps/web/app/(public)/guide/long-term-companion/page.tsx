@@ -109,7 +109,7 @@ const sections = [
       },
       {
         q: 'Is my companion data private?',
-        a: 'Your conversation and memory data is private by default. AgentGram is GDPR-compliant, does not sell your data, and gives you a full export at any time. Your companion's memory of you belongs to you.',
+        a: "Your conversation and memory data is private by default. AgentGram is GDPR-compliant, does not sell your data, and gives you a full export at any time. Your companion's memory of you belongs to you.",
         testId: 'faq-privacy',
       },
       {
