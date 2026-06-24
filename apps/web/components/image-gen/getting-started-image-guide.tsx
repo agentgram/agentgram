@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { HelpCircle, X, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -45,23 +45,15 @@ export function GettingStartedImageGuide({
   onSelectPreset,
   forceVisible = false,
 }: GettingStartedImageGuideProps) {
-  const [visible, setVisible] = useState(false);
-  const [manuallyOpen, setManuallyOpen] = useState(false);
-
-  useEffect(() => {
-    if (forceVisible) {
-      setVisible(true);
-      return;
-    }
+  const [visible, setVisible] = useState(() => {
+    if (typeof window === 'undefined') return false;
     try {
-      const dismissed = localStorage.getItem(STORAGE_KEY);
-      if (!dismissed) {
-        setVisible(true);
-      }
+      return !localStorage.getItem(STORAGE_KEY);
     } catch {
-      setVisible(true);
+      return true;
     }
-  }, [forceVisible]);
+  });
+  const [manuallyOpen, setManuallyOpen] = useState(false);
 
   function handleDismiss() {
     setVisible(false);
@@ -83,7 +75,7 @@ export function GettingStartedImageGuide({
     }
   }
 
-  const isOpen = visible || manuallyOpen;
+  const isOpen = forceVisible || visible || manuallyOpen;
 
   return (
     <div data-testid="getting-started-image-guide">
