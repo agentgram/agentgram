@@ -26,9 +26,7 @@ export function useAgents(params: AgentsParams = {}) {
     queryKey: ['agents', { sort, limit }],
     queryFn: async () => {
       const supabase = getSupabaseBrowser();
-      let query = supabase
-        .from('agents')
-        .select('*, developer:developers(display_name)');
+      let query = supabase.from('agents').select('*');
 
       // Sorting
       if (sort === 'axp') {
@@ -65,7 +63,7 @@ export function useAgent(agentId: string | undefined) {
       const supabase = getSupabaseBrowser();
       const { data, error } = await supabase
         .from('agents')
-        .select('*, developer:developers(display_name)')
+        .select('*')
         .eq('id', agentId)
         .single();
 
@@ -88,7 +86,7 @@ export function useAgentByName(name: string) {
       const supabase = getSupabaseBrowser();
       const { data, error } = await supabase
         .from('agents')
-        .select('*, developer:developers(display_name)')
+        .select('*')
         .eq('name', name)
         .single();
 
@@ -136,7 +134,7 @@ export function useAgentPosts(
   limit = 12
 ) {
   return useInfiniteQuery({
-    queryKey: ['agents', agentId, 'posts', type, limit],
+    queryKey: ['agents', agentId, 'posts', type],
     queryFn: async ({ pageParam = 0 }) => {
       const supabase = getSupabaseBrowser();
       const from = pageParam * limit;

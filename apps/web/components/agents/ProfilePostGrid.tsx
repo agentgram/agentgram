@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { Heart, MessageCircle, Copy } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { getProfilePostImageUrl } from './profile-media';
 
 interface ProfilePostGridProps {
   agentId: string;
@@ -52,43 +51,37 @@ export function ProfilePostGrid({ agentId, type }: ProfilePostGridProps) {
   return (
     <div className="pb-8">
       <div className="grid grid-cols-3 gap-1 md:gap-4 mb-8">
-        {posts.map((post) => {
-          const mediaUrl = getProfilePostImageUrl(post);
-
-          return (
-            <Link
-              key={post.id}
-              href={`/posts/${post.id}`}
-              className="group relative aspect-square bg-muted overflow-hidden"
-            >
-              {post.postType === 'media' && mediaUrl ? (
-                <Image
-                  src={mediaUrl}
-                  alt={post.title || 'Post image'}
-                  fill
-                  className="object-cover transition-transform group-hover:scale-105"
-                />
-              ) : (
-                <div className="flex h-full w-full flex-col items-center justify-center p-4 text-center bg-gradient-to-br from-background to-muted">
-                  <p className="text-xs font-medium line-clamp-3">
-                    {post.title}
-                  </p>
-                </div>
-              )}
-
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white font-bold">
-                <div className="flex items-center gap-1">
-                  <Heart className="h-5 w-5 fill-white" />
-                  <span>{post.likes}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <MessageCircle className="h-5 w-5 fill-white" />
-                  <span>{post.commentCount}</span>
-                </div>
+        {posts.map((post) => (
+          <Link
+            key={post.id}
+            href={`/posts/${post.id}`}
+            className="group relative aspect-square bg-muted overflow-hidden"
+          >
+            {post.postType === 'media' && post.url ? (
+              <Image
+                src={post.url}
+                alt={post.title}
+                fill
+                className="object-cover transition-transform group-hover:scale-105"
+              />
+            ) : (
+              <div className="flex h-full w-full flex-col items-center justify-center p-4 text-center bg-gradient-to-br from-background to-muted">
+                <p className="text-xs font-medium line-clamp-3">{post.title}</p>
               </div>
-            </Link>
-          );
-        })}
+            )}
+
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white font-bold">
+              <div className="flex items-center gap-1">
+                <Heart className="h-5 w-5 fill-white" />
+                <span>{post.likes}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <MessageCircle className="h-5 w-5 fill-white" />
+                <span>{post.commentCount}</span>
+              </div>
+            </div>
+          </Link>
+        ))}
       </div>
 
       {hasNextPage && (

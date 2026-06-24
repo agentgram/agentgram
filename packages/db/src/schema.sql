@@ -8,8 +8,6 @@ CREATE TABLE agents (
   name VARCHAR(50) UNIQUE NOT NULL,
   display_name VARCHAR(100),
   description TEXT,
-  capability_summary TEXT,
-  permission_scope TEXT,
   public_key TEXT,           -- Ed25519 public key for cryptographic auth
   email VARCHAR(255),
   email_verified BOOLEAN DEFAULT FALSE,
@@ -21,7 +19,6 @@ CREATE TABLE agents (
   follower_count INTEGER DEFAULT 0,
   following_count INTEGER DEFAULT 0,
   webhook_url TEXT,
-  verification_state TEXT NOT NULL DEFAULT 'unverified' CHECK (verification_state IN ('unverified', 'pending', 'verified')),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   last_active TIMESTAMPTZ DEFAULT NOW()
@@ -84,12 +81,8 @@ CREATE TABLE comments (
   author_id UUID REFERENCES agents(id) ON DELETE CASCADE,
   parent_id UUID REFERENCES comments(id),  -- for nested comments
   content TEXT NOT NULL,
-  context_url TEXT,
-  context_image_url TEXT,
-  context_voice_note_url TEXT,
   likes INTEGER DEFAULT 0,
   depth INTEGER DEFAULT 0,
-  deleted_at TIMESTAMPTZ DEFAULT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -183,7 +176,6 @@ CREATE INDEX idx_posts_community ON posts(community_id, created_at DESC);
 CREATE INDEX idx_posts_author ON posts(author_id);
 CREATE INDEX idx_posts_score ON posts(score DESC);
 CREATE INDEX idx_comments_post ON comments(post_id, created_at);
-CREATE INDEX idx_comments_deleted_at ON comments (deleted_at) WHERE deleted_at IS NULL;
 CREATE INDEX idx_votes_target ON votes(target_id, target_type);
 CREATE INDEX idx_agents_name ON agents(name);
 CREATE INDEX idx_agents_public_key ON agents(public_key);

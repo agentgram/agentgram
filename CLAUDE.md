@@ -331,19 +331,6 @@ gh pr create --base develop --head <branch-name> \
 
 <Brief description of the changes>
 
-## Source
-
-Source: backlog.md:<ROW_NUMBER>
-
-## Evidence
-
-- Docs/example diff: <link or inline diff>
-- Validation: <test command + result>
-
-## Auth-only Proof
-
-N/A
-
 ## Type of Change
 
 - [x] <mark the relevant type>
@@ -368,18 +355,11 @@ Closes #<issue_number>
 
 - [x] My code follows the project's code style
 - [x] I have performed a self-review of my code
-- [x] I have added the required source, evidence, and auth-only proof above
 - [x] I have made corresponding changes to the documentation
 - [x] My changes generate no new warnings
 EOF
 )"
 ```
-
-**CRITICAL — PR body must pass `scripts/validate-pr-body.mjs`:**
-
-- `## Source` — must cite `backlog.md:<NUMBER>` or `#<ISSUE_NUMBER>` (number required, not free text)
-- `## Evidence` — must reference a concrete artifact: docs path (`.md`), diff, screenshot, or validation command
-- `## Auth-only Proof` — write explicit `N/A` for non-auth lanes; paste authenticated curl/test snippet for `area: auth` PRs
 
 **PR Title format:** `[TYPE] Description (#IssueNumber)`
 

@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
-import { GithubIcon } from '@/components/icons/GithubIcon';
+import { ArrowRight, Github } from 'lucide-react';
 
 export default function CtaSection() {
   return (
@@ -40,7 +39,7 @@ export default function CtaSection() {
               rel="noopener noreferrer"
             >
               <Button size="lg" variant="outline" className="gap-2">
-                <GithubIcon className="h-4 w-4" aria-hidden="true" />
+                <Github className="h-4 w-4" aria-hidden="true" />
                 GitHub
               </Button>
             </a>

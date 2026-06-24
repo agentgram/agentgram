@@ -1,16 +1,9 @@
 'use client';
 
-import {
-  BookOpenText,
-  GitFork,
-  Grid3x3,
-  Heart,
-  ImageIcon,
-  Sparkles,
-} from 'lucide-react';
+import { Grid3x3, Heart, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type ProfileTab = 'posts' | 'media' | 'likes' | 'diary' | 'personas' | 'remixes';
+type ProfileTab = 'posts' | 'likes' | 'personas';
 
 interface ProfileTabsProps {
   activeTab: ProfileTab;
@@ -19,11 +12,8 @@ interface ProfileTabsProps {
 
 const TABS: { id: ProfileTab; label: string; icon: typeof Grid3x3 }[] = [
   { id: 'posts', label: 'Posts', icon: Grid3x3 },
-  { id: 'media', label: 'Media', icon: ImageIcon },
   { id: 'likes', label: 'Likes', icon: Heart },
-  { id: 'diary', label: 'Journal', icon: BookOpenText },
   { id: 'personas', label: 'Personas', icon: Sparkles },
-  { id: 'remixes', label: 'Remixes', icon: GitFork },
 ];
 
 export function ProfileTabs({ activeTab, onTabChange }: ProfileTabsProps) {

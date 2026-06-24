@@ -1,44 +1,12 @@
-import { UserCaseStudyCards } from '@/components/user-case-study-cards';
-import HealthyUseWidget from '@/components/marketing/HealthyUseWidget';
 import {
   HeroSection,
   StatsBar,
-  AdFreePledgeStrip,
-  MITBreakthroughBadge,
-  IndependenceTrustBadge,
-  IndependentOperatorBadge,
-  ContentPermanencePledgeStrip,
-  ZeroStateContractSection,
   FeaturesSection,
   HowItWorksSection,
   EcosystemSection,
-  CAILorebookEscapeCTA,
-  CompetitorMigrationSection,
-  CAIChatStyleRescueCTA,
-  CAIRegionalCapEscapeCTA,
-  KindroidJuneMigrationCTA,
-  StigmaFreePersonaStrip,
-  NomiMigrationCTA,
-  NoChatIsolationBadge,
-  QualityFirstPledgeStrip,
-  NoModelTrainingPledgeStrip,
-  MoltbookAcquisitionIndependenceSection,
-  PlatformComparisonSection,
-  ApiFirstEcosystemSection,
   FaqSection,
   CtaSection,
-  FreeToStartStrip,
-  UserStoriesSection,
-  CAIModeratedpocalypseCreatorRescueCTA,
-  StoryContinuityResumeChip,
 } from '@/components/home';
-import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-landing-section';
-import CompanionScenarioCards from '@/components/companion-scenario-cards';
-import MemoryModeDisclosureCard from '@/components/memory/MemoryModeDisclosureCard';
-import PlatformStatsStrip from '@/components/landing/PlatformStatsStrip';
-import SocialProofHeroCounter from '@/components/landing/SocialProofHeroCounter';
-import VerifiedOperatorBadge from '@/components/home/VerifiedOperatorSection';
-import OnboardingSplitGate from '@/components/onboarding/onboarding-split-gate';
 
 const structuredData = {
   '@context': 'https://schema.org',
@@ -176,58 +144,13 @@ export default function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
-      <OnboardingSplitGate />
       <div className="flex flex-col">
         <HeroSection />
-        <SocialProofHeroCounter />
         <StatsBar />
-        <PlatformStatsStrip />
-        <FreeToStartStrip />
-        <AdFreePledgeStrip />
-        <MITBreakthroughBadge />
-        <IndependenceTrustBadge />
-        <IndependentOperatorBadge />
-        <VerifiedOperatorBadge />
-        <QualityFirstPledgeStrip />
-        <NoModelTrainingPledgeStrip />
-        <MoltbookAcquisitionIndependenceSection />
-        <ContentPermanencePledgeStrip />
-        <MemoryGuaranteeLandingSection />
-        <ZeroStateContractSection />
         <FeaturesSection />
-        <UserStoriesSection />
-        <div className="container">
-          <UserCaseStudyCards />
-        </div>
-        <CompanionScenarioCards />
-        <section className="py-8 border-t border-border" data-testid="story-resume-home-section">
-          <div className="container max-w-xl">
-            <p className="mb-3 text-sm font-medium text-muted-foreground text-center">
-              Pick up exactly where you left off
-            </p>
-            <StoryContinuityResumeChip />
-          </div>
-        </section>
         <HowItWorksSection />
         <EcosystemSection />
-        <CompetitorMigrationSection />
-        <CAIModeratedpocalypseCreatorRescueCTA />
-        <CAILorebookEscapeCTA />
-        <CAIChatStyleRescueCTA />
-        <CAIRegionalCapEscapeCTA />
-        <KindroidJuneMigrationCTA />
-        <StigmaFreePersonaStrip />
-        <section className="py-8 border-t border-border" data-testid="memory-disclosure-home-section">
-          <div className="container max-w-2xl">
-            <MemoryModeDisclosureCard />
-          </div>
-        </section>
-        <NomiMigrationCTA />
-        <NoChatIsolationBadge />
-        <PlatformComparisonSection />
-        <ApiFirstEcosystemSection />
         <FaqSection />
-        <HealthyUseWidget />
         <CtaSection />
       </div>
     </>

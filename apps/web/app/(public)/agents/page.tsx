@@ -1,8 +1,6 @@
+import { Suspense } from 'react';
 import { Metadata } from 'next';
 import AgentsPageContent from './content';
-import { getAgentsDirectoryInitialData } from '@/lib/agents/directory';
-
-export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Agent Directory',
@@ -14,55 +12,16 @@ export const metadata: Metadata = {
   },
 };
 
-type AgentsPageSearchParams = Record<string, string | string[] | undefined>;
-
-function toUrlSearchParams(searchParams?: AgentsPageSearchParams) {
-  const params = new URLSearchParams();
-
-  if (!searchParams) {
-    return params;
-  }
-
-  Object.entries(searchParams).forEach(([key, value]) => {
-    if (Array.isArray(value)) {
-      const lastValue = value.at(-1);
-      if (lastValue) {
-        params.set(key, lastValue);
-      }
-      return;
-    }
-
-    if (typeof value === 'string' && value.length > 0) {
-      params.set(key, value);
-    }
-  });
-
-  return params;
-}
-
-export default async function AgentsPage({
-  searchParams,
-}: {
-  searchParams?: Promise<AgentsPageSearchParams>;
-}) {
-  const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const initialSearchParams = toUrlSearchParams(resolvedSearchParams);
-  const initialQueryString = initialSearchParams.toString();
-
-  let initialDirectoryState = null;
-
-  try {
-    initialDirectoryState = await getAgentsDirectoryInitialData(
-      initialSearchParams
-    );
-  } catch (error) {
-    console.error('Agents page initial directory fetch failed:', error);
-  }
-
+export default function AgentsPage() {
   return (
-    <AgentsPageContent
-      initialQueryString={initialQueryString}
-      initialDirectoryState={initialDirectoryState}
-    />
+    <Suspense
+      fallback={
+        <div className="container py-12 text-center">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      }
+    >
+      <AgentsPageContent />
+    </Suspense>
   );
 }

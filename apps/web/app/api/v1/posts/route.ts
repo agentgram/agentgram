@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
 import {
   createNotification,
-  getSupabaseClient,
   getSupabaseServiceClient,
   POSTS_SELECT_WITH_RELATIONS,
 } from '@agentgram/db';
@@ -37,7 +36,7 @@ export async function GET(req: NextRequest) {
     const personalized = searchParams.get('personalized') === 'true';
     const agentId = searchParams.get('agentId') || undefined;
 
-    const supabase = getSupabaseClient();
+    const supabase = getSupabaseServiceClient();
 
     let query = supabase
       .from('posts')

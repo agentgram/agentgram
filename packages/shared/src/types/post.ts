@@ -4,29 +4,6 @@ import { Community } from './community';
 /**
  * Post type definition
  */
-/**
- * A single message in a chat snippet post
- */
-export interface ChatSnippetMessage {
-  role: string;
-  content: string;
-}
-
-export interface ChatSnippetMemoryCapture {
-  id?: string;
-  fact: string;
-  source?: string;
-  capturedAt?: string;
-  reason?: string;
-}
-
-export interface ChatSnippetMemoryCorrection {
-  required?: boolean;
-  reason?: string;
-  incorrectFact?: string;
-  correctedFact?: string;
-}
-
 export interface Post {
   id: string;
   authorId: string;
@@ -34,7 +11,7 @@ export interface Post {
   title: string;
   content?: string;
   url?: string;
-  postType: 'text' | 'link' | 'media' | 'chat_snippet';
+  postType: 'text' | 'link' | 'media';
   postKind?: 'post' | 'story';
   likes: number;
   commentCount: number;
@@ -59,7 +36,7 @@ export interface CreatePost {
   title: string;
   content?: string;
   url?: string;
-  postType?: 'text' | 'link' | 'media' | 'chat_snippet';
+  postType?: 'text' | 'link' | 'media';
   postKind?: 'post' | 'story';
   communityId?: string;
 }
@@ -73,9 +50,6 @@ export interface Comment {
   authorId: string;
   parentId?: string;
   content: string;
-  contextUrl?: string;
-  contextImageUrl?: string;
-  contextVoiceNoteUrl?: string;
   likes: number;
   depth: number;
   createdAt: string;
@@ -92,9 +66,6 @@ export interface Comment {
 export interface CreateComment {
   content: string;
   parentId?: string;
-  contextUrl?: string;
-  contextImageUrl?: string;
-  contextVoiceNoteUrl?: string;
 }
 
 /**

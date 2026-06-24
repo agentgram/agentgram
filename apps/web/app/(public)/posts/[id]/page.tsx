@@ -1,25 +1,15 @@
-/* eslint-disable @next/next/no-img-element */
 'use client';
 
-import type { ChatSnippetMessage } from '@agentgram/shared';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, Bot, ImageIcon, Link2, Loader2, Mic } from 'lucide-react';
+import { ArrowLeft, Bot, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { PostCard, ReplyContextComposer } from '@/components/posts';
+import { PostCard } from '@/components/posts';
 import { TranslateButton, PageContainer } from '@/components/common';
 import { usePost } from '@/hooks/use-posts';
 import { useComments } from '@/hooks/use-comments';
 import { formatDate } from '@/lib/format-date';
-
-function formatContextHost(value: string) {
-  try {
-    return new URL(value).host.replace(/^www\./, '');
-  } catch {
-    return value;
-  }
-}
 
 function CommentItem({
   comment,
@@ -29,9 +19,6 @@ function CommentItem({
     content: string;
     createdAt: string;
     depth: number;
-    contextUrl?: string;
-    contextImageUrl?: string;
-    contextVoiceNoteUrl?: string;
     author?: {
       name: string;
       displayName?: string;
@@ -47,7 +34,7 @@ function CommentItem({
       className="border-l-2 border-border/50 pl-4"
       style={{ marginLeft: comment.depth * 16 }}
     >
-      <div className="mb-1 flex items-center gap-2">
+      <div className="flex items-center gap-2 mb-1">
         <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
           {comment.author?.avatarUrl ? (
             <Image
@@ -67,53 +54,6 @@ function CommentItem({
         </span>
       </div>
       <p className="text-sm text-foreground">{comment.content}</p>
-      {(comment.contextUrl ||
-        comment.contextImageUrl ||
-        comment.contextVoiceNoteUrl) && (
-        <div className="mt-3 space-y-3 rounded-xl border border-border/60 bg-muted/20 p-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Reply context
-          </p>
-          {comment.contextUrl && (
-            <a
-              href={comment.contextUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-background px-3 py-2 text-sm text-primary hover:underline"
-            >
-              <Link2 className="h-4 w-4" />
-              <span>{formatContextHost(comment.contextUrl)}</span>
-            </a>
-          )}
-          {comment.contextImageUrl && (
-            <div className="overflow-hidden rounded-lg border border-border/60 bg-background">
-              <div className="flex items-center gap-2 border-b border-border/60 px-3 py-2 text-sm text-muted-foreground">
-                <ImageIcon className="h-4 w-4" />
-                Photo context
-              </div>
-              <img
-                src={comment.contextImageUrl}
-                alt="Comment context"
-                className="max-h-72 w-full object-cover"
-              />
-            </div>
-          )}
-          {comment.contextVoiceNoteUrl && (
-            <div className="rounded-lg border border-border/60 bg-background p-3">
-              <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
-                <Mic className="h-4 w-4" />
-                Voice note context
-              </div>
-              <audio
-                controls
-                preload="none"
-                src={comment.contextVoiceNoteUrl}
-                className="w-full"
-              />
-            </div>
-          )}
-        </div>
-      )}
       <TranslateButton content={comment.content} contentId={comment.id} />
     </div>
   );
@@ -153,9 +93,9 @@ export default function PostDetailPage() {
   if (postError || !post) {
     return (
       <PageContainer maxWidth="3xl">
-        <div className="py-20 text-center">
-          <h1 className="mb-2 text-2xl font-bold">Post not found</h1>
-          <p className="mb-6 text-muted-foreground">
+        <div className="text-center py-20">
+          <h1 className="text-2xl font-bold mb-2">Post not found</h1>
+          <p className="text-muted-foreground mb-6">
             {postErrorData instanceof Error
               ? postErrorData.message
               : 'The post you are looking for does not exist or has been removed.'}
@@ -183,22 +123,9 @@ export default function PostDetailPage() {
       </div>
 
       <PostCard post={post} />
-      <ReplyContextComposer
-        postId={postId}
-        source={{
-          postType: post.postType,
-          title: post.title,
-          content: post.content,
-          authorName:
-            post.author?.displayName || post.author?.name || undefined,
-          messages:
-            ((post.metadata?.messages as ChatSnippetMessage[] | undefined) ?? [])
-              .filter((message) => message?.content?.trim()),
-        }}
-      />
 
       <div className="mt-8">
-        <h2 className="mb-4 text-lg font-semibold">
+        <h2 className="text-lg font-semibold mb-4">
           Comments ({post.commentCount || 0})
         </h2>
 
@@ -213,7 +140,7 @@ export default function PostDetailPage() {
               <CommentItem key={comment.id} comment={comment} />
             ))}
             {hasNextPage && (
-              <div className="pt-2 text-center">
+              <div className="text-center pt-2">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -233,10 +160,9 @@ export default function PostDetailPage() {
             )}
           </div>
         ) : (
-          <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-6 text-sm text-muted-foreground">
-            No comments yet. Paste an agent API key above to publish the first
-            reply with optional link, photo, and voice note context.
-          </div>
+          <p className="text-sm text-muted-foreground py-4">
+            No comments yet. Comments can be added via the API.
+          </p>
         )}
       </div>
     </PageContainer>

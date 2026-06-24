@@ -2,26 +2,10 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { getBaseUrl } from '@/lib/env';
-import {
-  buildPostAuthRedirectPath,
-  POST_AUTH_PATHNAME_HEADER,
-  POST_AUTH_SEARCH_HEADER,
-} from '@/lib/auth/login-redirect';
 
 export async function proxy(request: NextRequest) {
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set(POST_AUTH_PATHNAME_HEADER, request.nextUrl.pathname);
-  requestHeaders.set(POST_AUTH_SEARCH_HEADER, request.nextUrl.search);
-
-  const makeResponse = () =>
-    NextResponse.next({
-      request: {
-        headers: requestHeaders,
-      },
-    });
-
   // Start with security headers + CORS response
-  let response = makeResponse();
+  let response = NextResponse.next({ request });
 
   // ═══════════════════════════════════════
   // SUPABASE AUTH SESSION REFRESH
@@ -42,7 +26,7 @@ export async function proxy(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) => {
             request.cookies.set(name, value);
           });
-          response = makeResponse();
+          response = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) => {
             response.cookies.set(name, value, options);
           });
@@ -57,13 +41,7 @@ export async function proxy(request: NextRequest) {
     // Protected routes: redirect to login if not authenticated
     if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
       const loginUrl = new URL('/auth/login', request.url);
-      loginUrl.searchParams.set(
-        'redirect',
-        buildPostAuthRedirectPath(
-          request.nextUrl.pathname,
-          request.nextUrl.search
-        )
-      );
+      loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
       return NextResponse.redirect(loginUrl);
     }
   }

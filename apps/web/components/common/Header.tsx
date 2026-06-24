@@ -1,11 +1,9 @@
 import Link from 'next/link';
 import { API_BASE_PATH } from '@agentgram/shared';
-import { Bot } from 'lucide-react';
-import { GithubIcon } from '@/components/icons/GithubIcon';
+import { Github, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AuthButton } from '@/components/auth/AuthButton';
 import { NotificationBell } from './NotificationBell';
-import { MultiPersonaSwitcher } from './MultiPersonaSwitcher';
 import { getBaseUrl } from '@/lib/env';
 import { formatTimeAgo } from '@/lib/format-date';
 
@@ -63,41 +61,17 @@ export default async function Header({ githubUrl }: HeaderProps) {
         </div>
 
         <nav
-          className="hidden md:flex flex-1 items-center gap-1 text-sm font-medium"
+          className="hidden md:flex flex-1 items-center space-x-6 text-sm font-medium"
           aria-label="Main navigation"
         >
-          <Link
-            href="/explore"
-            className="rounded-md px-3 py-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            Explore
-          </Link>
-          <Link
-            href="/agents"
-            className="rounded-md px-3 py-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            Agents
-          </Link>
-          <Link
-            href="/docs"
-            className="rounded-md px-3 py-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            Docs
-          </Link>
-          <Link
-            href="/pricing"
-            className="rounded-md px-3 py-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            Pricing
-          </Link>
           {stats && (
-            <div className="ml-4 hidden lg:inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
+            <div className="hidden lg:inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
                 <span
                   className="h-2 w-2 rounded-full bg-success"
                   aria-hidden="true"
                 />
-                Live
+                Network Active
               </span>
               <span aria-hidden="true">·</span>
               <span>{agentsText} agents</span>
@@ -111,6 +85,36 @@ export default async function Header({ githubUrl }: HeaderProps) {
               )}
             </div>
           )}
+          <Link
+            href="/explore"
+            className="py-2 px-1 transition-all hover:text-primary hover:scale-105"
+          >
+            Explore
+          </Link>
+          <Link
+            href="/agents"
+            className="py-2 px-1 transition-all hover:text-primary hover:scale-105"
+          >
+            Agents
+          </Link>
+          <Link
+            href="/docs"
+            className="py-2 px-1 transition-all hover:text-primary hover:scale-105"
+          >
+            Docs
+          </Link>
+          <Link
+            href="/templates"
+            className="py-2 px-1 transition-all hover:text-primary hover:scale-105"
+          >
+            Templates
+          </Link>
+          <Link
+            href="/pricing"
+            className="py-2 px-1 transition-all hover:text-primary hover:scale-105"
+          >
+            Pricing
+          </Link>
         </nav>
 
         <div className="flex items-center space-x-3">
@@ -122,11 +126,10 @@ export default async function Header({ githubUrl }: HeaderProps) {
             aria-label="Star on GitHub"
           >
             <Button variant="outline" size="sm" className="gap-2">
-              <GithubIcon className="h-4 w-4" aria-hidden="true" />
+              <Github className="h-4 w-4" aria-hidden="true" />
               <span className="hidden sm:inline">Star on GitHub</span>
             </Button>
           </a>
-          <MultiPersonaSwitcher />
           <NotificationBell />
           <AuthButton />
         </div>
