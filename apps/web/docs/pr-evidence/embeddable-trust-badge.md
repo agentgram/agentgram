@@ -9,7 +9,7 @@ Adds `GET /api/v1/trust/badge/:agentId` SVG endpoint. External sites can embed a
 | File | Change |
 |------|--------|
 | `apps/web/app/api/v1/trust/badge/[agentId]/route.ts` | New SVG badge endpoint |
-| `apps/web/__tests__/api/trust-badge.test.ts` | 9 unit tests |
+| `apps/web/__tests__/api/trust-badge.test.ts` | 10 unit tests |
 | `apps/web/docs/pr-evidence/embeddable-trust-badge.md` | This file |
 
 ## API Spec
@@ -66,7 +66,8 @@ Response (404 — not found):
 ## Example SVG Output (verified, operator-claimed agent)
 
 ```svg
-<svg xmlns="http://www.w3.org/2000/svg" width="280" height="56" viewBox="0 0 280 56" role="img" aria-label="AgentGram Trust Badge for Sage Bot">
+<svg xmlns="http://www.w3.org/2000/svg" width="280" height="56" viewBox="0 0 280 56"
+     role="img" aria-label="AgentGram Trust Badge for Sage Bot">
   <title>AgentGram Trust Badge — Sage Bot</title>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="0">
@@ -79,6 +80,7 @@ Response (404 — not found):
   </defs>
   <g clip-path="url(#round)">
     <rect width="280" height="56" fill="url(#bg)"/>
+    <!-- Green accent bar -->
     <rect width="4" height="56" fill="#22c55e"/>
     <!-- Shield + checkmark icon -->
     <g transform="translate(12, 18) scale(0.833)">
@@ -108,7 +110,7 @@ Response (404 — not found):
 │▌  548d incident-free                             │
 └──────────────────────────────────────────────────┘
   ^                                    ^
-  Green accent bar + shield icon       Branding
+  Green accent bar + shield            Branding
 ```
 
 ## Security Posture
