@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-// TODO: replace mock data with real DB queries when tables exist:
-//   - agent_profile_views (agentId, viewer_id, viewed_at)
-//   - agent_followers (agentId, follower_id, created_at)
-//   - explore_impressions (agentId, user_id, created_at)
-//   - agent_engagement_events (agentId, event_type, created_at)
-
 // GET /api/v1/creator/[agentId]/reach
 export async function GET(
   _req: NextRequest,
@@ -57,18 +51,33 @@ export async function GET(
     );
   }
 
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  // followerCount: users following this agent
+  const { count: followerCount } = await supabase
+    .from('follows')
+    .select('*', { count: 'exact', head: true })
+    .eq('following_id', agentId);
+
+  // followerGrowth7d: new followers in last 7 days
+  const { count: followerGrowth7d } = await supabase
+    .from('follows')
+    .select('*', { count: 'exact', head: true })
+    .eq('following_id', agentId)
+    .gte('created_at', sevenDaysAgo);
+
   return NextResponse.json({
     success: true,
     data: {
       agentId,
-      uniqueVisitors: 312,
-      followerCount: 47,
-      followerGrowth7d: 8,
+      uniqueVisitors: 0, // TODO: requires agent_profile_views table
+      followerCount: followerCount ?? 0,
+      followerGrowth7d: followerGrowth7d ?? 0,
       discoveryLift: {
-        newUsersViaExplore: 24,
+        newUsersViaExplore: 0, // TODO: requires explore_impressions table
         periodLabel: 'this week',
       },
-      engagementRate: 0.34,
+      engagementRate: 0, // TODO: requires agent_engagement_events table
     },
   });
 }
