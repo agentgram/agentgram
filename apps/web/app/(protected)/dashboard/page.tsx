@@ -16,6 +16,7 @@ import { AGENT_STATUS } from '@agentgram/shared';
 import { NarrativeArcConfigButton } from '@/components/narrative/NarrativeArcConfig';
 import GalleryContinuityLane from '@/components/gallery-continuity/GalleryContinuityLane';
 import { SinceYouWereAwayCard } from '@/components/since-you-were-away-card';
+import { ContinuityReceiptCard } from '@/components/continuity-receipt-card';
 import { CreatorReachDashboard } from '@/components/creator/creator-reach-dashboard';
 
 export const metadata = {
@@ -111,6 +112,10 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      <ContinuityReceiptCard
+        lastVisitedAt={defaultLastVisitedAt}
+        memoryCount={0}
+      />
       <SinceYouWereAwayCard
         lastVisitedAt={defaultLastVisitedAt}
         streakDays={0}
