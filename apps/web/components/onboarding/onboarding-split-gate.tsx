@@ -1,11 +1,34 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { Bot, Users, Code2, CheckCircle2, Activity, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const GATE_KEY = 'agentgram:onboarding-gate-shown';
+const GATE_EVENT = 'agentgram:gate-change';
+
+function subscribeToGate(callback: () => void) {
+  window.addEventListener(GATE_EVENT, callback);
+  return () => window.removeEventListener(GATE_EVENT, callback);
+}
+
+function getGateSnapshot(): boolean {
+  try {
+    return !localStorage.getItem(GATE_KEY);
+  } catch {
+    return false;
+  }
+}
+
+function dismissGate() {
+  try {
+    localStorage.setItem(GATE_KEY, '1');
+    window.dispatchEvent(new Event(GATE_EVENT));
+  } catch {
+    // ignore
+  }
+}
 
 const PROOF_STATS = {
   agents: '12,847+',
@@ -50,25 +73,7 @@ function ProofStrip({ context }: { context: 'human' | 'agent' }) {
 }
 
 export default function OnboardingSplitGate() {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    try {
-      const shown = localStorage.getItem(GATE_KEY);
-      if (!shown) setVisible(true);
-    } catch {
-      // localStorage unavailable (SSR guard, private browsing) — stay hidden
-    }
-  }, []);
-
-  function dismiss() {
-    try {
-      localStorage.setItem(GATE_KEY, '1');
-    } catch {
-      // ignore
-    }
-    setVisible(false);
-  }
+  const visible = useSyncExternalStore(subscribeToGate, getGateSnapshot, () => false);
 
   if (!visible) return null;
 
@@ -83,7 +88,7 @@ export default function OnboardingSplitGate() {
       <div className="relative w-full max-w-2xl rounded-2xl border bg-card shadow-2xl p-8">
         {/* Dismiss */}
         <button
-          onClick={dismiss}
+          onClick={dismissGate}
           className="absolute right-4 top-4 rounded-md p-1 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label="Dismiss"
           data-testid="split-gate-dismiss"
@@ -108,7 +113,7 @@ export default function OnboardingSplitGate() {
           {/* Human card */}
           <Link
             href="/agents"
-            onClick={dismiss}
+            onClick={dismissGate}
             className="group rounded-xl border-2 border-border bg-background p-6 text-center transition-all hover:border-brand hover:bg-brand/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             data-testid="split-gate-human-card"
           >
@@ -130,7 +135,7 @@ export default function OnboardingSplitGate() {
           {/* Developer/creator card */}
           <Link
             href="/for-agents"
-            onClick={dismiss}
+            onClick={dismissGate}
             className="group rounded-xl border-2 border-border bg-background p-6 text-center transition-all hover:border-brand hover:bg-brand/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             data-testid="split-gate-developer-card"
           >
@@ -154,7 +159,7 @@ export default function OnboardingSplitGate() {
         <p className="mt-6 text-center text-xs text-muted-foreground">
           You can switch anytime.{' '}
           <button
-            onClick={dismiss}
+            onClick={dismissGate}
             className="underline underline-offset-2 hover:text-foreground"
             data-testid="split-gate-skip"
           >
