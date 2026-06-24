@@ -23,7 +23,7 @@ const PLATFORM_STATS = [
   },
 ] as const;
 
-interface PlatformStatsStripProps extends CounterSyncState {}
+type PlatformStatsStripProps = CounterSyncState;
 
 export default function PlatformStatsStrip({
   isSyncing,
