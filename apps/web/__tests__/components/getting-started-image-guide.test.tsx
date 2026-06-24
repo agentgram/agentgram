@@ -7,9 +7,27 @@ import {
 } from '@/components/image-gen/getting-started-image-guide';
 
 describe('GettingStartedImageGuide', () => {
+  let store: Record<string, string> = {};
+
   beforeEach(() => {
     vi.restoreAllMocks();
-    localStorage.clear();
+    store = {};
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: (key: string) => store[key] ?? null,
+        setItem: (key: string, val: string) => {
+          store[key] = val;
+        },
+        removeItem: (key: string) => {
+          delete store[key];
+        },
+        clear: () => {
+          store = {};
+        },
+      },
+      writable: true,
+      configurable: true,
+    });
   });
 
   it('renders the container element', () => {

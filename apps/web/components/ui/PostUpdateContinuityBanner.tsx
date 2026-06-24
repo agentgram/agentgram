@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -13,19 +13,19 @@ function getDismissedKey(version: string): string {
 export function PostUpdateContinuityBanner() {
   const currentVersion = process.env.NEXT_PUBLIC_APP_VERSION ?? '1.0.0';
 
-  const [visible, setVisible] = useState(() => {
-    if (typeof window === 'undefined') return false;
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
     const storedVersion = localStorage.getItem(APP_VERSION_KEY);
     if (!storedVersion) {
       localStorage.setItem(APP_VERSION_KEY, currentVersion);
-      return false;
+      return;
     }
     if (storedVersion !== currentVersion) {
       localStorage.setItem(APP_VERSION_KEY, currentVersion);
-      return !localStorage.getItem(getDismissedKey(currentVersion));
+      setVisible(!localStorage.getItem(getDismissedKey(currentVersion)));
     }
-    return false;
-  });
+  }, [currentVersion]);
 
   function handleDismiss() {
     localStorage.setItem(getDismissedKey(currentVersion), '1');
