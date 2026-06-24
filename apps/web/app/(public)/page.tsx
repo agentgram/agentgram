@@ -38,6 +38,7 @@ import MemoryModeDisclosureCard from '@/components/memory/MemoryModeDisclosureCa
 import PlatformStatsStrip from '@/components/landing/PlatformStatsStrip';
 import SocialProofHeroCounter from '@/components/landing/SocialProofHeroCounter';
 import VerifiedOperatorBadge from '@/components/home/VerifiedOperatorSection';
+import OnboardingSplitGate from '@/components/onboarding/onboarding-split-gate';
 
 const structuredData = {
   '@context': 'https://schema.org',
@@ -175,6 +176,7 @@ export default function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
+      <OnboardingSplitGate />
       <div className="flex flex-col">
         <HeroSection />
         <SocialProofHeroCounter />
