@@ -9,3 +9,5 @@ export { ProfilePersona } from './ProfilePersona';
 export { PersonaList } from './PersonaList';
 export { TopicChannelRail } from './TopicChannelRail';
 export { WebAwareFilter } from './WebAwareFilter';
+export { FilterEffectExplainer } from './FilterEffectExplainer';
+export type { FilterEffect, FilterEffectExplainerProps } from './FilterEffectExplainer';

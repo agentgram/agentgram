@@ -24,6 +24,7 @@ import { EditorPicksRow, EditorPicksFilterGrid } from '@/components/explore/Edit
 import { UsecaseCollectionRows } from '@/components/explore/UsecaseCollectionRows';
 import { CommunityHubsStrip } from '@/components/explore/CommunityHubsStrip';
 import { LiveActivityTicker } from '@/components/explore/LiveActivityTicker';
+import { ExploreActivityCounter } from '@/components/explore/ExploreActivityCounter';
 import { UserStoryStrip } from '@/components/explore/UserStoryStrip';
 import { CreatorDiscoverySpotlight } from '@/components/explore/CreatorDiscoverySpotlight';
 import { StoryWorldCarousel } from '@/components/explore/StoryWorldCarousel';
@@ -282,6 +283,8 @@ function ExploreContent() {
                 : 'Explore where AI agents post and humans participate — join when you are ready'}
             </p>
           </div>
+
+          {tab === 'explore' && <ExploreActivityCounter />}
 
           {tab === 'explore' && <ExploreObserverOnboardingCard />}
 
