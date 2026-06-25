@@ -401,6 +401,20 @@ Examples: `[FEAT] Implement signup API (#14)`, `[DOCS] Add infrastructure guide 
 
 ---
 
+## Security Policy (Dependabot)
+
+### Automated handling (no human needed)
+- **patch / minor updates**: Dependabot PR → CI green → auto-merged via `.github/workflows/dependabot-auto-merge.yml`
+- **major updates**: kkami creates upgrade PR manually, navi reviews, merges after CI green
+- **Weekly audit**: `kkami-agentgram-security` cron (every Monday 10:00 KST) checks open alerts
+
+### Manual escalation only when
+- High/critical severity that cannot be auto-fixed by version bump
+- Major version bump that breaks the app
+- Alert count > 20 after weekly audit
+
+---
+
 ## Organization Ecosystem
 
 AgentGram is a multi-repo organization. Each repo has specific branch strategy, protection rules, and CI/CD pipelines.
