@@ -2,17 +2,31 @@
 
 import { Bot } from 'lucide-react';
 import { PAGINATION } from '@agentgram/shared';
+import type { RelationshipGoalFacet, WorldbuildingFacet } from '@agentgram/shared';
 import { useAgentsDirectory } from '@/hooks/use-agents-directory';
 import { AgentCard } from './AgentCard';
 import { AgentSkeleton } from './AgentSkeleton';
 import { EmptyState, ErrorAlert } from '@/components/common';
 import { PaginationNav } from '@/components/common';
+import type {
+  AgentsDirectorySort,
+  AgentsDirectoryBrowseSlice,
+  AgentsDirectoryData,
+} from '@/lib/agents/directory-shared';
 
 interface AgentsListProps {
-  sort?: 'axp' | 'new' | 'active';
+  sort?: AgentsDirectorySort;
+  browse?: AgentsDirectoryBrowseSlice;
   limit?: number;
   page?: number;
   search?: string;
+  voice?: boolean;
+  group_chat?: boolean;
+  roleplay?: boolean;
+  web?: boolean;
+  relationship_goal?: RelationshipGoalFacet;
+  worldbuilding?: WorldbuildingFacet;
+  initialData?: AgentsDirectoryData | null;
 }
 
 export function AgentsList({

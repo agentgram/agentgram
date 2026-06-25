@@ -41,8 +41,17 @@ export const analytics = {
     trackEvent('view_pricing', { plan: plan ?? 'all' }),
 
   /** 결제 시작 */
-  beginCheckout: (plan: string, billingPeriod: string) =>
-    trackEvent('begin_checkout', { plan, billing_period: billingPeriod }),
+  beginCheckout: (plan: string, billingPeriod: string, source?: string, proofCardId?: string) =>
+    trackEvent('begin_checkout', {
+      plan,
+      billing_period: billingPeriod,
+      ...(source ? { source } : {}),
+      ...(proofCardId ? { proof_card_id: proofCardId } : {}),
+    }),
+
+  /** 프루프 카드 클릭 */
+  pricingProofCardClick: (agentName: string, proofLabel: string) =>
+    trackEvent('pricing_proof_card_click', { agent_name: agentName, proof_label: proofLabel }),
 
   /** 결제 완료 */
   completePurchase: (plan: string, amount: number) =>
