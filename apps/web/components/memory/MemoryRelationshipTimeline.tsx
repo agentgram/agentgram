@@ -23,7 +23,7 @@ export function MemoryRelationshipTimeline({
   milestoneCount = 0,
 }: MemoryRelationshipTimelineProps) {
   return (
-    <div
+    <section
       data-testid="memory-relationship-timeline"
       className="rounded-xl border border-border/50 bg-card/50 px-6 py-5 space-y-4"
       aria-label="Your shared history"
@@ -102,6 +102,6 @@ export function MemoryRelationshipTimeline({
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
