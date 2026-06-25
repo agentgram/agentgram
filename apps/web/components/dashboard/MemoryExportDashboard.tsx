@@ -4,11 +4,13 @@ import { useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
+  ArrowUpRight,
   Brain,
   Download,
   FileJson,
   FileText,
   Network,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,6 +22,7 @@ import {
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MemoryTierTabs } from './MemoryTierTabs';
+import { MemoryRelationshipTimeline } from '@/components/memory/MemoryRelationshipTimeline';
 import { MultilingualMemoryBadge } from '@/components/agents/MultilingualMemoryBadge';
 import {
   MemoryDeletionReceipt,
@@ -161,6 +164,14 @@ function buildMindMapData(memories: MemoryExportRecord[]): {
 
 export function MemoryExportDashboard({ memories: initialMemories }: Props) {
   const [memories, setMemories] = useState<MemoryExportRecord[]>(initialMemories);
+
+  const firstFactDate = memories.length > 0
+    ? memories.reduce((earliest, m) =>
+        m.createdAt < earliest ? m.createdAt : earliest,
+        memories[0].createdAt
+      )
+    : undefined;
+  const milestoneCount = memories.length;
   const [deleting, setDeleting] = useState<Set<string>>(new Set());
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deletionReceipt, setDeletionReceipt] = useState<MemoryDeletionReceiptData | null>(null);
@@ -251,6 +262,38 @@ export function MemoryExportDashboard({ memories: initialMemories }: Props) {
         <div data-testid="memory-export-multilingual-badge">
           <MultilingualMemoryBadge />
         </div>
+      </div>
+
+      {/* Relationship timeline — reframes memory as a trust asset */}
+      <MemoryRelationshipTimeline
+        firstFactDate={firstFactDate}
+        relationshipStartDate={firstFactDate}
+        milestoneCount={milestoneCount}
+      />
+
+      {/* Pricing upgrade CTA */}
+      <div
+        className="rounded-xl border border-violet-200 bg-violet-50/60 dark:border-violet-800/40 dark:bg-violet-950/20 px-6 py-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+        data-testid="memory-upgrade-cta"
+      >
+        <div className="flex items-start gap-3">
+          <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-violet-500" aria-hidden="true" />
+          <div className="space-y-0.5">
+            <p className="text-sm font-semibold text-foreground">Unlock the full memory layer</p>
+            <p className="text-xs text-muted-foreground">
+              Premium plans include unlimited memory slots, priority recall, and relationship insights — so nothing gets forgotten.
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/pricing"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+          data-testid="memory-upgrade-cta-link"
+          aria-label="View pricing plans to unlock full memory layer"
+        >
+          View plans
+          <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+        </Link>
       </div>
 
       {/* Export Actions */}

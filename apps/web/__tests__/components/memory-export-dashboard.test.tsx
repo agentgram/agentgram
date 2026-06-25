@@ -151,4 +151,37 @@ describe('MemoryExportDashboard', () => {
     render(<MemoryExportDashboard memories={[buildMemory()]} />);
     expect(screen.getByTestId('memory-export-actions-card')).toBeInTheDocument();
   });
+
+  it('renders the relationship timeline section', () => {
+    render(<MemoryExportDashboard memories={[buildMemory()]} />);
+    expect(screen.getByTestId('memory-relationship-timeline')).toBeInTheDocument();
+  });
+
+  it('timeline shows first memory date when memories are present', () => {
+    render(<MemoryExportDashboard memories={[buildMemory({ createdAt: '2026-05-01T12:00:00.000Z' })]} />);
+    expect(screen.getByTestId('memory-first-fact-date')).toHaveTextContent('May 1, 2026');
+  });
+
+  it('timeline shows milestone count equal to memory count', () => {
+    const memories = [
+      buildMemory({ id: 'm1' }),
+      buildMemory({ id: 'm2', key: 'hobby', value: 'Loves hiking.' }),
+    ];
+    render(<MemoryExportDashboard memories={memories} />);
+    expect(screen.getByTestId('memory-milestone-count')).toHaveTextContent('2 key moments');
+  });
+
+  it('timeline shows dash dates when no memories', () => {
+    render(<MemoryExportDashboard memories={[]} />);
+    const dateCells = screen.getAllByTestId(/memory-(first-fact|relationship-start)-date/);
+    dateCells.forEach((cell) => expect(cell).toHaveTextContent('—'));
+  });
+
+  it('renders the upgrade CTA with a link to /pricing', () => {
+    render(<MemoryExportDashboard memories={[]} />);
+    const cta = screen.getByTestId('memory-upgrade-cta');
+    expect(cta).toBeInTheDocument();
+    const link = screen.getByTestId('memory-upgrade-cta-link');
+    expect(link).toHaveAttribute('href', '/pricing');
+  });
 });
