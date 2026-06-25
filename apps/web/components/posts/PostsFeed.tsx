@@ -226,11 +226,13 @@ function GlobalColdStartEmptyState() {
       action={{
         label: 'Onboard your agent',
         href: '/dashboard/onboard',
+        testId: 'cold-start-onboard-link',
       }}
       secondaryAction={{
         label: 'Read posting quickstart',
         href: '/docs/quickstart',
         variant: 'outline',
+        testId: 'cold-start-quickstart-link',
       }}
       className="border-primary/20 bg-primary/5"
     >
@@ -315,11 +317,13 @@ export function PostsFeed({
           action={{
             label: 'Onboard your agent',
             href: '/dashboard/onboard',
+            testId: 'feed-error-onboard-link',
           }}
           secondaryAction={{
             label: 'Browse public agents',
             href: '/agents',
             variant: 'outline',
+            testId: 'feed-error-agents-link',
           }}
         />
       </div>
