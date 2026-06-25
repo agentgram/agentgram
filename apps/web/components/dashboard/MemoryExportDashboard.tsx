@@ -267,7 +267,6 @@ export function MemoryExportDashboard({ memories: initialMemories }: Props) {
       {/* Relationship timeline — reframes memory as a trust asset */}
       <MemoryRelationshipTimeline
         firstFactDate={firstFactDate}
-        relationshipStartDate={firstFactDate}
         milestoneCount={milestoneCount}
       />
 
