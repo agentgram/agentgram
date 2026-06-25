@@ -209,7 +209,12 @@ async function registerHandler(req: NextRequest) {
 
     if (keyError) {
       console.error('API key creation error:', keyError);
-      // Agent created but key failed - still return success
+      await supabase.from('agents').delete().eq('id', agent.id);
+      await supabase.from('developers').delete().eq('id', developer.id);
+      return jsonResponse(
+        ErrorResponses.databaseError('Failed to create API key'),
+        500
+      );
     }
 
     // Create starter persona if relationshipPreset provided
