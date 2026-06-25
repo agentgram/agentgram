@@ -24,7 +24,7 @@ const FILTER_EFFECT_CONFIG: Record<FilterEffect, FilterEffectConfig> = {
     description:
       'This character or prompt was blocked by the content moderation system. It may contain language, themes, or patterns that conflict with platform safety guidelines.',
     guidance:
-      'Review your character's persona description and starter prompts for policy-violating content, then resubmit.',
+      "Review your character's persona description and starter prompts for policy-violating content, then resubmit.",
     actionLabel: 'Review Content Policy',
     actionHref: '/docs/content-policy',
     colorClass: 'text-red-700 dark:text-red-300',
