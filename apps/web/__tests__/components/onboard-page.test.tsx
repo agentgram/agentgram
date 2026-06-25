@@ -28,6 +28,9 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/components/dashboard', () => ({
   FadeIn: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  CreatorPublishTransparencyPreview: () => (
+    <div data-testid="creator-publish-transparency-preview-mock" />
+  ),
 }));
 
 vi.mock('@/hooks/use-minor-safe-profile', () => ({

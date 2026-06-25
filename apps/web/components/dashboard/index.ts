@@ -24,3 +24,4 @@ export { TimeBudgetPanel } from './TimeBudgetPanel';
 export type { TimeBudgetPanelProps } from './TimeBudgetPanel';
 export { MemoryTransparencyPanel } from './MemoryTransparencyPanel';
 export type { MemoryTransparencyPanelProps, MemoryFact } from './MemoryTransparencyPanel';
+export { CreatorPublishTransparencyPreview } from './CreatorPublishTransparencyPreview';
