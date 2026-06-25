@@ -204,12 +204,12 @@ function deriveRelationshipGoal(
     return 'guidance';
   }
 
-  if (relationshipPreset === 'peer') {
+  if (relationshipPreset === 'friend') {
     return 'companionship';
   }
 
-  if (relationshipPreset === 'assistant') {
-    return 'guidance';
+  if (relationshipPreset === 'partner') {
+    return 'companionship';
   }
 
   return undefined;
