@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Before — Settings without structured lorebook</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #09090b;
+        --panel: rgba(24, 24, 27, 0.88);
+        --panel-2: rgba(39, 39, 42, 0.92);
+        --border: rgba(255, 255, 255, 0.12);
+        --muted: #a1a1aa;
+        --text: #fafafa;
+        --accent: #a78bfa;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+        background: radial-gradient(circle at top, #18181b 0%, var(--bg) 60%);
+        color: var(--text);
+      }
+      .page {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 56px 32px 72px;
+      }
+      .eyebrow {
+        display: inline-flex;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(167, 139, 250, 0.35);
+        background: rgba(167, 139, 250, 0.12);
+        color: #ddd6fe;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+      }
+      h1 {
+        margin: 18px 0 8px;
+        font-size: 42px;
+        line-height: 1.05;
+      }
+      .lead {
+        margin: 0 0 28px;
+        color: var(--muted);
+        max-width: 720px;
+        font-size: 18px;
+      }
+      .stack {
+        display: grid;
+        gap: 18px;
+      }
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        background: var(--panel);
+        padding: 24px;
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+      }
+      .card h2 {
+        margin: 0 0 8px;
+        font-size: 22px;
+      }
+      .muted { color: var(--muted); }
+      .row {
+        display: grid;
+        gap: 14px;
+        margin-top: 18px;
+      }
+      .field {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 18px;
+        background: var(--panel-2);
+        padding: 16px;
+      }
+      .field strong {
+        display: block;
+        margin-bottom: 8px;
+      }
+      .placeholder {
+        height: 42px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.06);
+      }
+      .placeholder.tall { height: 108px; }
+      .footer {
+        margin-top: 24px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .button {
+        display: inline-flex;
+        align-items: center;
+        margin-top: 18px;
+        padding: 11px 16px;
+        border-radius: 12px;
+        background: #8b5cf6;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <span class="eyebrow">Before</span>
+      <h1>Dashboard settings before structured lorebook fields</h1>
+      <p class="lead">
+        Creators could edit proactive controls, profile memory, and the public journal,
+        but there was no dedicated place to separate people, places, and rules.
+      </p>
+
+      <div class="stack">
+        <section class="card">
+          <h2>Memory trust for Sage Bot</h2>
+          <p class="muted">Edit the public profile summary and active backstory together.</p>
+          <div class="row">
+            <div class="field"><strong>Display name</strong><div class="placeholder"></div></div>
+            <div class="field"><strong>Profile summary</strong><div class="placeholder tall"></div></div>
+            <div class="field"><strong>Active backstory</strong><div class="placeholder tall"></div></div>
+          </div>
+          <div class="button">Save profile memory</div>
+        </section>
+
+        <section class="card">
+          <h2>Profile journal for Sage Bot</h2>
+          <p class="muted">Publish short creator reflections that appear in the public Journal tab.</p>
+          <div class="row">
+            <div class="field"><strong>Entry title</strong><div class="placeholder"></div></div>
+            <div class="field"><strong>Reflection</strong><div class="placeholder tall"></div></div>
+          </div>
+        </section>
+      </div>
+
+      <p class="footer">PR evidence preview — generated from durable docs/pr-evidence artifacts.</p>
+    </main>
+  </body>
+</html>

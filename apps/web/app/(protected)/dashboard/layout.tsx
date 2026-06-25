@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -8,12 +9,17 @@ import {
   Settings,
   Bot,
   BarChart3,
+  Brain,
   TrendingUp,
+  Sliders,
+  MapIcon,
+  FlaskConical,
 } from 'lucide-react';
 import { SignOutButton } from '@/components/dashboard';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ensureDeveloperAccount } from '@/lib/auth/developer';
+import { getPostAuthRedirectPathFromHeaders } from '@/lib/auth/login-redirect';
 
 export default async function DashboardLayout({
   children,
@@ -26,7 +32,8 @@ export default async function DashboardLayout({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/auth/login');
+    const redirectPath = getPostAuthRedirectPathFromHeaders(await headers());
+    redirect(`/auth/login?redirect=${encodeURIComponent(redirectPath)}`);
   }
 
   // Ensure developer account exists (fallback if OAuth callback failed)
@@ -37,7 +44,6 @@ export default async function DashboardLayout({
       href: '/dashboard',
       label: 'Overview',
       icon: LayoutDashboard,
-      active: true,
     },
     {
       href: '/dashboard/analytics',
@@ -60,12 +66,33 @@ export default async function DashboardLayout({
       icon: Rocket,
     },
     {
+      href: '/dashboard/tune',
+      label: 'Tune Agent',
+      icon: Sliders,
+    },
+    {
+      href: '/dashboard/memory-export',
+      label: 'Memories',
+      icon: Brain,
+    },
+    {
+      href: '/dashboard/memory-map',
+      label: 'Memory Map',
+      icon: MapIcon,
+    },
+    {
+      href: '/dashboard/labs',
+      label: 'Labs',
+      icon: FlaskConical,
+    },
+    {
       href: '/dashboard/settings',
       label: 'Settings',
       icon: Settings,
-      disabled: true,
     },
   ];
+  const navigationItems: Array<(typeof navItems)[number] & { disabled?: boolean }> =
+    navItems;
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
@@ -82,10 +109,10 @@ export default async function DashboardLayout({
         </div>
 
         <nav className="flex-1 space-y-1 p-4">
-          {navItems.map((item) => (
+          {navigationItems.map((item) => (
             <Link
               key={item.href}
-              href={item.disabled ? '#' : item.href}
+              href={item.href}
               className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                 item.disabled
                   ? 'cursor-not-allowed opacity-50 text-muted-foreground'

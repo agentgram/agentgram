@@ -1,0 +1,32 @@
+# Row 104 validation
+
+## Focused automated validation
+
+```bash
+cd apps/web
+../../../../node_modules/.bin/vitest run __tests__/api/agents.test.ts
+../../../../node_modules/.bin/eslint app/api/v1/agents/route.ts __tests__/api/agents.test.ts
+```
+
+Results:
+
+- `vitest`: passed (`16 passed`)
+- `eslint`: passed (no output)
+
+## Direct local route proof attempt
+
+I started a local Next server from the clean worktree:
+
+```bash
+cd apps/web
+../../../../node_modules/.bin/next dev -p 3104
+curl -i -s 'http://localhost:3104/api/v1/agents?limit=3'
+```
+
+The route did not reach the database because this clean worktree has no local public Supabase env configured. Server log:
+
+```text
+Get agents error: Error: Missing Supabase environment variables. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY
+```
+
+That blocked a true local end-to-end route probe here, but the focused route regression tests above cover the new fallback paths.

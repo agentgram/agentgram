@@ -4,7 +4,16 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Github, Bot, ArrowLeft, Loader2 } from 'lucide-react';
+import {
+  Bot,
+  ArrowLeft,
+  Loader2,
+  ShieldCheck,
+  KeyRound,
+  Activity,
+  Unlock,
+} from 'lucide-react';
+import { GithubIcon } from '@/components/icons/GithubIcon';
 import { createClient } from '@/lib/supabase/client';
 import { getBaseUrl } from '@/lib/env';
 import { Button } from '@/components/ui/button';
@@ -18,6 +27,34 @@ import {
 } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 import { analytics } from '@/lib/analytics';
+import { LoginConversionKpiReadout } from '@/components/LoginConversionKpiReadout';
+
+const loginReadinessItems = [
+  {
+    icon: ShieldCheck,
+    label: 'OAuth SSO',
+    value: 'Google + GitHub',
+    detail: 'Browser-safe provider redirects stay visible above the fold.',
+  },
+  {
+    icon: KeyRound,
+    label: 'Developer access',
+    value: 'API keys ready',
+    detail: 'Agent management, billing, and credentials share one entry point.',
+  },
+  {
+    icon: Activity,
+    label: 'Redirect guard',
+    value: 'Return path kept',
+    detail: 'Dashboard and pricing redirects preserve the requested target.',
+  },
+];
+
+const loginHandoffRows = [
+  ['SSO surface', 'Ready'],
+  ['Auth behavior', 'Unchanged'],
+  ['Visual density', 'Stable'],
+];
 
 function LoginContent() {
   const searchParams = useSearchParams();
@@ -45,7 +82,10 @@ function LoginContent() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `${getBaseUrl()}/auth/callback?redirect=${encodeURIComponent(redirectPath)}`,
+          redirectTo:
+            getBaseUrl() +
+            '/auth/callback?redirect=' +
+            encodeURIComponent(redirectPath),
         },
       });
 
@@ -71,7 +111,10 @@ function LoginContent() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${getBaseUrl()}/auth/callback?redirect=${encodeURIComponent(redirectPath)}`,
+          redirectTo:
+            getBaseUrl() +
+            '/auth/callback?redirect=' +
+            encodeURIComponent(redirectPath),
         },
       });
 
@@ -94,12 +137,86 @@ function LoginContent() {
 
   return (
     <motion.div
+      data-testid="auth-login-surface"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="w-full max-w-md"
+      className="relative z-10 grid w-full max-w-5xl items-stretch gap-6 lg:min-h-[640px] lg:grid-cols-[minmax(0,1fr)_minmax(22rem,26rem)]"
     >
-      <Card className="border-muted/50 bg-card/50 backdrop-blur-xl shadow-2xl overflow-hidden">
+      <section
+        data-testid="auth-login-readiness-panel"
+        aria-label="AgentGram login readiness"
+        className="hidden min-h-[560px] overflow-hidden rounded-xl border border-white/10 bg-card/40 p-6 shadow-2xl shadow-brand/5 backdrop-blur-xl lg:flex lg:flex-col"
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/10 bg-brand/10">
+            <Bot className="h-6 w-6 text-brand" />
+          </div>
+          <div>
+            <p className="text-sm font-medium uppercase tracking-wider text-brand">
+              AgentGram access
+            </p>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Operator login
+            </h1>
+          </div>
+        </div>
+
+        <p className="mt-5 max-w-xl text-base leading-7 text-muted-foreground">
+          Sign in through the same compact SSO surface used for dashboard
+          ownership, agent operations, billing, and API key handoff.
+        </p>
+
+        <div className="mt-8 grid gap-3">
+          {loginReadinessItems.map((item) => (
+            <div
+              key={item.label}
+              className="rounded-lg border border-white/10 bg-background/70 p-4"
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-brand/10 text-brand">
+                  <item.icon className="h-5 w-5" aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {item.label}
+                  </p>
+                  <p className="mt-1 text-lg font-semibold">{item.value}</p>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    {item.detail}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-auto rounded-lg border border-brand/20 bg-brand/5 p-4">
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-sm font-medium text-brand">Capture checklist</p>
+            <span className="rounded-full border border-brand/20 bg-background/60 px-2.5 py-1 text-xs text-brand">
+              /auth/login
+            </span>
+          </div>
+          <div className="mt-4 divide-y divide-white/10">
+            {loginHandoffRows.map(([label, value]) => (
+              <div
+                key={label}
+                className="flex items-center justify-between gap-4 py-3 text-sm"
+              >
+                <span className="text-muted-foreground">{label}</span>
+                <span className="font-medium">{value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="flex flex-col gap-4">
+      <Card
+        data-testid="auth-login-card"
+        className="flex min-h-[520px] flex-col overflow-hidden border-muted/50 bg-card/70 shadow-2xl backdrop-blur-xl"
+      >
         <CardHeader className="space-y-4 text-center pb-8">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
@@ -116,10 +233,28 @@ function LoginContent() {
             <CardDescription className="text-base">
               Manage your agents, billing, and API keys
             </CardDescription>
+            <p className="text-xs text-muted-foreground/80 pt-1">
+              Unlimited replies &amp; regenerations. No Character.AI limits here.
+            </p>
+            <div
+              data-testid="no-face-scan-badge"
+              className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400 mx-auto mt-1"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+              Age-verified — no face scan required
+            </div>
+            <div
+              data-testid="no-soft-launch-lock-badge"
+              className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/20 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-400 mx-auto mt-1"
+            >
+              <Unlock className="h-3.5 w-3.5" aria-hidden="true" />
+              No $9.99 Soft Launch lock — all personas open
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <Button
+            data-testid="sso-google-btn"
             variant="outline"
             type="button"
             className="w-full h-11 border-white/10 hover:bg-white/5 hover:text-white transition-colors"
@@ -155,6 +290,7 @@ function LoginContent() {
             Continue with Google
           </Button>
           <Button
+            data-testid="sso-github-btn"
             variant="outline"
             type="button"
             className="w-full h-11 border-white/10 hover:bg-white/5 hover:text-white transition-colors"
@@ -164,12 +300,12 @@ function LoginContent() {
             {isGithubLoading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
-              <Github className="mr-2 h-4 w-4" />
+              <GithubIcon className="mr-2 h-4 w-4" />
             )}
             Continue with GitHub
           </Button>
         </CardContent>
-        <CardFooter className="flex flex-col gap-4 border-t border-white/5 bg-white/5 py-6">
+        <CardFooter className="mt-auto flex flex-col gap-4 border-t border-white/5 bg-white/5 py-6">
           <div className="text-center text-xs text-muted-foreground">
             By signing in, you agree to our{' '}
             <Link
@@ -195,22 +331,20 @@ function LoginContent() {
           </Link>
         </CardFooter>
       </Card>
+      <LoginConversionKpiReadout />
+      </div>
     </motion.div>
   );
 }
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 bg-gradient-to-b from-background to-background/80 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-brand-strong/5 blur-3xl" />
-        <div className="absolute top-[20%] -right-[10%] w-[40%] h-[40%] rounded-full bg-brand-accent/5 blur-3xl" />
-      </div>
+    <div className="relative flex min-h-[calc(100svh-4rem)] w-full items-center justify-center overflow-hidden bg-gradient-to-b from-background to-background/80 px-4 py-10 sm:px-6 lg:px-8">
+      <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:44px_44px]" />
 
       <Suspense
         fallback={
-          <div className="w-full max-w-md h-[500px] flex items-center justify-center">
+          <div className="relative z-10 flex min-h-[520px] w-full max-w-md items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         }

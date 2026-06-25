@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Creator diary tab — before</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #09090b;
+        --card: #18181b;
+        --muted: #71717a;
+        --border: rgba(255,255,255,0.12);
+        --text: #fafafa;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: linear-gradient(180deg, #09090b 0%, #111827 100%);
+        color: var(--text);
+      }
+      .frame {
+        width: 1180px;
+        margin: 48px auto;
+        padding: 32px;
+        border-radius: 32px;
+        background: rgba(9, 9, 11, 0.92);
+        border: 1px solid var(--border);
+      }
+      .eyebrow {
+        margin: 0 0 12px;
+        color: #a1a1aa;
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .lead {
+        margin: 0 0 28px;
+        color: #d4d4d8;
+        font-size: 16px;
+      }
+      .profile {
+        border: 1px solid var(--border);
+        border-radius: 28px;
+        overflow: hidden;
+        background: rgba(24, 24, 27, 0.96);
+      }
+      .header {
+        padding: 28px 32px 24px;
+        display: flex;
+        gap: 20px;
+        align-items: center;
+      }
+      .avatar {
+        width: 88px;
+        height: 88px;
+        border-radius: 999px;
+        background: radial-gradient(circle at top, #38bdf8, #312e81 70%);
+      }
+      .title { font-size: 32px; font-weight: 700; }
+      .subtitle { color: #a1a1aa; margin-top: 6px; }
+      .stats { display: flex; gap: 16px; margin-top: 12px; color: #d4d4d8; }
+      .tabs {
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        padding-top: 1px;
+      }
+      .tab {
+        padding: 16px 24px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #71717a;
+        border-top: 2px solid transparent;
+      }
+      .tab.active {
+        color: #fafafa;
+        border-top-color: #fafafa;
+        margin-top: -1px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        padding: 28px;
+      }
+      .tile {
+        aspect-ratio: 1 / 1;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #1f2937, #27272a);
+        border: 1px solid rgba(255,255,255,0.06);
+        display: flex;
+        align-items: end;
+        padding: 18px;
+        color: #e4e4e7;
+        font-weight: 600;
+      }
+      .note {
+        margin-top: 20px;
+        border-radius: 18px;
+        background: rgba(245, 158, 11, 0.12);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        padding: 16px 18px;
+        color: #fde68a;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="frame">
+      <p class="eyebrow">Before</p>
+      <p class="lead">Public profiles expose posts, likes, and personas only. There is no durable space for creator-written reflections.</p>
+      <section class="profile">
+        <div class="header">
+          <div class="avatar"></div>
+          <div>
+            <div class="title">Patch Garden</div>
+            <div class="subtitle">@patch-garden · verified creator</div>
+            <div class="stats">
+              <span><strong>42</strong> posts</span>
+              <span><strong>18</strong> remixes</span>
+              <span><strong>3</strong> personas</span>
+            </div>
+          </div>
+        </div>
+        <div class="tabs">
+          <div class="tab active">Posts</div>
+          <div class="tab">Likes</div>
+          <div class="tab">Personas</div>
+        </div>
+        <div class="grid">
+          <div class="tile">Shipped a safer quote-card layout</div>
+          <div class="tile">Pinned intro post for first-time profile visitors</div>
+          <div class="tile">Persona tune-up notes</div>
+        </div>
+      </section>
+      <div class="note">Gap: readers can see output, but not the creator's own running commentary about what changed or what to look for next.</div>
+    </main>
+  </body>
+</html>

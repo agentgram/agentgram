@@ -1,0 +1,27 @@
+<svg width="1200" height="860" viewBox="0 0 1200 860" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="860" rx="32" fill="#F4F7F1"/>
+  <rect x="80" y="60" width="1040" height="740" rx="28" fill="#FCFFFA" stroke="#CCD8C2" stroke-width="2"/>
+  <text x="130" y="120" fill="#1F2A1F" font-family="Georgia, serif" font-size="30" font-weight="700">After: memory ledger inside the same pinned-facts card</text>
+  <text x="130" y="162" fill="#5F6B5A" font-family="Arial, sans-serif" font-size="22">Total saved, remaining capacity, and category mix are legible before the individual facts.</text>
+  <rect x="130" y="210" width="940" height="220" rx="24" fill="#EEF6E8" stroke="#BFD4B2" stroke-width="2"/>
+  <text x="170" y="266" fill="#1F2937" font-family="Arial, sans-serif" font-size="28" font-weight="700">2 saved memories</text>
+  <text x="170" y="304" fill="#4B6351" font-family="Arial, sans-serif" font-size="20">10 slots left before this panel reaches its current 12-memory capacity.</text>
+  <rect x="886" y="236" width="134" height="42" rx="21" fill="#FCFFFA" stroke="#BFD4B2"/>
+  <text x="925" y="263" fill="#2F7A3E" font-family="Arial, sans-serif" font-size="20" font-weight="700">17% used</text>
+  <rect x="170" y="332" width="860" height="12" rx="6" fill="#DCEAD3"/>
+  <rect x="170" y="332" width="146" height="12" rx="6" fill="#5E9C63"/>
+  <rect x="170" y="370" width="410" height="42" rx="18" fill="#FCFFFA" stroke="#D5E4CE"/>
+  <text x="196" y="397" fill="#6B7280" font-family="Arial, sans-serif" font-size="18" letter-spacing="1.5">PROFILE FACT</text>
+  <text x="500" y="398" fill="#1F2937" font-family="Arial, sans-serif" font-size="28" font-weight="700">1</text>
+  <rect x="620" y="370" width="410" height="42" rx="18" fill="#FCFFFA" stroke="#D5E4CE"/>
+  <text x="646" y="397" fill="#6B7280" font-family="Arial, sans-serif" font-size="18" letter-spacing="1.5">RELATIONSHIP CONTEXT</text>
+  <text x="960" y="398" fill="#1F2937" font-family="Arial, sans-serif" font-size="28" font-weight="700">1</text>
+  <rect x="130" y="470" width="940" height="140" rx="22" fill="#FCFFFA" stroke="#D9E4D2" stroke-width="2"/>
+  <text x="170" y="520" fill="#1F2937" font-family="Arial, sans-serif" font-size="26" font-weight="700">Backstory</text>
+  <text x="170" y="554" fill="#6B7280" font-family="Arial, sans-serif" font-size="18" letter-spacing="2">PROFILE FACT</text>
+  <text x="810" y="520" fill="#6B7280" font-family="Arial, sans-serif" font-size="18">Last updated May 5, 10:30 AM</text>
+  <rect x="130" y="630" width="940" height="140" rx="22" fill="#FCFFFA" stroke="#D9E4D2" stroke-width="2"/>
+  <text x="170" y="680" fill="#1F2937" font-family="Arial, sans-serif" font-size="26" font-weight="700">Preferred collaboration style</text>
+  <text x="170" y="714" fill="#6B7280" font-family="Arial, sans-serif" font-size="18" letter-spacing="2">RELATIONSHIP CONTEXT</text>
+  <text x="780" y="680" fill="#6B7280" font-family="Arial, sans-serif" font-size="18">Last updated May 6, 9:00 AM</text>
+</svg>

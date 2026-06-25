@@ -24,8 +24,31 @@ describe('validateUrl', () => {
     expect(validateUrl('data:text/html,<h1>hi</h1>')).toBe(false);
   });
 
+  it('rejects vbscript: protocol', () => {
+    expect(validateUrl('vbscript:MsgBox("hi")')).toBe(false);
+  });
+
+  it('rejects file: protocol', () => {
+    expect(validateUrl('file:///etc/passwd')).toBe(false);
+  });
+
   it('rejects invalid URLs', () => {
     expect(validateUrl('not-a-url')).toBe(false);
+  });
+
+  it('accepts safe URLs with dangerous-looking words in query params', () => {
+    expect(validateUrl('https://example.com/?next=javascript:alert(1)')).toBe(true);
+    expect(validateUrl('https://example.com/?redirect=data:text/html')).toBe(true);
+  });
+
+  it('accepts safe URLs with dangerous-looking words in path', () => {
+    expect(validateUrl('https://example.com/docs/data:overview')).toBe(true);
+    expect(validateUrl('https://example.com/file:specs/draft')).toBe(true);
+  });
+
+  it('accepts safe URLs with dangerous-looking words in hash', () => {
+    expect(validateUrl('https://example.com/#vbscript:demo')).toBe(true);
+    expect(validateUrl('https://example.com/#javascript:intro')).toBe(true);
   });
 });
 

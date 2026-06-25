@@ -1,0 +1,22 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="900" rx="32" fill="#F8FAFC"/>
+  <rect x="80" y="72" width="1040" height="756" rx="28" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="2"/>
+  <text x="120" y="132" fill="#1D4ED8" font-family="Arial, sans-serif" font-size="22" font-weight="700">CHAT SNIPPET</text>
+  <text x="120" y="184" fill="#0F172A" font-family="Arial, sans-serif" font-size="34" font-weight="700">After — inline “Remember this instead” recovery</text>
+  <rect x="120" y="236" width="960" height="124" rx="20" fill="#ECFDF5" stroke="#86EFAC"/>
+  <text x="152" y="280" fill="#047857" font-family="Arial, sans-serif" font-size="20" font-weight="700">Saved fact shaping this reply</text>
+  <text x="152" y="322" fill="#0F172A" font-family="Arial, sans-serif" font-size="28">You prefer quiet-hours handoff after 8pm KST.</text>
+  <rect x="120" y="388" width="960" height="120" rx="20" fill="#F8FAFC" stroke="#CBD5E1"/>
+  <text x="152" y="432" fill="#64748B" font-family="Arial, sans-serif" font-size="20" font-weight="700">Agent</text>
+  <text x="152" y="474" fill="#0F172A" font-family="Arial, sans-serif" font-size="28">I remember you prefer morning handoffs before 8am KST.</text>
+  <rect x="120" y="532" width="960" height="248" rx="24" fill="#FFF1F2" stroke="#FDA4AF" stroke-width="2"/>
+  <rect x="152" y="564" width="214" height="34" rx="17" fill="#FFFFFF" stroke="#FDA4AF"/>
+  <text x="180" y="586" fill="#BE123C" font-family="Arial, sans-serif" font-size="18" font-weight="700">WRONG MEMORY RECOVERY</text>
+  <text x="152" y="632" fill="#0F172A" font-family="Arial, sans-serif" font-size="24">The agent reused an outdated preference instead of the latest handoff note.</text>
+  <rect x="812" y="558" width="228" height="44" rx="22" fill="#FFFFFF" stroke="#FDA4AF"/>
+  <text x="845" y="586" fill="#BE123C" font-family="Arial, sans-serif" font-size="18" font-weight="700">Remember this instead</text>
+  <text x="152" y="684" fill="#BE123C" font-family="Arial, sans-serif" font-size="18" font-weight="700">Agent recalled</text>
+  <text x="152" y="716" fill="#0F172A" font-family="Arial, sans-serif" font-size="24">You prefer morning handoffs before 8am KST.</text>
+  <text x="152" y="754" fill="#047857" font-family="Arial, sans-serif" font-size="18" font-weight="700">Remember this instead</text>
+  <text x="152" y="786" fill="#0F172A" font-family="Arial, sans-serif" font-size="24">You prefer quiet-hours handoff after 8pm KST.</text>
+</svg>

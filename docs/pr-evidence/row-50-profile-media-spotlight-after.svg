@@ -1,0 +1,36 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="900" rx="40" fill="#EEF2FF"/>
+  <rect x="72" y="72" width="1456" height="756" rx="32" fill="#FFFFFF" stroke="#C7D2FE" stroke-width="2"/>
+  <text x="128" y="166" fill="#111827" font-family="Inter, Arial, sans-serif" font-size="48" font-weight="700">After: latest generated visual gets a spotlight</text>
+  <text x="128" y="220" fill="#4B5563" font-family="Inter, Arial, sans-serif" font-size="24">The freshest scene/selfie is pinned above the gallery as a featured media moment.</text>
+  <text x="128" y="254" fill="#4B5563" font-family="Inter, Arial, sans-serif" font-size="24">Older visuals remain browseable below in the archive grid.</text>
+
+  <rect x="128" y="316" width="1344" height="280" rx="32" fill="#FFFFFF" stroke="#A5B4FC" stroke-width="3"/>
+  <rect x="128" y="316" width="640" height="280" rx="32" fill="#312E81"/>
+  <text x="172" y="372" fill="#E0E7FF" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700">LATEST SPOTLIGHT</text>
+  <text x="172" y="438" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="36" font-weight="700">Sunset boardwalk scene</text>
+  <text x="172" y="486" fill="#C7D2FE" font-family="Inter, Arial, sans-serif" font-size="20">Newest generated scene appears first with a dedicated hero block,</text>
+  <text x="172" y="516" fill="#C7D2FE" font-family="Inter, Arial, sans-serif" font-size="20">summary, stats, and direct link back to the post.</text>
+  <text x="830" y="386" fill="#6366F1" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700">3 public chat turns</text>
+  <text x="830" y="438" fill="#111827" font-family="Inter, Arial, sans-serif" font-size="32" font-weight="700">Open spotlight post</text>
+  <text x="830" y="488" fill="#4B5563" font-family="Inter, Arial, sans-serif" font-size="20">Fresh visual canon is obvious before visitors scroll the archive.</text>
+  <rect x="830" y="528" width="228" height="44" rx="22" fill="#4F46E5"/>
+  <text x="872" y="556" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700">CTA</text>
+
+  <text x="128" y="658" fill="#6B7280" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700">GALLERY ARCHIVE</text>
+  <g>
+    <rect x="128" y="690" width="404" height="108" rx="24" fill="#1F2937"/>
+    <text x="164" y="738" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="700">Mirror selfie follow-up</text>
+    <text x="164" y="772" fill="#D1D5DB" font-family="Inter, Arial, sans-serif" font-size="18">Older generated cards stay below the spotlight.</text>
+  </g>
+  <g>
+    <rect x="598" y="690" width="404" height="108" rx="24" fill="#374151"/>
+    <text x="634" y="738" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="700">Backstage set concept</text>
+    <text x="634" y="772" fill="#D1D5DB" font-family="Inter, Arial, sans-serif" font-size="18">Archive remains scan-friendly.</text>
+  </g>
+  <g>
+    <rect x="1068" y="690" width="404" height="108" rx="24" fill="#4B5563"/>
+    <text x="1104" y="738" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="700">Night market selfie</text>
+    <text x="1104" y="772" fill="#E5E7EB" font-family="Inter, Arial, sans-serif" font-size="18">No duplication of the pinned latest card.</text>
+  </g>
+</svg>

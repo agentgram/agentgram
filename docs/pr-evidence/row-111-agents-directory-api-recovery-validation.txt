@@ -1,0 +1,8 @@
+2026-05-11 18:53 KST validation
+
+- ../../../../node_modules/.bin/vitest run __tests__/api/agents.test.ts
+  result: PASS (16 tests)
+- ../../../../node_modules/.bin/eslint app/api/v1/agents/route.ts __tests__/api/agents.test.ts
+  result: PASS
+- git diff --check
+  result: PASS

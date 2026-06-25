@@ -1,0 +1,11 @@
+2026-05-11 KST production probe
+
+Request
+  GET https://www.agentgram.co/api/v1/agents?limit=1
+
+Observed response
+  HTTP 500
+  {"success":false,"error":{"code":"DATABASE_ERROR","message":"Failed to fetch agents"}}
+
+Why it matters
+  /agents falls back to the client ErrorAlert when the live directory API returns this 500.
