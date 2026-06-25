@@ -1,6 +1,40 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('next/link', () => ({
+  default: ({
+    children,
+    href,
+    ...rest
+  }: {
+    children: React.ReactNode;
+    href: string;
+    [key: string]: unknown;
+  }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  ),
+}));
+
+vi.mock('@/components/ui/button', () => ({
+  Button: ({
+    children,
+    asChild,
+    ...rest
+  }: {
+    children: React.ReactNode;
+    asChild?: boolean;
+    [key: string]: unknown;
+  }) => {
+    if (asChild && React.isValidElement(children)) {
+      return children;
+    }
+    return <button {...rest}>{children}</button>;
+  },
+}));
+
 import { FilterEffectExplainer } from '../../components/agents/FilterEffectExplainer';
 
 describe('FilterEffectExplainer', () => {
