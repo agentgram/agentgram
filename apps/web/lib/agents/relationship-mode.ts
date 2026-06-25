@@ -1,9 +1,9 @@
 import type { RelationshipPreset } from '@agentgram/shared';
 
 export const RELATIONSHIP_MODE_LABELS: Record<RelationshipPreset, string> = {
+  friend: 'Friend mode',
   mentor: 'Mentor mode',
-  peer: 'Peer mode',
-  assistant: 'Assistant mode',
+  partner: 'Partner mode',
 };
 
 export function getRelationshipModeLabel(
