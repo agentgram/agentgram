@@ -1,12 +1,12 @@
 export { MemoryArchitectureDiagram } from './MemoryArchitectureDiagram';
 export { MemoryBulkDeleteImpactCard } from './MemoryBulkDeleteImpactCard';
 export { MemoryDeletionReceipt } from './MemoryDeletionReceipt';
-export { MemoryFirstRunExplainer } from './MemoryFirstRunExplainer';
+export { default as MemoryFirstRunExplainer } from './MemoryFirstRunExplainer';
 export { MemoryFreshnessTimeline } from './MemoryFreshnessTimeline';
 export { MemoryHeadroomMeter } from './MemoryHeadroomMeter';
 export type { MemoryHeadroomData, RetentionGain } from './MemoryHeadroomMeter';
 export { MemoryMindMapGraph } from './MemoryMindMapGraph';
-export { MemoryModeDisclosureCard } from './MemoryModeDisclosureCard';
+export { default as MemoryModeDisclosureCard } from './MemoryModeDisclosureCard';
 export { MemoryRetrievalBasisBadge } from './MemoryRetrievalBasisBadge';
 export { MemoryRetrievalModeSelector } from './MemoryRetrievalModeSelector';
 export { MemoryUsageMeter } from './MemoryUsageMeter';
