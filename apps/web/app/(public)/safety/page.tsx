@@ -349,6 +349,24 @@ export default function SafetyPage() {
         </div>
       </section>
 
+      {/* Link to mental health guidance */}
+      <section
+        className="border-t border-border/40 py-16"
+        data-testid="safety-mental-health-cta"
+      >
+        <div className="container text-center space-y-4">
+          <p className="text-muted-foreground">
+            Learn about responsible AI companionship and when to seek professional support.
+          </p>
+          <Button asChild variant="outline" size="lg" className="gap-2">
+            <Link href="/safety/mental-health" data-testid="safety-mental-health-link">
+              Mental Health &amp; AI Companionship
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+      </section>
+
       {/* Link back to /trust */}
       <section
         className="border-t border-border/40 py-16"

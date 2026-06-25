@@ -11,5 +11,7 @@ export { MemoryRetrievalBasisBadge } from './MemoryRetrievalBasisBadge';
 export { MemoryRetrievalModeSelector } from './MemoryRetrievalModeSelector';
 export { MemoryUsageMeter } from './MemoryUsageMeter';
 export type { MemoryUsageData } from './MemoryUsageMeter';
+export { MemoryRelationshipTimeline } from './MemoryRelationshipTimeline';
+export type { MemoryRelationshipTimelineProps } from './MemoryRelationshipTimeline';
 export { RetrievalExplainabilityCard } from './RetrievalExplainabilityCard';
 export { SharedNoteScopePicker } from './SharedNoteScopePicker';
