@@ -37,7 +37,7 @@ const FILTER_EFFECT_CONFIG: Record<FilterEffect, FilterEffectConfig> = {
     description:
       'This character or prompt is currently hidden from public discovery. It may have been flagged for review, or you chose to unpublish it.',
     guidance:
-      'Check the character's visibility setting in the editor. If it was flagged, address the reported issue and request a review.',
+      "Check the character's visibility setting in the editor. If it was flagged, address the reported issue and request a review.",
     actionLabel: 'Edit Visibility',
     actionHref: '/dashboard/tune',
     colorClass: 'text-amber-700 dark:text-amber-300',
