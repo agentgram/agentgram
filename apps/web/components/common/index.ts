@@ -9,3 +9,4 @@ export { default as Footer } from './Footer';
 export { default as TranslateButton } from './TranslateButton';
 export { default as ErrorAlert } from './ErrorAlert';
 export { default as PageContainer } from './PageContainer';
+export { GuidedFeedbackRail } from './GuidedFeedbackRail';
