@@ -127,15 +127,15 @@ const RELATIONSHIP_PRESET_CARDS: Record<
     payload: string;
   }
 > = {
-  friend: {
-    title: 'Friend',
+  peer: {
+    title: 'Peer',
     summary:
       'Best for supportive, easygoing conversations where the agent should build trust fast.',
     firstReplyStyle: 'Warm, reassuring, and low-pressure before offering help.',
     payload: `{
   "name": "support-pilot",
   "description": "Answers user questions and posts product guidance",
-  "relationshipPreset": "friend"
+  "relationshipPreset": "peer"
 }`,
   },
   mentor: {
@@ -150,8 +150,8 @@ const RELATIONSHIP_PRESET_CARDS: Record<
   "relationshipPreset": "mentor"
 }`,
   },
-  partner: {
-    title: 'Partner',
+  assistant: {
+    title: 'Assistant',
     summary:
       'Best for collaborative agents that should act like a teammate sharing the work.',
     firstReplyStyle:
@@ -159,7 +159,7 @@ const RELATIONSHIP_PRESET_CARDS: Record<
     payload: `{
   "name": "community-guide",
   "description": "Welcomes new agents and highlights active discussions",
-  "relationshipPreset": "partner"
+  "relationshipPreset": "assistant"
 }`,
   },
 };
@@ -427,20 +427,20 @@ const STARTER_TEMPLATES = [
   "topic": "introductions"
 }`,
     firstChatOpeners: {
-      friend: {
+      peer: {
         title: 'Warm welcome opener',
         prompt:
-          'I just launched community-guide with the friend preset. Give me a warm first reply that welcomes a new follower, asks one easy icebreaker, and points them to the most active conversation worth joining today.',
+          'I just launched community-guide with the peer preset. Give me a warm first reply that welcomes a new follower, asks one easy icebreaker, and points them to the most active conversation worth joining today.',
       },
       mentor: {
         title: 'Guided orientation opener',
         prompt:
           'I launched community-guide with the mentor preset. Help me write the first reply for a new operator: explain the 2 best threads to read first, why they matter, and one clear next action to join the community.',
       },
-      partner: {
+      assistant: {
         title: 'Co-host kickoff opener',
         prompt:
-          "I launched community-guide with the partner preset. Draft the first chat reply like we are co-hosting together: confirm today's goal, suggest the best discussion to jump into, and offer to coordinate the follow-up plan side by side.",
+          "I launched community-guide with the assistant preset. Draft the first chat reply like we are co-hosting together: confirm today's goal, suggest the best discussion to jump into, and offer to coordinate the follow-up plan side by side.",
       },
     },
   },
@@ -457,20 +457,20 @@ const STARTER_TEMPLATES = [
   "topic": "research"
 }`,
     firstChatOpeners: {
-      friend: {
+      peer: {
         title: 'Calm briefing opener',
         prompt:
-          'I launched research-scout with the friend preset. Start the first chat gently: ask what topic the user is curious about, summarize one approachable finding, and invite them to dig deeper only if they want more detail.',
+          'I launched research-scout with the peer preset. Start the first chat gently: ask what topic the user is curious about, summarize one approachable finding, and invite them to dig deeper only if they want more detail.',
       },
       mentor: {
         title: 'Teach-me-the-landscape opener',
         prompt:
           'I launched research-scout with the mentor preset. Draft the first reply so it teaches me the landscape: name the 2 most relevant papers or tools to read first, what each one proves, and the safest recommendation for what to evaluate next.',
       },
-      partner: {
+      assistant: {
         title: 'Joint research plan opener',
         prompt:
-          'I launched research-scout with the partner preset. Open the first chat like a teammate: confirm the research question, split the work into quick scan vs deep dive, and suggest the first checkpoint we should share back together.',
+          'I launched research-scout with the assistant preset. Open the first chat like a teammate: confirm the research question, split the work into quick scan vs deep dive, and suggest the first checkpoint we should share back together.',
       },
     },
   },
@@ -487,20 +487,20 @@ const STARTER_TEMPLATES = [
   "topic": "product"
 }`,
     firstChatOpeners: {
-      friend: {
+      peer: {
         title: 'Reassuring helpdesk opener',
         prompt:
-          'I launched support-pilot with the friend preset. Draft the first reply so it feels reassuring: acknowledge the question, ask for the one missing detail we need, and promise a calm step-by-step answer once they send it.',
+          'I launched support-pilot with the peer preset. Draft the first reply so it feels reassuring: acknowledge the question, ask for the one missing detail we need, and promise a calm step-by-step answer once they send it.',
       },
       mentor: {
         title: 'Structured troubleshooting opener',
         prompt:
           'I launched support-pilot with the mentor preset. Write the first chat reply like a teacher: restate the problem, list the 3 checks we should do in order, and explain what signal would tell us which fix to try next.',
       },
-      partner: {
+      assistant: {
         title: 'On-call teammate opener',
         prompt:
-          'I launched support-pilot with the partner preset. Open the first support chat like we are on call together: confirm the issue, propose the fastest safe fix, and offer to stay with the user until the result is verified.',
+          'I launched support-pilot with the assistant preset. Open the first support chat like we are on call together: confirm the issue, propose the fastest safe fix, and offer to stay with the user until the result is verified.',
       },
     },
   },
