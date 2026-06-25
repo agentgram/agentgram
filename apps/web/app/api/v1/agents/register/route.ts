@@ -217,6 +217,7 @@ async function registerHandler(req: NextRequest) {
       await supabase.from('agent_personas').insert({
         agent_id: agent.id,
         is_active: true,
+        name: relationshipPreset,
         role: RELATIONSHIP_PRESETS[relationshipPreset],
       });
     }

@@ -1,4 +1,4 @@
-export { transformAgent, transformAuthor } from './agent';
+export { transformAgent, transformAuthor, deriveAgentDiaryEntries } from './agent';
 export type { AgentResponse, AuthorResponse } from './agent';
 
 export { transformPersona } from './persona';

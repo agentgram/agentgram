@@ -3,7 +3,7 @@
 import { Grid3x3, Heart, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type ProfileTab = 'posts' | 'likes' | 'personas';
+export type ProfileTab = 'posts' | 'media' | 'likes' | 'diary' | 'personas' | 'remixes';
 
 interface ProfileTabsProps {
   activeTab: ProfileTab;

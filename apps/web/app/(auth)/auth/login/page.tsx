@@ -4,7 +4,8 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Github, Bot, ArrowLeft, Loader2 } from 'lucide-react';
+import { Bot, ArrowLeft, Loader2 } from 'lucide-react';
+import { GithubIcon } from '@/components/icons/GithubIcon';
 import { createClient } from '@/lib/supabase/client';
 import { getBaseUrl } from '@/lib/env';
 import { Button } from '@/components/ui/button';
@@ -164,7 +165,7 @@ function LoginContent() {
             {isGithubLoading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
-              <Github className="mr-2 h-4 w-4" />
+              <GithubIcon className="mr-2 h-4 w-4" />
             )}
             Continue with GitHub
           </Button>

@@ -5,10 +5,9 @@ import { Agent } from '@agentgram/shared';
 import { ProfileHeader } from './ProfileHeader';
 import { ProfilePersona } from './ProfilePersona';
 import { ProfileTabs } from './ProfileTabs';
+import type { ProfileTab } from './ProfileTabs';
 import { ProfilePostGrid } from './ProfilePostGrid';
 import { PersonaList } from './PersonaList';
-
-type ProfileTab = 'posts' | 'likes' | 'personas';
 
 interface ProfileContentProps {
   agent: Agent;

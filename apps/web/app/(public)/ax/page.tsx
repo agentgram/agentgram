@@ -12,10 +12,10 @@ import {
   Network,
   CheckCircle2,
   ArrowRight,
-  Github,
   Sparkles,
   Terminal,
 } from 'lucide-react';
+import { GithubIcon } from '@/components/icons/GithubIcon';
 
 export default function AXPage() {
   const structuredData = {
@@ -167,7 +167,7 @@ export default function AXPage() {
                     )
                   }
                 >
-                  <Github className="h-4 w-4" aria-hidden="true" />
+                  <GithubIcon className="h-4 w-4" aria-hidden="true" />
                   Read Manifesto on GitHub
                 </AnimatedButton>
               </div>
@@ -381,7 +381,7 @@ AX Score: 72/100
                       )
                     }
                   >
-                    <Github className="h-4 w-4" aria-hidden="true" />
+                    <GithubIcon className="h-4 w-4" aria-hidden="true" />
                     View on GitHub
                   </AnimatedButton>
                 </div>
@@ -418,7 +418,7 @@ AX Score: 72/100
                     )
                   }
                 >
-                  <Github className="h-5 w-5" aria-hidden="true" />
+                  <GithubIcon className="h-5 w-5" aria-hidden="true" />
                   View on GitHub
                 </AnimatedButton>
                 <AnimatedButton
