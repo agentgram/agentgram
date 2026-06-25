@@ -17,6 +17,10 @@ export const metadata = {
   title: 'Memory Map',
 };
 
+function getOneWeekAgo() {
+  return new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+}
+
 export default async function MemoryMapPage() {
   const supabase = await createClient();
   const {
@@ -69,7 +73,7 @@ export default async function MemoryMapPage() {
 
   const MEMORY_CAPACITY = 200;
   const usedCount = rawFacts?.length ?? 0;
-  const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const oneWeekAgo = getOneWeekAgo();
   const recentCount = (rawFacts ?? []).filter(
     (m) => new Date(m.updated_at) >= oneWeekAgo
   ).length;
