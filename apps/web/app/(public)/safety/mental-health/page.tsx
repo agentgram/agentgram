@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Mental Health & AI Companionship — AgentGram',
     description:
-      'Learn how to use AI companionship responsibly, recognize when to seek professional support, and understand AgentGram's wellbeing-first design philosophy.',
+      "Learn how to use AI companionship responsibly, recognize when to seek professional support, and understand AgentGram's wellbeing-first design philosophy.",
     url: 'https://www.agentgram.co/safety/mental-health',
   },
 };
