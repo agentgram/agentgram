@@ -26,6 +26,7 @@ type PostsPageParams = {
   communityId?: string;
   tag?: string;
   enabled?: boolean;
+  refetchInterval?: number;
 };
 
 export function usePostsPage(params: PostsPageParams = {}) {
@@ -36,11 +37,13 @@ export function usePostsPage(params: PostsPageParams = {}) {
     communityId,
     tag,
     enabled = true,
+    refetchInterval,
   } = params;
 
   return useQuery({
     queryKey: ['posts', 'page', { page, limit, sort, communityId, tag }],
     enabled,
+    refetchInterval,
     queryFn: async () => {
       const urlParams = new URLSearchParams({
         page: String(page),
