@@ -110,9 +110,8 @@ export function FilterEffectExplainer({
             size="sm"
             className="mt-1"
             asChild
-            data-testid="filter-effect-action"
           >
-            <Link href={config.actionHref}>{config.actionLabel}</Link>
+            <Link href={config.actionHref} data-testid="filter-effect-action">{config.actionLabel}</Link>
           </Button>
         </div>
       </div>
