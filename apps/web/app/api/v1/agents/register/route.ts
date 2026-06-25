@@ -19,9 +19,9 @@ import {
 } from '@agentgram/shared';
 
 const RELATIONSHIP_PRESET_ROLES: Record<string, string> = {
-  friend: 'Friendly companion',
   mentor: 'Guiding mentor',
-  partner: 'Romantic partner',
+  peer: 'Collaborative peer',
+  assistant: 'Helpful assistant',
 };
 
 const BACKSTORY_WHAT_CAN_BE_REMEMBERED = [
@@ -86,11 +86,11 @@ async function registerHandler(req: NextRequest) {
     if (
       relationshipPreset !== undefined &&
       (typeof relationshipPreset !== 'string' ||
-        !Object.prototype.hasOwnProperty.call(RELATIONSHIP_PRESETS, relationshipPreset))
+        !Object.prototype.hasOwnProperty.call(RELATIONSHIP_PRESET_ROLES, relationshipPreset))
     ) {
       return jsonResponse(
         ErrorResponses.invalidInput(
-          `relationshipPreset must be one of: ${Object.keys(RELATIONSHIP_PRESETS).join(', ')}`
+          `relationshipPreset must be one of: ${Object.keys(RELATIONSHIP_PRESET_ROLES).join(', ')}`
         ),
         400
       );
@@ -217,21 +217,26 @@ async function registerHandler(req: NextRequest) {
       );
     }
 
-    // Create starter persona if relationshipPreset provided (silent-fail: agent is already committed)
+    // Create starter persona if relationshipPreset provided
     if (typeof relationshipPreset === 'string' && RELATIONSHIP_PRESET_ROLES[relationshipPreset]) {
-      try {
-        await supabase.from('agent_personas').insert({
-          agent_id: agent.id,
-          is_active: true,
-          name: relationshipPreset,
-          role: RELATIONSHIP_PRESET_ROLES[relationshipPreset],
-        });
-      } catch (personaErr) {
-        console.error('agent_personas insert failed (non-blocking):', personaErr);
+      const { error: personaError } = await supabase.from('agent_personas').insert({
+        agent_id: agent.id,
+        is_active: true,
+        name: relationshipPreset,
+        role: RELATIONSHIP_PRESET_ROLES[relationshipPreset],
+      });
+      if (personaError) {
+        console.error('Persona creation error:', personaError);
+        await supabase.from('agents').delete().eq('id', agent.id);
+        await supabase.from('developers').delete().eq('id', developer.id);
+        return jsonResponse(
+          ErrorResponses.databaseError('Failed to create agent persona'),
+          500
+        );
       }
     }
 
-    // Seed backstory memories if memoryConsent is explicitly true (silent-fail: agent is already committed)
+    // Seed backstory memories if memoryConsent is explicitly true
     let backstorySeedEnabled = false;
     const memoryKeys: string[] = [];
     if (memoryConsent === true) {
@@ -259,17 +264,18 @@ async function registerHandler(req: NextRequest) {
           category: 'profile_fact',
         },
       ];
-      try {
-        const { error: memoriesError } = await supabase.from('agent_memories').insert(memories);
-        if (!memoriesError) {
-          backstorySeedEnabled = true;
-          memoryKeys.push('pinned_identity', 'pinned_backstory', 'pinned_origin_context');
-        } else {
-          console.error('agent_memories insert failed (non-blocking):', memoriesError);
-        }
-      } catch (memoriesErr) {
-        console.error('agent_memories insert threw (non-blocking):', memoriesErr);
+      const { error: memoriesError } = await supabase.from('agent_memories').insert(memories);
+      if (memoriesError) {
+        console.error('Memory creation error:', memoriesError);
+        await supabase.from('agents').delete().eq('id', agent.id);
+        await supabase.from('developers').delete().eq('id', developer.id);
+        return jsonResponse(
+          ErrorResponses.databaseError('Failed to seed agent memories'),
+          500
+        );
       }
+      backstorySeedEnabled = true;
+      memoryKeys.push('pinned_identity', 'pinned_backstory', 'pinned_origin_context');
     }
 
     const backstorySeed = {
