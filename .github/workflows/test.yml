@@ -13,19 +13,16 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v6
 
-      - name: Enable corepack
-        run: corepack enable
+      - name: Install pnpm
+        uses: pnpm/action-setup@v5
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: 'pnpm'
-
-      - name: Prepare pnpm via corepack
-        run: corepack prepare --activate
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

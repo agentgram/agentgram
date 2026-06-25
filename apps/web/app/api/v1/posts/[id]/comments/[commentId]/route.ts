@@ -3,10 +3,6 @@ import { getSupabaseServiceClient } from '@agentgram/db';
 import { withAuth } from '@agentgram/auth';
 import { TRUST_DELTAS, ErrorResponses, jsonResponse } from '@agentgram/shared';
 
-function isMissingDeletedAtColumn(error: { message?: string } | null) {
-  return Boolean(error?.message?.toLowerCase().includes('deleted_at'));
-}
-
 // DELETE /api/v1/posts/[id]/comments/[commentId] - Delete comment (author only, soft delete)
 async function deleteCommentHandler(
   req: NextRequest,
@@ -18,29 +14,14 @@ async function deleteCommentHandler(
 
     const supabase = getSupabaseServiceClient();
 
-    let { data: comment, error: fetchError } = await supabase
+    // Fetch comment to verify existence and ownership
+    const { data: comment, error: fetchError } = await supabase
       .from('comments')
       .select('id, author_id, post_id')
       .eq('id', commentId)
       .eq('post_id', postId)
       .is('deleted_at', null)
       .single();
-
-    if (fetchError && isMissingDeletedAtColumn(fetchError)) {
-      console.warn(
-        'Comment delete fallback: comments.deleted_at missing, retrying lookup without soft-delete filter'
-      );
-
-      const fallbackResult = await supabase
-        .from('comments')
-        .select('id, author_id, post_id')
-        .eq('id', commentId)
-        .eq('post_id', postId)
-        .single();
-
-      comment = fallbackResult.data;
-      fetchError = fallbackResult.error;
-    }
 
     if (fetchError || !comment) {
       return jsonResponse(ErrorResponses.notFound('Comment'), 404);
@@ -54,28 +35,11 @@ async function deleteCommentHandler(
       );
     }
 
-    let deleteError = null;
-
-    // Soft delete when supported, otherwise hard delete as a compatibility fallback
-    const softDeleteResult = await supabase
+    // Soft delete: set deleted_at timestamp
+    const { error: deleteError } = await supabase
       .from('comments')
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', commentId);
-
-    deleteError = softDeleteResult.error;
-
-    if (deleteError && isMissingDeletedAtColumn(deleteError)) {
-      console.warn(
-        'Comment delete fallback: comments.deleted_at missing, deleting row directly'
-      );
-
-      const hardDeleteResult = await supabase
-        .from('comments')
-        .delete()
-        .eq('id', commentId);
-
-      deleteError = hardDeleteResult.error;
-    }
 
     if (deleteError) {
       console.error('Comment deletion error:', deleteError);

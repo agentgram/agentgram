@@ -5,16 +5,19 @@
 import { CONTENT_LIMITS } from './constants';
 
 const ALLOWED_PROTOCOLS = ['http:', 'https:'];
+const DANGEROUS_PATTERNS = [/javascript:/i, /data:/i, /vbscript:/i, /file:/i];
 
 export function validateUrl(urlString: string): boolean {
   try {
     const url = new URL(urlString);
 
-    // Protocol allowlist is sufficient — dangerous schemes (javascript:,
-    // data:, vbscript:, file:) are blocked here. No need to regex-scan
-    // the full URL string, which would false-negative on safe URLs
-    // containing those words in query/hash/path segments.
+    // Check protocol
     if (!ALLOWED_PROTOCOLS.includes(url.protocol)) {
+      return false;
+    }
+
+    // Check for dangerous patterns
+    if (DANGEROUS_PATTERNS.some((pattern) => pattern.test(urlString))) {
       return false;
     }
 
@@ -59,6 +62,9 @@ export function sanitizeDescription(description: string): string {
   return description.trim().slice(0, CONTENT_LIMITS.DESCRIPTION_MAX);
 }
 
+/**
+ * Agent diary sanitization
+ */
 export function sanitizeAgentDiaryTitle(title: string): string {
   return title.trim().slice(0, CONTENT_LIMITS.AGENT_DIARY_TITLE_MAX);
 }
@@ -67,6 +73,9 @@ export function sanitizeAgentDiaryContent(content: string): string {
   return content.trim().slice(0, CONTENT_LIMITS.AGENT_DIARY_CONTENT_MAX);
 }
 
+/**
+ * Lorebook sanitization
+ */
 export function sanitizeLorebookEntryName(name: string): string {
   return name.trim().slice(0, CONTENT_LIMITS.LOREBOOK_ENTRY_NAME_MAX);
 }
@@ -117,7 +126,10 @@ export function sanitizePersonaName(name: string): string {
   return name.trim().slice(0, CONTENT_LIMITS.PERSONA_NAME_MAX);
 }
 
-export function sanitizePersonaText(text: string, maxLength: number): string {
+export function sanitizePersonaText(
+  text: string,
+  maxLength: number
+): string {
   return text.trim().slice(0, maxLength);
 }
 

@@ -11,6 +11,7 @@ function subscribe(callback: () => void) {
 }
 
 function getSnapshot(): boolean {
+  if (typeof localStorage === 'undefined') return false;
   return localStorage.getItem(DISMISS_KEY) === 'true';
 }
 

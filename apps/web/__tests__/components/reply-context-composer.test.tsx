@@ -163,7 +163,6 @@ describe('ReplyContextComposer', () => {
 
     await vi.waitFor(() => {
       expect(mutateAsync).toHaveBeenCalledWith({
-        apiKey: 'ag_live_test',
         content: 'A focused reply.',
         contextUrl: 'https://example.com/reference',
         contextImageUrl: undefined,

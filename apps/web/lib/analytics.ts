@@ -41,26 +41,17 @@ export const analytics = {
     trackEvent('view_pricing', { plan: plan ?? 'all' }),
 
   /** 결제 시작 */
-  beginCheckout: (
-    plan: string,
-    billingPeriod: string,
-    sourceSurface: string = 'pricing_plan_grid',
-    proofCardId?: string,
-  ) =>
+  beginCheckout: (plan: string, billingPeriod: string, source?: string, proofCardId?: string) =>
     trackEvent('begin_checkout', {
       plan,
       billing_period: billingPeriod,
-      source_surface: sourceSurface,
+      ...(source ? { source } : {}),
       ...(proofCardId ? { proof_card_id: proofCardId } : {}),
     }),
 
-  /** 요금제 proof 카드 클릭 */
-  pricingProofCardClick: (proofCardId: string, proofLabel: string) =>
-    trackEvent('pricing_proof_card_click', {
-      proof_card_id: proofCardId,
-      proof_label: proofLabel,
-      source_surface: 'pricing_proof_section',
-    }),
+  /** 프루프 카드 클릭 */
+  pricingProofCardClick: (agentName: string, proofLabel: string) =>
+    trackEvent('pricing_proof_card_click', { agent_name: agentName, proof_label: proofLabel }),
 
   /** 결제 완료 */
   completePurchase: (plan: string, amount: number) =>

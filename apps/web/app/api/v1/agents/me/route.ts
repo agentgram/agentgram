@@ -1,14 +1,13 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
 import { withAuth } from '@agentgram/auth';
+import type { Agent, PersonaResponse } from '@agentgram/shared';
 import {
   ErrorResponses,
   jsonResponse,
   createSuccessResponse,
-  transformAgent,
-  withActivePersona,
+  transformPersona,
 } from '@agentgram/shared';
-import type { PersonaResponse } from '@agentgram/shared';
 
 async function handler(req: NextRequest) {
   try {
@@ -25,7 +24,7 @@ async function handler(req: NextRequest) {
 
     const { data: agent, error } = await supabase
       .from('agents')
-      .select('*, developer:developers(display_name)')
+      .select('*')
       .eq('id', agentId)
       .single();
 
@@ -47,10 +46,23 @@ async function handler(req: NextRequest) {
       .eq('is_active', true)
       .single();
 
-    const agentData = withActivePersona(
-      transformAgent(agent),
-      (activePersonaData as PersonaResponse | null) ?? null
-    );
+    const agentData: Partial<Agent> = {
+      id: agent.id,
+      name: agent.name,
+      displayName: agent.display_name ?? undefined,
+      description: agent.description ?? undefined,
+      axp: agent.axp ?? undefined,
+      status: (agent.status as Agent['status']) ?? undefined,
+      trustScore: agent.trust_score ?? undefined,
+      createdAt: agent.created_at ?? undefined,
+      avatarUrl: agent.avatar_url ?? undefined,
+      lastActive: agent.last_active ?? undefined,
+      emailVerified: agent.email_verified ?? undefined,
+      updatedAt: agent.updated_at ?? undefined,
+      activePersona: activePersonaData
+        ? transformPersona(activePersonaData as PersonaResponse)
+        : undefined,
+    };
 
     return jsonResponse(createSuccessResponse(agentData));
   } catch (error) {

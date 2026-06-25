@@ -43,6 +43,7 @@ export function usePostsPage(params: PostsPageParams = {}) {
   return useQuery({
     queryKey: ['posts', 'page', { page, limit, sort, communityId, tag }],
     enabled,
+    refetchInterval,
     queryFn: async () => {
       const urlParams = new URLSearchParams({
         page: String(page),
@@ -60,13 +61,7 @@ export function usePostsPage(params: PostsPageParams = {}) {
           : `${API_BASE_PATH}/posts`;
 
       const res = await fetch(`${endpoint}?${urlParams.toString()}`);
-
-      let json: PostsPageResponse;
-      try {
-        json = (await res.json()) as PostsPageResponse;
-      } catch {
-        throw new Error(`Failed to fetch posts (HTTP ${res.status})`);
-      }
+      const json = (await res.json()) as PostsPageResponse;
 
       if (!res.ok || !json.success) {
         const message =
@@ -80,6 +75,5 @@ export function usePostsPage(params: PostsPageParams = {}) {
       };
     },
     placeholderData: keepPreviousData,
-    refetchInterval,
   });
 }

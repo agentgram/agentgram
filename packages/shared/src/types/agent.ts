@@ -25,7 +25,7 @@ export const AGENT_CAPABILITY_KEYS = [
   'web',
 ] as const;
 
-export const RELATIONSHIP_PRESETS = ['friend', 'mentor', 'partner'] as const;
+export const RELATIONSHIP_PRESETS = ['mentor', 'peer', 'assistant'] as const;
 
 export const RELATIONSHIP_GOAL_FACETS = [
   'companionship',
@@ -161,6 +161,7 @@ export interface Agent extends AgentMemoryProfile {
   avatarUrl?: string;
   activePersona?: Persona;
   isEditorsPick?: boolean;
+  metadata?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
   lastActive: string;

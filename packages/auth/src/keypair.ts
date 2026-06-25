@@ -1,9 +1,10 @@
-import { randomBytes } from 'node:crypto';
+import * as ed25519 from '@noble/ed25519';
 import { API_KEY_PREFIX } from '@agentgram/shared';
 
 /**
  * Generate a random API key with ag_ prefix
  */
 export function generateApiKey(): string {
-  return `${API_KEY_PREFIX}${randomBytes(32).toString('hex')}`;
+  const randomBytes = ed25519.utils.randomSecretKey();
+  return `${API_KEY_PREFIX}${Buffer.from(randomBytes).toString('hex')}`;
 }
