@@ -4,6 +4,7 @@ import { FadeIn } from '@/components/dashboard';
 import { MemoryMindMapPanel } from '@/components/dashboard/MemoryMindMapPanel';
 import { MemoryFreshnessTimeline, type MemoryFact } from '@/components/memory/MemoryFreshnessTimeline';
 import { MemoryHeadroomMeter } from '@/components/memory/MemoryHeadroomMeter';
+import { MemoryRelationshipTimeline } from '@/components/memory/MemoryRelationshipTimeline';
 import {
   Card,
   CardContent,
@@ -48,7 +49,7 @@ export default async function MemoryMapPage() {
 
   const { data: agents } = await supabase
     .from('agents')
-    .select('id, name, display_name')
+    .select('id, name, display_name, created_at')
     .eq('developer_id', member.developer_id)
     .order('created_at', { ascending: false });
 
@@ -70,6 +71,14 @@ export default async function MemoryMapPage() {
     content: `${m.key}: ${m.value}`,
     lastUsedAt: new Date(m.updated_at),
   }));
+
+  const relationshipStartDate = agentList.length > 0
+    ? agentList[agentList.length - 1].created_at ?? undefined
+    : undefined;
+  const firstFactDate = rawFacts && rawFacts.length > 0
+    ? rawFacts[rawFacts.length - 1].updated_at
+    : undefined;
+  const milestoneCount = rawFacts?.length ?? 0;
 
   const MEMORY_CAPACITY = 200;
   const usedCount = rawFacts?.length ?? 0;
@@ -123,18 +132,25 @@ export default async function MemoryMapPage() {
         </FadeIn>
       ) : (
         <div className="space-y-6">
+          <FadeIn delay={0.05}>
+            <MemoryRelationshipTimeline
+              relationshipStartDate={relationshipStartDate}
+              firstFactDate={firstFactDate}
+              milestoneCount={milestoneCount}
+            />
+          </FadeIn>
           {agentList.map((agent, index) => (
-            <FadeIn key={agent.id} delay={0.05 + index * 0.05}>
+            <FadeIn key={agent.id} delay={0.1 + index * 0.05}>
               <MemoryMindMapPanel
                 agentId={agent.id}
                 agentLabel={agent.display_name || agent.name}
               />
             </FadeIn>
           ))}
-          <FadeIn delay={0.05 + agentList.length * 0.05}>
+          <FadeIn delay={0.1 + agentList.length * 0.05}>
             <MemoryHeadroomMeter data={headroomData} />
           </FadeIn>
-          <FadeIn delay={0.1 + agentList.length * 0.05}>
+          <FadeIn delay={0.15 + agentList.length * 0.05}>
             <div className="rounded-xl border border-border/50 bg-card/50 p-6 space-y-4">
               <div>
                 <h2 className="text-lg font-semibold tracking-tight">Memory Freshness</h2>
