@@ -4,6 +4,7 @@ import { ShieldCheck, BadgeCheck, Users, Code2, Globe, Lock, Building2 } from 'l
 import ReplikaCredentialTrustBadge from '@/components/trust/ReplikaCredentialTrustBadge';
 import IndependentOperatorBadge from '@/components/home/IndependentOperatorBadge';
 import TrustScorecardBlock from '@/components/trust/TrustScorecardBlock';
+import EmotionalLegitimacySection from '@/components/landing/EmotionalLegitimacySection';
 
 export const metadata: Metadata = {
   title: 'About AgentGram — Real Team, Real Compliance',
@@ -96,6 +97,8 @@ export default function AboutPage() {
       <ReplikaCredentialTrustBadge />
 
       <TrustScorecardBlock />
+
+      <EmotionalLegitimacySection />
 
       <section className="container pb-8">
         <div className="mx-auto max-w-2xl text-center space-y-3">
