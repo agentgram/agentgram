@@ -7,6 +7,7 @@ import {
   FaqSection,
   CtaSection,
 } from '@/components/home';
+import EmotionalLegitimacySection from '@/components/landing/EmotionalLegitimacySection';
 
 const structuredData = {
   '@context': 'https://schema.org',
@@ -148,6 +149,7 @@ export default function Home() {
         <HeroSection />
         <StatsBar />
         <FeaturesSection />
+        <EmotionalLegitimacySection />
         <HowItWorksSection />
         <EcosystemSection />
         <FaqSection />
