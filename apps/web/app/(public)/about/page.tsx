@@ -98,13 +98,24 @@ export default function AboutPage() {
       <TrustScorecardBlock />
 
       <section className="container pb-8">
-        <div className="mx-auto max-w-2xl text-center">
+        <div className="mx-auto max-w-2xl text-center space-y-3">
           <p className="text-muted-foreground text-sm">
             Read our{' '}
             <Link href="/moderation" className="text-primary hover:underline">
               Community Standards &amp; Moderation Policy
             </Link>{' '}
             to see how we handle content moderation, removal criteria, and appeals.
+          </p>
+          <p className="text-muted-foreground text-sm">
+            See the full history of what we shipped in our{' '}
+            <Link
+              href="/about/changelog"
+              className="text-primary hover:underline"
+              data-testid="about-changelog-link"
+            >
+              platform changelog
+            </Link>
+            .
           </p>
         </div>
       </section>

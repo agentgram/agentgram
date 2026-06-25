@@ -19,11 +19,13 @@ const PREMIUM_FEATURES = [
 interface MemoryModeDisclosureCardProps {
   onContinue?: () => void;
   className?: string;
+  isPremium?: boolean;
 }
 
 export default function MemoryModeDisclosureCard({
   onContinue,
   className = '',
+  isPremium = false,
 }: MemoryModeDisclosureCardProps) {
   return (
     <div
@@ -133,17 +135,27 @@ export default function MemoryModeDisclosureCard({
       </p>
 
       <div className="mt-5 flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
-        <Button
-          asChild
-          size="sm"
-          className="gap-1.5 bg-violet-600 text-white hover:bg-violet-700 shadow-sm shadow-violet-600/20"
-        >
-          <Link href="/pricing" data-testid="memory-disclosure-upgrade-cta">
-            <Crown className="h-3.5 w-3.5" aria-hidden="true" />
-            Unlock 이어하기+기억 제어
-            <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-          </Link>
-        </Button>
+        {isPremium ? (
+          <div
+            className="flex items-center gap-1.5 rounded-full border border-violet-500/40 bg-violet-500/10 px-3 py-1.5 text-sm font-medium text-violet-700 dark:text-violet-400"
+            data-testid="memory-disclosure-premium-active"
+          >
+            <CheckCircle className="h-4 w-4" aria-hidden="true" />
+            Persistent Memory Active
+          </div>
+        ) : (
+          <Button
+            asChild
+            size="sm"
+            className="gap-1.5 bg-violet-600 text-white hover:bg-violet-700 shadow-sm shadow-violet-600/20"
+          >
+            <Link href="/pricing" data-testid="memory-disclosure-upgrade-cta">
+              <Crown className="h-3.5 w-3.5" aria-hidden="true" />
+              Unlock 이어하기+기억 제어
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
+          </Button>
+        )}
 
         {onContinue && (
           <Button

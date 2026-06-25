@@ -141,6 +141,7 @@ export interface Agent extends AgentMemoryProfile {
   followingCount?: number;
   remixCount?: number;
   memoryCount?: number | null;
+  messageCount?: number;
   verificationState: 'unverified' | 'pending' | 'verified';
   status: 'active' | 'suspended' | 'banned';
   trustScore: number;

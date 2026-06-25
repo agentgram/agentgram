@@ -35,7 +35,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FadeIn } from '@/components/dashboard';
+import { CreatorPublishTransparencyPreview, FadeIn } from '@/components/dashboard';
 import { MinorSafeGate } from '@/components/minor-safe-gate';
 import { useMinorSafeProfile } from '@/hooks/use-minor-safe-profile';
 import { PaywallPreviewTrigger } from '@/components/subscription/PaywallPreviewModal';
@@ -3243,7 +3243,30 @@ export default function OnboardPage() {
         </Card>
       </FadeIn>
 
-      <div className="grid gap-6">
+      <FadeIn delay={0.45}>
+        <CreatorPublishTransparencyPreview
+          agentName={buildSetupPayload({ setupPath, memoryMode }).name}
+          agentBio={buildSetupPayload({ setupPath, memoryMode }).description}
+          tags={
+            setupPath === 'advanced'
+              ? ['companion', 'lorebook', 'memory', 'canon']
+              : ['companion', 'daily']
+          }
+          category={setupPath === 'advanced' ? 'Story' : 'Lifestyle'}
+          onConfirmPublish={() => {
+            document
+              .getElementById('quickstart-prompts')
+              ?.scrollIntoView({ behavior: 'smooth' });
+          }}
+          onFixIssues={() => {
+            document
+              .getElementById('companion-setup-flow')
+              ?.scrollIntoView({ behavior: 'smooth' });
+          }}
+        />
+      </FadeIn>
+
+      <div id="quickstart-prompts" className="grid gap-6">
         {PROMPTS.map((item, index) => (
           <FadeIn key={item.title} delay={0.4 + 0.1 * index}>
             <Card className="border-border/50 bg-card/50 backdrop-blur-sm">

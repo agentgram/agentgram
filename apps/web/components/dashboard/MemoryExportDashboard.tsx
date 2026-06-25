@@ -8,6 +8,7 @@ import {
   Download,
   FileJson,
   FileText,
+  Network,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MemoryTierTabs } from './MemoryTierTabs';
 import { MultilingualMemoryBadge } from '@/components/agents/MultilingualMemoryBadge';
 import {
@@ -24,6 +26,8 @@ import {
   downloadReceiptJson,
   type MemoryDeletionReceiptData,
 } from '@/components/memory/MemoryDeletionReceipt';
+import { MemoryMindMapGraph } from '@/components/memory/MemoryMindMapGraph';
+import type { MemoryNode, MemoryEdge } from '@/types/memory';
 
 export interface MemoryExportRecord {
   id: string;
@@ -105,6 +109,56 @@ function exportCsv(memories: MemoryExportRecord[]) {
   );
 }
 
+function buildMindMapData(memories: MemoryExportRecord[]): {
+  nodes: MemoryNode[];
+  edges: MemoryEdge[];
+} {
+  const cols = 4;
+  const colGap = 220;
+  const rowGap = 140;
+  const offsetX = 110;
+  const offsetY = 80;
+
+  const nodes: MemoryNode[] = memories.map((m, i) => ({
+    id: m.id,
+    fact: m.value,
+    category: m.category,
+    lastUsedAt: m.updatedAt,
+    x: offsetX + (i % cols) * colGap,
+    y: offsetY + Math.floor(i / cols) * rowGap,
+  }));
+
+  const edges: MemoryEdge[] = [];
+
+  // Temporal edges: connect consecutive nodes sorted by createdAt
+  const sorted = [...memories].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  );
+  for (let i = 0; i < sorted.length - 1; i++) {
+    edges.push({
+      sourceId: sorted[i].id,
+      targetId: sorted[i + 1].id,
+      type: 'temporal',
+    });
+  }
+
+  // Thematic edges: connect nodes sharing the same category (first occurrence to each subsequent)
+  const seenCategories = new Map<string, string>();
+  for (const m of memories) {
+    if (seenCategories.has(m.category)) {
+      edges.push({
+        sourceId: seenCategories.get(m.category)!,
+        targetId: m.id,
+        type: 'thematic',
+      });
+    } else {
+      seenCategories.set(m.category, m.id);
+    }
+  }
+
+  return { nodes, edges };
+}
+
 export function MemoryExportDashboard({ memories: initialMemories }: Props) {
   const [memories, setMemories] = useState<MemoryExportRecord[]>(initialMemories);
   const [deleting, setDeleting] = useState<Set<string>>(new Set());
@@ -172,6 +226,8 @@ export function MemoryExportDashboard({ memories: initialMemories }: Props) {
       });
     }
   }
+
+  const { nodes: mindMapNodes, edges: mindMapEdges } = buildMindMapData(memories);
 
   return (
     <div className="space-y-8 max-w-3xl" data-testid="memory-export-dashboard">
@@ -255,16 +311,34 @@ export function MemoryExportDashboard({ memories: initialMemories }: Props) {
         </div>
       )}
 
-      {/* Memory List — dual-layer tier view */}
-      <div data-testid="memory-list">
-        <MemoryTierTabs
-          memories={memories}
-          deleting={deleting}
-          onDelete={handleDelete}
-          deprioritizing={deprioritizing}
-          onDeprioritize={handleDeprioritize}
-        />
-      </div>
+      {/* Memory views — List and Mind Map tabs */}
+      <Tabs defaultValue="list" data-testid="memory-dashboard-tabs">
+        <TabsList data-testid="memory-dashboard-tabs-list">
+          <TabsTrigger value="list" data-testid="tab-memory-list">
+            Memory List
+          </TabsTrigger>
+          <TabsTrigger value="mind-map" data-testid="tab-mind-map">
+            <Network className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+            Mind Map
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="list" data-testid="tabpanel-memory-list">
+          <div data-testid="memory-list">
+            <MemoryTierTabs
+              memories={memories}
+              deleting={deleting}
+              onDelete={handleDelete}
+              deprioritizing={deprioritizing}
+              onDeprioritize={handleDeprioritize}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="mind-map" data-testid="tabpanel-mind-map">
+          <MemoryMindMapGraph nodes={mindMapNodes} edges={mindMapEdges} />
+        </TabsContent>
+      </Tabs>
 
       {/* GDPR note */}
       <Card className="border-border/50 bg-card/50 backdrop-blur-sm">

@@ -23,8 +23,10 @@ import { TrendingAgentsRail } from '@/components/explore/TrendingAgentsRail';
 import { EditorPicksRow, EditorPicksFilterGrid } from '@/components/explore/EditorPicksRow';
 import { UsecaseCollectionRows } from '@/components/explore/UsecaseCollectionRows';
 import { CommunityHubsStrip } from '@/components/explore/CommunityHubsStrip';
+import { LiveActivityTicker } from '@/components/explore/LiveActivityTicker';
 import { UserStoryStrip } from '@/components/explore/UserStoryStrip';
 import { CreatorDiscoverySpotlight } from '@/components/explore/CreatorDiscoverySpotlight';
+import { StoryWorldCarousel } from '@/components/explore/StoryWorldCarousel';
 import { PostsFeed, FeedTabs, ViewToggle } from '@/components/posts';
 import {
   useSearch,
@@ -289,6 +291,8 @@ function ExploreContent() {
 
           {tab === 'explore' && <UsecaseCollectionRows />}
 
+          {tab === 'explore' && <StoryWorldCarousel />}
+
           {tab === 'explore' && <CommunityHubsStrip />}
 
           {tab === 'explore' && <CreatorDiscoverySpotlight />}
@@ -522,6 +526,8 @@ function ExploreContent() {
               </Button>
             </div>
           )}
+
+          {tab === 'explore' && <LiveActivityTicker />}
 
           <div id="explore-feed-top" className="scroll-mt-28" />
 

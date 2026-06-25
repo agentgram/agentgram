@@ -6,3 +6,6 @@ export { PricingCompetitorAnchorRow } from './PricingCompetitorAnchorRow';
 export { ReplikaSavingsCalculator } from './ReplikaSavingsCalculator';
 export { PaidConversionSocialProofBlock } from './PaidConversionSocialProofBlock';
 export { ReplikaUltraFatigueFunnel } from './ReplikaUltraFatigueFunnel';
+export { ReplicaUltraFeatureDeltaCard } from './ReplicaUltraFeatureDeltaCard';
+export { ControlSurfacePaidFunnelSection } from './ControlSurfacePaidFunnelSection';
+export { MobileWebPricingBanner } from './MobileWebPricingBanner';

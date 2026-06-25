@@ -5,24 +5,17 @@ import { NextRequest } from 'next/server';
  * Trending agents API endpoint tests.
  *
  * Tests the /api/v1/agents/trending route handler logic in isolation
- * by mocking the Supabase client. Verifies ranking, comment aggregation,
- * and response shape.
+ * by mocking the Supabase client against the trending_agents_aggregation view.
+ * The view returns pre-ranked rows; the route just maps them to TrendingAgentEntry.
  */
 
-// Mocks for posts query chain
-const mockPostsIs = vi.fn();
-const mockPostsSelect = vi.fn().mockReturnValue({ is: mockPostsIs });
-
-// Mocks for agents query chain
-const mockAgentsIn = vi.fn();
-const mockAgentsSelect = vi.fn().mockReturnValue({ in: mockAgentsIn });
+const mockLimit = vi.fn();
+const mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
+const mockSelect = vi.fn().mockReturnValue({ order: mockOrder });
 
 const mockFrom = vi.fn((table: string) => {
-  if (table === 'posts') {
-    return { select: mockPostsSelect };
-  }
-  if (table === 'agents') {
-    return { select: mockAgentsSelect };
+  if (table === 'trending_agents_aggregation') {
+    return { select: mockSelect };
   }
   return { select: vi.fn() };
 });
@@ -32,18 +25,28 @@ vi.mock('@agentgram/db', () => ({
   getSupabaseServiceClient: () => ({ from: mockFrom }),
 }));
 
-const AGENT_ROWS = [
-  { id: 'agent-1', name: 'aria-companion', display_name: 'Aria', verification_state: 'verified' },
-  { id: 'agent-2', name: 'muse-creative', display_name: 'Muse', verification_state: 'unverified' },
-  { id: 'agent-3', name: 'sage-mentor', display_name: 'Sage', verification_state: 'verified' },
-];
-
-const POST_ROWS = [
-  { author_id: 'agent-1', comment_count: 100 },
-  { author_id: 'agent-1', comment_count: 134 },  // total: 234
-  { author_id: 'agent-2', comment_count: 187 },  // total: 187
-  { author_id: 'agent-3', comment_count: 100 },
-  { author_id: 'agent-3', comment_count: 56 },   // total: 156
+const VIEW_ROWS = [
+  {
+    slug: 'aria-companion',
+    display_name: 'Aria',
+    rank: 1,
+    total_comment_count: 234,
+    verification_state: 'verified',
+  },
+  {
+    slug: 'muse-creative',
+    display_name: 'Muse',
+    rank: 2,
+    total_comment_count: 187,
+    verification_state: 'unverified',
+  },
+  {
+    slug: 'sage-mentor',
+    display_name: 'Sage',
+    rank: 3,
+    total_comment_count: 156,
+    verification_state: 'verified',
+  },
 ];
 
 function makeRequest() {
@@ -53,12 +56,12 @@ function makeRequest() {
 describe('GET /api/v1/agents/trending', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Default: posts query returns data, agents query returns data
-    mockPostsIs.mockResolvedValue({ data: POST_ROWS, error: null });
-    mockAgentsIn.mockResolvedValue({ data: AGENT_ROWS, error: null });
+    mockOrder.mockReturnValue({ limit: mockLimit });
+    mockSelect.mockReturnValue({ order: mockOrder });
+    mockLimit.mockResolvedValue({ data: VIEW_ROWS, error: null });
   });
 
-  it('returns 200 with ranked trending agents', async () => {
+  it('returns 200 with ranked trending agents from view', async () => {
     const { GET } = await import('../../app/api/v1/agents/trending/route');
     const res = await GET(makeRequest());
     expect(res.status).toBe(200);
@@ -71,7 +74,19 @@ describe('GET /api/v1/agents/trending', () => {
     expect(body.data[0].verified).toBe(true);
   });
 
-  it('ranks agents by total comment count descending', async () => {
+  it('queries trending_agents_aggregation view ordered by rank with correct limit', async () => {
+    const { GET } = await import('../../app/api/v1/agents/trending/route');
+    await GET(makeRequest());
+
+    expect(mockFrom).toHaveBeenCalledWith('trending_agents_aggregation');
+    expect(mockSelect).toHaveBeenCalledWith(
+      'slug, display_name, rank, total_comment_count, verification_state'
+    );
+    expect(mockOrder).toHaveBeenCalledWith('rank', { ascending: true });
+    expect(mockLimit).toHaveBeenCalledWith(10);
+  });
+
+  it('ranks agents by ascending rank from view (highest comment count first)', async () => {
     const { GET } = await import('../../app/api/v1/agents/trending/route');
     const res = await GET(makeRequest());
     const body = await res.json();
@@ -91,8 +106,8 @@ describe('GET /api/v1/agents/trending', () => {
     expect(museEntry?.verified).toBe(false);
   });
 
-  it('returns empty array when no posts exist', async () => {
-    mockPostsIs.mockResolvedValue({ data: [], error: null });
+  it('returns empty array when view returns no rows', async () => {
+    mockLimit.mockResolvedValue({ data: [], error: null });
 
     const { GET } = await import('../../app/api/v1/agents/trending/route');
     const res = await GET(makeRequest());
@@ -102,27 +117,44 @@ describe('GET /api/v1/agents/trending', () => {
     expect(body.data).toEqual([]);
   });
 
-  it('returns 500 when posts query fails', async () => {
-    mockPostsIs.mockResolvedValue({ data: null, error: { message: 'DB error' } });
+  it('returns empty array when view returns null data', async () => {
+    mockLimit.mockResolvedValue({ data: null, error: null });
+
+    const { GET } = await import('../../app/api/v1/agents/trending/route');
+    const res = await GET(makeRequest());
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body.data).toEqual([]);
+  });
+
+  it('returns 500 when view query fails', async () => {
+    mockLimit.mockResolvedValue({ data: null, error: { message: 'view not found' } });
 
     const { GET } = await import('../../app/api/v1/agents/trending/route');
     const res = await GET(makeRequest());
     expect(res.status).toBe(500);
   });
 
-  it('returns 500 when agents query fails', async () => {
-    mockAgentsIn.mockResolvedValue({ data: null, error: { message: 'DB error' } });
+  it('maps total_comment_count to commentCount as a number', async () => {
+    mockLimit.mockResolvedValue({
+      data: [
+        {
+          slug: 'bignum-agent',
+          display_name: 'BigNum',
+          rank: 1,
+          total_comment_count: '9999',
+          verification_state: 'verified',
+        },
+      ],
+      error: null,
+    });
 
     const { GET } = await import('../../app/api/v1/agents/trending/route');
     const res = await GET(makeRequest());
-    expect(res.status).toBe(500);
-  });
+    const body = await res.json();
 
-  it('queries posts filtered by null original_post_id (top-level only)', async () => {
-    const { GET } = await import('../../app/api/v1/agents/trending/route');
-    await GET(makeRequest());
-
-    expect(mockPostsSelect).toHaveBeenCalledWith('author_id, comment_count');
-    expect(mockPostsIs).toHaveBeenCalledWith('original_post_id', null);
+    expect(body.data[0].commentCount).toBe(9999);
+    expect(typeof body.data[0].commentCount).toBe('number');
   });
 });

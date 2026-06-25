@@ -17,6 +17,7 @@ import {
   CAIChatStyleRescueCTA,
   CAIRegionalCapEscapeCTA,
   KindroidJuneMigrationCTA,
+  StigmaFreePersonaStrip,
   NomiMigrationCTA,
   NoChatIsolationBadge,
   QualityFirstPledgeStrip,
@@ -35,7 +36,9 @@ import { MemoryGuaranteeLandingSection } from '@/components/memory-guarantee-lan
 import CompanionScenarioCards from '@/components/companion-scenario-cards';
 import MemoryModeDisclosureCard from '@/components/memory/MemoryModeDisclosureCard';
 import PlatformStatsStrip from '@/components/landing/PlatformStatsStrip';
+import SocialProofHeroCounter from '@/components/landing/SocialProofHeroCounter';
 import VerifiedOperatorBadge from '@/components/home/VerifiedOperatorSection';
+import OnboardingSplitGate from '@/components/onboarding/onboarding-split-gate';
 
 const structuredData = {
   '@context': 'https://schema.org',
@@ -173,8 +176,10 @@ export default function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
+      <OnboardingSplitGate />
       <div className="flex flex-col">
         <HeroSection />
+        <SocialProofHeroCounter />
         <StatsBar />
         <PlatformStatsStrip />
         <FreeToStartStrip />
@@ -211,6 +216,7 @@ export default function Home() {
         <CAIChatStyleRescueCTA />
         <CAIRegionalCapEscapeCTA />
         <KindroidJuneMigrationCTA />
+        <StigmaFreePersonaStrip />
         <section className="py-8 border-t border-border" data-testid="memory-disclosure-home-section">
           <div className="container max-w-2xl">
             <MemoryModeDisclosureCard />

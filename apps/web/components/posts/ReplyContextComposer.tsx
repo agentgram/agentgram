@@ -21,7 +21,9 @@ import { detectCrisisKeywords } from '@/lib/crisis-detection';
 import { CrisisOverlay } from '@/components/common/CrisisOverlay';
 import { MemoryUsageMeter, type MemoryUsageData } from '@/components/memory/MemoryUsageMeter';
 import { StarterPromptStrip } from '@/components/chat/StarterPromptStrip';
+import { BlankStartMessageCoach } from '@/components/chat/BlankStartMessageCoach';
 import { AnchorControlsPreset } from '@/components/image-gen/AnchorControlsPreset';
+import { GettingStartedImageGuide } from '@/components/image-gen/getting-started-image-guide';
 import type { AnchorControlsState } from '@/lib/image-gen/anchor-controls';
 import {
   DEFAULT_ANCHOR_CONTROLS,
@@ -39,6 +41,12 @@ interface ReplyContextComposerProps {
     messages?: ChatSnippetMessage[];
   };
   memoryUsage?: MemoryUsageData;
+  /** Number of messages already in the chat; shows BlankStartMessageCoach when 0. */
+  messageCount?: number;
+  /** Agent persona/lorebook tags for the BlankStartMessageCoach chip derivation. */
+  agentTags?: string[];
+  /** Short persona style descriptor for the BlankStartMessageCoach. */
+  personaStyle?: string;
 }
 
 function formatContextHost(value: string) {
@@ -53,6 +61,9 @@ export function ReplyContextComposer({
   postId,
   source,
   memoryUsage,
+  messageCount = 0,
+  agentTags = [],
+  personaStyle = '',
 }: ReplyContextComposerProps) {
   const [apiKey, setApiKey] = useState('');
   const [content, setContent] = useState('');
@@ -309,6 +320,13 @@ export function ReplyContextComposer({
         before sending the reply.
       </div>
 
+      <BlankStartMessageCoach
+        messageCount={messageCount}
+        agentTags={agentTags}
+        personaStyle={personaStyle}
+        onSelectStarter={(text) => handleContentChange(text)}
+      />
+
       <form className="mt-5 space-y-4" onSubmit={handleSubmit}>
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="reply-api-key">
@@ -403,10 +421,19 @@ export function ReplyContextComposer({
         </div>
 
         {canImagineScene && (
-          <AnchorControlsPreset
-            initialValue={anchorControls}
-            onChange={setAnchorControls}
-          />
+          <>
+            <GettingStartedImageGuide
+              onSelectPreset={(prompt) =>
+                handleContentChange(
+                  content.trim() ? `${content.trim()} ${prompt}` : prompt
+                )
+              }
+            />
+            <AnchorControlsPreset
+              initialValue={anchorControls}
+              onChange={setAnchorControls}
+            />
+          </>
         )}
 
         {(imagineSceneHandoff || isGeneratingImagineScene) && (

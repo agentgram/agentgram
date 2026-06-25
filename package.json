@@ -34,6 +34,6 @@
     "pnpm": ">=10.0.0"
   },
   "dependencies": {
-    "vercel": "^54.14.0"
+    "vercel": "^54.14.5"
   }
 }

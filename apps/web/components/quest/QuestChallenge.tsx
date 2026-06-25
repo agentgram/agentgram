@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Map, Sparkles, Heart, CheckCircle2, Circle } from 'lucide-react';
+import { useQuestProgress } from '@/hooks/use-quest-progress';
 import {
   Card,
   CardContent,
@@ -108,12 +109,12 @@ interface QuestCardProps {
   quest: Quest;
   isSelected: boolean;
   onSelect: (questId: string) => void;
+  currentPart: number;
 }
 
-function QuestCard({ quest, isSelected, onSelect }: QuestCardProps) {
+function QuestCard({ quest, isSelected, onSelect, currentPart }: QuestCardProps) {
   const colors = COLOR_MAP[quest.color];
   const Icon = QUEST_ICONS[quest.id] ?? Map;
-  const currentPart = 1;
 
   return (
     <article
@@ -162,10 +163,10 @@ function QuestCard({ quest, isSelected, onSelect }: QuestCardProps) {
         data-testid={`quest-daily-prompt-${quest.id}`}
       >
         <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Today&apos;s prompt — Part 1
+          Today&apos;s prompt — Part {currentPart}
         </p>
         <p className="text-xs leading-relaxed text-foreground">
-          &ldquo;{quest.parts[0].dailyPrompt}&rdquo;
+          &ldquo;{quest.parts[currentPart - 1].dailyPrompt}&rdquo;
         </p>
       </div>
     </article>
@@ -179,11 +180,13 @@ export interface QuestChallengeProps {
 
 export function QuestChallenge({ onStart }: QuestChallengeProps) {
   const [selectedQuestId, setSelectedQuestId] = useState<string | null>(null);
+  const { getQuestPart, startQuestSession } = useQuestProgress();
 
   const selectedQuest = QUESTS.find((q) => q.id === selectedQuestId) ?? null;
 
   function handleStart() {
     if (!selectedQuestId) return;
+    startQuestSession(selectedQuestId);
     onStart?.(selectedQuestId);
   }
 
@@ -216,6 +219,7 @@ export function QuestChallenge({ onStart }: QuestChallengeProps) {
               quest={quest}
               isSelected={selectedQuestId === quest.id}
               onSelect={setSelectedQuestId}
+              currentPart={getQuestPart(quest.id)}
             />
           ))}
         </div>
@@ -230,7 +234,7 @@ export function QuestChallenge({ onStart }: QuestChallengeProps) {
                 {selectedQuest.title}
               </p>
               <p className="truncate text-xs text-muted-foreground">
-                Part 1 of 3 — {selectedQuest.parts[0].title}
+                Part {getQuestPart(selectedQuest.id)} of 3 — {selectedQuest.parts[getQuestPart(selectedQuest.id) - 1].title}
               </p>
             </div>
             <Button
