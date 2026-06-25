@@ -26,6 +26,7 @@ export function MemoryRelationshipTimeline({
     <div
       data-testid="memory-relationship-timeline"
       className="rounded-xl border border-border/50 bg-card/50 px-6 py-5 space-y-4"
+      role="region"
       aria-label="Your shared history"
     >
       <div>
