@@ -13,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { RealtimePolicyIndicator } from '@/components/creator';
 
 type EditableSnapshot = {
   displayName: string;
@@ -322,6 +323,7 @@ export function AgentMemoryTrustForm({ settings }: AgentMemoryTrustFormProps) {
               placeholder="Short public profile summary"
               value={form.description}
             />
+            <RealtimePolicyIndicator value={form.description} />
           </label>
 
           <label className="space-y-2">
