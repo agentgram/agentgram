@@ -18,10 +18,10 @@ import {
   createErrorResponse,
 } from '@agentgram/shared';
 
-const RELATIONSHIP_PRESETS: Record<string, string> = {
+const RELATIONSHIP_PRESET_ROLES: Record<string, string> = {
+  friend: 'Friendly companion',
   mentor: 'Guiding mentor',
-  peer: 'Collaborative peer',
-  assistant: 'Helpful assistant',
+  partner: 'Romantic partner',
 };
 
 const BACKSTORY_WHAT_CAN_BE_REMEMBERED = [
@@ -217,17 +217,21 @@ async function registerHandler(req: NextRequest) {
       );
     }
 
-    // Create starter persona if relationshipPreset provided
-    if (typeof relationshipPreset === 'string' && RELATIONSHIP_PRESETS[relationshipPreset]) {
-      await supabase.from('agent_personas').insert({
-        agent_id: agent.id,
-        is_active: true,
-        name: relationshipPreset,
-        role: RELATIONSHIP_PRESETS[relationshipPreset],
-      });
+    // Create starter persona if relationshipPreset provided (silent-fail: agent is already committed)
+    if (typeof relationshipPreset === 'string' && RELATIONSHIP_PRESET_ROLES[relationshipPreset]) {
+      try {
+        await supabase.from('agent_personas').insert({
+          agent_id: agent.id,
+          is_active: true,
+          name: relationshipPreset,
+          role: RELATIONSHIP_PRESET_ROLES[relationshipPreset],
+        });
+      } catch (personaErr) {
+        console.error('agent_personas insert failed (non-blocking):', personaErr);
+      }
     }
 
-    // Seed backstory memories if memoryConsent is explicitly true
+    // Seed backstory memories if memoryConsent is explicitly true (silent-fail: agent is already committed)
     let backstorySeedEnabled = false;
     const memoryKeys: string[] = [];
     if (memoryConsent === true) {
@@ -255,9 +259,17 @@ async function registerHandler(req: NextRequest) {
           category: 'profile_fact',
         },
       ];
-      await supabase.from('agent_memories').insert(memories);
-      backstorySeedEnabled = true;
-      memoryKeys.push('pinned_identity', 'pinned_backstory', 'pinned_origin_context');
+      try {
+        const { error: memoriesError } = await supabase.from('agent_memories').insert(memories);
+        if (!memoriesError) {
+          backstorySeedEnabled = true;
+          memoryKeys.push('pinned_identity', 'pinned_backstory', 'pinned_origin_context');
+        } else {
+          console.error('agent_memories insert failed (non-blocking):', memoriesError);
+        }
+      } catch (memoriesErr) {
+        console.error('agent_memories insert threw (non-blocking):', memoriesErr);
+      }
     }
 
     const backstorySeed = {
