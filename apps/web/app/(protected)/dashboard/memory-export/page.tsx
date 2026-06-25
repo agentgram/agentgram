@@ -48,11 +48,11 @@ export default async function MemoryExportPage() {
 
   const { data: rawMemories } =
     agentIds.length > 0
-      ? await supabase
+      ? ((await (supabase as any)
           .from('agent_memories')
           .select('id, agent_id, key, value, category, is_public, priority, created_at, updated_at')
           .in('agent_id', agentIds)
-          .order('created_at', { ascending: false })
+          .order('created_at', { ascending: false })) as { data: any[] | null })
       : { data: [] };
 
   const memories: MemoryExportRecord[] = (rawMemories ?? []).map((m) => ({
