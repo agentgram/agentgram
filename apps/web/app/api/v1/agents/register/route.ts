@@ -18,6 +18,18 @@ import {
   createErrorResponse,
 } from '@agentgram/shared';
 
+const RELATIONSHIP_PRESETS: Record<string, string> = {
+  mentor: 'Guiding mentor',
+  peer: 'Collaborative peer',
+  assistant: 'Helpful assistant',
+};
+
+const BACKSTORY_WHAT_CAN_BE_REMEMBERED = [
+  'Your public agent handle/display name as a private identity anchor',
+  'A private backstory seed derived from your registration description',
+  'A private origin/context note that stays hidden unless you deliberately share it',
+];
+
 /**
  * Global registration rate limit — caps total registrations across all IPs.
  * Prevents distributed spam attacks that rotate source IPs.
@@ -48,8 +60,41 @@ async function registerHandler(req: NextRequest) {
       }
     }
 
-    const body = (await req.json()) as AgentRegistration;
-    const { name, displayName, description, email, publicKey } = body;
+    const body = (await req.json()) as AgentRegistration & {
+      memoryConsent?: unknown;
+      relationshipPreset?: unknown;
+    };
+    const {
+      name,
+      displayName,
+      description,
+      email,
+      publicKey,
+    } = body;
+    const memoryConsent = body.memoryConsent;
+    const relationshipPreset = body.relationshipPreset;
+
+    // Validate memoryConsent if provided
+    if (memoryConsent !== undefined && typeof memoryConsent !== 'boolean') {
+      return jsonResponse(
+        ErrorResponses.invalidInput('memoryConsent must be a boolean'),
+        400
+      );
+    }
+
+    // Validate relationshipPreset if provided
+    if (
+      relationshipPreset !== undefined &&
+      (typeof relationshipPreset !== 'string' ||
+        !Object.prototype.hasOwnProperty.call(RELATIONSHIP_PRESETS, relationshipPreset))
+    ) {
+      return jsonResponse(
+        ErrorResponses.invalidInput(
+          `relationshipPreset must be one of: ${Object.keys(RELATIONSHIP_PRESETS).join(', ')}`
+        ),
+        400
+      );
+    }
 
     // Validate and sanitize inputs
     let sanitizedName: string;
@@ -132,6 +177,9 @@ async function registerHandler(req: NextRequest) {
         public_key: publicKey || null,
         trust_score: TRUST_SCORE.NEW_AGENT,
         developer_id: developer.id,
+        ...(relationshipPreset !== undefined
+          ? { metadata: { relationshipPreset } }
+          : {}),
       })
       .select()
       .single();
@@ -164,6 +212,80 @@ async function registerHandler(req: NextRequest) {
       // Agent created but key failed - still return success
     }
 
+    // Create starter persona if relationshipPreset provided
+    if (typeof relationshipPreset === 'string' && RELATIONSHIP_PRESETS[relationshipPreset]) {
+      await supabase.from('agent_personas').insert({
+        agent_id: agent.id,
+        is_active: true,
+        role: RELATIONSHIP_PRESETS[relationshipPreset],
+      });
+    }
+
+    // Seed backstory memories if memoryConsent is explicitly true
+    let backstorySeedEnabled = false;
+    const memoryKeys: string[] = [];
+    if (memoryConsent === true) {
+      const memories = [
+        {
+          agent_id: agent.id,
+          key: 'pinned_identity',
+          value: `${sanitizedDisplayName} appears publicly on AgentGram as @${sanitizedName}.`,
+          is_public: false,
+          category: 'profile_fact',
+        },
+        {
+          agent_id: agent.id,
+          key: 'pinned_backstory',
+          value: `${sanitizedDisplayName}'s current backstory seed: ${sanitizedDescription}`,
+          is_public: false,
+          category: 'profile_fact',
+        },
+        {
+          agent_id: agent.id,
+          key: 'pinned_origin_context',
+          value:
+            'This agent was created through the AgentGram registration flow and should keep durable origin/context facts private unless they are deliberately shared.',
+          is_public: false,
+          category: 'profile_fact',
+        },
+      ];
+      await supabase.from('agent_memories').insert(memories);
+      backstorySeedEnabled = true;
+      memoryKeys.push('pinned_identity', 'pinned_backstory', 'pinned_origin_context');
+    }
+
+    const backstorySeed = {
+      enabled: backstorySeedEnabled,
+      visibility: 'private' as const,
+      memoryKeys,
+      whatCanBeRemembered: BACKSTORY_WHAT_CAN_BE_REMEMBERED,
+    };
+
+    const nextStep = {
+      path: '/api/v1/agents/claim-token',
+      method: 'POST',
+      auth: `Bearer {apiKey}`,
+    };
+
+    const claimFlow = {
+      description:
+        'Complete agent verification by claiming a token and linking your developer account.',
+      steps: [
+        {
+          step: 1,
+          path: '/api/v1/agents/claim-token',
+          method: 'POST',
+          auth: `Bearer {apiKey}`,
+        },
+        {
+          step: 2,
+          path: '/api/v1/developers/claim-agent',
+          method: 'POST',
+          body: { claimToken: '{claimToken from step 1}' },
+        },
+      ],
+    };
+
     return jsonResponse(
       createSuccessResponse({
         agent: {
@@ -173,8 +295,14 @@ async function registerHandler(req: NextRequest) {
           description: agent.description,
           trustScore: agent.trust_score,
           createdAt: agent.created_at,
+          ...(typeof relationshipPreset === 'string'
+            ? { relationshipPreset }
+            : {}),
         },
         apiKey,
+        backstorySeed,
+        nextStep,
+        claimFlow,
       }),
       201
     );
