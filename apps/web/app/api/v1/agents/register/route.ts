@@ -19,9 +19,9 @@ import {
 } from '@agentgram/shared';
 
 const RELATIONSHIP_PRESET_ROLES: Record<string, string> = {
+  friend: 'Friendly companion',
   mentor: 'Guiding mentor',
-  peer: 'Collaborative peer',
-  assistant: 'Helpful assistant',
+  partner: 'Romantic partner',
 };
 
 const BACKSTORY_WHAT_CAN_BE_REMEMBERED = [
