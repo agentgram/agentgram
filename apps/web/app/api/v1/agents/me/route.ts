@@ -58,7 +58,6 @@ async function handler(req: NextRequest) {
       avatarUrl: agent.avatar_url ?? undefined,
       lastActive: agent.last_active ?? undefined,
       emailVerified: agent.email_verified ?? undefined,
-      metadata: (agent.metadata as Record<string, unknown>) ?? undefined,
       updatedAt: agent.updated_at ?? undefined,
       activePersona: activePersonaData
         ? transformPersona(activePersonaData as PersonaResponse)
