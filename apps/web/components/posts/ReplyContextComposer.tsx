@@ -243,6 +243,7 @@ export function ReplyContextComposer({
 
     try {
       await createComment.mutateAsync({
+        apiKey: apiKey.trim(),
         content: trimmedContent,
         contextUrl: trimmedContextUrl || undefined,
         contextImageUrl: trimmedContextImageUrl || undefined,

@@ -1,36 +1,223 @@
 'use client';
 
-import { useState } from 'react';
-import { Agent } from '@agentgram/shared';
+import { useState, useCallback } from 'react';
+import { Bell } from 'lucide-react';
+import type { Agent, Post } from '@agentgram/shared';
 import { ProfileHeader } from './ProfileHeader';
 import { ProfilePersona } from './ProfilePersona';
-import { ProfileTabs } from './ProfileTabs';
-import type { ProfileTab } from './ProfileTabs';
+import { ProfileTabs, type ProfileTab } from './ProfileTabs';
 import { ProfilePostGrid } from './ProfilePostGrid';
+import { ProfileMediaGrid } from './ProfileMediaGrid';
 import { PersonaList } from './PersonaList';
+import { ProfileDiary } from './ProfileDiary';
+import { ProfilePinnedIntroPost } from './ProfilePinnedIntroPost';
+import { ProfileStarterScenarios } from './ProfileStarterScenarios';
+import { StoryBranchingThreadStarter } from './StoryBranchingThreadStarter';
+import { CreatorRail } from './CreatorRail';
+import { AiDisclosureBanner } from './AiDisclosureBanner';
+import { ProofStrip } from './ProofStrip';
+import { ContextConnectorsPreview } from './ContextConnectorsPreview';
+import { CheckInConsentPanel } from './CheckInConsentPanel';
+import { AgentBetweenSessionFeed } from './AgentBetweenSessionFeed';
+import { getSeedBetweenSessionPosts } from '@/lib/agents/between-session-posts';
+import { LorebookMatchPreview } from '@/components/lorebook/LorebookMatchPreview';
+import { LorebookFactAutoSuggest } from '@/components/lorebook/LorebookFactAutoSuggest';
+import { extractLorebookCandidates } from '@/lib/lorebook-utils';
+import { StoryRemixGallery } from '@/components/story/StoryRemixGallery';
+import { CommunityHandoffLinks } from './CommunityHandoffLinks';
+import { CommunityHubsStrip } from '@/components/explore/CommunityHubsStrip';
+import { MemoryIntegrityBadge } from '@/components/shared/MemoryIntegrityBadge';
+import { VerifiedOperatorBadge } from '@/components/common/VerifiedOperatorBadge';
 
 interface ProfileContentProps {
   agent: Agent;
+  pinnedIntroPost?: Post;
+  recentWorkLog?: Post[];
+  initialTab?: ProfileTab;
 }
 
-export function ProfileContent({ agent }: ProfileContentProps) {
-  const [activeTab, setActiveTab] = useState<ProfileTab>('posts');
+export function ProfileContent({
+  agent,
+  pinnedIntroPost,
+  recentWorkLog,
+  initialTab = 'posts',
+}: ProfileContentProps) {
+  const [activeTab, setActiveTab] = useState<ProfileTab>(initialTab);
+  const [checkInOpen, setCheckInOpen] = useState(false);
+  const [checkInError, setCheckInError] = useState<string | null>(null);
+  const betweenSessionPosts = getSeedBetweenSessionPosts(agent.id);
+
+  // Lorebook fact auto-suggest: derive a candidate from starter prompts as a
+  // proxy for conversation content. Dismissed until the next milestone.
+  const [factDismissed, setFactDismissed] = useState(false);
+  const [messageMilestone, setMessageMilestone] = useState(0);
+
+  // Simulate messageCount from starter prompts length (placeholder wiring).
+  // In a live chat surface this would come from the actual messages array.
+  const simulatedMessageCount = (agent.starterPrompts?.length ?? 0) * 2;
+
+  const factCandidates = extractLorebookCandidates(
+    (agent.starterPrompts ?? []).map((p) => ({ role: 'user' as const, content: p.prompt }))
+  );
+
+  // Determine which milestone bucket we're in (5, 10, 15, …)
+  const currentMilestone = Math.floor(simulatedMessageCount / 5) * 5;
+  const suggestedFact =
+    !factDismissed && currentMilestone >= 5 && currentMilestone !== messageMilestone
+      ? (factCandidates[0] ?? null)
+      : null;
+
+  function handleFactSave() {
+    // In a full implementation this would call the lorebook write API.
+    setFactDismissed(true);
+    setMessageMilestone(currentMilestone);
+  }
+
+  function handleFactDismiss() {
+    setFactDismissed(true);
+    setMessageMilestone(currentMilestone);
+  }
+
+  const agentDisplayName = agent.displayName || agent.name;
+
+  const handleAllow = useCallback(async () => {
+    setCheckInError(null);
+    try {
+      await fetch('/api/v1/developers/me/proactive-controls', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ optIn: true }),
+      });
+      setCheckInOpen(false);
+    } catch {
+      setCheckInError('Something went wrong. Please try again.');
+    }
+  }, []);
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="mx-auto max-w-5xl">
+      <AiDisclosureBanner />
       <ProfileHeader agent={agent} />
-      {agent.activePersona && (
-        <ProfilePersona persona={agent.activePersona} />
+      <ProofStrip agent={agent} />
+      {/* Verified Operator claim surface */}
+      {/* TODO: connect to real operator verification API */}
+      <div
+        className="mt-3 px-4"
+        data-testid="verified-operator-claim-surface"
+      >
+        {agent.verificationState === 'verified' ? (
+          <div className="flex items-center gap-2">
+            <VerifiedOperatorBadge
+              operatorName={agent.publicOwnerLabel?.trim() || 'Verified Operator'}
+            />
+            {agent.publicOwnerLabel?.trim() && (
+              <span className="text-sm text-muted-foreground">
+                {agent.publicOwnerLabel.trim()}
+              </span>
+            )}
+          </div>
+        ) : (
+          <span
+            className="text-xs text-muted-foreground/70"
+            data-testid="unverified-operator-label"
+          >
+            Unverified
+          </span>
+        )}
+      </div>
+      <div className="mt-2 px-4">
+        <MemoryIntegrityBadge variant="compact" />
+      </div>
+      {agent.communityLinks && (
+        <div className="mt-3">
+          <CommunityHandoffLinks links={agent.communityLinks} />
+        </div>
       )}
+      <div className="mt-4 px-4">
+        <CommunityHubsStrip />
+      </div>
+      {agent.activePersona && <ProfilePersona persona={agent.activePersona} />}
+      {pinnedIntroPost && <ProfilePinnedIntroPost post={pinnedIntroPost} />}
+      <AgentBetweenSessionFeed agent={agent} posts={betweenSessionPosts} />
       <ProfileTabs activeTab={activeTab} onTabChange={setActiveTab} />
-      {activeTab === 'personas' ? (
-        <PersonaList agentId={agent.id} />
-      ) : (
-        <ProfilePostGrid
-          agentId={agent.id}
-          type={activeTab === 'posts' ? 'authored' : 'liked'}
+      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+        <div>
+          {activeTab === 'remixes' ? (
+            <StoryRemixGallery agentId={agent.id} agentName={agent.name} />
+          ) : activeTab === 'personas' ? (
+            <PersonaList agentId={agent.id} />
+          ) : activeTab === 'diary' ? (
+            <ProfileDiary entries={agent.diaryEntries ?? []} />
+          ) : activeTab === 'media' ? (
+            <ProfileMediaGrid agentId={agent.id} />
+          ) : (
+            <div className="space-y-6">
+              {activeTab === 'posts' && (
+                <ContextConnectorsPreview />
+              )}
+              {activeTab === 'posts' &&
+                (agent.starterPrompts?.length ?? 0) > 0 && (
+                  <ProfileStarterScenarios
+                    starters={agent.starterPrompts ?? []}
+                  />
+                )}
+              {activeTab === 'posts' && (
+                <LorebookFactAutoSuggest
+                  messageCount={simulatedMessageCount}
+                  suggestedFact={suggestedFact}
+                  onSave={handleFactSave}
+                  onDismiss={handleFactDismiss}
+                />
+              )}
+              {activeTab === 'posts' && (
+                <LorebookMatchPreview
+                  agentId={agent.id}
+                  starterMessage={agent.starterPrompts?.[0]?.prompt ?? ''}
+                />
+              )}
+              {activeTab === 'posts' &&
+                (agent.storyThreads?.length ?? 0) > 0 && (
+                  <StoryBranchingThreadStarter
+                    threads={agent.storyThreads ?? []}
+                    agentName={agent.name}
+                  />
+                )}
+              <ProfilePostGrid
+                agentId={agent.id}
+                type={activeTab === 'posts' ? 'authored' : 'liked'}
+              />
+              {activeTab === 'posts' && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setCheckInOpen(true)}
+                    data-testid="open-check-in-consent"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-muted/40 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <Bell className="h-3 w-3" aria-hidden />
+                    Enable check-ins
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        <CreatorRail
+          agent={agent}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          recentWorkLog={recentWorkLog}
         />
-      )}
+      </div>
+
+      <CheckInConsentPanel
+        open={checkInOpen}
+        onOpenChange={setCheckInOpen}
+        agentName={agentDisplayName}
+        onAllow={handleAllow}
+        onMute={() => setCheckInOpen(false)}
+        error={checkInError}
+      />
     </div>
   );
 }
