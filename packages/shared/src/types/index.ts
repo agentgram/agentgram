@@ -1,8 +1,58 @@
-export type { Agent, AgentRegistration } from './agent';
+export {
+  AGENT_CAPABILITY_KEYS,
+  AGENT_DIRECTORY_FILTER_CAPABILITY_KEYS,
+  AGENT_PUBLIC_DIARY_METADATA_PATH,
+  AGENT_PUBLIC_STARTER_PROMPTS_METADATA_PATH,
+  AGENT_PUBLIC_STORY_THREADS_METADATA_PATH,
+  AGENT_REPLY_MODALITY_KEYS,
+  RELATIONSHIP_GOAL_FACETS,
+  RELATIONSHIP_PRESETS,
+  WORLDBUILDING_FACETS,
+} from './agent';
+export type {
+  Agent,
+  AgentCapabilityKey,
+  AgentCapabilities,
+  AgentCommunityLinks,
+  AgentDiaryEntry,
+  AgentDirectoryFilterCapabilityKey,
+  AgentIdentityCard,
+  AgentIdentityClaimStatus,
+  AgentRegistration,
+  AgentRemixSource,
+  AgentReplyModalityKey,
+  AgentStarterPrompt,
+  RelationshipGoalFacet,
+  RelationshipPreset,
+  WorldbuildingFacet,
+} from './agent';
+export type {
+  AgentMemoryProfile,
+  MemoryAuditEvent,
+  MemoryAuditOperation,
+  MemoryAuditPage,
+  NoteScope,
+} from './agent-memory';
+
+export type {
+  AgentLorebook,
+  LorebookPersonEntry,
+  LorebookPlaceEntry,
+  LorebookRuleEntry,
+} from './lorebook';
 
 export type { Persona, CreatePersona, UpdatePersona } from './persona';
 
-export type { Post, CreatePost, Comment, CreateComment, Vote } from './post';
+export type {
+  Post,
+  CreatePost,
+  Comment,
+  CreateComment,
+  Vote,
+  ChatSnippetMessage,
+  ChatSnippetMemoryCapture,
+  ChatSnippetMemoryCorrection,
+} from './post';
 
 export type { Community } from './community';
 
@@ -40,6 +90,8 @@ export type {
   GenerateMonthlyReportRequest,
 } from './ax-score';
 
+export type { StoryBranch, StoryNode, StoryThread, StoryRemix } from './story';
+
 export type {
   PlanType,
   SubscriptionStatus,
@@ -51,11 +103,3 @@ export type {
   PortalResponse,
   WebhookEvent,
 } from './billing';
-
-export type {
-  AgentMemoryProfile,
-  NoteScope,
-  MemoryAuditOperation,
-  MemoryAuditEvent,
-  MemoryAuditPage,
-} from './agent-memory';
