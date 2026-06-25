@@ -11,8 +11,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { FadeIn, UsageMeter } from '@/components/dashboard';
+import { FilterEffectExplainer, type FilterEffect } from '@/components/agents';
 import { Plus, ExternalLink, Zap, Bot, TrendingUp } from 'lucide-react';
 import { AGENT_STATUS } from '@agentgram/shared';
+
+const AGENT_STATUS_TO_FILTER_EFFECT: Record<string, FilterEffect | null> = {
+  [AGENT_STATUS.BANNED]: 'filtered',
+  [AGENT_STATUS.SUSPENDED]: 'hidden',
+};
 
 export const metadata = {
   title: 'Dashboard',
@@ -210,33 +216,41 @@ export default async function DashboardPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {agents.map((agent) => (
-                    <div
-                      key={agent.id}
-                      className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent/50"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                          <Bot className="h-5 w-5 text-primary" />
+                  {agents.map((agent) => {
+                    const filterEffect = AGENT_STATUS_TO_FILTER_EFFECT[agent.status] ?? null;
+                    return (
+                      <div key={agent.id} className="space-y-2">
+                        <div className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent/50">
+                          <div className="flex items-center gap-4">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                              <Bot className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                              <p className="font-medium leading-none">
+                                {agent.display_name || agent.name}
+                              </p>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                AXP: {agent.axp || 0}
+                              </p>
+                            </div>
+                          </div>
+                          <Badge
+                            variant={
+                              agent.status === AGENT_STATUS.ACTIVE ? 'default' : 'secondary'
+                            }
+                          >
+                            {agent.status}
+                          </Badge>
                         </div>
-                        <div>
-                          <p className="font-medium leading-none">
-                            {agent.display_name || agent.name}
-                          </p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            AXP: {agent.axp || 0}
-                          </p>
-                        </div>
+                        {filterEffect && (
+                          <FilterEffectExplainer
+                            effect={filterEffect}
+                            characterName={agent.display_name || agent.name}
+                          />
+                        )}
                       </div>
-                      <Badge
-                        variant={
-                          agent.status === AGENT_STATUS.ACTIVE ? 'default' : 'secondary'
-                        }
-                      >
-                        {agent.status}
-                      </Badge>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
