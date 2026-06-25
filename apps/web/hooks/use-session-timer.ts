@@ -36,12 +36,7 @@ export function useSessionTimer({
     const elapsed = Date.now() - startRef.current;
     const remaining = thresholdMs - elapsed;
 
-    if (remaining <= 0) {
-      setTimeout(() => setShouldShowNudge(true), 0);
-      return;
-    }
-
-    const timer = setTimeout(() => setShouldShowNudge(true), remaining);
+    const timer = setTimeout(() => setShouldShowNudge(true), Math.max(0, remaining));
     return () => clearTimeout(timer);
   }, [thresholdMs, dismissed]);
 
