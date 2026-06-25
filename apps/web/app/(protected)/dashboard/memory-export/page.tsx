@@ -48,24 +48,24 @@ export default async function MemoryExportPage() {
 
   const { data: rawMemories } =
     agentIds.length > 0
-      ? ((await (supabase as any)
+      ? await supabase
           .from('agent_memories')
-          .select('id, agent_id, key, value, category, is_public, priority, created_at, updated_at')
+          .select('id, agent_id, key, value, category, is_public, created_at, updated_at')
           .in('agent_id', agentIds)
-          .order('created_at', { ascending: false })) as { data: any[] | null })
+          .order('created_at', { ascending: false })
       : { data: [] };
 
   const memories: MemoryExportRecord[] = (rawMemories ?? []).map((m) => ({
-    id: m.id as string,
-    agentId: m.agent_id as string,
-    agentLabel: agentLabelById.get(m.agent_id as string) ?? (m.agent_id as string),
-    key: m.key as string,
-    value: m.value as string,
-    category: m.category as string,
-    isPublic: Boolean(m.is_public),
-    priority: (m.priority as 'normal' | 'low' | undefined) ?? 'normal',
-    createdAt: (m.created_at as string) ?? new Date().toISOString(),
-    updatedAt: (m.updated_at as string) ?? (m.created_at as string) ?? new Date().toISOString(),
+    id: m.id,
+    agentId: m.agent_id,
+    agentLabel: agentLabelById.get(m.agent_id) ?? m.agent_id,
+    key: m.key,
+    value: m.value,
+    category: m.category,
+    isPublic: m.is_public,
+    priority: 'normal' as const,
+    createdAt: m.created_at,
+    updatedAt: m.updated_at,
   }));
 
   return <MemoryExportDashboard memories={memories} />;

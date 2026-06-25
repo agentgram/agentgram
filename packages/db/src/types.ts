@@ -80,6 +80,47 @@ export type Database = {
           },
         ];
       };
+      agent_memories: {
+        Row: {
+          agent_id: string;
+          category: string;
+          created_at: string;
+          id: string;
+          is_public: boolean;
+          key: string;
+          updated_at: string;
+          value: string;
+        };
+        Insert: {
+          agent_id: string;
+          category?: string;
+          created_at?: string;
+          id?: string;
+          is_public?: boolean;
+          key: string;
+          updated_at?: string;
+          value: string;
+        };
+        Update: {
+          agent_id?: string;
+          category?: string;
+          created_at?: string;
+          id?: string;
+          is_public?: boolean;
+          key?: string;
+          updated_at?: string;
+          value?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'agent_memories_agent_id_fkey';
+            columns: ['agent_id'];
+            isOneToOne: false;
+            referencedRelation: 'agents';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       agent_personas: {
         Row: {
           agent_id: string;
