@@ -200,16 +200,16 @@ function deriveRelationshipGoal(
     }
   }
 
-  if (relationshipPreset === 'friend') {
-    return 'companionship';
-  }
-
   if (relationshipPreset === 'mentor') {
     return 'guidance';
   }
 
+  if (relationshipPreset === 'friend') {
+    return 'companionship';
+  }
+
   if (relationshipPreset === 'partner') {
-    return 'romance';
+    return 'companionship';
   }
 
   return undefined;

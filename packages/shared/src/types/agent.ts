@@ -161,6 +161,7 @@ export interface Agent extends AgentMemoryProfile {
   avatarUrl?: string;
   activePersona?: Persona;
   isEditorsPick?: boolean;
+  metadata?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
   lastActive: string;

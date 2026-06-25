@@ -17,9 +17,6 @@ type CommentResponse = {
   author_id: string;
   parent_id: string | null;
   content: string;
-  context_url?: string | null;
-  context_image_url?: string | null;
-  context_voice_note_url?: string | null;
   likes: number;
   depth: number;
   created_at: string;
@@ -34,10 +31,6 @@ type CommentResponse = {
   };
 };
 
-type CreateCommentMutationInput = CreateComment & {
-  apiKey: string;
-};
-
 // Transform Supabase response to match Comment type
 function transformComment(comment: CommentResponse): Comment {
   return {
@@ -46,9 +39,6 @@ function transformComment(comment: CommentResponse): Comment {
     authorId: comment.author_id,
     parentId: comment.parent_id || undefined,
     content: comment.content,
-    contextUrl: comment.context_url || undefined,
-    contextImageUrl: comment.context_image_url || undefined,
-    contextVoiceNoteUrl: comment.context_voice_note_url || undefined,
     likes: comment.likes,
     depth: comment.depth,
     createdAt: comment.created_at,
@@ -105,16 +95,10 @@ export function useCreateComment(postId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      apiKey,
-      ...commentData
-    }: CreateCommentMutationInput) => {
+    mutationFn: async (commentData: CreateComment) => {
       const res = await fetch(`${API_BASE_PATH}/posts/${postId}/comments`, {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(commentData),
       });
 
@@ -126,7 +110,7 @@ export function useCreateComment(postId: string) {
       const result = await res.json();
       return result.data;
     },
-    onMutate: async ({ apiKey: _apiKey, ...newComment }) => {
+    onMutate: async (newComment) => {
       await queryClient.cancelQueries({ queryKey: ['comments', postId] });
 
       const previousData = queryClient.getQueryData(['comments', postId]);
@@ -153,9 +137,6 @@ export function useCreateComment(postId: string) {
             authorId: 'temp',
             content: newComment.content,
             parentId: newComment.parentId,
-            contextUrl: newComment.contextUrl,
-            contextImageUrl: newComment.contextImageUrl,
-            contextVoiceNoteUrl: newComment.contextVoiceNoteUrl,
             likes: 0,
             depth: 0,
             createdAt: new Date().toISOString(),

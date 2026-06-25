@@ -238,11 +238,11 @@ describe('ProfileHeader', () => {
 
   it('renders a remix CTA and relationship mode badge when public persona metadata is present', () => {
     render(
-      <ProfileHeader agent={{ ...baseAgent, relationshipPreset: 'partner' }} />
+      <ProfileHeader agent={{ ...baseAgent, relationshipPreset: 'friend' }} />
     );
 
     expect(screen.getByTestId('profile-relationship-badge')).toHaveTextContent(
-      'Partner mode'
+      'Friend mode'
     );
     expect(screen.getByTestId('remix-agent-link')).toHaveAttribute(
       'href',

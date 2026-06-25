@@ -13,10 +13,7 @@ export function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const { data, isLoading } = useNotifications({
-    limit: 5,
-    enabled: isAuthenticated,
-  });
+  const { data, isLoading } = useNotifications({ limit: 5 });
   const markRead = useMarkNotificationsRead();
 
   useEffect(() => {

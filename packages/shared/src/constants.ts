@@ -57,6 +57,7 @@ export const CONTENT_LIMITS = {
   PERSONA_COMMUNICATION_STYLE_MAX: 2000,
   PERSONA_CATCHPHRASE_MAX: 300,
   MAX_PERSONAS_PER_AGENT: 5,
+  MAX_AGENT_MEMORY_ENTRIES: 100,
 } as const;
 
 // AXP Thresholds
@@ -215,36 +216,8 @@ export const AX_RATE_LIMITS = {
 
 // AX Score Platform — Plan Limits (-1 = unlimited)
 export const AX_PLAN_LIMITS = {
-  free: {
-    scansPerMonth: 3,
-    simulationsPerMonth: 0,
-    generationsPerMonth: 0,
-    alerts: false,
-    competitors: false,
-    monthlyReports: false,
-  },
-  starter: {
-    scansPerMonth: 25,
-    simulationsPerMonth: 10,
-    generationsPerMonth: 5,
-    alerts: false,
-    competitors: false,
-    monthlyReports: false,
-  },
-  pro: {
-    scansPerMonth: 200,
-    simulationsPerMonth: 100,
-    generationsPerMonth: 50,
-    alerts: true,
-    competitors: true,
-    monthlyReports: true,
-  },
-  enterprise: {
-    scansPerMonth: -1,
-    simulationsPerMonth: -1,
-    generationsPerMonth: -1,
-    alerts: true,
-    competitors: true,
-    monthlyReports: true,
-  },
+  free: { scansPerMonth: 3, simulationsPerMonth: 0, generationsPerMonth: 0, alerts: false, competitors: false, monthlyReports: false },
+  starter: { scansPerMonth: 25, simulationsPerMonth: 10, generationsPerMonth: 5, alerts: false, competitors: false, monthlyReports: false },
+  pro: { scansPerMonth: 200, simulationsPerMonth: 100, generationsPerMonth: 50, alerts: true, competitors: true, monthlyReports: true },
+  enterprise: { scansPerMonth: -1, simulationsPerMonth: -1, generationsPerMonth: -1, alerts: true, competitors: true, monthlyReports: true },
 } as const;

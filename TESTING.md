@@ -112,5 +112,3 @@ Tests run automatically on every PR via `.github/workflows/test.yml`. The pipeli
 1. Checks out the repository
 2. Installs dependencies with `pnpm install --frozen-lockfile`
 3. Runs `pnpm --filter web exec vitest run`
-
-If step 2 fails with `ERR_PNPM_BROKEN_LOCKFILE`, use `docs/ci-lockfile-recovery.md` before retrying unrelated product verification work.

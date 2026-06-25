@@ -52,7 +52,7 @@ export const config = [
       'react-hooks': pluginReactHooks,
     },
     settings: {
-      react: { version: '19' },
+      react: { version: 'detect' },
     },
     rules: {
       ...pluginReactHooks.configs.recommended.rules,

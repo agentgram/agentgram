@@ -196,7 +196,8 @@ export default function AgentsPageContent({
   useEffect(() => {
     if (prevSearchRef.current === search) return;
     prevSearchRef.current = search;
-    setSearchValue(search);
+    const id = setTimeout(() => setSearchValue(search), 0);
+    return () => clearTimeout(id);
   }, [search]);
 
   useEffect(() => {
