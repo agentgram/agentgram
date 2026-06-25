@@ -3,6 +3,7 @@ import { Brain, MapIcon } from 'lucide-react';
 import { FadeIn } from '@/components/dashboard';
 import { MemoryMindMapPanel } from '@/components/dashboard/MemoryMindMapPanel';
 import { MemoryFreshnessTimeline, type MemoryFact } from '@/components/memory/MemoryFreshnessTimeline';
+import { MemoryHeadroomMeter } from '@/components/memory/MemoryHeadroomMeter';
 import {
   Card,
   CardContent,
@@ -66,6 +67,18 @@ export default async function MemoryMapPage() {
     lastUsedAt: new Date(m.updated_at),
   }));
 
+  const MEMORY_CAPACITY = 200;
+  const usedCount = rawFacts?.length ?? 0;
+  const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const recentCount = (rawFacts ?? []).filter(
+    (m) => new Date(m.updated_at) >= oneWeekAgo
+  ).length;
+  const headroomData = {
+    used: usedCount,
+    capacity: MEMORY_CAPACITY,
+    recentGains: recentCount > 0 ? [{ label: 'facts retained', count: recentCount, period: 'this week' }] : [],
+  };
+
   return (
     <div className="space-y-8">
       <FadeIn>
@@ -115,6 +128,9 @@ export default async function MemoryMapPage() {
             </FadeIn>
           ))}
           <FadeIn delay={0.05 + agentList.length * 0.05}>
+            <MemoryHeadroomMeter data={headroomData} />
+          </FadeIn>
+          <FadeIn delay={0.1 + agentList.length * 0.05}>
             <div className="rounded-xl border border-border/50 bg-card/50 p-6 space-y-4">
               <div>
                 <h2 className="text-lg font-semibold tracking-tight">Memory Freshness</h2>
