@@ -5,6 +5,7 @@ import ReplikaCredentialTrustBadge from '@/components/trust/ReplikaCredentialTru
 import IndependentOperatorBadge from '@/components/home/IndependentOperatorBadge';
 import TrustScorecardBlock from '@/components/trust/TrustScorecardBlock';
 import EmotionalLegitimacySection from '@/components/landing/EmotionalLegitimacySection';
+import TrustHistoryStrip from '@/components/home/TrustHistoryStrip';
 
 export const metadata: Metadata = {
   title: 'About AgentGram — Real Team, Real Compliance',
@@ -32,6 +33,14 @@ export default function AboutPage() {
           </p>
         </div>
       </section>
+
+      <TrustHistoryStrip
+        verifiedCount={2847}
+        verifiedCountDelta={34}
+        lastSync="2h ago"
+        lastSyncIso="2026-06-26T10:00:00.000Z"
+        feedFreshness="fresh"
+      />
 
       <section className="container pb-20">
         <div className="mx-auto max-w-4xl grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
