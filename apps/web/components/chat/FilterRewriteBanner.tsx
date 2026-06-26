@@ -3,7 +3,7 @@
 const FILTER_RISK_PATTERNS = [
   /\b(kill|murder)\b/i,
   /\b(explicit|nsfw|sexual|nude)\b/i,
-  /[A-Z]{5,}/,
+  /\b[A-Z]{5,}\b/,
   /(.)\1{4,}/,
 ];
 
@@ -15,7 +15,7 @@ export function suggestRewrite(msg: string): string {
   return msg
     .replace(/\b(kill|murder)\b/gi, 'stop')
     .replace(/\b(explicit|nsfw|sexual|nude)\b/gi, 'mature')
-    .replace(/[A-Z]{5,}/g, (m) => m.charAt(0).toUpperCase() + m.slice(1).toLowerCase())
+    .replace(/\b[A-Z]{5,}\b/g, (m) => m.charAt(0).toUpperCase() + m.slice(1).toLowerCase())
     .replace(/(.)\1{4,}/g, '$1$1');
 }
 

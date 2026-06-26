@@ -22,7 +22,7 @@ import { CrisisOverlay } from '@/components/common/CrisisOverlay';
 import { MemoryUsageMeter, type MemoryUsageData } from '@/components/memory/MemoryUsageMeter';
 import { StarterPromptStrip } from '@/components/chat/StarterPromptStrip';
 import { BlankStartMessageCoach } from '@/components/chat/BlankStartMessageCoach';
-import { FilterRewriteBanner } from '@/components/chat/FilterRewriteBanner';
+import { FilterRewriteBanner, estimateFilterRisk } from '@/components/chat/FilterRewriteBanner';
 import { AnchorControlsPreset } from '@/components/image-gen/AnchorControlsPreset';
 import { GettingStartedImageGuide } from '@/components/image-gen/getting-started-image-guide';
 import type { AnchorControlsState } from '@/lib/image-gen/anchor-controls';
@@ -109,7 +109,7 @@ export function ReplyContextComposer({
 
   function handleContentChange(newValue: string) {
     setContent(newValue);
-    setFilterBannerDismissed(false);
+    if (!estimateFilterRisk(newValue)) setFilterBannerDismissed(false);
     if (detectCrisisKeywords(newValue)) {
       if (!crisisShownRef.current) {
         crisisShownRef.current = true;
