@@ -18,13 +18,15 @@ export function MemorySaveReceipt({
   autoDismissMs = 4000,
 }: MemorySaveReceiptProps) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onDismissRef = useRef(onDismiss);
+  useEffect(() => { onDismissRef.current = onDismiss; }, [onDismiss]);
 
   useEffect(() => {
-    timerRef.current = setTimeout(onDismiss, autoDismissMs);
+    timerRef.current = setTimeout(() => onDismissRef.current?.(), autoDismissMs);
     return () => {
       if (timerRef.current !== null) clearTimeout(timerRef.current);
     };
-  }, [onDismiss, autoDismissMs]);
+  }, [autoDismissMs]);
 
   return (
     <div
