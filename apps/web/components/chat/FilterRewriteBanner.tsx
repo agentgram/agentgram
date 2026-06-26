@@ -1,7 +1,7 @@
 'use client';
 
 const FILTER_RISK_PATTERNS = [
-  /\b(kill|murder|suicide|self-harm)\b/i,
+  /\b(kill|murder)\b/i,
   /\b(explicit|nsfw|sexual|nude)\b/i,
   /[A-Z]{5,}/,
   /(.)\1{4,}/,
