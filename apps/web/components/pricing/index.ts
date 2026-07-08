@@ -2,6 +2,7 @@ export { PricingCard } from './PricingCard';
 export { PricingProofSection } from './PricingProofSection';
 export { ReplikaPricingConfusionCallout } from './ReplikaPricingConfusionCallout';
 export { CAISoftLaunchLockEscape } from './CAISoftLaunchLockEscape';
+export { CAIStatusEntitlementBanner } from './CAIStatusEntitlementBanner';
 export { PricingCompetitorAnchorRow } from './PricingCompetitorAnchorRow';
 export { ReplikaSavingsCalculator } from './ReplikaSavingsCalculator';
 export { PaidConversionSocialProofBlock } from './PaidConversionSocialProofBlock';
