@@ -58,4 +58,14 @@ describe('ReplikaAlternativePage', () => {
     expect(body).toMatch(/€5 million|€5M/i);
     expect(body).toMatch(/GDPR/i);
   });
+
+  it('explains where Replika legacy customization controls moved', () => {
+    render(<ReplikaAlternativePage />);
+    const body = document.body.textContent ?? '';
+
+    expect(body).toMatch(/late-May update/i);
+    expect(body).toMatch(/Wardrobe moved into the Store closet/i);
+    expect(body).toMatch(/Eye color now lives in Face editing/i);
+    expect(body).toMatch(/Avatar controls are under Profile appearance/i);
+  });
 });
