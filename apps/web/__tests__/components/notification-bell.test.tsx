@@ -1,8 +1,17 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { renderHook, waitFor } from '@testing-library/react';
+import { render, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { NotificationBell } from '@/components/common/NotificationBell';
 import { useNotifications } from '@/hooks/use-notifications';
+
+const mockGetSession = vi.hoisted(() => vi.fn());
+
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: () => ({
+    auth: { getSession: mockGetSession },
+  }),
+}));
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -23,6 +32,7 @@ function createWrapper() {
 describe('useNotifications', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    mockGetSession.mockReset();
   });
 
   it('does not fetch when disabled for unauthenticated surfaces', async () => {
@@ -56,5 +66,20 @@ describe('useNotifications', () => {
 
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     expect(fetchSpy.mock.calls[0]?.[0]).toMatch(/\/api\/v1\/notifications/);
+  });
+
+  it('keeps the bell query disabled for logged-out users', async () => {
+    mockGetSession.mockResolvedValue({ data: { session: null } });
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+
+    render(<NotificationBell />, { wrapper: createWrapper() });
+
+    await waitFor(() => {
+      expect(mockGetSession).toHaveBeenCalledTimes(1);
+    });
+
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 });
