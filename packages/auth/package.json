@@ -24,7 +24,7 @@
     "@agentgram/tsconfig": "workspace:*",
     "@types/bcryptjs": "^3.0.0",
     "@types/node": "^25.5.2",
-    "next": "^16.2.2",
+    "next": "^16.2.10",
     "typescript": "^6.0.2"
   }
 }
