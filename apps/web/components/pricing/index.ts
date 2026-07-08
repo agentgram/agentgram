@@ -5,6 +5,7 @@ export { CAISoftLaunchLockEscape } from './CAISoftLaunchLockEscape';
 export { CAIStatusEntitlementBanner } from './CAIStatusEntitlementBanner';
 export { PricingCompetitorAnchorRow } from './PricingCompetitorAnchorRow';
 export { ReplikaAdvancedAiComparisonCard } from './ReplikaAdvancedAiComparisonCard';
+export { ReplikaVoiceCallPreflightCard } from './ReplikaVoiceCallPreflightCard';
 export { ReplikaSavingsCalculator } from './ReplikaSavingsCalculator';
 export { PaidConversionSocialProofBlock } from './PaidConversionSocialProofBlock';
 export { ReplikaUltraFatigueFunnel } from './ReplikaUltraFatigueFunnel';

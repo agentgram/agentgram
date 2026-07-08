@@ -191,6 +191,16 @@ describe('PricingPage', () => {
     ).toHaveTextContent('Transparent pricing, no tier confusion');
   });
 
+  it('renders the Replika voice-call preflight card with quality, latency, and voice mode', () => {
+    render(<PricingPage />);
+
+    const section = screen.getByTestId('replika-voice-call-preflight-section');
+    expect(section).toBeInTheDocument();
+    expect(section).toHaveTextContent('Call quality');
+    expect(section).toHaveTextContent('Latency');
+    expect(section).toHaveTextContent('Voice mode');
+  });
+
   it('renders Visual Memory mind map section with Nomi parity badge and Starter+ callout', () => {
     render(<PricingPage />);
 
