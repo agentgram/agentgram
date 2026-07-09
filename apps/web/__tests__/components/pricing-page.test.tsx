@@ -201,6 +201,16 @@ describe('PricingPage', () => {
     expect(section).toHaveTextContent('Voice mode');
   });
 
+  it('renders the Kindroid transcript provider picker on the pricing page', () => {
+    render(<PricingPage />);
+
+    const section = screen.getByTestId('kindroid-transcript-provider-picker-section');
+    expect(section).toBeInTheDocument();
+    expect(section).toHaveTextContent('AgentGram Live');
+    expect(section).toHaveTextContent('Bring your provider');
+    expect(section).toHaveTextContent('Local export only');
+  });
+
   it('renders Visual Memory mind map section with Nomi parity badge and Starter+ callout', () => {
     render(<PricingPage />);
 
