@@ -23,6 +23,21 @@ const comparisonRows = [
   },
 ] as const;
 
+const decisionSteps = [
+  {
+    label: 'Replika standard chat',
+    detail: 'Baseline replies before the upgrade toggle.',
+  },
+  {
+    label: 'Advanced AI upgrade',
+    detail: 'Richer mode, but the improvement is mostly discovered after switching.',
+  },
+  {
+    label: 'AgentGram preview',
+    detail: 'Response depth and memory behavior are explained before checkout.',
+  },
+] as const;
+
 export function ReplikaAdvancedAiComparisonCard() {
   return (
     <div
@@ -67,6 +82,20 @@ export function ReplikaAdvancedAiComparisonCard() {
         className="grid gap-3"
         data-testid="advanced-ai-comparison-rows"
       >
+        <div
+          className="grid gap-3 rounded-xl border border-blue-500/20 bg-background/80 p-4 md:grid-cols-3"
+          data-testid="advanced-ai-decision-steps"
+        >
+          {decisionSteps.map((step) => (
+            <div key={step.label} className="space-y-1">
+              <p className="text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300">
+                {step.label}
+              </p>
+              <p className="text-xs leading-relaxed text-muted-foreground">{step.detail}</p>
+            </div>
+          ))}
+        </div>
+
         {comparisonRows.map((row) => (
           <div
             key={row.feature}

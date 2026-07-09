@@ -201,6 +201,16 @@ describe('PricingPage', () => {
     expect(section).toHaveTextContent('Voice mode');
   });
 
+  it('renders the Replika Advanced AI comparison section with the decision path', () => {
+    render(<PricingPage />);
+
+    const section = screen.getByTestId('replika-advanced-ai-comparison-section');
+    expect(section).toBeInTheDocument();
+    expect(section).toHaveTextContent('Replika standard chat');
+    expect(section).toHaveTextContent('Advanced AI upgrade');
+    expect(section).toHaveTextContent('AgentGram preview');
+  });
+
   it('renders Visual Memory mind map section with Nomi parity badge and Starter+ callout', () => {
     render(<PricingPage />);
 

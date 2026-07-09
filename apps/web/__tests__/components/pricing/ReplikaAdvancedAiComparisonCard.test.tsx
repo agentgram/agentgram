@@ -25,6 +25,15 @@ describe('ReplikaAdvancedAiComparisonCard', () => {
     expect(card).toHaveTextContent('before checkout');
   });
 
+  it('shows the decision path from standard chat to AgentGram preview', () => {
+    render(<ReplikaAdvancedAiComparisonCard />);
+    const steps = screen.getByTestId('advanced-ai-decision-steps');
+
+    expect(steps).toHaveTextContent('Replika standard chat');
+    expect(steps).toHaveTextContent('Advanced AI upgrade');
+    expect(steps).toHaveTextContent('AgentGram preview');
+  });
+
   it('renders all comparison rows', () => {
     render(<ReplikaAdvancedAiComparisonCard />);
     expect(screen.getByTestId('advanced-ai-response-depth')).toBeInTheDocument();
