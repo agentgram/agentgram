@@ -212,6 +212,17 @@ describe('PricingPage', () => {
     expect(section).toHaveTextContent('Before/after memo');
   });
 
+  it('renders the Replika safe-space manifesto onboarding strip', () => {
+    render(<PricingPage />);
+
+    const section = screen.getByTestId('replika-safe-space-manifesto-section');
+    expect(section).toBeInTheDocument();
+    expect(section).toHaveTextContent('Safe-space promise');
+    expect(section).toHaveTextContent('Memory boundaries');
+    expect(section).toHaveTextContent('Manifesto receipt');
+    expect(section).toHaveTextContent('Onboarding receipt');
+  });
+
   it('renders the Replika Advanced AI comparison section with the decision path', () => {
     render(<PricingPage />);
 
