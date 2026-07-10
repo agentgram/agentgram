@@ -201,6 +201,17 @@ describe('PricingPage', () => {
     expect(section).toHaveTextContent('Voice mode');
   });
 
+  it('renders the Kindroid live video-call preflight card with device and availability checks', () => {
+    render(<PricingPage />);
+
+    const section = screen.getByTestId('kindroid-video-call-preflight-section');
+    expect(section).toBeInTheDocument();
+    expect(section).toHaveTextContent('Camera');
+    expect(section).toHaveTextContent('Microphone');
+    expect(section).toHaveTextContent('Estimated latency');
+    expect(section).toHaveTextContent('Video call available');
+  });
+
   it('renders the Replika Advanced AI comparison section with the decision path', () => {
     render(<PricingPage />);
 
