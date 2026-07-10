@@ -201,6 +201,17 @@ describe('PricingPage', () => {
     expect(section).toHaveTextContent('Voice mode');
   });
 
+  it('renders the Replika update-change explainer strip with plan, memory, and voice deltas', () => {
+    render(<PricingPage />);
+
+    const section = screen.getByTestId('replika-update-change-explainer-section');
+    expect(section).toBeInTheDocument();
+    expect(section).toHaveTextContent('Plan changes');
+    expect(section).toHaveTextContent('Memory changes');
+    expect(section).toHaveTextContent('Voice changes');
+    expect(section).toHaveTextContent('Before/after memo');
+  });
+
   it('renders the Replika Advanced AI comparison section with the decision path', () => {
     render(<PricingPage />);
 

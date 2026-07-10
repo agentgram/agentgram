@@ -6,6 +6,7 @@ export { CAIStatusEntitlementBanner } from './CAIStatusEntitlementBanner';
 export { PricingCompetitorAnchorRow } from './PricingCompetitorAnchorRow';
 export { ReplikaAdvancedAiComparisonCard } from './ReplikaAdvancedAiComparisonCard';
 export { ReplikaVoiceCallPreflightCard } from './ReplikaVoiceCallPreflightCard';
+export { ReplikaUpdateChangeExplainerStrip } from './ReplikaUpdateChangeExplainerStrip';
 export { KindroidTranscriptProviderPicker } from './KindroidTranscriptProviderPicker';
 export { ReplikaSavingsCalculator } from './ReplikaSavingsCalculator';
 export { PaidConversionSocialProofBlock } from './PaidConversionSocialProofBlock';
