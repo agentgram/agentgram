@@ -8,6 +8,7 @@ export { ReplikaAdvancedAiComparisonCard } from './ReplikaAdvancedAiComparisonCa
 export { ReplikaVoiceCallPreflightCard } from './ReplikaVoiceCallPreflightCard';
 export { ReplikaUpdateChangeExplainerStrip } from './ReplikaUpdateChangeExplainerStrip';
 export { KindroidTranscriptProviderPicker } from './KindroidTranscriptProviderPicker';
+export { KindroidLiveCallStabilityConsole } from './KindroidLiveCallStabilityConsole';
 export { ReplikaSavingsCalculator } from './ReplikaSavingsCalculator';
 export { PaidConversionSocialProofBlock } from './PaidConversionSocialProofBlock';
 export { ReplikaUltraFatigueFunnel } from './ReplikaUltraFatigueFunnel';

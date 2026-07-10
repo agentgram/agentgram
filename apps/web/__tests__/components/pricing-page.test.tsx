@@ -222,6 +222,16 @@ describe('PricingPage', () => {
     expect(section).toHaveTextContent('AgentGram preview');
   });
 
+  it('renders the Kindroid live-call stability console with readiness, transcript, and troubleshooting', () => {
+    render(<PricingPage />);
+
+    const section = screen.getByTestId('kindroid-live-call-stability-section');
+    expect(section).toBeInTheDocument();
+    expect(section).toHaveTextContent('Readiness');
+    expect(section).toHaveTextContent('Live transcript');
+    expect(section).toHaveTextContent('Troubleshooting pinned');
+  });
+
   it('renders Visual Memory mind map section with Nomi parity badge and Starter+ callout', () => {
     render(<PricingPage />);
 
