@@ -9,6 +9,7 @@ export { ReplikaVoiceCallPreflightCard } from './ReplikaVoiceCallPreflightCard';
 export { ReplikaUpdateChangeExplainerStrip } from './ReplikaUpdateChangeExplainerStrip';
 export { KindroidTranscriptProviderPicker } from './KindroidTranscriptProviderPicker';
 export { KindroidLiveCallStabilityConsole } from './KindroidLiveCallStabilityConsole';
+export { KindroidBondContinuityReassuranceCard } from './KindroidBondContinuityReassuranceCard';
 export { ReplikaSavingsCalculator } from './ReplikaSavingsCalculator';
 export { PaidConversionSocialProofBlock } from './PaidConversionSocialProofBlock';
 export { ReplikaUltraFatigueFunnel } from './ReplikaUltraFatigueFunnel';

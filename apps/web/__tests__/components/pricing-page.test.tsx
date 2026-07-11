@@ -232,6 +232,16 @@ describe('PricingPage', () => {
     expect(section).toHaveTextContent('Troubleshooting pinned');
   });
 
+  it('renders the Kindroid bond continuity reassurance card with history, consent, and receipts', () => {
+    render(<PricingPage />);
+
+    const section = screen.getByTestId('kindroid-bond-continuity-section');
+    expect(section).toBeInTheDocument();
+    expect(section).toHaveTextContent('Bond history');
+    expect(section).toHaveTextContent('Consent checkpoint');
+    expect(section).toHaveTextContent('Continuity receipt timeline');
+  });
+
   it('renders Visual Memory mind map section with Nomi parity badge and Starter+ callout', () => {
     render(<PricingPage />);
 
