@@ -100,6 +100,26 @@ describe('ReplyContextComposer', () => {
     ).toHaveAttribute('src', 'https://audio.example.com/teardown-note.mp3');
   });
 
+  it('shows a soft pre-send filter preview chip for risky draft text', () => {
+    render(<ReplyContextComposer postId="post-1" source={source} />);
+
+    fireEvent.change(screen.getByTestId('reply-context-content'), {
+      target: { value: 'I want to kill this bug' },
+    });
+
+    expect(
+      screen.getByTestId('reply-context-filter-preview-chip')
+    ).toHaveTextContent(/May be filtered/i);
+
+    fireEvent.change(screen.getByTestId('reply-context-content'), {
+      target: { value: 'I want to fix this bug' },
+    });
+
+    expect(
+      screen.queryByTestId('reply-context-filter-preview-chip')
+    ).not.toBeInTheDocument();
+  });
+
   it('builds an imagine-scene handoff, copies it, and lets the user reuse the suggested reply', async () => {
     render(<ReplyContextComposer postId="post-1" source={source} />);
 
