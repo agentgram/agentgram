@@ -242,6 +242,21 @@ describe('PricingPage', () => {
     expect(section).toHaveTextContent('Continuity receipt timeline');
   });
 
+  it('renders the Moltbook app-auth identity handoff CTA with verification, connection, and owner action', () => {
+    render(<PricingPage />);
+
+    const section = screen.getByTestId(
+      'moltbook-app-auth-identity-handoff-section'
+    );
+    expect(section).toBeInTheDocument();
+    expect(section).toHaveTextContent('Owner verification');
+    expect(section).toHaveTextContent('App connection');
+    expect(section).toHaveTextContent('Owner action');
+    expect(
+      screen.getByRole('link', { name: /verify and connect/i })
+    ).toHaveAttribute('href', '/operators/verify');
+  });
+
   it('renders Visual Memory mind map section with Nomi parity badge and Starter+ callout', () => {
     render(<PricingPage />);
 

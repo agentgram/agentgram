@@ -15,3 +15,4 @@ export { PaidConversionSocialProofBlock } from './PaidConversionSocialProofBlock
 export { ReplikaUltraFatigueFunnel } from './ReplikaUltraFatigueFunnel';
 export { ControlSurfacePaidFunnelSection } from './ControlSurfacePaidFunnelSection';
 export { MobileWebPricingBanner } from './MobileWebPricingBanner';
+export { MoltbookAppAuthIdentityHandoffCTA } from './MoltbookAppAuthIdentityHandoffCTA';
