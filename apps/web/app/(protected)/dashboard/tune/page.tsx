@@ -96,6 +96,14 @@ export default async function TunePage() {
 
   const { developer_id } = member as { developer_id: string };
 
+  const { data: developer } = await supabase
+    .from('developers')
+    .select('plan')
+    .eq('id', developer_id)
+    .single();
+  const developerPlan =
+    typeof developer?.plan === 'string' ? developer.plan : 'free';
+
   const { data: agents } = await supabase
     .from('agents')
     .select('id, name, display_name, description, avatar_url, metadata')
@@ -193,6 +201,7 @@ export default async function TunePage() {
                 pinnedFactsSettings: {
                   agentId: agent.id,
                   agentLabel: agent.display_name || agent.name,
+                  developerPlan,
                   facts: pinnedFacts,
                   ledger: {
                     capacity: PINNED_FACTS_LEDGER_CAPACITY,

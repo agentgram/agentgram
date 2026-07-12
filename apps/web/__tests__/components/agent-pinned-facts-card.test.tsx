@@ -368,4 +368,53 @@ describe('AgentPinnedFactsCard', () => {
       { method: 'DELETE' }
     );
   });
+
+  it('surfaces a contextual tier upgrade gate when the plan memory limit is hit', () => {
+    const cappedFacts = Array.from({ length: 12 }, (_, index) => ({
+      id: `memory-limit-${index + 1}`,
+      key:
+        index === 0
+          ? 'preferred_collaboration_style'
+          : `saved_fact_${index + 1}`,
+      value:
+        index === 0
+          ? 'Prefers async check-ins and clear handoff notes.'
+          : `Saved memory ${index + 1} that should remain visible after upgrade.`,
+      category: index % 2 === 0 ? 'profile_fact' : 'relationship_context',
+      updatedAt: new Date(
+        Date.UTC(2026, 4, index + 1, 9, 0, 0)
+      ).toISOString(),
+      isPublic: false,
+      originLabel: 'Saved fact snapshot',
+      originSnippet: `Saved memory ${index + 1}`,
+    }));
+
+    render(
+      <AgentPinnedFactsCard
+        settings={buildSettings({
+          developerPlan: 'free',
+          facts: cappedFacts,
+          ledger: {
+            capacity: 12,
+            savedCount: 12,
+            remainingCount: 0,
+            categoryCounts: {
+              profileFact: 6,
+              relationshipContext: 6,
+            },
+          },
+        })}
+      />
+    );
+
+    expect(
+      screen.getByTestId('memory-conversion-cta-headline')
+    ).toHaveTextContent("You'd keep 12 more memories with Starter");
+    expect(
+      screen.getByTestId('memory-conversion-cta-limit-upsell')
+    ).toHaveTextContent('Preserved at the higher tier');
+    expect(
+      screen.getByTestId('memory-conversion-cta-preserved-memory-limit-12')
+    ).toHaveTextContent('Saved Fact 12');
+  });
 });

@@ -52,4 +52,42 @@ describe('MemoryConversionCTA', () => {
       )
     ).toBeInTheDocument();
   });
+
+  it('renders contextual limit upsell copy when the plan memory cap is reached', () => {
+    render(
+      <MemoryConversionCTA
+        agentLabel="Sage Bot"
+        factCount={12}
+        limitUpsell={{
+          nextPlanName: 'Starter',
+          additionalMemoryCount: 12,
+          preservedMemoryCount: 12,
+          preservedFacts: [
+            {
+              id: 'memory-1',
+              label: 'Preferred Collaboration Style',
+              snippet: 'Prefers async check-ins and clear handoff notes.',
+            },
+          ],
+        }}
+      />
+    );
+
+    expect(
+      screen.getByTestId('memory-conversion-cta-headline')
+    ).toHaveTextContent("You'd keep 12 more memories with Starter");
+    expect(
+      screen.getByTestId('memory-conversion-cta-limit-copy')
+    ).toHaveTextContent(
+      "Sage Bot hit this plan's memory limit. Upgrade to Starter to preserve the current 12 memories and add room for 12 more memories."
+    );
+    expect(
+      screen.getByTestId('memory-conversion-cta-preserved-memory-1')
+    ).toHaveTextContent(
+      'Preferred Collaboration Style — Prefers async check-ins and clear handoff notes.'
+    );
+    expect(screen.getByTestId('memory-conversion-cta-upgrade')).toHaveTextContent(
+      'Upgrade to Starter'
+    );
+  });
 });
