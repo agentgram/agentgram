@@ -360,6 +360,7 @@ export default async function SettingsPage() {
                   settings={{
                     agentId: settings.agentId,
                     agentLabel: settings.agentLabel,
+                    developerPlan: settings.developerPlan,
                     facts: settings.pinnedFacts,
                     ledger: settings.pinnedFactsLedger,
                   }}

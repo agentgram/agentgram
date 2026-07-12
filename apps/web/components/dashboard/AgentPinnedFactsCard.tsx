@@ -59,6 +59,7 @@ export interface AgentPinnedFactsLedger {
 export interface AgentPinnedFactsSettings {
   agentId: string;
   agentLabel: string;
+  developerPlan?: string;
   facts: AgentPinnedFactRecord[];
   ledger: AgentPinnedFactsLedger;
 }
@@ -99,6 +100,13 @@ const EMPTY_DRAFT: MemoryDraft = {
   scope: 'private',
 };
 
+const MEMORY_PLAN_TIERS = [
+  { key: 'free', name: 'Free', capacity: 12 },
+  { key: 'starter', name: 'Starter', capacity: 24 },
+  { key: 'pro', name: 'Pro', capacity: 60 },
+  { key: 'enterprise', name: 'Enterprise', capacity: 120 },
+] as const;
+
 function formatTimestamp(value: string) {
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
@@ -128,6 +136,21 @@ function formatCategoryLabel(category: string) {
 
 function formatCapacityCopy(count: number) {
   return count === 1 ? '1 slot left' : `${count} slots left`;
+}
+
+function getMemoryPlanTier(plan: string | undefined, capacity: number) {
+  const planTier = MEMORY_PLAN_TIERS.find((tier) => tier.key === plan);
+  if (planTier) return planTier;
+
+  return (
+    MEMORY_PLAN_TIERS.find((tier) => tier.capacity === capacity) ??
+    MEMORY_PLAN_TIERS[0]
+  );
+}
+
+function getNextMemoryPlanTier(plan: string | undefined, capacity: number) {
+  const currentTier = getMemoryPlanTier(plan, capacity);
+  return MEMORY_PLAN_TIERS.find((tier) => tier.capacity > currentTier.capacity);
 }
 
 function getRecallHealth({
@@ -239,6 +262,32 @@ function buildFactReviewLog(facts: AgentPinnedFactRecord[]) {
   }));
 }
 
+function buildMemoryLimitUpsell(params: {
+  plan: string | undefined;
+  ledger: AgentPinnedFactsLedger;
+  facts: AgentPinnedFactRecord[];
+}) {
+  const { plan, ledger, facts } = params;
+
+  if (ledger.remainingCount > 0 || facts.length === 0) {
+    return null;
+  }
+
+  const nextTier = getNextMemoryPlanTier(plan, ledger.capacity);
+  if (!nextTier) return null;
+
+  return {
+    nextPlanName: nextTier.name,
+    additionalMemoryCount: Math.max(nextTier.capacity - ledger.capacity, 0),
+    preservedMemoryCount: Math.min(facts.length, nextTier.capacity),
+    preservedFacts: facts.slice(0, 3).map((fact) => ({
+      id: fact.id,
+      label: formatFactLabel(fact.key),
+      snippet: truncateSnippet(fact.value, 90),
+    })),
+  };
+}
+
 function toPinnedFact(
   record: MemoryApiRecord,
   fallback?: AgentPinnedFactRecord
@@ -300,6 +349,15 @@ export function AgentPinnedFactsCard({ settings }: AgentPinnedFactsCardProps) {
   );
   const recentFacts = facts.slice(0, 3);
   const factReviewLog = useMemo(() => buildFactReviewLog(facts), [facts]);
+  const memoryLimitUpsell = useMemo(
+    () =>
+      buildMemoryLimitUpsell({
+        plan: settings.developerPlan,
+        ledger,
+        facts,
+      }),
+    [facts, ledger, settings.developerPlan]
+  );
   const recallHealth = getRecallHealth({ facts, ledger });
   const RecallHealthIcon = recallHealth.icon;
   const reSyncHref = '#memory-trust-' + settings.agentId;
@@ -746,6 +804,7 @@ export function AgentPinnedFactsCard({ settings }: AgentPinnedFactsCardProps) {
             <MemoryConversionCTA
               factCount={facts.length}
               agentLabel={settings.agentLabel}
+              limitUpsell={memoryLimitUpsell}
             />
 
             <div

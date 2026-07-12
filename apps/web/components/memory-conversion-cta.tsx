@@ -5,17 +5,40 @@ import { Button } from '@/components/ui/button';
 interface MemoryConversionCTAProps {
   factCount: number;
   agentLabel?: string;
+  limitUpsell?: {
+    nextPlanName: string;
+    additionalMemoryCount: number;
+    preservedMemoryCount: number;
+    preservedFacts: Array<{
+      id: string;
+      label: string;
+      snippet: string;
+    }>;
+  } | null;
+}
+
+function formatMemoryLabel(count: number) {
+  return count === 1 ? '1 memory' : `${count} memories`;
+}
+
+function formatMoreMemoryLabel(count: number) {
+  return count === 1 ? '1 more memory' : `${count} more memories`;
 }
 
 export function MemoryConversionCTA({
   factCount,
   agentLabel,
+  limitUpsell,
 }: MemoryConversionCTAProps) {
   const factLabel =
     factCount === 1 ? '1 fact' : `${factCount} facts`;
-  const headline = agentLabel
-    ? `${agentLabel} remembers ${factLabel} about you`
-    : `Your AI remembers ${factLabel} about you`;
+  const headline = limitUpsell
+    ? `You'd keep ${formatMoreMemoryLabel(
+        limitUpsell.additionalMemoryCount
+      )} with ${limitUpsell.nextPlanName}`
+    : agentLabel
+      ? `${agentLabel} remembers ${factLabel} about you`
+      : `Your AI remembers ${factLabel} about you`;
 
   return (
     <div
@@ -34,10 +57,49 @@ export function MemoryConversionCTA({
             >
               {headline}
             </p>
-            <p className="text-sm text-muted-foreground">
-              Unlock premium memory for unlimited facts, categories, and
-              export — so nothing important gets forgotten.
-            </p>
+            {limitUpsell ? (
+              <div
+                className="space-y-3 text-sm text-muted-foreground"
+                data-testid="memory-conversion-cta-limit-upsell"
+              >
+                <p data-testid="memory-conversion-cta-limit-copy">
+                  {agentLabel ?? 'Your AI'} hit this plan&apos;s memory limit.
+                  Upgrade to {limitUpsell.nextPlanName} to preserve the current{' '}
+                  {formatMemoryLabel(limitUpsell.preservedMemoryCount)} and add
+                  room for{' '}
+                  {formatMoreMemoryLabel(limitUpsell.additionalMemoryCount)}.
+                </p>
+                {limitUpsell.preservedFacts.length > 0 ? (
+                  <div>
+                    <div className="text-xs font-medium uppercase tracking-wide text-primary">
+                      Preserved at the higher tier
+                    </div>
+                    <ul className="mt-2 space-y-1.5">
+                      {limitUpsell.preservedFacts.map((fact) => (
+                        <li
+                          className="rounded-md border border-primary/15 bg-background/80 px-3 py-2"
+                          data-testid={`memory-conversion-cta-preserved-${fact.id}`}
+                          key={fact.id}
+                        >
+                          <span className="font-medium text-foreground">
+                            {fact.label}
+                          </span>
+                          <span className="text-muted-foreground">
+                            {' '}
+                            — {fact.snippet}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Unlock premium memory for unlimited facts, categories, and
+                export — so nothing important gets forgotten.
+              </p>
+            )}
           </div>
         </div>
 
@@ -48,7 +110,9 @@ export function MemoryConversionCTA({
               data-testid="memory-conversion-cta-upgrade"
             >
               <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-              Unlock Premium Memory
+              {limitUpsell
+                ? `Upgrade to ${limitUpsell.nextPlanName}`
+                : 'Unlock Premium Memory'}
             </Link>
           </Button>
           <Button asChild size="sm" variant="outline">
