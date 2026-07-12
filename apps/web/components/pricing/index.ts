@@ -3,6 +3,7 @@ export { PricingProofSection } from './PricingProofSection';
 export { ReplikaPricingConfusionCallout } from './ReplikaPricingConfusionCallout';
 export { CAISoftLaunchLockEscape } from './CAISoftLaunchLockEscape';
 export { CAIStatusEntitlementBanner } from './CAIStatusEntitlementBanner';
+export { CharacterAICreatorDiscoveryLiftCard } from './CharacterAICreatorDiscoveryLiftCard';
 export { PricingCompetitorAnchorRow } from './PricingCompetitorAnchorRow';
 export { ReplikaAdvancedAiComparisonCard } from './ReplikaAdvancedAiComparisonCard';
 export { ReplikaVoiceCallPreflightCard } from './ReplikaVoiceCallPreflightCard';

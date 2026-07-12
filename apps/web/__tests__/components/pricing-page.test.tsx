@@ -242,6 +242,18 @@ describe('PricingPage', () => {
     expect(section).toHaveTextContent('Continuity receipt timeline');
   });
 
+  it('renders the Character.AI creator discovery lift card with publish, follow, and remix signals', () => {
+    render(<PricingPage />);
+
+    const section = screen.getByTestId('cai-creator-discovery-lift-section');
+    expect(section).toBeInTheDocument();
+    expect(section).toHaveTextContent('Published character report');
+    expect(section).toHaveTextContent('Discovery lift');
+    expect(section).toHaveTextContent('Follows after publish');
+    expect(section).toHaveTextContent('Remix lift');
+    expect(section).toHaveTextContent('Post-publish lift path');
+  });
+
   it('renders the Moltbook app-auth identity handoff CTA with verification, connection, and owner action', () => {
     render(<PricingPage />);
 
