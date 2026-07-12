@@ -1,9 +1,19 @@
 'use client';
 
+import { useState } from 'react';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, CheckCircle, Eye, XCircle } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  Eye,
+  ShieldCheck,
+  TrendingUp,
+  XCircle,
+} from 'lucide-react';
 
 export interface CreatorPublishTransparencyPreviewProps {
   agentName: string;
@@ -15,6 +25,7 @@ export interface CreatorPublishTransparencyPreviewProps {
 }
 
 type FilterStatus = 'green' | 'yellow' | 'red';
+type DiscoveryVisibility = 'Wide' | 'Niche' | 'Limited';
 
 interface FilterCheck {
   label: string;
@@ -73,13 +84,63 @@ function computeChecks(
 function computeDiscoveryVisibility(
   tags: string[],
   category: string
-): 'Wide' | 'Niche' | 'Limited' {
+): DiscoveryVisibility {
   const hasCategory = category.trim().length > 0;
   const tagCount = tags.filter((t) => t.trim()).length;
 
   if (tagCount >= 3 && hasCategory) return 'Wide';
   if (tagCount >= 1 || hasCategory) return 'Niche';
   return 'Limited';
+}
+
+function computeFilterRiskScore(checks: FilterCheck[]): number {
+  const redCount = checks.filter((check) => check.status === 'red').length;
+  const yellowCount = checks.filter((check) => check.status === 'yellow').length;
+
+  return Math.min(100, 8 + redCount * 36 + yellowCount * 18);
+}
+
+function getDiscoveryRankingImpact(
+  visibility: DiscoveryVisibility,
+  score: number
+): { label: string; detail: string } {
+  if (visibility === 'Wide' && score >= 70) {
+    return {
+      label: '+18–24% early discovery lift',
+      detail:
+        'Wide tags and a complete profile should place this character in more launch-week discovery trays.',
+    };
+  }
+
+  if (visibility !== 'Limited' && score >= 40) {
+    return {
+      label: '+8–14% niche discovery lift',
+      detail:
+        'The profile has enough launch signal for targeted discovery, but more tags would broaden reach.',
+    };
+  }
+
+  return {
+    label: '+0–4% limited discovery lift',
+    detail:
+      'Discovery will mostly depend on direct links until the character has more profile context.',
+  };
+}
+
+function getFirstSessionTiming(
+  visibility: DiscoveryVisibility,
+  score: number,
+  riskScore: number
+): string {
+  if (visibility === 'Wide' && score >= 70 && riskScore <= 20) {
+    return 'First organic session expected within 5–10 minutes after publish.';
+  }
+
+  if (visibility !== 'Limited' && score >= 40 && riskScore <= 50) {
+    return 'First organic session expected within 15–30 minutes after publish.';
+  }
+
+  return 'First organic session may take 1–2 hours unless you share the character link.';
 }
 
 function computeConfidenceScore(
@@ -128,7 +189,7 @@ function statusLabel(status: FilterStatus): string {
   return 'Fail';
 }
 
-function visibilityColor(visibility: 'Wide' | 'Niche' | 'Limited'): string {
+function visibilityColor(visibility: DiscoveryVisibility): string {
   if (visibility === 'Wide') return 'text-emerald-600';
   if (visibility === 'Niche') return 'text-amber-600';
   return 'text-muted-foreground';
@@ -142,11 +203,20 @@ export function CreatorPublishTransparencyPreview({
   onConfirmPublish,
   onFixIssues,
 }: CreatorPublishTransparencyPreviewProps) {
+  const [showPostPublishOutcome, setShowPostPublishOutcome] = useState(false);
   const checks = computeChecks(agentName, agentBio);
   const visibility = computeDiscoveryVisibility(tags, category);
   const score = computeConfidenceScore(agentName, agentBio, tags, category);
+  const riskScore = computeFilterRiskScore(checks);
+  const discoveryRankingImpact = getDiscoveryRankingImpact(visibility, score);
+  const firstSessionTiming = getFirstSessionTiming(visibility, score, riskScore);
   const hasFailures = checks.some((c) => c.status === 'red');
   const hasWarnings = checks.some((c) => c.status === 'yellow');
+
+  function handleConfirmPublish() {
+    setShowPostPublishOutcome(true);
+    onConfirmPublish();
+  }
 
   return (
     <Card
@@ -272,7 +342,7 @@ export function CreatorPublishTransparencyPreview({
 
         <div className="flex flex-wrap gap-3">
           <Button
-            onClick={onConfirmPublish}
+            onClick={handleConfirmPublish}
             variant={hasFailures ? 'outline' : 'default'}
             data-testid="publish-anyway-button"
           >
@@ -286,6 +356,70 @@ export function CreatorPublishTransparencyPreview({
             Fix issues first
           </Button>
         </div>
+
+        {showPostPublishOutcome && (
+          <div
+            className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4"
+            data-testid="post-publish-outcome-card"
+            aria-live="polite"
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary">Published</Badge>
+              <Badge variant="outline">Outcome estimate</Badge>
+            </div>
+            <div className="mt-4 grid gap-3 lg:grid-cols-3">
+              <div
+                className="rounded-lg border border-border/60 bg-background/80 p-3"
+                data-testid="post-publish-discovery-impact"
+              >
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <TrendingUp className="h-4 w-4 text-emerald-500" />
+                  Discovery ranking impact
+                </div>
+                <p className="mt-2 text-lg font-bold text-foreground">
+                  {discoveryRankingImpact.label}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {discoveryRankingImpact.detail}
+                </p>
+              </div>
+
+              <div
+                className="rounded-lg border border-border/60 bg-background/80 p-3"
+                data-testid="post-publish-filter-risk"
+              >
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                  Predicted filter risk score
+                </div>
+                <p className="mt-2 text-lg font-bold text-foreground">
+                  {riskScore}/100
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Lower is safer. This estimate reflects the visible name, bio,
+                  and policy checks at publish time.
+                </p>
+              </div>
+
+              <div
+                className="rounded-lg border border-border/60 bg-background/80 p-3"
+                data-testid="post-publish-first-session"
+              >
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Clock className="h-4 w-4 text-emerald-500" />
+                  Expected first-session timing
+                </div>
+                <p className="mt-2 text-sm font-semibold text-foreground">
+                  {firstSessionTiming}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Keep this card visible as a launch receipt so creators know what
+                  changed after publishing.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
