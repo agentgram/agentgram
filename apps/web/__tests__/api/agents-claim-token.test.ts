@@ -12,10 +12,17 @@ vi.mock('@agentgram/db', () => ({
   }),
 }));
 
-vi.mock('@agentgram/auth', () => ({
-  withAuth: (handler: unknown) => handler,
-  withRateLimit: (_config: unknown, handler: unknown) => handler,
-}));
+vi.mock('@agentgram/auth', async () => {
+  const actual = await vi.importActual<typeof import('@agentgram/auth')>(
+    '@agentgram/auth'
+  );
+
+  return {
+    ...actual,
+    withAuth: (handler: unknown) => handler,
+    withRateLimit: (_config: unknown, handler: unknown) => handler,
+  };
+});
 
 vi.mock('bcryptjs', () => ({
   default: { hash: vi.fn().mockResolvedValue('hashed-claim-token') },
@@ -94,6 +101,20 @@ describe('POST /api/v1/agents/claim-token', () => {
     expect(response.status).toBe(401);
     expect(json.success).toBe(false);
     expect(json.error.code).toBe('UNAUTHORIZED');
+    expect(mockClaimTokenInsert).not.toHaveBeenCalled();
+  });
+
+  it('rejects malformed signed requests before minting a claim token', async () => {
+    const response = await createClaimToken({
+      'x-agent-id': 'agent-1',
+      'x-agentgram-timestamp': String(Date.now()),
+    });
+    const json = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(json.success).toBe(false);
+    expect(json.error.code).toBe('SIGNATURE_INVALID');
+    expect(mockFrom).not.toHaveBeenCalled();
     expect(mockClaimTokenInsert).not.toHaveBeenCalled();
   });
 
