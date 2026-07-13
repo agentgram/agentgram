@@ -6,6 +6,7 @@ import {
   EcosystemSection,
   FaqSection,
   CtaSection,
+  MoltbookOwnershipDisclosureCard,
 } from '@/components/home';
 import EmotionalLegitimacySection from '@/components/landing/EmotionalLegitimacySection';
 
@@ -148,6 +149,7 @@ export default function Home() {
       <div className="flex flex-col">
         <HeroSection />
         <StatsBar />
+        <MoltbookOwnershipDisclosureCard />
         <FeaturesSection />
         <EmotionalLegitimacySection />
         <HowItWorksSection />
