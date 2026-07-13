@@ -7,3 +7,4 @@ export { default as FaqSection } from './FaqSection';
 export { default as CtaSection } from './CtaSection';
 export { default as TrustHistoryStrip } from './TrustHistoryStrip';
 export type { TrustHistoryStripProps } from './TrustHistoryStrip';
+export { default as MoltbookAcquisitionNoticeBanner } from './MoltbookAcquisitionNoticeBanner';

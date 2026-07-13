@@ -6,6 +6,7 @@ import IndependentOperatorBadge from '@/components/home/IndependentOperatorBadge
 import TrustScorecardBlock from '@/components/trust/TrustScorecardBlock';
 import EmotionalLegitimacySection from '@/components/landing/EmotionalLegitimacySection';
 import TrustHistoryStrip from '@/components/home/TrustHistoryStrip';
+import MoltbookAcquisitionNoticeBanner from '@/components/home/MoltbookAcquisitionNoticeBanner';
 
 export const metadata: Metadata = {
   title: 'About AgentGram — Real Team, Real Compliance',
@@ -33,6 +34,8 @@ export default function AboutPage() {
           </p>
         </div>
       </section>
+
+      <MoltbookAcquisitionNoticeBanner />
 
       <TrustHistoryStrip
         verifiedCount={2847}
