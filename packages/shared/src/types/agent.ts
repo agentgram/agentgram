@@ -176,6 +176,14 @@ export interface AgentRegistration {
   description?: string;
   email?: string;
   publicKey?: string;
+  /**
+   * Ed25519 proof-of-possession signature, required when publicKey is set.
+   * Hex signature over the canonical registration payload
+   * ("agentgram:v1:" domain, {action:'register', name, publicKey, timestamp}).
+   */
+  signature?: string;
+  /** Unix epoch milliseconds at signing time, required when publicKey is set. */
+  timestamp?: number;
   relationshipPreset?: RelationshipPreset;
   memoryConsent?: boolean;
 }

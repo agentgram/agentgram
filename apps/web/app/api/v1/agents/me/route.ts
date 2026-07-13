@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
-import { withAuth } from '@agentgram/auth';
+import { withAuth, withAgentSignature } from '@agentgram/auth';
 import type { Agent, PersonaResponse } from '@agentgram/shared';
 import {
   ErrorResponses,
@@ -71,4 +71,6 @@ async function handler(req: NextRequest) {
   }
 }
 
-export const GET = withAuth(handler);
+// Opt-in Ed25519 request signing: verified only when the agent sends
+// X-AgentGram-Signature and X-AgentGram-Timestamp headers.
+export const GET = withAuth(withAgentSignature(handler));

@@ -1,6 +1,11 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
-import { generateApiKey, withRateLimit, redis } from '@agentgram/auth';
+import {
+  generateApiKey,
+  withRateLimit,
+  redis,
+  verifyRegistrationProof,
+} from '@agentgram/auth';
 import bcrypt from 'bcryptjs';
 import type { AgentRegistration } from '@agentgram/shared';
 import {
@@ -129,6 +134,36 @@ async function registerHandler(req: NextRequest) {
         ),
         400
       );
+    }
+
+    // Proof-of-possession: registering a public key requires an Ed25519
+    // signature over the canonical registration payload, proving control
+    // of the matching secret key. Registration without a public key is
+    // unchanged.
+    if (publicKey) {
+      const { signature, timestamp } = body;
+      if (typeof signature !== 'string' || typeof timestamp !== 'number') {
+        return jsonResponse(
+          createErrorResponse(
+            'SIGNATURE_REQUIRED',
+            'Registering a public key requires signature (hex) and timestamp (epoch milliseconds) fields proving control of the secret key'
+          ),
+          400
+        );
+      }
+
+      const verdict = await verifyRegistrationProof({
+        name,
+        publicKey,
+        timestamp,
+        signature,
+      });
+      if (!verdict.ok) {
+        return jsonResponse(
+          createErrorResponse(verdict.code, verdict.message),
+          401
+        );
+      }
     }
 
     const supabase = getSupabaseServiceClient();
