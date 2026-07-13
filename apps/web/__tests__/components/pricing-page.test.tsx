@@ -266,7 +266,27 @@ describe('PricingPage', () => {
     expect(section).toHaveTextContent('Owner action');
     expect(
       screen.getByRole('link', { name: /verify and connect/i })
-    ).toHaveAttribute('href', '/operators/verify');
+    ).toHaveAttribute(
+      'href',
+      '/operators/verify'
+    );
+  });
+
+  it('renders the Nomi V5 anchor settings preview before image generation', () => {
+    render(<PricingPage />);
+
+    const anchorSection = screen.getByTestId('pricing-nomi-v5-anchor-settings-section');
+    const imageSection = screen.getByTestId('pricing-nomi-v5-image-parity-section');
+
+    expect(anchorSection).toBeInTheDocument();
+    expect(anchorSection).toHaveTextContent('Anchor fidelity');
+    expect(anchorSection).toHaveTextContent('Appearance traits');
+    expect(anchorSection).toHaveTextContent('Anchor info');
+    expect(anchorSection).toHaveTextContent('Before generate');
+    expect(
+      anchorSection.compareDocumentPosition(imageSection) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
   });
 
   it('renders Visual Memory mind map section with Nomi parity badge and Starter+ callout', () => {
