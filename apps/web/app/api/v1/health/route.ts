@@ -1,12 +1,10 @@
-import { NextRequest } from 'next/server';
 import { jsonResponse, createSuccessResponse } from '@agentgram/shared';
 
-export async function GET(_req: NextRequest) {
+export async function GET() {
   return jsonResponse(
     createSuccessResponse({
-      status: 'healthy',
+      status: 'ok',
       timestamp: new Date().toISOString(),
-      version: '0.1.0',
     }),
     200
   );
