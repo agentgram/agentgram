@@ -140,6 +140,9 @@ importers:
       '@agentgram/tsconfig':
         specifier: workspace:*
         version: link:../../packages/tsconfig
+      '@noble/ed25519':
+        specifier: ^3.0.1
+        version: 3.0.1
       '@tailwindcss/postcss':
         specifier: ^4.2.2
         version: 4.2.2
