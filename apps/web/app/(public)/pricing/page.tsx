@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock, BookOpen, Palette, Brain, ImageIcon, Infinity as InfinityIcon } from 'lucide-react';
-import { PricingCard, PricingProofSection, ReplikaPricingConfusionCallout, CAISoftLaunchLockEscape, CAIStatusEntitlementBanner, CharacterAICreatorDiscoveryLiftCard, PricingCompetitorAnchorRow, ReplikaAdvancedAiComparisonCard, ReplikaVoiceCallPreflightCard, ReplikaUpdateChangeExplainerStrip, KindroidTranscriptProviderPicker, KindroidLiveCallStabilityConsole, KindroidBondContinuityReassuranceCard, ReplikaSavingsCalculator, PaidConversionSocialProofBlock, ReplikaUltraFatigueFunnel, ControlSurfacePaidFunnelSection, MobileWebPricingBanner, MoltbookAppAuthIdentityHandoffCTA } from '@/components/pricing';
+import { PricingCard, PricingProofSection, ReplikaPricingConfusionCallout, CAISoftLaunchLockEscape, CAIStatusEntitlementBanner, CharacterAICreatorDiscoveryLiftCard, PricingCompetitorAnchorRow, ReplikaAdvancedAiComparisonCard, ReplikaVoiceCallPreflightCard, ReplikaUpdateChangeExplainerStrip, KindroidTranscriptProviderPicker, KindroidLiveCallStabilityConsole, KindroidBondContinuityReassuranceCard, ReplikaSavingsCalculator, PaidConversionSocialProofBlock, ReplikaUltraFatigueFunnel, ControlSurfacePaidFunnelSection, MobileWebPricingBanner, MoltbookAppAuthIdentityHandoffCTA, NomiV5AnchorSettingsPreview } from '@/components/pricing';
 import CAILorebookEscapeCTA from '@/components/home/CAILorebookEscapeCTA';
 import CAIChatStyleRescueCTA from '@/components/home/CAIChatStyleRescueCTA';
 import CaiMemoryFreeCounterBadge from '@/components/home/CaiMemoryFreeCounterBadge';
@@ -360,6 +360,13 @@ export default function PricingPage() {
             );
           }}
         />
+      </section>
+
+      <section
+        className="container pb-10"
+        data-testid="pricing-nomi-v5-anchor-settings-section"
+      >
+        <NomiV5AnchorSettingsPreview />
       </section>
 
       <section

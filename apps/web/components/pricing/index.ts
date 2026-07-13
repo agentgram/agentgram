@@ -17,3 +17,4 @@ export { ReplikaUltraFatigueFunnel } from './ReplikaUltraFatigueFunnel';
 export { ControlSurfacePaidFunnelSection } from './ControlSurfacePaidFunnelSection';
 export { MobileWebPricingBanner } from './MobileWebPricingBanner';
 export { MoltbookAppAuthIdentityHandoffCTA } from './MoltbookAppAuthIdentityHandoffCTA';
+export { NomiV5AnchorSettingsPreview } from './NomiV5AnchorSettingsPreview';
