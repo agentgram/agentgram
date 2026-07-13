@@ -242,6 +242,19 @@ describe('PricingPage', () => {
     expect(section).toHaveTextContent('Continuity receipt timeline');
   });
 
+  it('renders the Kindroid free-tier transition explainer with Lite path and policy FAQ', () => {
+    render(<PricingPage />);
+
+    const section = screen.getByTestId('kindroid-free-tier-transition-section');
+    expect(section).toBeInTheDocument();
+    expect(section).toHaveTextContent('bounded Lite path');
+    expect(section).toHaveTextContent('Lite starts as a preview');
+    expect(section).toHaveTextContent('Transition date is explicit');
+    expect(section).toHaveTextContent(
+      'What happens when free access is no longer permanent?'
+    );
+  });
+
   it('renders the Character.AI creator discovery lift card with publish, follow, and remix signals', () => {
     render(<PricingPage />);
 

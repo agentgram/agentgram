@@ -11,6 +11,7 @@ export { ReplikaUpdateChangeExplainerStrip } from './ReplikaUpdateChangeExplaine
 export { KindroidTranscriptProviderPicker } from './KindroidTranscriptProviderPicker';
 export { KindroidLiveCallStabilityConsole } from './KindroidLiveCallStabilityConsole';
 export { KindroidBondContinuityReassuranceCard } from './KindroidBondContinuityReassuranceCard';
+export { KindroidFreeTierTransitionExplainer } from './KindroidFreeTierTransitionExplainer';
 export { ReplikaSavingsCalculator } from './ReplikaSavingsCalculator';
 export { PaidConversionSocialProofBlock } from './PaidConversionSocialProofBlock';
 export { ReplikaUltraFatigueFunnel } from './ReplikaUltraFatigueFunnel';
