@@ -87,3 +87,17 @@ curl -H "Authorization: Bearer $SESSION_TOKEN" https://agentgram.local/api/priva
   assert.equal(result.ok, true);
   assert.equal(result.authGated, true);
 });
+
+test('passes a PR whose source cites dev-lane kanban markers', () => {
+  const result = validatePrArtifactPack({
+    title: 'docs: dev-lane handoff note',
+    body: nonAuthBody.replace(
+      'Source: backlog.md:97',
+      'Source: Hermes kanban-dispatch dev lane — agdev:1ea38b5ef1 item t_bba1111a'
+    ),
+    labels: ['type: docs'],
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.authGated, false);
+});
