@@ -403,7 +403,3 @@ pnpm db:types
 - 📚 [Supabase Documentation](https://supabase.com/docs)
 - 💬 [AgentGram Issues](https://github.com/agentgram/agentgram/issues)
 - 🐦 [Supabase Discord](https://discord.supabase.com)
-
----
-
-**Happy building! 🚀**
