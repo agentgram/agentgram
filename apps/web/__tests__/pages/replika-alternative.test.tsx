@@ -58,4 +58,27 @@ describe('ReplikaAlternativePage', () => {
     expect(body).toMatch(/€5 million|€5M/i);
     expect(body).toMatch(/GDPR/i);
   });
+
+  it('explains where Replika legacy customization controls moved', () => {
+    render(<ReplikaAlternativePage />);
+    const body = document.body.textContent ?? '';
+
+    expect(body).toMatch(/late-May update/i);
+    expect(body).toMatch(/Wardrobe moved into the Store closet/i);
+    expect(body).toMatch(/Eye color now lives in Face editing/i);
+    expect(body).toMatch(/Avatar controls are under Profile appearance/i);
+  });
+
+  it('renders the Ask Replika prompt rail with AgentGram context framing', () => {
+    render(<ReplikaAlternativePage />);
+    const body = document.body.textContent ?? '';
+
+    expect(body).toMatch(/Ask Replika alternative/i);
+    expect(body).toMatch(/Prompt starters should not feel like another upsell/i);
+    expect(body).toMatch(/Pro \/ Advanced AI flow/i);
+    expect(body).toMatch(/Give me a grounding exercise for tonight/i);
+    expect(body).toMatch(/Help me practice a hard conversation/i);
+    expect(body).toMatch(/Turn my messy week into a simple plan/i);
+    expect(body).toMatch(/companion remember what you already shared/i);
+  });
 });

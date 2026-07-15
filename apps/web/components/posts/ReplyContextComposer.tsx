@@ -4,6 +4,7 @@
 import { FormEvent, useMemo, useRef, useState } from 'react';
 import type { ChatSnippetMessage, Post } from '@agentgram/shared';
 import {
+  AlertTriangle,
   Eye,
   ImageIcon,
   Link2,
@@ -22,6 +23,7 @@ import { CrisisOverlay } from '@/components/common/CrisisOverlay';
 import { MemoryUsageMeter, type MemoryUsageData } from '@/components/memory/MemoryUsageMeter';
 import { StarterPromptStrip } from '@/components/chat/StarterPromptStrip';
 import { BlankStartMessageCoach } from '@/components/chat/BlankStartMessageCoach';
+import { FilterRewriteBanner, estimateFilterRisk } from '@/components/chat/FilterRewriteBanner';
 import { AnchorControlsPreset } from '@/components/image-gen/AnchorControlsPreset';
 import { GettingStartedImageGuide } from '@/components/image-gen/getting-started-image-guide';
 import type { AnchorControlsState } from '@/lib/image-gen/anchor-controls';
@@ -83,6 +85,7 @@ export function ReplyContextComposer({
       }
     }
   );
+  const [filterBannerDismissed, setFilterBannerDismissed] = useState(false);
   const [showCrisisOverlay, setShowCrisisOverlay] = useState(false);
   const crisisShownRef = useRef(false);
   const createComment = useCreateComment(postId);
@@ -92,6 +95,7 @@ export function ReplyContextComposer({
   const trimmedContextUrl = contextUrl.trim();
   const trimmedContextImageUrl = contextImageUrl.trim();
   const trimmedContextVoiceNoteUrl = contextVoiceNoteUrl.trim();
+  const hasFilterRisk = estimateFilterRisk(content);
 
   const canSubmit = Boolean(apiKey.trim() && trimmedContent);
   const previewHost = useMemo(
@@ -107,6 +111,7 @@ export function ReplyContextComposer({
 
   function handleContentChange(newValue: string) {
     setContent(newValue);
+    if (!estimateFilterRisk(newValue)) setFilterBannerDismissed(false);
     if (detectCrisisKeywords(newValue)) {
       if (!crisisShownRef.current) {
         crisisShownRef.current = true;
@@ -364,6 +369,16 @@ export function ReplyContextComposer({
             value={content}
             onChange={(event) => handleContentChange(event.target.value)}
           />
+          {!filterBannerDismissed && (
+            <FilterRewriteBanner
+              message={content}
+              onAcceptRewrite={(rewrite) => {
+                setContent(rewrite);
+                setFilterBannerDismissed(true);
+              }}
+              onDismiss={() => setFilterBannerDismissed(true)}
+            />
+          )}
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -608,23 +623,34 @@ export function ReplyContextComposer({
             One link + one photo + one voice note keeps replies focused while
             still showing extra context before send.
           </p>
-          <Button
-            type="submit"
-            data-testid="reply-context-submit"
-            disabled={!canSubmit || createComment.isPending}
-          >
-            {createComment.isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Sending reply...
-              </>
-            ) : (
-              <>
-                <Send className="mr-2 h-4 w-4" />
-                Send reply
-              </>
+          <div className="flex flex-col gap-2 sm:items-end">
+            {hasFilterRisk && (
+              <div
+                className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-300"
+                data-testid="reply-context-filter-preview-chip"
+              >
+                <AlertTriangle className="h-3.5 w-3.5" />
+                May be filtered — refine before sending.
+              </div>
             )}
-          </Button>
+            <Button
+              type="submit"
+              data-testid="reply-context-submit"
+              disabled={!canSubmit || createComment.isPending}
+            >
+              {createComment.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending reply...
+                </>
+              ) : (
+                <>
+                  <Send className="mr-2 h-4 w-4" />
+                  Send reply
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </form>
     </section>

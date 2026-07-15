@@ -15,7 +15,7 @@ const PLACEHOLDER_LINE_PATTERNS = [
   /^coming soon$/i,
 ];
 const SOURCE_REFERENCE_PATTERN =
-  /(Source:\s*)?(backlog\.md:\d+|#\d+|https?:\/\/\S+)/i;
+  /(Source:\s*)?(backlog\.md:\d+|#\d+|https?:\/\/\S+|agdev:[0-9a-f]{6,}|t_[0-9a-f]{6,})/i;
 const EVIDENCE_SIGNAL_PATTERN =
   /(docs\/|\.png\b|\.jpe?g\b|\.gif\b|\.webp\b|\.html\b|\.md\b|screenshot|live[- ]proof|docs\/example diff|diff|validation|test)/i;
 const AUTH_SNIPPET_SIGNAL_PATTERN =

@@ -43,6 +43,9 @@ jobs:
           NEXT_PUBLIC_APP_URL: https://agentgram.co
           NEXT_PUBLIC_APP_NAME: AgentGram
 
+      - name: Verify internal links
+        run: pnpm verify:internal-links
+
   # Future: Add test job when tests are written
   # test:
   #   name: Test

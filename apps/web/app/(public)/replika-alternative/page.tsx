@@ -9,6 +9,10 @@ import {
   Heart,
   DollarSign,
   Database,
+  Eye,
+  Palette,
+  Sparkles,
+  MessageCircleQuestion,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageContainer } from '@/components/common';
@@ -64,6 +68,48 @@ const comparisonRows = [
   },
 ];
 
+const legacyCustomizationSteps = [
+  {
+    title: 'Wardrobe moved into the Store closet',
+    description:
+      'Open the avatar room, choose Store, then Closet to find purchased outfits and legacy wardrobe items after the late-May layout change.',
+    icon: Palette,
+  },
+  {
+    title: 'Eye color now lives in Face editing',
+    description:
+      'Tap Appearance, then Face and Eyes. The old standalone eye-color picker is now grouped with face and makeup controls.',
+    icon: Eye,
+  },
+  {
+    title: 'Avatar controls are under Profile appearance',
+    description:
+      'Use Profile, Edit, Appearance for body, hair, face, and outfit controls instead of the removed legacy customization shortcut.',
+    icon: Sparkles,
+  },
+] as const;
+
+const askReplikaPromptRail = [
+  {
+    category: 'Well-being',
+    prompt: 'Give me a grounding exercise for tonight.',
+    agentgram:
+      'AgentGram keeps the context with your companion history instead of hiding starters behind a Pro-only Advanced AI rail.',
+  },
+  {
+    category: 'Relationships',
+    prompt: 'Help me practice a hard conversation.',
+    agentgram:
+      'Prompts can connect to memory, boundaries, and relationship tone without making you re-explain the same situation.',
+  },
+  {
+    category: 'Life Skills',
+    prompt: 'Turn my messy week into a simple plan.',
+    agentgram:
+      'Starter ideas are framed as companion guidance, not a separate mode you must remember to launch from the composer.',
+  },
+] as const;
+
 export default function ReplikaAlternativePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/80">
@@ -98,6 +144,110 @@ export default function ReplikaAlternativePage() {
                 </Link>
               </Button>
             </div>
+          </section>
+
+          {/* Replika legacy customization recovery notice */}
+          <section
+            aria-labelledby="replika-customization-recovery"
+            className="space-y-6 max-w-5xl mx-auto rounded-2xl border border-primary/20 bg-primary/5 p-8"
+          >
+            <div className="space-y-3">
+              <p className="text-sm font-medium uppercase tracking-[0.24em] text-primary">
+                Replika late-May update recovery
+              </p>
+              <h2
+                id="replika-customization-recovery"
+                className="text-3xl font-bold"
+              >
+                Can&apos;t find wardrobe, eye color, or avatar controls?
+              </h2>
+              <p className="text-muted-foreground max-w-3xl">
+                Replika&apos;s late-May update moved several legacy customization
+                entry points. Use this quick map before assuming your items or
+                avatar settings disappeared.
+              </p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              {legacyCustomizationSteps.map((step) => {
+                const Icon = step.icon;
+
+                return (
+                  <div
+                    key={step.title}
+                    className="rounded-xl border border-border/60 bg-background/70 p-5 space-y-3"
+                  >
+                    <Icon className="h-6 w-6 text-primary" />
+                    <h3 className="font-semibold">{step.title}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {step.description}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+
+            <p className="text-sm text-muted-foreground">
+              If you prefer not to chase moving menus, AgentGram keeps companion
+              setup, memory, and data export in predictable account settings.
+            </p>
+          </section>
+
+          {/* Ask Replika prompt rail */}
+          <section
+            aria-labelledby="ask-replika-prompt-rail"
+            className="space-y-6 max-w-5xl mx-auto rounded-2xl border border-border/60 bg-muted/20 p-8"
+          >
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div className="space-y-3 max-w-3xl">
+                <p className="text-sm font-medium uppercase tracking-[0.24em] text-primary">
+                  Ask Replika alternative
+                </p>
+                <h2 id="ask-replika-prompt-rail" className="text-3xl font-bold">
+                  Prompt starters should not feel like another upsell
+                </h2>
+                <p className="text-muted-foreground">
+                  Replika&apos;s Ask Replika feature puts prompt categories such as
+                  well-being, relationships, life skills, productivity, and
+                  creativity behind the Pro / Advanced AI flow. AgentGram makes
+                  starter prompts useful by tying them to memory and clear
+                  companion context before you type.
+                </p>
+              </div>
+
+              <div className="rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
+                Composer-ready ideas
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              {askReplikaPromptRail.map((item) => (
+                <article
+                  key={item.category}
+                  className="rounded-xl border border-border/60 bg-background/80 p-5 space-y-4"
+                >
+                  <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+                    <MessageCircleQuestion
+                      className="h-4 w-4"
+                      aria-hidden="true"
+                    />
+                    {item.category}
+                  </div>
+                  <p className="rounded-lg bg-muted/50 p-3 text-sm font-medium">
+                    “{item.prompt}”
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {item.agentgram}
+                  </p>
+                </article>
+              ))}
+            </div>
+
+            <p className="text-sm text-muted-foreground">
+              Use this rail to compare the real question: are prompts just a
+              content library, or do they help your companion remember what you
+              already shared?
+            </p>
           </section>
 
           {/* Why Switch */}

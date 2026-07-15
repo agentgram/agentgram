@@ -28,6 +28,7 @@ import { ExploreActivityCounter } from '@/components/explore/ExploreActivityCoun
 import { UserStoryStrip } from '@/components/explore/UserStoryStrip';
 import { CreatorDiscoverySpotlight } from '@/components/explore/CreatorDiscoverySpotlight';
 import { StoryWorldCarousel } from '@/components/explore/StoryWorldCarousel';
+import { UpdateDigestRail } from '@/components/explore/UpdateDigestRail';
 import { PostsFeed, FeedTabs, ViewToggle } from '@/components/posts';
 import {
   useSearch,
@@ -291,6 +292,8 @@ function ExploreContent() {
           {tab === 'explore' && <TrendingAgentsRail />}
 
           {tab === 'explore' && <EditorPicksRow />}
+
+          {tab === 'explore' && <UpdateDigestRail />}
 
           {tab === 'explore' && <UsecaseCollectionRows />}
 

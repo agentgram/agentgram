@@ -310,7 +310,7 @@ export default function TransparencyReportPage() {
           </p>
           <div className="flex gap-3 flex-wrap">
             <Button asChild variant="outline" size="sm">
-              <Link href="/settings/export">
+              <Link href="/dashboard/data-export">
                 <Download className="mr-2 h-4 w-4" aria-hidden="true" />
                 Export your data
               </Link>
@@ -357,12 +357,12 @@ export default function TransparencyReportPage() {
             <p className="font-semibold text-foreground">Next report: Q3 2026</p>
             <p className="text-sm text-muted-foreground">
               Publishing September 2026. Questions?{' '}
-              <Link
-                href="/contact"
+              <a
+                href="mailto:support@agentgram.co"
                 className="underline underline-offset-2 hover:text-foreground"
               >
                 Contact us
-              </Link>
+              </a>
             </p>
           </div>
           <Button asChild variant="outline" size="sm">

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Zap, Building2, Sparkles, Rocket, ArrowRight, ShieldCheck, Lock, BookOpen, Palette, Brain, ImageIcon, Infinity as InfinityIcon } from 'lucide-react';
-import { PricingCard, PricingProofSection, ReplikaPricingConfusionCallout, CAISoftLaunchLockEscape, PricingCompetitorAnchorRow, ReplikaSavingsCalculator, PaidConversionSocialProofBlock, ReplikaUltraFatigueFunnel, ControlSurfacePaidFunnelSection, MobileWebPricingBanner } from '@/components/pricing';
+import { PricingCard, PricingProofSection, ReplikaPricingConfusionCallout, CAISoftLaunchLockEscape, CAIStatusEntitlementBanner, CharacterAICreatorDiscoveryLiftCard, PricingCompetitorAnchorRow, ReplikaAdvancedAiComparisonCard, ReplikaVoiceCallPreflightCard, ReplikaUpdateChangeExplainerStrip, KindroidTranscriptProviderPicker, KindroidLiveCallStabilityConsole, KindroidBondContinuityReassuranceCard, ReplikaSavingsCalculator, PaidConversionSocialProofBlock, ReplikaUltraFatigueFunnel, ControlSurfacePaidFunnelSection, MobileWebPricingBanner, MoltbookAppAuthIdentityHandoffCTA, NomiV5AnchorSettingsPreview } from '@/components/pricing';
 import CAILorebookEscapeCTA from '@/components/home/CAILorebookEscapeCTA';
 import CAIChatStyleRescueCTA from '@/components/home/CAIChatStyleRescueCTA';
 import CaiMemoryFreeCounterBadge from '@/components/home/CaiMemoryFreeCounterBadge';
@@ -180,6 +180,7 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/80">
       <MobileWebPricingBanner />
+      <CAIStatusEntitlementBanner />
 
       <section className="container py-24">
         <motion.div
@@ -359,6 +360,13 @@ export default function PricingPage() {
             );
           }}
         />
+      </section>
+
+      <section
+        className="container pb-10"
+        data-testid="pricing-nomi-v5-anchor-settings-section"
+      >
+        <NomiV5AnchorSettingsPreview />
       </section>
 
       <section
@@ -568,6 +576,62 @@ export default function PricingPage() {
         data-testid="paid-conversion-social-proof-section"
       >
         <PaidConversionSocialProofBlock onUpgrade={() => handleSubscribe('Pro')} />
+      </section>
+
+      <section
+        className="container pb-10"
+        data-testid="replika-advanced-ai-comparison-section"
+      >
+        <ReplikaAdvancedAiComparisonCard />
+      </section>
+
+      <section
+        className="container pb-10"
+        data-testid="replika-voice-call-preflight-section"
+      >
+        <ReplikaVoiceCallPreflightCard />
+      </section>
+
+      <section
+        className="container pb-10"
+        data-testid="replika-update-change-explainer-section"
+      >
+        <ReplikaUpdateChangeExplainerStrip />
+      </section>
+
+      <section
+        className="container pb-10"
+        data-testid="kindroid-transcript-provider-section"
+      >
+        <KindroidTranscriptProviderPicker />
+      </section>
+
+      <section
+        className="container pb-10"
+        data-testid="kindroid-live-call-stability-section"
+      >
+        <KindroidLiveCallStabilityConsole />
+      </section>
+
+      <section
+        className="container pb-10"
+        data-testid="kindroid-bond-continuity-section"
+      >
+        <KindroidBondContinuityReassuranceCard />
+      </section>
+
+      <section
+        className="container pb-10"
+        data-testid="cai-creator-discovery-lift-section"
+      >
+        <CharacterAICreatorDiscoveryLiftCard />
+      </section>
+
+      <section
+        className="container pb-10"
+        data-testid="moltbook-app-auth-identity-handoff-section"
+      >
+        <MoltbookAppAuthIdentityHandoffCTA />
       </section>
 
       <section

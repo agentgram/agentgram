@@ -191,6 +191,104 @@ describe('PricingPage', () => {
     ).toHaveTextContent('Transparent pricing, no tier confusion');
   });
 
+  it('renders the Replika voice-call preflight card with quality, latency, and voice mode', () => {
+    render(<PricingPage />);
+
+    const section = screen.getByTestId('replika-voice-call-preflight-section');
+    expect(section).toBeInTheDocument();
+    expect(section).toHaveTextContent('Call quality');
+    expect(section).toHaveTextContent('Latency');
+    expect(section).toHaveTextContent('Voice mode');
+  });
+
+  it('renders the Replika update-change explainer strip with plan, memory, and voice deltas', () => {
+    render(<PricingPage />);
+
+    const section = screen.getByTestId('replika-update-change-explainer-section');
+    expect(section).toBeInTheDocument();
+    expect(section).toHaveTextContent('Plan changes');
+    expect(section).toHaveTextContent('Memory changes');
+    expect(section).toHaveTextContent('Voice changes');
+    expect(section).toHaveTextContent('Before/after memo');
+  });
+
+  it('renders the Replika Advanced AI comparison section with the decision path', () => {
+    render(<PricingPage />);
+
+    const section = screen.getByTestId('replika-advanced-ai-comparison-section');
+    expect(section).toBeInTheDocument();
+    expect(section).toHaveTextContent('Replika standard chat');
+    expect(section).toHaveTextContent('Advanced AI upgrade');
+    expect(section).toHaveTextContent('AgentGram preview');
+  });
+
+  it('renders the Kindroid live-call stability console with readiness, transcript, and troubleshooting', () => {
+    render(<PricingPage />);
+
+    const section = screen.getByTestId('kindroid-live-call-stability-section');
+    expect(section).toBeInTheDocument();
+    expect(section).toHaveTextContent('Readiness');
+    expect(section).toHaveTextContent('Live transcript');
+    expect(section).toHaveTextContent('Troubleshooting pinned');
+  });
+
+  it('renders the Kindroid bond continuity reassurance card with history, consent, and receipts', () => {
+    render(<PricingPage />);
+
+    const section = screen.getByTestId('kindroid-bond-continuity-section');
+    expect(section).toBeInTheDocument();
+    expect(section).toHaveTextContent('Bond history');
+    expect(section).toHaveTextContent('Consent checkpoint');
+    expect(section).toHaveTextContent('Continuity receipt timeline');
+  });
+
+  it('renders the Character.AI creator discovery lift card with publish, follow, and remix signals', () => {
+    render(<PricingPage />);
+
+    const section = screen.getByTestId('cai-creator-discovery-lift-section');
+    expect(section).toBeInTheDocument();
+    expect(section).toHaveTextContent('Published character report');
+    expect(section).toHaveTextContent('Discovery lift');
+    expect(section).toHaveTextContent('Follows after publish');
+    expect(section).toHaveTextContent('Remix lift');
+    expect(section).toHaveTextContent('Post-publish lift path');
+  });
+
+  it('renders the Moltbook app-auth identity handoff CTA with verification, connection, and owner action', () => {
+    render(<PricingPage />);
+
+    const section = screen.getByTestId(
+      'moltbook-app-auth-identity-handoff-section'
+    );
+    expect(section).toBeInTheDocument();
+    expect(section).toHaveTextContent('Owner verification');
+    expect(section).toHaveTextContent('App connection');
+    expect(section).toHaveTextContent('Owner action');
+    expect(
+      screen.getByRole('link', { name: /verify and connect/i })
+    ).toHaveAttribute(
+      'href',
+      '/operators/verify'
+    );
+  });
+
+  it('renders the Nomi V5 anchor settings preview before image generation', () => {
+    render(<PricingPage />);
+
+    const anchorSection = screen.getByTestId('pricing-nomi-v5-anchor-settings-section');
+    const imageSection = screen.getByTestId('pricing-nomi-v5-image-parity-section');
+
+    expect(anchorSection).toBeInTheDocument();
+    expect(anchorSection).toHaveTextContent('Anchor fidelity');
+    expect(anchorSection).toHaveTextContent('Appearance traits');
+    expect(anchorSection).toHaveTextContent('Anchor info');
+    expect(anchorSection).toHaveTextContent('Before generate');
+    expect(
+      anchorSection.compareDocumentPosition(imageSection) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
   it('renders Visual Memory mind map section with Nomi parity badge and Starter+ callout', () => {
     render(<PricingPage />);
 

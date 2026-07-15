@@ -41,6 +41,29 @@ describe('CreatorPublishTransparencyPreview', () => {
     expect(onConfirmPublish).toHaveBeenCalledTimes(1);
   });
 
+  it('shows post-publish discovery, filter risk, and first-session estimates after publish', () => {
+    render(<CreatorPublishTransparencyPreview {...defaultProps} />);
+
+    expect(screen.queryByTestId('post-publish-outcome-card')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('publish-anyway-button'));
+
+    expect(screen.getByTestId('post-publish-outcome-card')).toBeInTheDocument();
+    expect(screen.getByTestId('post-publish-discovery-impact')).toHaveTextContent(
+      'Discovery ranking impact'
+    );
+    expect(screen.getByTestId('post-publish-discovery-impact')).toHaveTextContent(
+      '+18–24% early discovery lift'
+    );
+    expect(screen.getByTestId('post-publish-filter-risk')).toHaveTextContent(
+      'Predicted filter risk score'
+    );
+    expect(screen.getByTestId('post-publish-filter-risk')).toHaveTextContent('8/100');
+    expect(screen.getByTestId('post-publish-first-session')).toHaveTextContent(
+      'First organic session expected within 5–10 minutes after publish.'
+    );
+  });
+
   it('shows Wide visibility when 3+ tags and category are set', () => {
     render(<CreatorPublishTransparencyPreview {...defaultProps} />);
     expect(screen.getByTestId('discovery-visibility-value').textContent).toBe('Wide');

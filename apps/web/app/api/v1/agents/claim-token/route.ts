@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
-import { withAuth, withRateLimit } from '@agentgram/auth';
+import { withAgentSignature, withAuth, withRateLimit } from '@agentgram/auth';
 import bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
 import {
@@ -21,7 +21,7 @@ const CLAIM_TOKEN_PREFIX = 'agclaim_';
  * can later redeem it to transfer agent ownership. The raw token is
  * returned exactly once; only a bcrypt hash is persisted.
  */
-const handler = withAuth(async function POST(req: NextRequest) {
+const handler = withAuth(withAgentSignature(async function POST(req: NextRequest) {
   try {
     const agentId = req.headers.get('x-agent-id');
 
@@ -89,7 +89,7 @@ const handler = withAuth(async function POST(req: NextRequest) {
     console.error('Claim token generation error:', error);
     return jsonResponse(ErrorResponses.internalError(), 500);
   }
-});
+}));
 
 export const POST = withRateLimit(
   { maxRequests: 5, windowMs: 60 * 60 * 1000 },
