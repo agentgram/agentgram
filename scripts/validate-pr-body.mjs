@@ -145,8 +145,8 @@ function normalizeChangedFile(file) {
   return '';
 }
 
-function isDocsMarkdownFile(file) {
-  return /^docs\/.+\.md$/i.test(file);
+function isMarkdownDocumentFile(file) {
+  return /(^|\/)[^/]+\.md$/i.test(file);
 }
 
 function isPackageMetadataFile(file) {
@@ -179,7 +179,7 @@ function isArtifactPackExempt({
   if (
     normalizedFiles.length > 0 &&
     normalizedFiles.every(
-      (file) => isDocsMarkdownFile(file) || isPackageMetadataFile(file)
+      (file) => isMarkdownDocumentFile(file) || isPackageMetadataFile(file)
     )
   ) {
     return { exempt: true, reason: 'docs/package metadata only changes' };

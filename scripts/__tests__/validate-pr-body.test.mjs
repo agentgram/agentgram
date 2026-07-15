@@ -154,6 +154,32 @@ test('skips artifact pack validation for docs and package metadata only changes'
   assert.equal(result.skipReason, 'docs/package metadata only changes');
 });
 
+test('skips artifact pack validation for root README-only changes', () => {
+  const result = validatePrArtifactPack({
+    title: 'docs: refresh root readme',
+    body: '',
+    author: 'human-maintainer',
+    changedFiles: ['README.md'],
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.skipped, true);
+  assert.equal(result.skipReason, 'docs/package metadata only changes');
+});
+
+test('skips artifact pack validation for markdown-only changes outside docs', () => {
+  const result = validatePrArtifactPack({
+    title: 'docs: refresh app readme',
+    body: '',
+    author: 'human-maintainer',
+    changedFiles: ['README.md', 'apps/web/README.md'],
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.skipped, true);
+  assert.equal(result.skipReason, 'docs/package metadata only changes');
+});
+
 test('keeps artifact pack validation for non-exempt dev-lane bot PRs', () => {
   const result = validatePrArtifactPack({
     title: 'feat: dev-lane implementation',
