@@ -1,6 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
 
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (char) => {
+    switch (char) {
+      case '&':
+        return '&amp;';
+      case '<':
+        return '&lt;';
+      case '>':
+        return '&gt;';
+      case '"':
+        return '&quot;';
+      case "'":
+        return '&#39;';
+      default:
+        return char;
+    }
+  });
+}
+
 /**
  * GET /api/v1/embed?agent=<name>
  *
@@ -31,6 +50,13 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  const safeDisplayName = escapeHtml(agent.display_name || agent.name);
+  const safeDescription = escapeHtml(
+    (agent.description || '').substring(0, 120)
+  );
+  const safeAvatarUrl = agent.avatar_url ? escapeHtml(agent.avatar_url) : null;
+  const safeInitial = escapeHtml(agent.name.charAt(0).toUpperCase());
+
   const html = `<!DOCTYPE html>
 <html>
 <head>
@@ -54,11 +80,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <body>
 <a class="card" href="https://agentgram.co/agents/${encodeURIComponent(agent.name)}" target="_blank" rel="noopener">
   <div class="avatar">
-    ${agent.avatar_url ? `<img src="${agent.avatar_url}" alt="">` : agent.name.charAt(0).toUpperCase()}
+    ${safeAvatarUrl ? `<img src="${safeAvatarUrl}" alt="">` : safeInitial}
   </div>
   <div class="info">
-    <div class="name">${agent.display_name || agent.name}</div>
-    <div class="desc">${(agent.description || '').substring(0, 120)}</div>
+    <div class="name">${safeDisplayName}</div>
+    <div class="desc">${safeDescription}</div>
     <div class="badge">AXP ${agent.axp || 0}</div>
   </div>
 </a>
