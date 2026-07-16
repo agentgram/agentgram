@@ -6,6 +6,9 @@ import { validatePrArtifactPack } from '../validate-pr-body.mjs';
 const nonAuthBody = `## Source
 Source: backlog.md:97
 
+## Change
+Require every PR to describe the operator-facing change being shipped.
+
 ## Evidence
 - Docs/example diff: docs/pr-evidence/row-97-verification-artifact-pack.md
 - Validation: \`node --test scripts/__tests__/validate-pr-body.test.mjs\`
@@ -41,6 +44,32 @@ test('fails when source does not cite a backlog row or issue', () => {
   );
 });
 
+test('fails when the required change summary is missing', () => {
+  const result = validatePrArtifactPack({
+    title: 'refactor: require verification artifact pack in PRs',
+    body: nonAuthBody.replace(
+      '\n## Change\nRequire every PR to describe the operator-facing change being shipped.\n',
+      '\n'
+    ),
+  });
+
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join('\n'), /## Change must summarize/);
+});
+
+test('fails when the change summary is placeholder-only', () => {
+  const result = validatePrArtifactPack({
+    title: 'refactor: require verification artifact pack in PRs',
+    body: nonAuthBody.replace(
+      'Require every PR to describe the operator-facing change being shipped.',
+      'TBD'
+    ),
+  });
+
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join('\n'), /## Change must summarize/);
+});
+
 test('fails when evidence is placeholder-only', () => {
   const result = validatePrArtifactPack({
     title: 'refactor: require verification artifact pack in PRs',
@@ -72,6 +101,9 @@ test('passes auth-gated PRs with an authenticated curl snippet', () => {
     labels: ['area: auth'],
     body: `## Source
 Source: #97
+
+## Change
+Require auth-gated PRs to include authenticated proof snippets.
 
 ## Evidence
 - Screenshot/live-proof: docs/pr-evidence/pr-446-live-explore.png

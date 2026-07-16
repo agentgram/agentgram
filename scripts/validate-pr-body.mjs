@@ -4,7 +4,12 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const REQUIRED_SECTION_TITLES = ['Source', 'Evidence', 'Auth-only Proof'];
+const REQUIRED_SECTION_TITLES = [
+  'Source',
+  'Change',
+  'Evidence',
+  'Auth-only Proof',
+];
 const PLACEHOLDER_LINE_PATTERNS = [
   /^[-*]\s*$/,
   /^tbd$/i,
@@ -158,6 +163,13 @@ export function validatePrArtifactPack({
   ) {
     errors.push(
       '## Source must cite a backlog row or issue (for example `Source: backlog.md:97` or `Source: #123`).'
+    );
+  }
+
+  const change = sections.Change;
+  if (!change || isPlaceholderOnly(change)) {
+    errors.push(
+      '## Change must summarize the concrete user/operator-facing change being shipped.'
     );
   }
 
