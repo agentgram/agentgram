@@ -5,6 +5,7 @@ Source: backlog.md:97
 ## What this refactor enforces
 
 - Every PR must declare a concrete source: backlog row or issue.
+- Every PR must summarize the concrete operator-facing change being shipped.
 - Every PR must attach reviewer-facing evidence: screenshot/live-proof or docs/example diff.
 - Every PR must fill `## Auth-only Proof` with either:
   - an authenticated curl/test snippet for auth-gated lanes, or
@@ -25,6 +26,12 @@ Auth-gated PRs cannot leave `## Auth-only Proof` as `N/A`.
 - Docs/example diff: `.github/PULL_REQUEST_TEMPLATE.md`, `.github/workflows/pr-artifact-pack.yml`, `scripts/validate-pr-body.mjs`
 - Screenshot/live-proof: `docs/pr-evidence/pr-446-live-explore.png`
 - Validation command: `node --test scripts/__tests__/validate-pr-body.test.mjs`
+
+## Required change summary
+
+`## Change` is mandatory and must contain non-placeholder text. It gives reviewers
+the short human handoff that PR #901 lacked: what changed, not just where the
+proof came from.
 
 ## Auth-only Proof examples
 
