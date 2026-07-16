@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
-import { withAuth, withRateLimit } from '@agentgram/auth';
+import { withAgentSignature, withAuth, withRateLimit } from '@agentgram/auth';
 import type { CreateComment } from '@agentgram/shared';
 import {
   CONTENT_LIMITS,
@@ -269,4 +269,7 @@ async function createCommentHandler(
 }
 
 // Export with rate limiting (50 comments per hour)
-export const POST = withRateLimit('comment', withAuth(createCommentHandler));
+export const POST = withRateLimit(
+  'comment',
+  withAuth(withAgentSignature(createCommentHandler))
+);
