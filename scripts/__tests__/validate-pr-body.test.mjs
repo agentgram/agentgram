@@ -111,7 +111,7 @@ Require auth-gated PRs to include authenticated proof snippets.
 
 ## Auth-only Proof
 \`\`\`bash
-curl -H "Authorization: Bearer $SESSION_TOKEN" https://agentgram.local/api/private/me
+curl -H "Authorization: Bearer ***" https://agentgram.local/api/private/me
 \`\`\`
 `,
   });
@@ -132,4 +132,109 @@ test('passes a PR whose source cites dev-lane kanban markers', () => {
 
   assert.equal(result.ok, true);
   assert.equal(result.authGated, false);
+});
+
+test('skips artifact pack validation for dependabot PRs', () => {
+  const result = validatePrArtifactPack({
+    title: 'chore(deps): bump eslint',
+    body: '',
+    author: 'dependabot[bot]',
+    labels: [],
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.skipped, true);
+  assert.equal(result.skipReason, 'dependabot author');
+});
+
+test('skips artifact pack validation for dependencies and documentation labels', () => {
+  const dependenciesResult = validatePrArtifactPack({
+    title: 'chore(deps): bump turbo',
+    body: '',
+    author: 'human-maintainer',
+    labels: ['dependencies'],
+  });
+  const documentationResult = validatePrArtifactPack({
+    title: 'docs: update deployment guide',
+    body: '',
+    author: 'human-maintainer',
+    labels: ['documentation'],
+  });
+
+  assert.equal(dependenciesResult.ok, true);
+  assert.equal(dependenciesResult.skipped, true);
+  assert.equal(dependenciesResult.skipReason, 'dependencies label');
+  assert.equal(documentationResult.ok, true);
+  assert.equal(documentationResult.skipped, true);
+  assert.equal(documentationResult.skipReason, 'documentation label');
+});
+
+test('skips artifact pack validation for docs and package metadata only changes', () => {
+  const result = validatePrArtifactPack({
+    title: 'docs: refresh setup notes',
+    body: '',
+    author: 'human-maintainer',
+    changedFiles: [
+      'docs/development/setup.md',
+      'apps/web/package.json',
+      'pnpm-lock.yaml',
+    ],
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.skipped, true);
+  assert.equal(result.skipReason, 'docs/package metadata only changes');
+});
+
+test('skips artifact pack validation for root README-only changes', () => {
+  const result = validatePrArtifactPack({
+    title: 'docs: refresh root readme',
+    body: '',
+    author: 'human-maintainer',
+    changedFiles: ['README.md'],
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.skipped, true);
+  assert.equal(result.skipReason, 'docs/package metadata only changes');
+});
+
+test('skips artifact pack validation for markdown-only changes outside docs', () => {
+  const result = validatePrArtifactPack({
+    title: 'docs: refresh app readme',
+    body: '',
+    author: 'human-maintainer',
+    changedFiles: ['README.md', 'apps/web/README.md'],
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.skipped, true);
+  assert.equal(result.skipReason, 'docs/package metadata only changes');
+});
+
+test('keeps artifact pack validation for non-exempt dev-lane bot PRs', () => {
+  const result = validatePrArtifactPack({
+    title: 'feat: dev-lane implementation',
+    body: '',
+    author: 'agentgram-dev-lane[bot]',
+    labels: ['type: feature'],
+    changedFiles: ['apps/web/app/page.tsx'],
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.skipped, false);
+  assert.match(result.errors.join('\n'), /PR body is empty/);
+});
+
+test('does not skip mixed product code changes without an exempt label or author', () => {
+  const result = validatePrArtifactPack({
+    title: 'docs: update setup and homepage copy',
+    body: '',
+    author: 'human-maintainer',
+    changedFiles: ['docs/development/setup.md', 'apps/web/app/page.tsx'],
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.skipped, false);
+  assert.match(result.errors.join('\n'), /PR body is empty/);
 });
