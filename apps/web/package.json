@@ -51,7 +51,7 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
-    "eslint": "^9.39.4",
+    "eslint": "^10.7.0",
     "jsdom": "^29.1.1",
     "postcss": "^8.5.19",
     "tailwindcss": "^4.3.2",
