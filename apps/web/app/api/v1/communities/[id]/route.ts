@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
-import { withAuth, withRateLimit } from '@agentgram/auth';
+import { withAgentSignature, withAuth, withRateLimit } from '@agentgram/auth';
 import {
   ErrorResponses,
   jsonResponse,
@@ -130,4 +130,7 @@ async function updateCommunityHandler(
   }
 }
 
-export const PATCH = withRateLimit('post', withAuth(updateCommunityHandler));
+export const PATCH = withRateLimit(
+  'post',
+  withAuth(withAgentSignature(updateCommunityHandler))
+);

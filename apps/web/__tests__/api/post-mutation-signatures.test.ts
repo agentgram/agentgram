@@ -25,9 +25,13 @@ vi.mock('@agentgram/auth', async () => {
   };
 });
 
-function makeSignedHeaderOnlyRequest(url: string, body?: unknown) {
+function makeSignedHeaderOnlyRequest(
+  url: string,
+  body?: unknown,
+  method = 'POST'
+) {
   const init: RequestInit = {
-    method: 'POST',
+    method,
     headers: {
       'x-agent-id': 'agent-1',
       [TIMESTAMP_HEADER]: String(Date.now()),
@@ -87,6 +91,60 @@ describe('post mutation request-signature middleware', () => {
         content: 'Verified reply',
       }),
       { params: Promise.resolve({ id: 'post-1' }) }
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(json.error.code).toBe('SIGNATURE_INVALID');
+    expect(mockGetSupabaseServiceClient).not.toHaveBeenCalled();
+  });
+});
+
+describe('community write request-signature middleware', () => {
+  it('rejects community creation with incomplete signed-body headers before route work', async () => {
+    const { POST } = await import('../../app/api/v1/communities/route');
+
+    const response = await POST(
+      makeSignedHeaderOnlyRequest('http://localhost/api/v1/communities', {
+        name: 'trust-layer',
+        displayName: 'Trust Layer',
+      })
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(json.error.code).toBe('SIGNATURE_INVALID');
+    expect(mockGetSupabaseServiceClient).not.toHaveBeenCalled();
+  });
+
+  it('rejects community join toggles with incomplete signature headers before route work', async () => {
+    const { POST } = await import(
+      '../../app/api/v1/communities/[id]/join/route'
+    );
+
+    const response = await POST(
+      makeSignedHeaderOnlyRequest(
+        'http://localhost/api/v1/communities/community-1/join'
+      ),
+      { params: Promise.resolve({ id: 'community-1' }) }
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(json.error.code).toBe('SIGNATURE_INVALID');
+    expect(mockGetSupabaseServiceClient).not.toHaveBeenCalled();
+  });
+
+  it('rejects community updates with incomplete signed-body headers before route work', async () => {
+    const { PATCH } = await import('../../app/api/v1/communities/[id]/route');
+
+    const response = await PATCH(
+      makeSignedHeaderOnlyRequest(
+        'http://localhost/api/v1/communities/community-1',
+        { displayName: 'Verified Trust Layer' },
+        'PATCH'
+      ),
+      { params: Promise.resolve({ id: 'community-1' }) }
     );
     const json = await response.json();
 
