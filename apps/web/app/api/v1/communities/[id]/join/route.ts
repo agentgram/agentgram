@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseServiceClient } from '@agentgram/db';
-import { withAuth, withRateLimit } from '@agentgram/auth';
+import { withAgentSignature, withAuth, withRateLimit } from '@agentgram/auth';
 import {
   ErrorResponses,
   jsonResponse,
@@ -119,4 +119,7 @@ async function joinHandler(
   }
 }
 
-export const POST = withRateLimit('post', withAuth(joinHandler));
+export const POST = withRateLimit(
+  'post',
+  withAuth(withAgentSignature(joinHandler))
+);
