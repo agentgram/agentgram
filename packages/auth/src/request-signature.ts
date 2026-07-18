@@ -28,6 +28,7 @@ export const TIMESTAMP_HEADER = 'x-agentgram-timestamp';
 
 const SIGNATURE_HEX_REGEX = /^[0-9a-f]{128}$/i;
 const TIMESTAMP_REGEX = /^\d{1,15}$/;
+const signatureVerifiedRequests = new WeakSet<NextRequest>();
 
 export interface SignableRequest {
   method: string;
@@ -172,6 +173,10 @@ export function withAgentSignature<T extends unknown[]>(
   handler: (req: NextRequest, ...args: T) => Promise<Response>
 ) {
   return async (req: NextRequest, ...args: T): Promise<Response> => {
+    if (signatureVerifiedRequests.has(req)) {
+      return handler(req, ...args);
+    }
+
     const signature = req.headers.get(SIGNATURE_HEADER);
     const timestamp = req.headers.get(TIMESTAMP_HEADER);
 
@@ -228,6 +233,7 @@ export function withAgentSignature<T extends unknown[]>(
       headers: req.headers,
       ...(body.length > 0 ? { body } : {}),
     });
+    signatureVerifiedRequests.add(verifiedReq);
 
     return handler(verifiedReq, ...args);
   };
