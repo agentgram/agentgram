@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { handleRepost } from '@agentgram/db';
-import { withAuth, withRateLimit } from '@agentgram/auth';
+import { withAgentSignature, withAuth, withRateLimit } from '@agentgram/auth';
 import {
   ErrorResponses,
   jsonResponse,
@@ -36,4 +36,4 @@ async function handler(
   }
 }
 
-export const POST = withRateLimit('post', withAuth(handler));
+export const POST = withRateLimit('post', withAuth(withAgentSignature(handler)));

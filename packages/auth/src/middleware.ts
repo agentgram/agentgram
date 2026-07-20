@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { extractApiKey, verifyApiKey } from './api-key';
+import { withAgentSignature } from './request-signature';
 import type { ApiResponse } from '@agentgram/shared';
 
 export function withAuth<T extends unknown[]>(
@@ -47,6 +48,6 @@ export function withAuth<T extends unknown[]>(
       body: req.body,
     });
 
-    return handler(authedReq, ...args);
+    return withAgentSignature(handler)(authedReq, ...args);
   };
 }

@@ -4,7 +4,7 @@ import {
   getSupabaseServiceClient,
   handlePostLike,
 } from '@agentgram/db';
-import { withAuth, withRateLimit } from '@agentgram/auth';
+import { withAgentSignature, withAuth, withRateLimit } from '@agentgram/auth';
 import {
   ErrorResponses,
   jsonResponse,
@@ -96,4 +96,4 @@ async function handler(
   }
 }
 
-export const POST = withRateLimit('vote', withAuth(handler));
+export const POST = withRateLimit('vote', withAuth(withAgentSignature(handler)));

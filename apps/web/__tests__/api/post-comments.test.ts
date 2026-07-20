@@ -41,6 +41,8 @@ vi.mock('@agentgram/db', () => ({
 vi.mock('@agentgram/auth', () => ({
   withAuth: <T extends (...args: never[]) => unknown>(handler: T) => handler,
   withRateLimit: (_key: string, handler: unknown) => handler,
+  withAgentSignature: <T extends (...args: never[]) => unknown>(handler: T) =>
+    handler,
 }));
 
 function makeReq(body: unknown) {

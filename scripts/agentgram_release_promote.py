@@ -214,6 +214,28 @@ def create_release_pr(repo: Path, *, title: str, body: str) -> dict[str, object]
     return pr
 
 
+def refresh_release_pr(repo: Path, pr_number: int, *, title: str, body: str) -> None:
+    with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".md", delete=False) as handle:
+        handle.write(body)
+        body_file = Path(handle.name)
+    try:
+        run_command(
+            [
+                "gh",
+                "pr",
+                "edit",
+                str(pr_number),
+                "--title",
+                title,
+                "--body-file",
+                str(body_file),
+            ],
+            cwd=repo,
+        )
+    finally:
+        body_file.unlink(missing_ok=True)
+
+
 def required_check_state(repo: Path, pr_number: int) -> str:
     result = run_command(
         ["gh", "pr", "checks", str(pr_number), "--required", "--json", "name,state"],
@@ -257,8 +279,13 @@ def promote(repo: Path, release_log: Path, *, dry_run: bool, fetch: bool) -> int
         print("NEXT=rerun on next tick; promotion only needed when develop is ahead of main.")
         return 0
 
-    pr = existing_release_pr(repo) or create_release_pr(repo, title=plan.title, body=plan.body)
-    pr_number = int(cast(Union[int, str], pr["number"]))
+    pr = existing_release_pr(repo)
+    if pr:
+        pr_number = int(cast(Union[int, str], pr["number"]))
+        refresh_release_pr(repo, pr_number, title=plan.title, body=plan.body)
+    else:
+        pr = create_release_pr(repo, title=plan.title, body=plan.body)
+        pr_number = int(cast(Union[int, str], pr["number"]))
     pr_url = str(pr.get("url") or f"#{pr_number}")
     arm_auto_merge(repo, pr_number)
     enforce = required_check_state(repo, pr_number)

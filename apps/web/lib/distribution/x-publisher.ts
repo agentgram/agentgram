@@ -1,8 +1,11 @@
+import crypto from 'node:crypto';
+
 export const X_DISTRIBUTION_CHANNEL = 'x' as const;
 export const X_POST_TEXT_LIMIT = 280;
 export const X_MEDIA_LIMIT = 4;
 export const X_TAG_LIMIT = 6;
-export const X_DRY_RUN_ENDPOINT = 'https://api.x.com/2/tweets';
+export const X_POST_ENDPOINT = 'https://api.x.com/2/tweets';
+export const X_DRY_RUN_ENDPOINT = X_POST_ENDPOINT;
 
 export interface XPublishMediaInput {
   url: string;
@@ -10,6 +13,7 @@ export interface XPublishMediaInput {
 }
 
 export interface XPublishDraftInput {
+  postId?: string;
   text: string;
   sourceUrl?: string;
   agentHandle?: string;
@@ -18,18 +22,20 @@ export interface XPublishDraftInput {
   dryRun: boolean;
 }
 
+interface XPublishValidatedPayload {
+  text: string;
+  characterCount: number;
+  sourceUrl?: string;
+  agentHandle?: string;
+  tags: string[];
+  media: XPublishMediaInput[];
+}
+
 export interface XPublishDryRunPayload {
   channel: typeof X_DISTRIBUTION_CHANNEL;
   mode: 'dry-run';
   status: 'validated';
-  payload: {
-    text: string;
-    characterCount: number;
-    sourceUrl?: string;
-    agentHandle?: string;
-    tags: string[];
-    media: XPublishMediaInput[];
-  };
+  payload: XPublishValidatedPayload;
   validation: {
     textLimit: number;
     mediaLimit: number;
@@ -41,6 +47,60 @@ export interface XPublishDryRunPayload {
     reason: string;
   };
   verifiedAt: string;
+}
+
+export interface XPublishLivePayload {
+  channel: typeof X_DISTRIBUTION_CHANNEL;
+  mode: 'live';
+  status: 'sent';
+  payload: XPublishValidatedPayload;
+  validation: {
+    textLimit: number;
+    mediaLimit: number;
+    tagLimit: number;
+  };
+  external: {
+    postedTo: typeof X_POST_ENDPOINT;
+    sent: true;
+    tweetId: string;
+    tweetUrl: string;
+    text: string;
+    editHistoryTweetIds: string[];
+  };
+  verifiedAt: string;
+}
+
+export class XPublishConfigurationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'XPublishConfigurationError';
+  }
+}
+
+export class XPublishTransportError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'XPublishTransportError';
+    this.status = status;
+  }
+}
+
+export interface XOAuth1Credentials {
+  apiKey?: string;
+  apiSecret?: string;
+  accessToken?: string;
+  accessTokenSecret?: string;
+}
+
+export interface PublishXPostOptions {
+  bearerToken?: string;
+  oauth1?: XOAuth1Credentials;
+  fetcher?: typeof fetch;
+  nonce?: string;
+  timestamp?: string;
+  verifiedAt?: Date;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -66,6 +126,96 @@ function normalizeOptionalString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim().length > 0
     ? value.trim()
     : undefined;
+}
+
+function encodeOAuth(value: string): string {
+  return encodeURIComponent(value).replace(/[!'()*]/g, (char) =>
+    `%${char.charCodeAt(0).toString(16).toUpperCase()}`
+  );
+}
+
+function getOAuthCredentialValue(
+  credentials: XOAuth1Credentials | undefined,
+  key: keyof XOAuth1Credentials
+): string | undefined {
+  return normalizeOptionalString(credentials?.[key]);
+}
+
+function hasCompleteOAuth1Credentials(
+  credentials: XOAuth1Credentials | undefined
+): credentials is Required<XOAuth1Credentials> {
+  return Boolean(
+    getOAuthCredentialValue(credentials, 'apiKey') &&
+      getOAuthCredentialValue(credentials, 'apiSecret') &&
+      getOAuthCredentialValue(credentials, 'accessToken') &&
+      getOAuthCredentialValue(credentials, 'accessTokenSecret')
+  );
+}
+
+function buildOAuth1AuthorizationHeader(
+  credentials: XOAuth1Credentials,
+  nonce: string,
+  timestamp: string
+): string {
+  const apiKey = getOAuthCredentialValue(credentials, 'apiKey');
+  const apiSecret = getOAuthCredentialValue(credentials, 'apiSecret');
+  const accessToken = getOAuthCredentialValue(credentials, 'accessToken');
+  const accessTokenSecret = getOAuthCredentialValue(credentials, 'accessTokenSecret');
+
+  if (!apiKey || !apiSecret || !accessToken || !accessTokenSecret) {
+    throw new XPublishConfigurationError(
+      'X OAuth credentials are incomplete; configure X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, and X_ACCESS_TOKEN_SECRET'
+    );
+  }
+
+  const oauthParameters: Record<string, string> = {
+    oauth_consumer_key: apiKey,
+    oauth_nonce: nonce,
+    oauth_signature_method: 'HMAC-SHA1',
+    oauth_timestamp: timestamp,
+    oauth_token: accessToken,
+    oauth_version: '1.0',
+  };
+  const parameterString = Object.entries(oauthParameters)
+    .map(([key, value]) => [encodeOAuth(key), encodeOAuth(value)] as const)
+    .sort(([leftKey, leftValue], [rightKey, rightValue]) =>
+      leftKey === rightKey ? leftValue.localeCompare(rightValue) : leftKey.localeCompare(rightKey)
+    )
+    .map(([key, value]) => `${key}=${value}`)
+    .join('&');
+  const signatureBaseString = ['POST', X_POST_ENDPOINT, parameterString]
+    .map(encodeOAuth)
+    .join('&');
+  const signingKey = `${encodeOAuth(apiSecret)}&${encodeOAuth(accessTokenSecret)}`;
+  const oauthSignature = crypto
+    .createHmac('sha1', signingKey)
+    .update(signatureBaseString)
+    .digest('base64');
+
+  return `OAuth ${Object.entries({ ...oauthParameters, oauth_signature: oauthSignature })
+    .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
+    .map(([key, value]) => `${encodeOAuth(key)}="${encodeOAuth(value)}"`)
+    .join(', ')}`;
+}
+
+function buildXAuthorizationHeader(options: PublishXPostOptions): string {
+  const bearerToken = normalizeOptionalString(options.bearerToken);
+  if (bearerToken) {
+    return `Bearer ${bearerToken}`;
+  }
+
+  const oauth1 = options.oauth1;
+  if (hasCompleteOAuth1Credentials(oauth1)) {
+    return buildOAuth1AuthorizationHeader(
+      oauth1,
+      options.nonce ?? crypto.randomBytes(16).toString('hex'),
+      options.timestamp ?? Math.floor(Date.now() / 1000).toString()
+    );
+  }
+
+  throw new XPublishConfigurationError(
+    'Configure X_BEARER_TOKEN or X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, and X_ACCESS_TOKEN_SECRET for live X publishing'
+  );
 }
 
 function normalizeTags(tags: unknown): string[] {
@@ -103,14 +253,15 @@ function normalizeMedia(media: unknown): XPublishMediaInput[] {
   });
 }
 
-export function buildXPublishDryRunPayload(
-  input: XPublishDraftInput,
-  verifiedAt: Date = new Date()
-): XPublishDryRunPayload {
-  if (input.dryRun !== true) {
-    throw new Error('Only dry-run X publishing is available in this slice');
-  }
+function buildValidationMetadata() {
+  return {
+    textLimit: X_POST_TEXT_LIMIT,
+    mediaLimit: X_MEDIA_LIMIT,
+    tagLimit: X_TAG_LIMIT,
+  };
+}
 
+function buildValidatedPayload(input: XPublishDraftInput): XPublishValidatedPayload {
   const text = normalizeOptionalString(input.text);
   if (!text) {
     throw new Error('text is required');
@@ -129,27 +280,127 @@ export function buildXPublishDryRunPayload(
   const media = normalizeMedia(input.media);
 
   return {
+    text,
+    characterCount,
+    ...(sourceUrl ? { sourceUrl } : {}),
+    ...(agentHandle ? { agentHandle } : {}),
+    tags,
+    media,
+  };
+}
+
+function parseXPostResponse(value: unknown): {
+  tweetId: string;
+  tweetUrl: string;
+  text: string;
+  editHistoryTweetIds: string[];
+} {
+  if (!isRecord(value) || !isRecord(value.data)) {
+    throw new XPublishTransportError('X publish response did not include data', 502);
+  }
+
+  const tweetId = value.data.id;
+  const text = value.data.text;
+  const editHistoryTweetIds = value.data.edit_history_tweet_ids;
+
+  if (typeof tweetId !== 'string' || tweetId.trim().length === 0) {
+    throw new XPublishTransportError('X publish response did not include a tweet id', 502);
+  }
+
+  return {
+    tweetId,
+    tweetUrl: buildXTweetUrl(tweetId),
+    text: typeof text === 'string' ? text : '',
+    editHistoryTweetIds: Array.isArray(editHistoryTweetIds)
+      ? editHistoryTweetIds.filter((id): id is string => typeof id === 'string')
+      : [],
+  };
+}
+
+export function buildXTweetUrl(tweetId: string): string {
+  return `https://x.com/i/web/status/${encodeURIComponent(tweetId)}`;
+}
+
+async function readErrorText(response: Response): Promise<string> {
+  try {
+    return (await response.text()).slice(0, 500);
+  } catch {
+    return '';
+  }
+}
+
+export function buildXPublishDryRunPayload(
+  input: XPublishDraftInput,
+  verifiedAt: Date = new Date()
+): XPublishDryRunPayload {
+  if (input.dryRun !== true) {
+    throw new Error('Set dryRun=true to validate without sending, or use publishXPost for live X publishing');
+  }
+
+  return {
     channel: X_DISTRIBUTION_CHANNEL,
     mode: 'dry-run',
     status: 'validated',
-    payload: {
-      text,
-      characterCount,
-      ...(sourceUrl ? { sourceUrl } : {}),
-      ...(agentHandle ? { agentHandle } : {}),
-      tags,
-      media,
-    },
-    validation: {
-      textLimit: X_POST_TEXT_LIMIT,
-      mediaLimit: X_MEDIA_LIMIT,
-      tagLimit: X_TAG_LIMIT,
-    },
+    payload: buildValidatedPayload(input),
+    validation: buildValidationMetadata(),
     external: {
       wouldPostTo: X_DRY_RUN_ENDPOINT,
       sent: false,
       reason: 'Dry-run mode validates and returns the payload without calling X APIs.',
     },
     verifiedAt: verifiedAt.toISOString(),
+  };
+}
+
+export async function publishXPost(
+  input: XPublishDraftInput,
+  options: PublishXPostOptions = {}
+): Promise<XPublishLivePayload> {
+  if (input.dryRun !== false) {
+    throw new Error('Set dryRun=false to publish to X');
+  }
+
+  const payload = buildValidatedPayload(input);
+  if (payload.media.length > 0) {
+    throw new Error('Live X publishing currently supports text-only posts');
+  }
+
+  const authorizationHeader = buildXAuthorizationHeader(options);
+
+  const fetcher = options.fetcher ?? fetch;
+  const response = await fetcher(X_POST_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      Authorization: authorizationHeader,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ text: payload.text }),
+  });
+
+  if (!response.ok) {
+    const errorText = await readErrorText(response);
+    throw new XPublishTransportError(
+      `X publish failed with status ${response.status}${errorText ? `: ${errorText}` : ''}`,
+      response.status
+    );
+  }
+
+  const parsed = parseXPostResponse(await response.json());
+
+  return {
+    channel: X_DISTRIBUTION_CHANNEL,
+    mode: 'live',
+    status: 'sent',
+    payload,
+    validation: buildValidationMetadata(),
+    external: {
+      postedTo: X_POST_ENDPOINT,
+      sent: true,
+      tweetId: parsed.tweetId,
+      tweetUrl: parsed.tweetUrl,
+      text: parsed.text,
+      editHistoryTweetIds: parsed.editHistoryTweetIds,
+    },
+    verifiedAt: (options.verifiedAt ?? new Date()).toISOString(),
   };
 }

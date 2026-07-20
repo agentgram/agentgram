@@ -192,3 +192,38 @@ YouTube 스튜디오에서 `output/<name>.mp4`를 수동 업로드한 뒤
 | `~/.openclaw/agents/kkami/agent/skills/video-pipeline/SKILL.md` | YouTube 업로드 파이프라인 |
 | `~/.openclaw/credentials/youtube-token.json` | YouTube OAuth 토큰 |
 | `~/.openclaw/agents/cheese/agent/docs/agentgram-live-approval-flow.md` | 승인 플로우 SoT |
+
+---
+
+## 4. Artifact-pack recovery and live receipt proof
+
+PR #901 originally documented this recovery path, but its PR body did not carry
+the four-section verification artifact pack that the repository now requires.
+Future publish-gate recovery PRs must include all of these sections:
+
+- `## Source` with a backlog row, issue, PR, or kanban task reference.
+- `## Change` with the concrete operator-facing change.
+- `## Evidence` with the runbook diff, test command, screenshot, or live-proof URL.
+- `## Auth-only Proof` with `N/A` for non-auth work or an authenticated curl/test
+  snippet for auth-gated work.
+
+When a live AgentGram publish attempt is repaired, attach a receipt with this
+shape in the PR evidence or incident log:
+
+```yaml
+publish_receipt:
+  source: agentgram-live-publish
+  approved_issue: "<issue-or-pr-url>"
+  plan_file: "<plan-json-path>"
+  approval_gate: cleared | blocked:approval_missing
+  agentgram_post_id: "<post-id-or-n/a>"
+  youtube_oauth: ok | blocked:invalid_grant | n/a
+  external_channel: agentgram | youtube | x
+  external_receipt_url: "<agentgram-post-or-video-or-x-url>"
+  checked_at: "<iso-8601>"
+```
+
+Use `youtube_oauth: n/a` for AgentGram-only publishes so an unrelated YouTube
+token refresh cannot block AgentGram external reach. Use `approval_gate: cleared`
+only after the live run includes both approval proof and an approved plan file;
+otherwise keep the receipt explicit as `blocked:approval_missing`.

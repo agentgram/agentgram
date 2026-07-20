@@ -4,7 +4,12 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const REQUIRED_SECTION_TITLES = ['Source', 'Evidence', 'Auth-only Proof'];
+const REQUIRED_SECTION_TITLES = [
+  'Source',
+  'Change',
+  'Evidence',
+  'Auth-only Proof',
+];
 const PLACEHOLDER_LINE_PATTERNS = [
   /^[-*]\s*$/,
   /^tbd$/i,
@@ -22,6 +27,9 @@ const AUTH_SNIPPET_SIGNAL_PATTERN =
   /```[\s\S]+```|`[^`]+`|\bcurl\b|\bpnpm\b|\bvitest\b|\bplaywright\b|\bauthorization\b|\bbearer\b|\bcookie\b|\bsession\b|\btoken\b/i;
 const EXPLICIT_NA_PATTERN =
   /^(?:[-*]\s*)?(?:`)?(?:n\/a|na|not applicable)(?:`)?$/i;
+const ARTIFACT_PACK_EXEMPT_LABELS = new Set(['dependencies', 'documentation']);
+const PACKAGE_METADATA_FILE_PATTERN =
+  /(^|\/)(package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|package-lock\.json|yarn\.lock|bun\.lockb?)$/;
 
 function stripComments(text) {
   return text.replace(/<!--[\s\S]*?-->/g, '').trim();
@@ -120,13 +128,92 @@ function isAuthGated({
   );
 }
 
+function normalizeLabels(labels) {
+  return labels.map((label) => String(label).trim().toLowerCase());
+}
+
+function normalizeAuthor(author) {
+  return String(author || '')
+    .trim()
+    .toLowerCase();
+}
+
+function normalizeChangedFile(file) {
+  if (typeof file === 'string') {
+    return file;
+  }
+
+  if (file && typeof file === 'object' && typeof file.filename === 'string') {
+    return file.filename;
+  }
+
+  return '';
+}
+
+function isMarkdownDocumentFile(file) {
+  return /(^|\/)[^/]+\.md$/i.test(file);
+}
+
+function isPackageMetadataFile(file) {
+  return PACKAGE_METADATA_FILE_PATTERN.test(file);
+}
+
+function isArtifactPackExempt({
+  author = '',
+  labels = [],
+  changedFiles = [],
+} = {}) {
+  const normalizedAuthor = normalizeAuthor(author);
+  if (
+    normalizedAuthor === 'dependabot[bot]' ||
+    normalizedAuthor === 'dependabot'
+  ) {
+    return { exempt: true, reason: 'dependabot author' };
+  }
+
+  const exemptLabel = normalizeLabels(labels).find((label) =>
+    ARTIFACT_PACK_EXEMPT_LABELS.has(label)
+  );
+  if (exemptLabel) {
+    return { exempt: true, reason: `${exemptLabel} label` };
+  }
+
+  const normalizedFiles = changedFiles
+    .map(normalizeChangedFile)
+    .filter(Boolean);
+  if (
+    normalizedFiles.length > 0 &&
+    normalizedFiles.every(
+      (file) => isMarkdownDocumentFile(file) || isPackageMetadataFile(file)
+    )
+  ) {
+    return { exempt: true, reason: 'docs/package metadata only changes' };
+  }
+
+  return { exempt: false, reason: null };
+}
+
 export function validatePrArtifactPack({
   title = '',
   body = '',
   labels = [],
+  author = '',
+  changedFiles = [],
   requireAuthProof,
 } = {}) {
   const errors = [];
+  const exemption = isArtifactPackExempt({ author, labels, changedFiles });
+  if (exemption.exempt) {
+    return {
+      ok: true,
+      authGated: isAuthGated({ title, body, labels, requireAuthProof }),
+      errors,
+      sections: parseSections(String(body || '')),
+      skipped: true,
+      skipReason: exemption.reason,
+    };
+  }
+
   const normalizedBody = String(body || '')
     .replace(/\r/g, '')
     .trim();
@@ -139,6 +226,8 @@ export function validatePrArtifactPack({
         'PR body is empty. Fill out the required verification artifact pack sections.',
       ],
       sections: parseSections(''),
+      skipped: false,
+      skipReason: null,
     };
   }
 
@@ -158,6 +247,13 @@ export function validatePrArtifactPack({
   ) {
     errors.push(
       '## Source must cite a backlog row or issue (for example `Source: backlog.md:97` or `Source: #123`).'
+    );
+  }
+
+  const change = sections.Change;
+  if (!change || isPlaceholderOnly(change)) {
+    errors.push(
+      '## Change must summarize the concrete user/operator-facing change being shipped.'
     );
   }
 
@@ -187,15 +283,22 @@ export function validatePrArtifactPack({
         '## Auth-only Proof must include an authenticated curl/test snippet when the PR is auth-gated.'
       );
     }
-  } else if (
-    !(isExplicitNa(authProof) || AUTH_SNIPPET_SIGNAL_PATTERN.test(authProof))
-  ) {
+  } else if (!(
+    isExplicitNa(authProof) || AUTH_SNIPPET_SIGNAL_PATTERN.test(authProof)
+  )) {
     errors.push(
       '## Auth-only Proof must be explicit `N/A` for non-auth lanes or include an authenticated curl/test snippet.'
     );
   }
 
-  return { ok: errors.length === 0, authGated, errors, sections };
+  return {
+    ok: errors.length === 0,
+    authGated,
+    errors,
+    sections,
+    skipped: false,
+    skipReason: null,
+  };
 }
 
 function parseArgs(argv) {
@@ -238,6 +341,15 @@ function coerceBoolean(value) {
   return value === 'true';
 }
 
+function parseJsonArray(value) {
+  if (!value) {
+    return [];
+  }
+
+  const parsed = JSON.parse(value);
+  return Array.isArray(parsed) ? parsed : [];
+}
+
 function loadInput(argv) {
   const args = parseArgs(argv);
   const event = loadEventPayload();
@@ -246,14 +358,20 @@ function loadInput(argv) {
     ? readFileSync(resolve(args['body-file']), 'utf8')
     : undefined;
   const labelsFromJson = args['labels-json'] ?? process.env.PR_LABELS_JSON;
+  const changedFilesFromJson =
+    args['changed-files-json'] ?? process.env.PR_CHANGED_FILES_JSON;
 
   return {
     title: args.title ?? process.env.PR_TITLE ?? eventPr?.title ?? '',
     body:
       bodyFromFile ?? args.body ?? process.env.PR_BODY ?? eventPr?.body ?? '',
     labels: labelsFromJson
-      ? JSON.parse(labelsFromJson)
+      ? parseJsonArray(labelsFromJson)
       : (eventPr?.labels ?? []).map((label) => label.name),
+    author: args.author ?? process.env.PR_AUTHOR ?? eventPr?.user?.login ?? '',
+    changedFiles: changedFilesFromJson
+      ? parseJsonArray(changedFilesFromJson)
+      : [],
     requireAuthProof: coerceBoolean(
       args['auth-gated'] ?? process.env.PR_AUTH_GATED
     ),
@@ -273,7 +391,9 @@ function main() {
   }
 
   console.log(
-    `PR artifact pack validation passed (${result.authGated ? 'auth-gated' : 'non-auth'} lane).`
+    result.skipped
+      ? `PR artifact pack validation skipped (${result.skipReason}).`
+      : `PR artifact pack validation passed (${result.authGated ? 'auth-gated' : 'non-auth'} lane).`
   );
 }
 

@@ -728,6 +728,65 @@ export type Database = {
           },
         ];
       };
+      post_distribution_receipts: {
+        Row: {
+          channel: string;
+          channel_status: string;
+          created_at: string;
+          endpoint: string;
+          error_message: string | null;
+          error_status: number | null;
+          external_id: string | null;
+          external_url: string | null;
+          id: string;
+          post_id: string;
+          request_payload: Json;
+          response_payload: Json | null;
+          retryable: boolean;
+          verified_at: string;
+        };
+        Insert: {
+          channel: string;
+          channel_status: string;
+          created_at?: string;
+          endpoint: string;
+          error_message?: string | null;
+          error_status?: number | null;
+          external_id?: string | null;
+          external_url?: string | null;
+          id?: string;
+          post_id: string;
+          request_payload?: Json;
+          response_payload?: Json | null;
+          retryable?: boolean;
+          verified_at?: string;
+        };
+        Update: {
+          channel?: string;
+          channel_status?: string;
+          created_at?: string;
+          endpoint?: string;
+          error_message?: string | null;
+          error_status?: number | null;
+          external_id?: string | null;
+          external_url?: string | null;
+          id?: string;
+          post_id?: string;
+          request_payload?: Json;
+          response_payload?: Json | null;
+          retryable?: boolean;
+          verified_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'post_distribution_receipts_post_id_fkey';
+            columns: ['post_id'];
+            isOneToOne: false;
+            referencedRelation: 'posts';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       posts: {
         Row: {
           author_id: string | null;
