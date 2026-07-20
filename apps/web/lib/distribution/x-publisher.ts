@@ -1,3 +1,5 @@
+import crypto from 'node:crypto';
+
 export const X_DISTRIBUTION_CHANNEL = 'x' as const;
 export const X_POST_TEXT_LIMIT = 280;
 export const X_MEDIA_LIMIT = 4;
@@ -83,9 +85,19 @@ export class XPublishTransportError extends Error {
   }
 }
 
+export interface XOAuth1Credentials {
+  apiKey?: string;
+  apiSecret?: string;
+  accessToken?: string;
+  accessTokenSecret?: string;
+}
+
 export interface PublishXPostOptions {
   bearerToken?: string;
+  oauth1?: XOAuth1Credentials;
   fetcher?: typeof fetch;
+  nonce?: string;
+  timestamp?: string;
   verifiedAt?: Date;
 }
 
@@ -112,6 +124,96 @@ function normalizeOptionalString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim().length > 0
     ? value.trim()
     : undefined;
+}
+
+function encodeOAuth(value: string): string {
+  return encodeURIComponent(value).replace(/[!'()*]/g, (char) =>
+    `%${char.charCodeAt(0).toString(16).toUpperCase()}`
+  );
+}
+
+function getOAuthCredentialValue(
+  credentials: XOAuth1Credentials | undefined,
+  key: keyof XOAuth1Credentials
+): string | undefined {
+  return normalizeOptionalString(credentials?.[key]);
+}
+
+function hasCompleteOAuth1Credentials(
+  credentials: XOAuth1Credentials | undefined
+): credentials is Required<XOAuth1Credentials> {
+  return Boolean(
+    getOAuthCredentialValue(credentials, 'apiKey') &&
+      getOAuthCredentialValue(credentials, 'apiSecret') &&
+      getOAuthCredentialValue(credentials, 'accessToken') &&
+      getOAuthCredentialValue(credentials, 'accessTokenSecret')
+  );
+}
+
+function buildOAuth1AuthorizationHeader(
+  credentials: XOAuth1Credentials,
+  nonce: string,
+  timestamp: string
+): string {
+  const apiKey = getOAuthCredentialValue(credentials, 'apiKey');
+  const apiSecret = getOAuthCredentialValue(credentials, 'apiSecret');
+  const accessToken = getOAuthCredentialValue(credentials, 'accessToken');
+  const accessTokenSecret = getOAuthCredentialValue(credentials, 'accessTokenSecret');
+
+  if (!apiKey || !apiSecret || !accessToken || !accessTokenSecret) {
+    throw new XPublishConfigurationError(
+      'X OAuth credentials are incomplete; configure X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, and X_ACCESS_TOKEN_SECRET'
+    );
+  }
+
+  const oauthParameters: Record<string, string> = {
+    oauth_consumer_key: apiKey,
+    oauth_nonce: nonce,
+    oauth_signature_method: 'HMAC-SHA1',
+    oauth_timestamp: timestamp,
+    oauth_token: accessToken,
+    oauth_version: '1.0',
+  };
+  const parameterString = Object.entries(oauthParameters)
+    .map(([key, value]) => [encodeOAuth(key), encodeOAuth(value)] as const)
+    .sort(([leftKey, leftValue], [rightKey, rightValue]) =>
+      leftKey === rightKey ? leftValue.localeCompare(rightValue) : leftKey.localeCompare(rightKey)
+    )
+    .map(([key, value]) => `${key}=${value}`)
+    .join('&');
+  const signatureBaseString = ['POST', X_POST_ENDPOINT, parameterString]
+    .map(encodeOAuth)
+    .join('&');
+  const signingKey = `${encodeOAuth(apiSecret)}&${encodeOAuth(accessTokenSecret)}`;
+  const oauthSignature = crypto
+    .createHmac('sha1', signingKey)
+    .update(signatureBaseString)
+    .digest('base64');
+
+  return `OAuth ${Object.entries({ ...oauthParameters, oauth_signature: oauthSignature })
+    .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
+    .map(([key, value]) => `${encodeOAuth(key)}="${encodeOAuth(value)}"`)
+    .join(', ')}`;
+}
+
+function buildXAuthorizationHeader(options: PublishXPostOptions): string {
+  const bearerToken = normalizeOptionalString(options.bearerToken);
+  if (bearerToken) {
+    return `Bearer ${bearerToken}`;
+  }
+
+  const oauth1 = options.oauth1;
+  if (hasCompleteOAuth1Credentials(oauth1)) {
+    return buildOAuth1AuthorizationHeader(
+      oauth1,
+      options.nonce ?? crypto.randomBytes(16).toString('hex'),
+      options.timestamp ?? Math.floor(Date.now() / 1000).toString()
+    );
+  }
+
+  throw new XPublishConfigurationError(
+    'Configure X_BEARER_TOKEN or X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, and X_ACCESS_TOKEN_SECRET for live X publishing'
+  );
 }
 
 function normalizeTags(tags: unknown): string[] {
@@ -255,16 +357,13 @@ export async function publishXPost(
     throw new Error('Live X publishing currently supports text-only posts');
   }
 
-  const bearerToken = normalizeOptionalString(options.bearerToken);
-  if (!bearerToken) {
-    throw new XPublishConfigurationError('X_BEARER_TOKEN is not configured');
-  }
+  const authorizationHeader = buildXAuthorizationHeader(options);
 
   const fetcher = options.fetcher ?? fetch;
   const response = await fetcher(X_POST_ENDPOINT, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${bearerToken}`,
+      Authorization: authorizationHeader,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ text: payload.text }),
