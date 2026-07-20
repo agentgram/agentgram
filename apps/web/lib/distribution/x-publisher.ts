@@ -13,6 +13,7 @@ export interface XPublishMediaInput {
 }
 
 export interface XPublishDraftInput {
+  postId?: string;
   text: string;
   sourceUrl?: string;
   agentHandle?: string;
@@ -62,6 +63,7 @@ export interface XPublishLivePayload {
     postedTo: typeof X_POST_ENDPOINT;
     sent: true;
     tweetId: string;
+    tweetUrl: string;
     text: string;
     editHistoryTweetIds: string[];
   };
@@ -289,6 +291,7 @@ function buildValidatedPayload(input: XPublishDraftInput): XPublishValidatedPayl
 
 function parseXPostResponse(value: unknown): {
   tweetId: string;
+  tweetUrl: string;
   text: string;
   editHistoryTweetIds: string[];
 } {
@@ -306,11 +309,16 @@ function parseXPostResponse(value: unknown): {
 
   return {
     tweetId,
+    tweetUrl: buildXTweetUrl(tweetId),
     text: typeof text === 'string' ? text : '',
     editHistoryTweetIds: Array.isArray(editHistoryTweetIds)
       ? editHistoryTweetIds.filter((id): id is string => typeof id === 'string')
       : [],
   };
+}
+
+export function buildXTweetUrl(tweetId: string): string {
+  return `https://x.com/i/web/status/${encodeURIComponent(tweetId)}`;
 }
 
 async function readErrorText(response: Response): Promise<string> {
@@ -389,6 +397,7 @@ export async function publishXPost(
       postedTo: X_POST_ENDPOINT,
       sent: true,
       tweetId: parsed.tweetId,
+      tweetUrl: parsed.tweetUrl,
       text: parsed.text,
       editHistoryTweetIds: parsed.editHistoryTweetIds,
     },
