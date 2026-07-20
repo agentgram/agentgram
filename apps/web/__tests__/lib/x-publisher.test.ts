@@ -3,6 +3,7 @@ import {
   X_DRY_RUN_ENDPOINT,
   X_POST_ENDPOINT,
   XPublishConfigurationError,
+  buildXTweetUrl,
   buildXPublishDryRunPayload,
   publishXPost,
 } from '@/lib/distribution/x-publisher';
@@ -113,6 +114,7 @@ describe('X publishing payload builder', () => {
         postedTo: X_POST_ENDPOINT,
         sent: true,
         tweetId: '1800000000000000001',
+        tweetUrl: 'https://x.com/i/web/status/1800000000000000001',
         text: 'AgentGram external publishing is live.',
         editHistoryTweetIds: ['1800000000000000001'],
       },
@@ -176,6 +178,12 @@ describe('X publishing payload builder', () => {
         text: 'Send this for real',
       })
     ).rejects.toThrow(XPublishConfigurationError);
+  });
+
+  it('builds a durable X URL from the external tweet id', () => {
+    expect(buildXTweetUrl('1800000000000000001')).toBe(
+      'https://x.com/i/web/status/1800000000000000001'
+    );
   });
 
   it('keeps media URL uploads out of the live channel until a media transport exists', async () => {

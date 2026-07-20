@@ -12,8 +12,14 @@ import {
   XPublishTransportError,
   buildXPublishDryRunPayload,
   publishXPost,
+  X_POST_ENDPOINT,
   type XPublishDraftInput,
 } from '@/lib/distribution/x-publisher';
+import {
+  extractReceiptPostId,
+  persistXPublishReceipt,
+  type XPublishChannelStatus,
+} from '@/lib/distribution/publish-receipts';
 
 function getBearerToken(req: NextRequest): string | undefined {
   const authorization = req.headers.get('authorization');
@@ -38,10 +44,19 @@ function verifyPublishSecret(provided: string | undefined, expected: string | un
   return crypto.timingSafeEqual(providedBuffer, expectedBuffer);
 }
 
+function isRetryablePublishError(error: unknown): boolean {
+  return error instanceof XPublishTransportError && (error.status === 429 || error.status >= 500);
+}
+
+function getFailedChannelStatus(error: unknown): XPublishChannelStatus {
+  return isRetryablePublishError(error) ? 'retryable_error' : 'failed';
+}
+
 // POST /api/v1/distribution/x/publish - Validate or publish an X distribution payload.
 export async function POST(req: NextRequest) {
+  let body: XPublishDraftInput | undefined;
   try {
-    const body = (await req.json()) as XPublishDraftInput;
+    body = (await req.json()) as XPublishDraftInput;
 
     if (body.dryRun === false) {
       if (!verifyPublishSecret(getBearerToken(req), process.env.X_PUBLISH_SECRET)) {
@@ -60,8 +75,29 @@ export async function POST(req: NextRequest) {
           accessTokenSecret: process.env.X_ACCESS_TOKEN_SECRET,
         },
       });
+      const postId = extractReceiptPostId(body);
+      const receipt = postId
+        ? await persistXPublishReceipt({
+            postId,
+            channel: published.channel,
+            channelStatus: 'sent',
+            externalId: published.external.tweetId,
+            externalUrl: published.external.tweetUrl,
+            endpoint: X_POST_ENDPOINT,
+            requestPayload: published.payload,
+            responsePayload: published.external,
+            retryable: false,
+            verifiedAt: published.verifiedAt,
+          })
+        : undefined;
 
-      return jsonResponse(createSuccessResponse(published), 200);
+      return jsonResponse(
+        createSuccessResponse({
+          ...published,
+          ...(receipt ? { receipt } : {}),
+        }),
+        200
+      );
     }
 
     const dryRun = buildXPublishDryRunPayload(body);
@@ -70,6 +106,26 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'Failed to process X publish payload';
+
+    const postId = body?.dryRun === false ? extractReceiptPostId(body) : undefined;
+    if (postId) {
+      await persistXPublishReceipt({
+        postId,
+        channel: 'x',
+        channelStatus: getFailedChannelStatus(error),
+        endpoint: X_POST_ENDPOINT,
+        requestPayload: {
+          text: body?.text,
+          sourceUrl: body?.sourceUrl,
+          agentHandle: body?.agentHandle,
+          tags: body?.tags,
+        },
+        errorMessage: message,
+        errorStatus: error instanceof XPublishTransportError ? error.status : undefined,
+        retryable: isRetryablePublishError(error),
+        verifiedAt: new Date().toISOString(),
+      });
+    }
 
     if (error instanceof XPublishConfigurationError) {
       return jsonResponse(
