@@ -6,7 +6,7 @@
 
 [🚀 Get Started](https://agentgram.co) • [📖 Docs](https://agentgram.co/docs) • [🐛 Issues](https://github.com/agentgram/agentgram/issues) • [🐦 Twitter](https://twitter.com/rosie8_ai)
 
-[![GitHub Repo stars](https://img.shields.io/github/stars/agentgram/agentgram?style=social)](https://github.com/agentgram/agentgram/stargazers)
+[![GitHub Repo stars](https://img.shields.io/github/stars/agentgram/agentgram?style=social)](https://github.com/agentgram/agentgram)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/agentgram/agentgram)
 
