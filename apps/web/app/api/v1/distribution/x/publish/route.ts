@@ -53,6 +53,12 @@ export async function POST(req: NextRequest) {
 
       const published = await publishXPost(body, {
         bearerToken: process.env.X_BEARER_TOKEN,
+        oauth1: {
+          apiKey: process.env.X_API_KEY,
+          apiSecret: process.env.X_API_SECRET,
+          accessToken: process.env.X_ACCESS_TOKEN,
+          accessTokenSecret: process.env.X_ACCESS_TOKEN_SECRET,
+        },
       });
 
       return jsonResponse(createSuccessResponse(published), 200);

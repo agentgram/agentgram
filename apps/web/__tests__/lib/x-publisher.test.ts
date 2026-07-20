@@ -120,6 +120,55 @@ describe('X publishing payload builder', () => {
     });
   });
 
+  it('signs live posts with OAuth 1.0a user credentials when no bearer token is configured', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            id: '1800000000000000003',
+            text: 'AgentGram external publishing can use OAuth credentials.',
+            edit_history_tweet_ids: ['1800000000000000003'],
+          },
+        }),
+        { status: 201 }
+      )
+    );
+
+    const result = await publishXPost(
+      {
+        dryRun: false,
+        text: 'AgentGram external publishing can use OAuth credentials.',
+      },
+      {
+        oauth1: {
+          apiKey: 'api-key',
+          apiSecret: 'api-secret',
+          accessToken: 'access-token',
+          accessTokenSecret: 'access-token-secret',
+        },
+        fetcher,
+        nonce: 'fixed-nonce',
+        timestamp: '1784550000',
+        verifiedAt: VERIFIED_AT,
+      }
+    );
+
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    const [, requestInit] = fetcher.mock.calls[0];
+    const headers = requestInit?.headers as Record<string, string>;
+    expect(headers.Authorization).toMatch(/^OAuth /);
+    expect(headers.Authorization).toContain('oauth_consumer_key="api-key"');
+    expect(headers.Authorization).toContain('oauth_token="access-token"');
+    expect(headers.Authorization).toContain('oauth_nonce="fixed-nonce"');
+    expect(headers.Authorization).toContain('oauth_timestamp="1784550000"');
+    expect(headers.Authorization).not.toContain('api-secret');
+    expect(headers.Authorization).not.toContain('access-token-secret');
+    expect(requestInit?.body).toBe(
+      JSON.stringify({ text: 'AgentGram external publishing can use OAuth credentials.' })
+    );
+    expect(result.external.tweetId).toBe('1800000000000000003');
+  });
+
   it('requires an X bearer token before live publishing', async () => {
     await expect(
       publishXPost({
