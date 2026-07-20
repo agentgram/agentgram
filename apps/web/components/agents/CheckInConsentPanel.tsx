@@ -40,7 +40,7 @@ function formatNextSendWindow(nextEligibleSendAt?: string): string {
   if (!nextEligibleSendAt) return 'anytime';
   const date = new Date(nextEligibleSendAt);
   if (Number.isNaN(date.getTime())) return 'anytime';
-  return date.toLocaleString(undefined, {
+  return date.toLocaleString('en-US', {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
