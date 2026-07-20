@@ -59,6 +59,91 @@ class ReleasePromoteTests(unittest.TestCase):
 
             self.assertEqual(log_path.read_text(encoding="utf-8"), "# Log\n- first\n- second\n")
 
+    def test_refresh_release_pr_updates_title_and_body_file(self):
+        captured = {}
+        original_run_command = release_promote.run_command
+
+        def fake_run_command(args, cwd, check=True):
+            captured["args"] = list(args)
+            captured["cwd"] = cwd
+            body_file = Path(args[args.index("--body-file") + 1])
+            captured["body"] = body_file.read_text(encoding="utf-8")
+            return release_promote.CommandResult("", "", 0)
+
+        try:
+            setattr(release_promote, "run_command", fake_run_command)
+            release_promote.refresh_release_pr(
+                Path("/repo"),
+                42,
+                title="release: promote develop to main — 2026-07-13",
+                body="## Source\nrelease body\n",
+            )
+        finally:
+            setattr(release_promote, "run_command", original_run_command)
+
+        self.assertEqual(captured["cwd"], Path("/repo"))
+        self.assertEqual(captured["body"], "## Source\nrelease body\n")
+        self.assertEqual(
+            captured["args"][:6],
+            [
+                "gh",
+                "pr",
+                "edit",
+                "42",
+                "--title",
+                "release: promote develop to main — 2026-07-13",
+            ],
+        )
+
+    def test_promote_refreshes_existing_release_pr_before_auto_merge(self):
+        calls = []
+        originals = {
+            "kst_now": release_promote.kst_now,
+            "git_ahead_count": release_promote.git_ahead_count,
+            "existing_release_pr": release_promote.existing_release_pr,
+            "refresh_release_pr": release_promote.refresh_release_pr,
+            "arm_auto_merge": release_promote.arm_auto_merge,
+            "required_check_state": release_promote.required_check_state,
+        }
+
+        def fake_refresh(repo, pr_number, *, title, body):
+            calls.append(("refresh", repo, pr_number, title, body))
+
+        def fake_arm(repo, pr_number):
+            calls.append(("arm", repo, pr_number))
+
+        try:
+            setattr(release_promote, "kst_now", lambda: self.now)
+            setattr(release_promote, "git_ahead_count", lambda repo, *, fetch: 7)
+            setattr(
+                release_promote,
+                "existing_release_pr",
+                lambda repo: {"number": 42, "url": "https://github.com/agentgram/agentgram/pull/42"},
+            )
+            setattr(release_promote, "refresh_release_pr", fake_refresh)
+            setattr(release_promote, "arm_auto_merge", fake_arm)
+            setattr(release_promote, "required_check_state", lambda repo, pr_number: "SUCCESS")
+
+            with tempfile.TemporaryDirectory() as tmpdir:
+                log_path = Path(tmpdir) / "release-log.md"
+                exit_code = release_promote.promote(
+                    Path("/repo"),
+                    log_path,
+                    dry_run=False,
+                    fetch=False,
+                )
+                log_content = log_path.read_text(encoding="utf-8")
+        finally:
+            for name, value in originals.items():
+                setattr(release_promote, name, value)
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(calls[0][0], "refresh")
+        self.assertEqual(calls[0][2], 42)
+        self.assertIn("ahead of `main` by 7 commit(s)", calls[0][4])
+        self.assertEqual(calls[1], ("arm", Path("/repo"), 42))
+        self.assertIn("| ok | ahead=7 | pr=#42 | enforce=SUCCESS |", log_content)
+
 
 if __name__ == "__main__":
     unittest.main()
