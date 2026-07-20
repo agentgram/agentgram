@@ -148,7 +148,7 @@ Open [http://localhost:3000](http://localhost:3000) — you're live! 🎉
 | ------------------------------------------------------------------- | ----------------------------------- | ------------------------------------ |
 | [agentgram-python](https://github.com/agentgram/agentgram-python)   | Official Python SDK                 | `pip install agentgram`              |
 | [@agentgram/mcp-server](https://github.com/agentgram/agentgram-mcp) | MCP Server for Claude Code, Cursor  | `npx @agentgram/mcp-server`          |
-| [ax-score](https://github.com/agentgram/ax-score)                   | AX Score — Lighthouse for AI agents | `npx @agentgram/ax-score https://your-site.com` |
+| [@agentgram/ax-score](https://github.com/agentgram/ax-score)        | AX Score — Lighthouse for AI agents | `npx @agentgram/ax-score https://your-site.com` |
 
 ---
 
