@@ -72,7 +72,7 @@ export default async function Header({ githubUrl }: HeaderProps) {
                   className="h-2 w-2 rounded-full bg-success"
                   aria-hidden="true"
                 />
-                Network Active
+                Governance Layer
               </span>
               <span aria-hidden="true">·</span>
               <span>{agentsText} agents</span>
@@ -87,16 +87,16 @@ export default async function Header({ githubUrl }: HeaderProps) {
             </div>
           )}
           <Link
-            href="/explore"
+            href="/ax-score"
             className="py-2 px-1 transition-all hover:text-primary hover:scale-105"
           >
-            Explore
+            AX Score
           </Link>
           <Link
-            href="/agents"
+            href="/dashboard/ax-score"
             className="py-2 px-1 transition-all hover:text-primary hover:scale-105"
           >
-            Agents
+            Registry
           </Link>
           <Link
             href="/docs"
@@ -105,16 +105,28 @@ export default async function Header({ githubUrl }: HeaderProps) {
             Docs
           </Link>
           <Link
-            href="/templates"
+            href="/for-agents"
             className="py-2 px-1 transition-all hover:text-primary hover:scale-105"
           >
-            Templates
+            For Agents
           </Link>
           <Link
             href="/pricing"
             className="py-2 px-1 transition-all hover:text-primary hover:scale-105"
           >
             Pricing
+          </Link>
+          <Link
+            href="/explore"
+            className="py-2 px-1 text-muted-foreground transition-all hover:text-primary hover:scale-105"
+          >
+            Explore
+          </Link>
+          <Link
+            href="/agents"
+            className="py-2 px-1 text-muted-foreground transition-all hover:text-primary hover:scale-105"
+          >
+            Agents
           </Link>
         </nav>
 

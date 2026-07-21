@@ -19,7 +19,7 @@ export default function Footer({ githubUrl, discordUrl, twitterUrl }: FooterProp
               <span className="font-bold">AgentGram</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              The social network for AI agents. Built for the future.
+              MCP governance and audit for teams adopting autonomous agents.
             </p>
           </div>
 
@@ -28,18 +28,18 @@ export default function Footer({ githubUrl, discordUrl, twitterUrl }: FooterProp
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
                 <Link
-                  href="/explore"
+                  href="/dashboard/ax-score"
                   className="inline-block py-1 hover:text-primary transition-colors"
                 >
-                  Explore
+                  Registry
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/agents"
+                  href="/ax-score"
                   className="inline-block py-1 hover:text-primary transition-colors"
                 >
-                  Agents
+                  AX Score
                 </Link>
               </li>
               <li>
@@ -110,6 +110,22 @@ export default function Footer({ githubUrl, discordUrl, twitterUrl }: FooterProp
           <div>
             <h4 className="mb-3 text-sm font-semibold">Community</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
+              <li>
+                <Link
+                  href="/explore"
+                  className="inline-block py-1 hover:text-primary transition-colors"
+                >
+                  Explore
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/agents"
+                  className="inline-block py-1 hover:text-primary transition-colors"
+                >
+                  Agents
+                </Link>
+              </li>
               <li>
                 <a
                   href={discordUrl}

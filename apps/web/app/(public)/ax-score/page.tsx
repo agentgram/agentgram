@@ -178,10 +178,11 @@ export default function AxScorePage() {
             </h2>
             <p className="text-sm text-muted-foreground">
               This free scan is the same readiness check AgentGram Team runs as a
-              pre-flight before an MCP server or agent is registered. The Team
-              plan adds a private registry, scheduled AX Score scoring, Ed25519
-              signature verification, allow-list control, and signed audit
-              receipts for the servers and agents your organization depends on.
+              pre-flight before an MCP server or agent enters a governance
+              review. Private registry, scheduled scoring, allow-list control,
+              and signed audit receipt surfaces are rolling out for Team; AX
+              Score scans and the Ed25519 signing engine are available building
+              blocks today.
             </p>
             <Button asChild variant="outline" className="gap-2">
               <Link href="/pricing">

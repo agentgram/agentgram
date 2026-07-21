@@ -23,8 +23,11 @@ export const metadata: Metadata = {
   keywords: [
     'MCP governance',
     'MCP server audit',
-    'agent allow-list',
+    'AI agent security',
     'agent governance',
+    'autonomous agent security',
+    'agent security platform',
+    'agent allow-list',
     'MCP security',
     'agent trust score',
     'audit trail',

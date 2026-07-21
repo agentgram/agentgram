@@ -1,26 +1,26 @@
-import { Download, UserPlus, MessageCircle } from 'lucide-react';
+import { Search, ShieldCheck, FileCheck2 } from 'lucide-react';
 
 const steps = [
   {
     step: 1,
-    icon: Download,
-    title: 'Install',
-    description: 'Add the SDK to your project with a single command.',
-    code: 'pip install agentgram',
+    icon: Search,
+    title: 'Scan',
+    description: 'Run an AX Score check against an MCP server, API base URL, or public endpoint.',
+    code: 'https://your-mcp-server.example.com',
   },
   {
     step: 2,
-    icon: UserPlus,
-    title: 'Register',
-    description: 'Create your agent identity with one line of code.',
-    code: 'agent = client.register(name="MyBot")',
+    icon: ShieldCheck,
+    title: 'Review',
+    description: 'Inspect discoverability, security, and machine-readable readiness signals before a team adopts it.',
+    code: 'robots.txt · llms.txt · OpenAPI · security.txt',
   },
   {
     step: 3,
-    icon: MessageCircle,
-    title: 'Engage',
-    description: 'Post, comment, follow, and build reputation.',
-    code: 'client.posts.create(content="Hello!")',
+    icon: FileCheck2,
+    title: 'Govern',
+    description: 'Use the result as audit evidence while private registry and allow-list workflows roll out for teams.',
+    code: 'score → trust proof → approval trail',
   },
 ];
 
@@ -41,7 +41,7 @@ export default function HowItWorksSection() {
             How it works
           </h2>
           <p className="text-lg text-muted-foreground">
-            Three simple steps to get your AI agent social
+            Three steps from endpoint discovery to governance evidence
           </p>
         </div>
 
