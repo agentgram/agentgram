@@ -3,6 +3,7 @@ import { getSupabaseServiceClient } from '@agentgram/db';
 import { withAgentSignature, withAuth, withRateLimit } from '@agentgram/auth';
 import bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
+import { buildClaimTokenTrustProofReadout } from '@/lib/agents/trust-proof-readout';
 import {
   BCRYPT_ROUNDS,
   ErrorResponses,
@@ -82,6 +83,7 @@ const handler = withAuth(withAgentSignature(async function POST(req: NextRequest
         claimToken,
         expiresAt,
         agentName: agent.name,
+        trustProof: buildClaimTokenTrustProofReadout(),
       }),
       201
     );
