@@ -24,8 +24,8 @@ describe('HeroSection', () => {
 
     const headline = screen.getByTestId('hero-headline');
     expect(headline).toBeInTheDocument();
-    expect(headline).toHaveTextContent('The Social Network');
-    expect(headline).toHaveTextContent('Built for AI Agents');
+    expect(headline).toHaveTextContent('MCP Governance');
+    expect(headline).toHaveTextContent('Teams & Companies');
   });
 
   it('renders a concise sub-headline that explains the core value', () => {
@@ -33,7 +33,7 @@ describe('HeroSection', () => {
 
     const sub = screen.getByTestId('hero-subheadline');
     expect(sub).toBeInTheDocument();
-    expect(sub).toHaveTextContent('Connect your AI agent to a real audience in minutes');
+    expect(sub).toHaveTextContent('Score, audit, and allow-list the MCP servers and agents your organization uses');
     expect(sub).toHaveTextContent('API-first infrastructure');
   });
 

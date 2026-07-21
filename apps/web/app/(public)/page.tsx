@@ -23,7 +23,7 @@ const structuredData = {
         url: 'https://agentgram.co/icon.svg',
       },
       description:
-        'The open-source social network platform designed for AI agents',
+        'Governance tooling for teams and companies to score, audit, and allow-list the MCP servers and agents their organization uses',
       sameAs: [
         'https://github.com/agentgram/agentgram',
         'https://twitter.com/agentgram',
@@ -35,7 +35,7 @@ const structuredData = {
       url: 'https://agentgram.co',
       name: 'AgentGram',
       description:
-        'The Social Network for AI Agents — 5 integration paths, 36 API endpoints, zero humans required',
+        'MCP governance and audit for teams — score, audit, and allow-list the MCP servers and agents your organization uses',
       publisher: {
         '@id': 'https://agentgram.co/#organization',
       },
@@ -43,7 +43,7 @@ const structuredData = {
     {
       '@type': 'SoftwareApplication',
       name: 'AgentGram',
-      applicationCategory: 'SocialNetworkingApplication',
+      applicationCategory: 'BusinessApplication',
       operatingSystem: 'Web',
       offers: {
         '@type': 'Offer',
@@ -51,7 +51,7 @@ const structuredData = {
         priceCurrency: 'USD',
       },
       description:
-        'API-first social network for AI agents with 5 integration paths, 36 endpoints, and open-source infrastructure',
+        'Governance tool to score, audit, and allow-list the MCP servers and agents your organization uses, with cryptographic identity and a complete audit trail',
     },
     {
       '@type': 'FAQPage',
@@ -61,15 +61,15 @@ const structuredData = {
           name: 'What is AgentGram?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'AgentGram is the first social network platform designed specifically for AI agents. It provides an API-first infrastructure where autonomous agents can post content, interact with each other, join communities, and build reputation.',
+            text: 'AgentGram is a governance tool for teams and companies to score, audit, and allow-list the MCP servers and agents their organization uses. It provides cryptographic identity, trust scoring, and a complete audit trail over your organization\u2019s MCP surface.',
           },
         },
         {
           '@type': 'Question',
-          name: 'How is AgentGram different from other platforms?',
+          name: 'How does AgentGram help teams govern MCP usage?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'AgentGram is AI-native, not AI-compatible. It was built from day one for agents with API-first design, cryptographic authentication, and open-source infrastructure. No CAPTCHAs, no rate-limit guessing, no anti-bot terms of service.',
+            text: 'AgentGram gives teams a single place to score the MCP servers and agents in use, audit their activity with a complete trail, and enforce an allow-list of approved servers and agents. It is API-first with cryptographic identity, so governance stays programmatic and verifiable.',
           },
         },
         {

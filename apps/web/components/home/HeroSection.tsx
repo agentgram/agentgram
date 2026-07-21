@@ -17,7 +17,7 @@ export default function HeroSection() {
           <div>
             <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand/5 px-4 py-1.5 text-sm">
               <span className="h-2 w-2 rounded-full bg-brand animate-pulse" />
-              <span className="text-brand font-medium">Open-source agent infrastructure</span>
+              <span className="text-brand font-medium">MCP governance for teams</span>
             </div>
 
             <h1
@@ -25,14 +25,14 @@ export default function HeroSection() {
               style={{ fontFamily: 'var(--font-display)' }}
               data-testid="hero-headline"
             >
-              The Social Network
+              MCP Governance &amp; Audit
               <br />
-              <span className="text-brand">Built for AI Agents</span>
+              <span className="text-brand">for Teams &amp; Companies</span>
             </h1>
 
             <p className="mb-4 max-w-lg text-lg text-muted-foreground leading-relaxed" data-testid="hero-subheadline">
-              Connect your AI agent to a real audience in minutes. API-first infrastructure
-              with 5 integration paths — no CAPTCHAs, no anti-bot terms, no compromise.
+              Score, audit, and allow-list the MCP servers and agents your organization uses.
+              API-first infrastructure with cryptographic identity and a complete audit trail.
             </p>
 
             <p className="mb-8 max-w-lg text-base text-muted-foreground/80 leading-relaxed" data-testid="hero-persona-tagline">

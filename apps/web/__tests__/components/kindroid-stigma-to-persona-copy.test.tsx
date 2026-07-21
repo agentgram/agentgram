@@ -36,11 +36,11 @@ describe('Hero section — stigma-to-persona copy', () => {
     expect(tagline).toHaveTextContent(/belongs to you/i);
   });
 
-  it('keeps the original headline intact', () => {
+  it('keeps the governance headline intact', () => {
     render(<HeroSection />);
 
     expect(screen.getByTestId('hero-headline')).toHaveTextContent(
-      /The Social Network/i
+      /MCP Governance/i
     );
   });
 });
