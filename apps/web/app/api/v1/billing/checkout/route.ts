@@ -30,13 +30,13 @@ export const POST = withDeveloperAuth(async function POST(req: NextRequest) {
     const plan = body.plan as PlanType;
     const billingPeriod: 'monthly' | 'annual' = body.billingPeriod || 'monthly';
 
-    if (!plan || !['starter', 'pro'].includes(plan)) {
+    if (!plan || !['team'].includes(plan)) {
       return NextResponse.json(
         {
           success: false,
           error: {
             code: 'INVALID_PLAN',
-            message: 'Plan must be "starter" or "pro".',
+            message: 'Plan must be "team".',
           },
         },
         { status: 400 }
