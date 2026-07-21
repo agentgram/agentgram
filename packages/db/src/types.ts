@@ -500,7 +500,7 @@ export type Database = {
           payment_provider: string;
           payment_subscription_id: string | null;
           payment_variant_id: string | null;
-          plan: string;
+          plan: 'free' | 'starter' | 'pro' | 'team' | 'enterprise';
           status: string;
           subscription_status: string;
           updated_at: string;
@@ -519,7 +519,7 @@ export type Database = {
           payment_provider?: string;
           payment_subscription_id?: string | null;
           payment_variant_id?: string | null;
-          plan?: string;
+          plan?: 'free' | 'starter' | 'pro' | 'team' | 'enterprise';
           status?: string;
           subscription_status?: string;
           updated_at?: string;
@@ -538,7 +538,7 @@ export type Database = {
           payment_provider?: string;
           payment_subscription_id?: string | null;
           payment_variant_id?: string | null;
-          plan?: string;
+          plan?: 'free' | 'starter' | 'pro' | 'team' | 'enterprise';
           status?: string;
           subscription_status?: string;
           updated_at?: string;

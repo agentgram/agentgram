@@ -27,6 +27,17 @@ export function isBillingEnabled(): boolean {
   return process.env.NEXT_PUBLIC_ENABLE_BILLING === 'true';
 }
 
+/**
+ * C-plan product tiers: Free (evaluation) → Team (paid governance plan) →
+ * Enterprise (contact sales). The companion starter/pro SKUs are retired.
+ *
+ * Team resolves its Lemon Squeezy variant from the new
+ * LEMONSQUEEZY_TEAM_* env vars, falling back to any legacy starter/pro
+ * variant that is still configured so an existing store keeps a working
+ * checkout until the CEO creates dedicated Team variants. Missing env is
+ * tolerated: the fields become `undefined` and the checkout route reports
+ * VARIANT_NOT_CONFIGURED instead of crashing.
+ */
 export const PLANS = {
   free: {
     name: 'Free',
@@ -38,26 +49,18 @@ export const PLANS = {
     },
     ax: { scansPerMonth: 3, simulationsPerMonth: 0, generationsPerMonth: 0 },
   },
-  starter: {
-    name: 'Starter',
-    price: { monthly: 900, annual: 8640 },
+  team: {
+    name: 'Team',
+    price: { monthly: 4900, annual: 47040 },
     variantIds: {
-      monthly: process.env.LEMONSQUEEZY_STARTER_MONTHLY_VARIANT_ID,
-      annual: process.env.LEMONSQUEEZY_STARTER_ANNUAL_VARIANT_ID,
-    },
-    limits: {
-      apiRequestsPerDay: 5000,
-      postsPerDay: -1,
-      communities: 5,
-    },
-    ax: { scansPerMonth: 25, simulationsPerMonth: 10, generationsPerMonth: 5 },
-  },
-  pro: {
-    name: 'Pro',
-    price: { monthly: 2900, annual: 27840 },
-    variantIds: {
-      monthly: process.env.LEMONSQUEEZY_PRO_MONTHLY_VARIANT_ID,
-      annual: process.env.LEMONSQUEEZY_PRO_ANNUAL_VARIANT_ID,
+      monthly:
+        process.env.LEMONSQUEEZY_TEAM_MONTHLY_VARIANT_ID ??
+        process.env.LEMONSQUEEZY_PRO_MONTHLY_VARIANT_ID ??
+        process.env.LEMONSQUEEZY_STARTER_MONTHLY_VARIANT_ID,
+      annual:
+        process.env.LEMONSQUEEZY_TEAM_ANNUAL_VARIANT_ID ??
+        process.env.LEMONSQUEEZY_PRO_ANNUAL_VARIANT_ID ??
+        process.env.LEMONSQUEEZY_STARTER_ANNUAL_VARIANT_ID,
     },
     limits: {
       apiRequestsPerDay: 50000,
@@ -80,15 +83,26 @@ export const PLANS = {
 
 export type PlanType = keyof typeof PLANS;
 
+/**
+ * Resolve a Lemon Squeezy variant ID to a C-plan tier.
+ *
+ * New Team variants map to `team`. Legacy starter/pro variant IDs are still
+ * recognized (webhook regression safety for any pre-existing subscription)
+ * but are remapped to the `team` product — starter/pro are no longer sold.
+ * Unknown or unset variants fall back to `free`.
+ */
 export function getPlanFromVariantId(variantId: string): PlanType {
-  const starterMonthly = process.env.LEMONSQUEEZY_STARTER_MONTHLY_VARIANT_ID;
-  const starterAnnual = process.env.LEMONSQUEEZY_STARTER_ANNUAL_VARIANT_ID;
-  const proMonthly = process.env.LEMONSQUEEZY_PRO_MONTHLY_VARIANT_ID;
-  const proAnnual = process.env.LEMONSQUEEZY_PRO_ANNUAL_VARIANT_ID;
+  const teamVariantIds = [
+    process.env.LEMONSQUEEZY_TEAM_MONTHLY_VARIANT_ID,
+    process.env.LEMONSQUEEZY_TEAM_ANNUAL_VARIANT_ID,
+    // Legacy companion SKUs — remapped to Team, not removed.
+    process.env.LEMONSQUEEZY_STARTER_MONTHLY_VARIANT_ID,
+    process.env.LEMONSQUEEZY_STARTER_ANNUAL_VARIANT_ID,
+    process.env.LEMONSQUEEZY_PRO_MONTHLY_VARIANT_ID,
+    process.env.LEMONSQUEEZY_PRO_ANNUAL_VARIANT_ID,
+  ];
 
-  if (variantId === proMonthly || variantId === proAnnual) return 'pro';
-  if (variantId === starterMonthly || variantId === starterAnnual)
-    return 'starter';
+  if (teamVariantIds.some((id) => id && id === variantId)) return 'team';
   return 'free';
 }
 
