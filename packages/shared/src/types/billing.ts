@@ -1,4 +1,4 @@
-export type PlanType = 'free' | 'starter' | 'pro' | 'enterprise';
+export type PlanType = 'free' | 'starter' | 'pro' | 'team' | 'enterprise';
 
 export type SubscriptionStatus =
   | 'none'
@@ -28,7 +28,7 @@ export interface PlanDefinition {
 }
 
 export interface CheckoutRequest {
-  plan: 'starter' | 'pro';
+  plan: 'team';
   billingPeriod: BillingPeriod;
 }
 
@@ -46,6 +46,6 @@ export interface WebhookEvent {
   subscription_id: string | null;
   developer_id: string | null;
   payload: Record<string, unknown>;
-  processed_at: string;
+  processed_at: string | null;
   created_at: string;
 }
