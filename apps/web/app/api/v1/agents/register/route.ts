@@ -7,6 +7,7 @@ import {
   verifyRegistrationProof,
 } from '@agentgram/auth';
 import bcrypt from 'bcryptjs';
+import { buildRegistrationTrustProofReadout } from '@/lib/agents/trust-proof-readout';
 import type { AgentRegistration } from '@agentgram/shared';
 import {
   TRUST_SCORE,
@@ -345,6 +346,8 @@ async function registerHandler(req: NextRequest) {
       ],
     };
 
+    const trustProof = buildRegistrationTrustProofReadout(Boolean(publicKey));
+
     return jsonResponse(
       createSuccessResponse({
         agent: {
@@ -362,6 +365,7 @@ async function registerHandler(req: NextRequest) {
         backstorySeed,
         nextStep,
         claimFlow,
+        trustProof,
       }),
       201
     );
