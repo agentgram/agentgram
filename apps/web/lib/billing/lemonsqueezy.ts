@@ -5,6 +5,14 @@ import {
 
 let _configured = false;
 
+function firstNonEmptyEnv(...keys: string[]): string | undefined {
+  for (const key of keys) {
+    const value = process.env[key]?.trim();
+    if (value) return value;
+  }
+  return undefined;
+}
+
 export function configureLemonSqueezy(): void {
   if (_configured) return;
 
@@ -53,14 +61,16 @@ export const PLANS = {
     name: 'Team',
     price: { monthly: 4900, annual: 47040 },
     variantIds: {
-      monthly:
-        process.env.LEMONSQUEEZY_TEAM_MONTHLY_VARIANT_ID ??
-        process.env.LEMONSQUEEZY_PRO_MONTHLY_VARIANT_ID ??
-        process.env.LEMONSQUEEZY_STARTER_MONTHLY_VARIANT_ID,
-      annual:
-        process.env.LEMONSQUEEZY_TEAM_ANNUAL_VARIANT_ID ??
-        process.env.LEMONSQUEEZY_PRO_ANNUAL_VARIANT_ID ??
-        process.env.LEMONSQUEEZY_STARTER_ANNUAL_VARIANT_ID,
+      monthly: firstNonEmptyEnv(
+        'LEMONSQUEEZY_TEAM_MONTHLY_VARIANT_ID',
+        'LEMONSQUEEZY_PRO_MONTHLY_VARIANT_ID',
+        'LEMONSQUEEZY_STARTER_MONTHLY_VARIANT_ID'
+      ),
+      annual: firstNonEmptyEnv(
+        'LEMONSQUEEZY_TEAM_ANNUAL_VARIANT_ID',
+        'LEMONSQUEEZY_PRO_ANNUAL_VARIANT_ID',
+        'LEMONSQUEEZY_STARTER_ANNUAL_VARIANT_ID'
+      ),
     },
     limits: {
       apiRequestsPerDay: 50000,
@@ -89,9 +99,10 @@ export type PlanType = keyof typeof PLANS;
  * New Team variants map to `team`. Legacy starter/pro variant IDs are still
  * recognized (webhook regression safety for any pre-existing subscription)
  * but are remapped to the `team` product — starter/pro are no longer sold.
- * Unknown or unset variants fall back to `free`.
+ * Unknown or unset variants return null so webhook handlers can preserve the
+ * current plan instead of silently downgrading paid customers to Free.
  */
-export function getPlanFromVariantId(variantId: string): PlanType {
+export function getPlanFromVariantId(variantId: string): PlanType | null {
   const teamVariantIds = [
     process.env.LEMONSQUEEZY_TEAM_MONTHLY_VARIANT_ID,
     process.env.LEMONSQUEEZY_TEAM_ANNUAL_VARIANT_ID,
@@ -102,13 +113,15 @@ export function getPlanFromVariantId(variantId: string): PlanType {
     process.env.LEMONSQUEEZY_PRO_ANNUAL_VARIANT_ID,
   ];
 
-  if (teamVariantIds.some((id) => id && id === variantId)) return 'team';
-  return 'free';
+  if (teamVariantIds.some((id) => id?.trim() && id.trim() === variantId)) {
+    return 'team';
+  }
+  return null;
 }
 
 export function getPlanFromSubscription(
   attributes: Subscription['data']['attributes']
-): PlanType {
+): PlanType | null {
   const variantId = String(attributes.variant_id);
   return getPlanFromVariantId(variantId);
 }

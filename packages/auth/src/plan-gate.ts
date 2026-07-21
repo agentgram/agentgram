@@ -3,7 +3,7 @@ import { redis } from './ratelimit';
 /**
  * Plan hierarchy — higher index = more privileged.
  */
-const PLAN_HIERARCHY = ['free', 'starter', 'pro', 'enterprise'] as const;
+const PLAN_HIERARCHY = ['free', 'starter', 'pro', 'team', 'enterprise'] as const;
 export type PlanName = (typeof PLAN_HIERARCHY)[number];
 
 /**

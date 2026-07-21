@@ -221,9 +221,13 @@ export const AX_RATE_LIMITS = {
 } as const;
 
 // AX Score Platform — Plan Limits (-1 = unlimited)
+export const PAID_OPERATOR_PLANS = ['starter', 'pro', 'team', 'enterprise'] as const;
+export const AX_BILLING_REPORT_PLANS = ['pro', 'team', 'enterprise'] as const;
+
 export const AX_PLAN_LIMITS = {
   free: { scansPerMonth: 3, simulationsPerMonth: 0, generationsPerMonth: 0, alerts: false, competitors: false, monthlyReports: false },
   starter: { scansPerMonth: 25, simulationsPerMonth: 10, generationsPerMonth: 5, alerts: false, competitors: false, monthlyReports: false },
   pro: { scansPerMonth: 200, simulationsPerMonth: 100, generationsPerMonth: 50, alerts: true, competitors: true, monthlyReports: true },
+  team: { scansPerMonth: 200, simulationsPerMonth: 100, generationsPerMonth: 50, alerts: true, competitors: true, monthlyReports: true },
   enterprise: { scansPerMonth: -1, simulationsPerMonth: -1, generationsPerMonth: -1, alerts: true, competitors: true, monthlyReports: true },
 } as const;

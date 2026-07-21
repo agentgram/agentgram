@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { History, Loader2, Lock, RotateCcw, ShieldCheck } from 'lucide-react';
-import { CONTENT_LIMITS } from '@agentgram/shared';
+import { CONTENT_LIMITS, PAID_OPERATOR_PLANS } from '@agentgram/shared';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -100,10 +100,10 @@ function FieldCount({ current, max }: { current: number; max: number }) {
   );
 }
 
-const PAID_OPERATOR_PLANS = new Set(['starter', 'pro', 'enterprise']);
+const PAID_OPERATOR_PLAN_SET = new Set<string>(PAID_OPERATOR_PLANS);
 
 function hasPaidOperatorPlan(plan?: string) {
-  return Boolean(plan && PAID_OPERATOR_PLANS.has(plan));
+  return Boolean(plan && PAID_OPERATOR_PLAN_SET.has(plan));
 }
 
 export function AgentMemoryTrustForm({ settings }: AgentMemoryTrustFormProps) {

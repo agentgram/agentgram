@@ -46,12 +46,12 @@ describe('lemonsqueezy variant mapping', () => {
     ).toBe('team');
   });
 
-  it('falls back to free for unknown or unset variants', async () => {
+  it('returns null for unknown or unset variants so webhooks preserve current plan', async () => {
     const { getPlanFromVariantId } = await import('@/lib/billing/lemonsqueezy');
 
-    expect(getPlanFromVariantId('nope')).toBe('free');
+    expect(getPlanFromVariantId('nope')).toBeNull();
     // Must not match when env is unset (undefined === undefined guard).
-    expect(getPlanFromVariantId('')).toBe('free');
+    expect(getPlanFromVariantId('')).toBeNull();
   });
 
   it('resolves Team variantIds from new env, then legacy env as fallback', async () => {
@@ -65,6 +65,14 @@ describe('lemonsqueezy variant mapping', () => {
     mod = await import('@/lib/billing/lemonsqueezy');
     // New team env takes precedence.
     expect(mod.PLANS.team.variantIds.monthly).toBe('team-monthly');
+  });
+
+  it('skips empty Team env and falls back to the first non-empty legacy env', async () => {
+    process.env.LEMONSQUEEZY_TEAM_MONTHLY_VARIANT_ID = '   ';
+    process.env.LEMONSQUEEZY_PRO_MONTHLY_VARIANT_ID = 'legacy-pro-monthly';
+    const { PLANS } = await import('@/lib/billing/lemonsqueezy');
+
+    expect(PLANS.team.variantIds.monthly).toBe('legacy-pro-monthly');
   });
 
   it('tolerates missing variant env without crashing', async () => {
@@ -107,8 +115,10 @@ describe('plan values stay in sync with the developers.plan DB constraint', () =
     process.env.LEMONSQUEEZY_PRO_MONTHLY_VARIANT_ID = 'legacy-pro';
     const { getPlanFromVariantId } = await import('@/lib/billing/lemonsqueezy');
 
-    for (const variant of ['team-monthly', 'legacy-starter', 'legacy-pro', 'unknown']) {
+    for (const variant of ['team-monthly', 'legacy-starter', 'legacy-pro']) {
       expect(ALLOWED_DB_PLANS).toContain(getPlanFromVariantId(variant));
     }
+
+    expect(getPlanFromVariantId('unknown')).toBeNull();
   });
 });

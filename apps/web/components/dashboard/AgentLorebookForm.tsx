@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import {
   CONTENT_LIMITS,
+  PAID_OPERATOR_PLANS,
   type AgentLorebook,
   type LorebookPersonEntry,
   type LorebookPlaceEntry,
@@ -117,7 +118,7 @@ function FieldCount({ current, max }: { current: number; max: number }) {
   );
 }
 
-const PAID_OPERATOR_PLANS = new Set(['starter', 'pro', 'enterprise']);
+const PAID_OPERATOR_PLAN_SET = new Set<string>(PAID_OPERATOR_PLANS);
 
 const LOCKED_CANON_TEMPLATES = [
   {
@@ -153,7 +154,7 @@ const LOCKED_CANON_TEMPLATES = [
 ] as const;
 
 function hasPaidOperatorPlan(plan?: string) {
-  return Boolean(plan && PAID_OPERATOR_PLANS.has(plan));
+  return Boolean(plan && PAID_OPERATOR_PLAN_SET.has(plan));
 }
 
 export function AgentLorebookForm({ settings }: AgentLorebookFormProps) {

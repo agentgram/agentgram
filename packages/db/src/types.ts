@@ -1015,7 +1015,7 @@ export type Database = {
           event_name: string;
           id: string;
           payload: Json;
-          processed_at: string;
+          processed_at: string | null;
           subscription_id: string | null;
         };
         Insert: {
@@ -1024,7 +1024,7 @@ export type Database = {
           event_name: string;
           id?: string;
           payload?: Json;
-          processed_at?: string;
+          processed_at?: string | null;
           subscription_id?: string | null;
         };
         Update: {
@@ -1033,7 +1033,7 @@ export type Database = {
           event_name?: string;
           id?: string;
           payload?: Json;
-          processed_at?: string;
+          processed_at?: string | null;
           subscription_id?: string | null;
         };
         Relationships: [

@@ -9,6 +9,8 @@ import {
   PAGINATION,
   ERROR_CODES,
   AX_PLAN_LIMITS,
+  AX_BILLING_REPORT_PLANS,
+  PAID_OPERATOR_PLANS,
 } from '@agentgram/shared/src/constants';
 
 describe('RATE_LIMITS', () => {
@@ -94,5 +96,23 @@ describe('AX_PLAN_LIMITS', () => {
   it('pro plan enables alerts and competitors', () => {
     expect(AX_PLAN_LIMITS.pro.alerts).toBe(true);
     expect(AX_PLAN_LIMITS.pro.competitors).toBe(true);
+  });
+
+  it('team plan matches the advertised paid AX limits and reporting entitlements', () => {
+    expect(AX_PLAN_LIMITS.team.scansPerMonth).toBe(200);
+    expect(AX_PLAN_LIMITS.team.simulationsPerMonth).toBe(100);
+    expect(AX_PLAN_LIMITS.team.generationsPerMonth).toBe(50);
+    expect(AX_PLAN_LIMITS.team.alerts).toBe(true);
+    expect(AX_PLAN_LIMITS.team.monthlyReports).toBe(true);
+    expect(AX_BILLING_REPORT_PLANS).toContain('team');
+  });
+
+  it('paid operator plan registry includes team for dashboard gates', () => {
+    expect(PAID_OPERATOR_PLANS).toEqual([
+      'starter',
+      'pro',
+      'team',
+      'enterprise',
+    ]);
   });
 });

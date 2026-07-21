@@ -5,10 +5,12 @@ import { invalidateAllPlanCaches } from '@agentgram/auth';
 import {
   getPlanFromVariantId,
   mapSubscriptionStatus,
+  type PlanType,
 } from '@/lib/billing/lemonsqueezy';
 
 interface WebhookMeta {
   event_name: string;
+  webhook_id?: string;
   custom_data?: { developer_id?: string };
 }
 
@@ -69,20 +71,36 @@ function validateStoreId(attrs: SubscriptionAttributes): boolean {
 async function logWebhookEvent(
   eventName: string,
   payload: WebhookPayload
-): Promise<void> {
+): Promise<string | null> {
   try {
-    await getSupabaseServiceClient()
+    const { data } = await getSupabaseServiceClient()
       .from('webhook_events')
       .insert({
         event_name: eventName,
         subscription_id: payload.data.id,
         developer_id: payload.meta.custom_data?.developer_id ?? null,
         payload: JSON.parse(JSON.stringify(payload)),
-      });
+        processed_at: null,
+      })
+      .select('id')
+      .single();
+
+    return data?.id ?? null;
   } catch {
     // Non-critical: log failure should not block webhook processing
     console.error('Failed to log webhook event:', eventName);
+    return null;
   }
+}
+
+function planPatchForVariant(variantId: string): { plan?: PlanType } {
+  const plan = getPlanFromVariantId(variantId);
+  if (plan) return { plan };
+
+  console.error(
+    `Unknown Lemon Squeezy variant_id ${variantId}; preserving current plan`
+  );
+  return {};
 }
 
 /**
@@ -160,17 +178,31 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true });
   }
 
-  await logWebhookEvent(eventName, payload);
+  const loggedWebhookEventId = await logWebhookEvent(eventName, payload);
 
   // Idempotency check: skip already-processed webhook events
-  const { data: existing } = await getSupabaseServiceClient()
+  let existingEventQuery = getSupabaseServiceClient()
     .from('webhook_events')
     .select('id')
-    .eq('subscription_id', payload.data.id)
-    .eq('event_name', eventName)
     .not('processed_at', 'is', null)
-    .limit(1)
-    .maybeSingle();
+    .limit(1);
+
+  if (payload.meta.webhook_id) {
+    existingEventQuery = existingEventQuery.eq(
+      'payload->meta->>webhook_id',
+      payload.meta.webhook_id
+    );
+  } else {
+    existingEventQuery = existingEventQuery
+      .eq('subscription_id', payload.data.id)
+      .eq('event_name', eventName);
+  }
+
+  if (loggedWebhookEventId) {
+    existingEventQuery = existingEventQuery.neq('id', loggedWebhookEventId);
+  }
+
+  const { data: existing } = await existingEventQuery.maybeSingle();
 
   if (existing) {
     return NextResponse.json({ received: true, deduplicated: true });
@@ -206,13 +238,13 @@ export async function POST(req: NextRequest) {
         console.log(`Unhandled Lemon Squeezy event: ${eventName}`);
     }
 
-    // Mark webhook event as processed for idempotency
-    await getSupabaseServiceClient()
-      .from('webhook_events')
-      .update({ processed_at: new Date().toISOString() })
-      .eq('subscription_id', payload.data.id)
-      .eq('event_name', eventName)
-      .is('processed_at', null);
+    // Mark the current webhook event as processed for idempotency.
+    if (loggedWebhookEventId) {
+      await getSupabaseServiceClient()
+        .from('webhook_events')
+        .update({ processed_at: new Date().toISOString() })
+        .eq('id', loggedWebhookEventId);
+    }
 
     // Clear in-memory plan caches so plan-gate picks up changes immediately.
     // Redis-cached plans expire via TTL (60s) — acceptable for webhook latency.
@@ -240,7 +272,7 @@ async function handleSubscriptionCreated(payload: WebhookPayload) {
     return;
   }
 
-  const plan = getPlanFromVariantId(String(attrs.variant_id));
+  const planPatch = planPatchForVariant(String(attrs.variant_id));
 
   const result = await getSupabaseServiceClient()
     .from('developers')
@@ -249,7 +281,7 @@ async function handleSubscriptionCreated(payload: WebhookPayload) {
       payment_subscription_id: payload.data.id,
       payment_provider: 'lemonsqueezy',
       payment_variant_id: String(attrs.variant_id),
-      plan,
+      ...planPatch,
       subscription_status: mapSubscriptionStatus(attrs.status),
       current_period_end: attrs.renews_at,
       billing_last_event_at: attrs.updated_at,
@@ -263,12 +295,12 @@ async function handleSubscriptionCreated(payload: WebhookPayload) {
 
 async function handleSubscriptionUpdated(payload: WebhookPayload) {
   const attrs = payload.data.attributes;
-  const plan = getPlanFromVariantId(String(attrs.variant_id));
+  const planPatch = planPatchForVariant(String(attrs.variant_id));
 
   const result = await getSupabaseServiceClient()
     .from('developers')
     .update({
-      plan,
+      ...planPatch,
       payment_variant_id: String(attrs.variant_id),
       subscription_status: mapSubscriptionStatus(attrs.status),
       current_period_end: attrs.renews_at,
