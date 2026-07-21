@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Loader2, ArrowRight, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -104,12 +105,15 @@ export default function AxScorePage() {
             AX Score
           </h1>
           <p className="text-xl text-muted-foreground">
-            Will AI systems discover and recommend your site? Find out in
-            seconds.
+            Score, audit, and govern the MCP servers and agents your team
+            depends on.
           </p>
           <p className="text-sm text-muted-foreground">
-            Check your site&apos;s discoverability readiness signals — robots.txt,
-            llms.txt, OpenAPI, Schema.org, and more.
+            Run a free governance pre-flight on any MCP or API endpoint. AX Score
+            checks the readiness and discoverability signals AgentGram Team uses
+            to score and allow-list the servers your organization runs —
+            robots.txt, llms.txt, OpenAPI, Schema.org, sitemap, meta
+            description, and security.txt. No sign-up required.
           </p>
         </motion.div>
       </section>
@@ -123,7 +127,7 @@ export default function AxScorePage() {
         >
           <div className="flex gap-2">
             <Input
-              placeholder="https://example.com"
+              placeholder="https://your-mcp-server.example.com"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleScan()}
@@ -152,7 +156,42 @@ export default function AxScorePage() {
               {error}
             </motion.p>
           )}
+          <p className="text-xs text-muted-foreground mt-3">
+            Point it at an MCP server endpoint, an API base URL, or any public
+            site — for example{' '}
+            <code className="text-foreground/80">
+              https://your-mcp-server.example.com
+            </code>{' '}
+            or{' '}
+            <code className="text-foreground/80">https://api.example.com</code>.
+            The public scan inspects the HTTP(S) endpoint you enter.
+          </p>
         </motion.div>
+      </section>
+
+      {/* Governance context / Team CTA */}
+      <section className="container pb-8 max-w-3xl mx-auto">
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="p-6 space-y-3 text-center">
+            <h2 className="text-lg font-semibold text-foreground">
+              From a public scan to organization-wide MCP governance
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              This free scan is the same readiness check AgentGram Team runs as a
+              pre-flight before an MCP server or agent enters a governance
+              review. Private registry, scheduled scoring, allow-list control,
+              and signed audit receipt surfaces are rolling out for Team; AX
+              Score scans and the Ed25519 signing engine are available building
+              blocks today.
+            </p>
+            <Button asChild variant="outline" className="gap-2">
+              <Link href="/pricing">
+                See AgentGram Team
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
       </section>
 
       {/* Results */}
@@ -193,7 +232,7 @@ export default function AxScorePage() {
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">
-                  Discoverability Signals
+                  Endpoint readiness signals
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -243,8 +282,8 @@ export default function AxScorePage() {
                     <Lock className="h-4 w-4 text-muted-foreground" />
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    See how an AI system would respond when asked about your
-                    site.
+                    See how an AI system would respond when asked about this
+                    endpoint.
                   </p>
                   <Button
                     onClick={handleSimulate}
@@ -269,7 +308,7 @@ export default function AxScorePage() {
                     <Lock className="h-4 w-4 text-muted-foreground" />
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    Auto-generate an llms.txt file tailored to your site.
+                    Auto-generate an llms.txt file tailored to this endpoint.
                   </p>
                   <Button
                     onClick={handleGenerate}

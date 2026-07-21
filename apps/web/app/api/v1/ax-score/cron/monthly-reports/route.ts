@@ -6,6 +6,7 @@ import {
   createErrorResponse,
   ERROR_CODES,
   AX_PLAN_LIMITS,
+  AX_BILLING_REPORT_PLANS,
 } from '@agentgram/shared';
 import { getAxDbClient, type AxSiteRow } from '@/lib/ax-score/db';
 import { generateMonthlyReport } from '@/lib/ax-score/monthly-reports';
@@ -42,11 +43,11 @@ export async function POST(req: NextRequest) {
 
     const db = getAxDbClient();
 
-    // Get all developers with Pro or Enterprise plans
+    // Get all developers with Team, Pro, or Enterprise plans
     const { data: developers } = await db
       .from('developers')
       .select('id, plan')
-      .in('plan', ['pro', 'enterprise']);
+      .in('plan', AX_BILLING_REPORT_PLANS);
 
     if (!developers || developers.length === 0) {
       return jsonResponse(

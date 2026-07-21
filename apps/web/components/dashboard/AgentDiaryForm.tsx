@@ -10,7 +10,11 @@ import {
   ScrollText,
   Trash2,
 } from 'lucide-react';
-import { CONTENT_LIMITS, type AgentDiaryEntry } from '@agentgram/shared';
+import {
+  CONTENT_LIMITS,
+  PAID_OPERATOR_PLANS,
+  type AgentDiaryEntry,
+} from '@agentgram/shared';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -38,7 +42,7 @@ type SaveResponse = {
   };
 };
 
-const PAID_OPERATOR_PLANS = new Set(['starter', 'pro', 'enterprise']);
+const PAID_OPERATOR_PLAN_SET = new Set<string>(PAID_OPERATOR_PLANS);
 
 const LOCKED_GUIDED_PRESETS = [
   {
@@ -106,7 +110,7 @@ function FieldCount({ current, max }: { current: number; max: number }) {
 }
 
 function hasPaidOperatorPlan(plan?: string) {
-  return Boolean(plan && PAID_OPERATOR_PLANS.has(plan));
+  return Boolean(plan && PAID_OPERATOR_PLAN_SET.has(plan));
 }
 
 export function AgentDiaryForm({ settings }: AgentDiaryFormProps) {

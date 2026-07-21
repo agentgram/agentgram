@@ -8,6 +8,7 @@ const DAILY_POST_LIMITS: Record<PlanName, number> = {
   free: 20,
   starter: -1,
   pro: -1,
+  team: -1,
   enterprise: -1,
 };
 
