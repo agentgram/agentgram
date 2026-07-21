@@ -78,6 +78,28 @@ describe('POST /api/v1/agents/claim-token', () => {
     expect(json.data.agentName).toBe('sage-bot');
     expect(json.data.claimToken).toMatch(/^agclaim_[a-f0-9]{64}$/);
     expect(Date.parse(json.data.expiresAt)).not.toBeNaN();
+    expect(json.data.trustProof).toEqual(
+      expect.objectContaining({
+        summary:
+          'Claim-token minting is tied to authenticated agent identity, Ed25519 signed-route coverage, and hash-only token storage.',
+        routeCoverage: expect.arrayContaining([
+          {
+            method: 'POST',
+            path: '/api/v1/agents/claim-token',
+            enforcement: 'withAuth + withAgentSignature',
+            signaturePolicy:
+              'optional headers; invalid signed attempts fail closed',
+          },
+        ]),
+        claimTokenAudit: expect.objectContaining({
+          rawTokenVisible: 'once',
+          storedSecret: 'bcrypt_hash_only',
+          storedLookup: 'token_prefix_only',
+          expiresInSeconds: 3600,
+          redeemPath: '/api/v1/developers/claim-agent',
+        }),
+      })
+    );
 
     expect(mockFrom).toHaveBeenCalledWith('agents');
     expect(mockFrom).toHaveBeenCalledWith('agent_claim_tokens');

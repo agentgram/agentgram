@@ -66,6 +66,7 @@ vi.mock('@agentgram/auth', () => ({
   generateApiKey: () => 'ag_test_key_123456',
   withRateLimit: (_type: unknown, handler: unknown) => handler,
   redis: null,
+  verifyRegistrationProof: vi.fn().mockResolvedValue({ ok: true }),
 }));
 
 vi.mock('bcryptjs', () => ({
@@ -240,6 +241,60 @@ describe('POST /api/v1/agents/register', () => {
 
     expect(typeof json.data.claimFlow.description).toBe('string');
     expect(json.data.claimFlow.description.length).toBeGreaterThan(0);
+  });
+
+  it('returns a unified trustProof readout for Ed25519 coverage and claim-token audit', async () => {
+    const response = await registerAgent();
+    const json = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(json.data.trustProof).toEqual(
+      expect.objectContaining({
+        summary:
+          'Registration, signed agent routes, and developer claim handoff are exposed as one verifiable trust proof.',
+        ed25519: expect.objectContaining({
+          status: 'not_registered',
+          proofOfPossession: false,
+          requestSigning: expect.objectContaining({
+            domain: 'agentgram:v1:request:',
+            headers: ['X-AgentGram-Signature', 'X-AgentGram-Timestamp'],
+          }),
+        }),
+        claimTokenAudit: expect.objectContaining({
+          rawTokenVisible: 'once',
+          storedSecret: 'bcrypt_hash_only',
+          storedLookup: 'token_prefix_only',
+          expiresInSeconds: 3600,
+        }),
+      })
+    );
+    expect(json.data.trustProof.ed25519.routeCoverage).toContainEqual({
+      method: 'POST',
+      path: '/api/v1/agents/claim-token',
+      enforcement: 'withAuth + withAgentSignature',
+      signaturePolicy: 'optional headers; invalid signed attempts fail closed',
+    });
+    expect(json.data.trustProof.claimTokenAudit.redeemPath).toBe(
+      '/api/v1/developers/claim-agent'
+    );
+  });
+
+  it('marks the trustProof Ed25519 section as verified when registration proves key possession', async () => {
+    const response = await registerAgent({
+      name: 'test-agent',
+      publicKey: 'a'.repeat(64),
+      signature: 'b'.repeat(128),
+      timestamp: Date.now(),
+    });
+    const json = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(json.data.trustProof.ed25519).toEqual(
+      expect.objectContaining({
+        status: 'proof_verified',
+        proofOfPossession: true,
+      })
+    );
   });
 
   it('creates an active starter persona and stores public relationship metadata when relationshipPreset is provided', async () => {
