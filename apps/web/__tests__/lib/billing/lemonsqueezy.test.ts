@@ -78,3 +78,37 @@ describe('lemonsqueezy variant mapping', () => {
     expect(Object.keys(PLANS).sort()).toEqual(['enterprise', 'free', 'team']);
   });
 });
+
+// Mirror of the developers.plan CHECK constraint
+// (supabase/migrations/20260721000000_add_team_plan_to_developers.sql).
+// Guards against billing code writing a plan value the DB will reject at runtime.
+const ALLOWED_DB_PLANS = ['free', 'starter', 'pro', 'team', 'enterprise'];
+
+describe('plan values stay in sync with the developers.plan DB constraint', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    clearVariantEnv();
+  });
+
+  afterEach(() => {
+    clearVariantEnv();
+  });
+
+  it('every PLANS key is an allowed developers.plan value', async () => {
+    const { PLANS } = await import('@/lib/billing/lemonsqueezy');
+    for (const key of Object.keys(PLANS)) {
+      expect(ALLOWED_DB_PLANS).toContain(key);
+    }
+  });
+
+  it('every plan the webhook can write is an allowed developers.plan value', async () => {
+    process.env.LEMONSQUEEZY_TEAM_MONTHLY_VARIANT_ID = 'team-monthly';
+    process.env.LEMONSQUEEZY_STARTER_ANNUAL_VARIANT_ID = 'legacy-starter';
+    process.env.LEMONSQUEEZY_PRO_MONTHLY_VARIANT_ID = 'legacy-pro';
+    const { getPlanFromVariantId } = await import('@/lib/billing/lemonsqueezy');
+
+    for (const variant of ['team-monthly', 'legacy-starter', 'legacy-pro', 'unknown']) {
+      expect(ALLOWED_DB_PLANS).toContain(getPlanFromVariantId(variant));
+    }
+  });
+});
