@@ -12,6 +12,7 @@ permissions:
 jobs:
   validate-pr-artifact-pack:
     name: Validate PR verification artifact pack
+    if: ${{ github.actor != 'dependabot[bot]' }}
     runs-on: ubuntu-latest
 
     steps:
