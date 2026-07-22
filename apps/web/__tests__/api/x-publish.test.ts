@@ -10,6 +10,7 @@ const ORIGINAL_X_ACCESS_TOKEN = process.env.X_ACCESS_TOKEN;
 const ORIGINAL_X_ACCESS_TOKEN_SECRET = process.env.X_ACCESS_TOKEN_SECRET;
 const ORIGINAL_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const ORIGINAL_SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const ORIGINAL_APP_URL = process.env.NEXT_PUBLIC_APP_URL;
 
 type XPublishEnvName =
   | 'X_PUBLISH_SECRET'
@@ -19,7 +20,8 @@ type XPublishEnvName =
   | 'X_ACCESS_TOKEN'
   | 'X_ACCESS_TOKEN_SECRET'
   | 'NEXT_PUBLIC_SUPABASE_URL'
-  | 'SUPABASE_SERVICE_ROLE_KEY';
+  | 'SUPABASE_SERVICE_ROLE_KEY'
+  | 'NEXT_PUBLIC_APP_URL';
 
 vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(),
@@ -36,11 +38,15 @@ function restoreEnv(name: XPublishEnvName, value: string | undefined) {
 }
 
 function mockReceiptInsert() {
-  const insert = vi.fn().mockResolvedValue({ error: null });
+  const single = vi
+    .fn()
+    .mockResolvedValue({ data: { id: '5f7e8c9a-6a2d-4462-a2f8-89e57573e1b4' }, error: null });
+  const select = vi.fn().mockReturnValue({ single });
+  const insert = vi.fn().mockReturnValue({ select });
   const from = vi.fn().mockReturnValue({ insert });
   createClientMock.mockReturnValue({ from } as never);
 
-  return { from, insert };
+  return { from, insert, select, single };
 }
 
 function makeRequest(body: unknown, authorization?: string) {
@@ -61,6 +67,7 @@ describe('POST /api/v1/distribution/x/publish', () => {
     restoreEnv('X_ACCESS_TOKEN_SECRET', ORIGINAL_X_ACCESS_TOKEN_SECRET);
     restoreEnv('NEXT_PUBLIC_SUPABASE_URL', ORIGINAL_SUPABASE_URL);
     restoreEnv('SUPABASE_SERVICE_ROLE_KEY', ORIGINAL_SUPABASE_SERVICE_ROLE_KEY);
+    restoreEnv('NEXT_PUBLIC_APP_URL', ORIGINAL_APP_URL);
     createClientMock.mockReset();
     vi.unstubAllGlobals();
   });
@@ -220,6 +227,7 @@ describe('POST /api/v1/distribution/x/publish', () => {
     process.env.X_BEARER_TOKEN = 'x-token';
     process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co';
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-key';
+    process.env.NEXT_PUBLIC_APP_URL = 'https://agentgram.co';
     const receiptDb = mockReceiptInsert();
     vi.stubGlobal(
       'fetch',
@@ -256,6 +264,9 @@ describe('POST /api/v1/distribution/x/publish', () => {
       persisted: true,
       table: 'post_distribution_receipts',
       channelStatus: 'sent',
+      receiptId: '5f7e8c9a-6a2d-4462-a2f8-89e57573e1b4',
+      receiptUrl:
+        'https://agentgram.co/posts/9a94f4e2-f27b-4b02-8405-b496904bea95#distribution-x-5f7e8c9a-6a2d-4462-a2f8-89e57573e1b4',
       externalId: '1800000000000000003',
       externalUrl: 'https://x.com/i/web/status/1800000000000000003',
     });
@@ -270,6 +281,8 @@ describe('POST /api/v1/distribution/x/publish', () => {
         retryable: false,
       })
     );
+    expect(receiptDb.select).toHaveBeenCalledWith('id');
+    expect(receiptDb.single).toHaveBeenCalled();
   });
 
   it('persists retryable error receipts when X returns a transient failure', async () => {

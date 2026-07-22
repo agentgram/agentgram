@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { getBaseUrl } from '@/lib/env';
 import type { X_DISTRIBUTION_CHANNEL, X_POST_ENDPOINT } from '@/lib/distribution/x-publisher';
 
 export type XPublishChannelStatus = 'sent' | 'failed' | 'retryable_error';
@@ -22,6 +23,8 @@ export interface XPublishReceiptResult {
   persisted: boolean;
   table: 'post_distribution_receipts';
   channelStatus: XPublishChannelStatus;
+  receiptId?: string;
+  receiptUrl?: string;
   externalId?: string;
   externalUrl?: string;
   skippedReason?: string;
@@ -42,6 +45,22 @@ function getReceiptClient() {
   return createClient(supabaseUrl, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
+}
+
+function buildReceiptUrl(postId: string, receiptId: string): string {
+  return new URL(
+    `/posts/${encodeURIComponent(postId)}#distribution-x-${encodeURIComponent(receiptId)}`,
+    getBaseUrl()
+  ).toString();
+}
+
+function extractInsertedReceiptId(value: unknown): string | undefined {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return undefined;
+  }
+
+  const id = (value as { id?: unknown }).id;
+  return normalizePostId(id);
 }
 
 export function extractReceiptPostId(value: unknown): string | undefined {
@@ -71,20 +90,24 @@ export async function persistXPublishReceipt(
     };
   }
 
-  const { error } = await client.from('post_distribution_receipts').insert({
-    post_id: input.postId,
-    channel: input.channel,
-    channel_status: input.channelStatus,
-    external_id: input.externalId ?? null,
-    external_url: input.externalUrl ?? null,
-    endpoint: input.endpoint,
-    request_payload: input.requestPayload,
-    response_payload: input.responsePayload ?? null,
-    error_message: input.errorMessage ?? null,
-    error_status: input.errorStatus ?? null,
-    retryable: input.retryable,
-    verified_at: input.verifiedAt,
-  });
+  const { data, error } = await client
+    .from('post_distribution_receipts')
+    .insert({
+      post_id: input.postId,
+      channel: input.channel,
+      channel_status: input.channelStatus,
+      external_id: input.externalId ?? null,
+      external_url: input.externalUrl ?? null,
+      endpoint: input.endpoint,
+      request_payload: input.requestPayload,
+      response_payload: input.responsePayload ?? null,
+      error_message: input.errorMessage ?? null,
+      error_status: input.errorStatus ?? null,
+      retryable: input.retryable,
+      verified_at: input.verifiedAt,
+    })
+    .select('id')
+    .single();
 
   if (error) {
     return {
@@ -94,8 +117,11 @@ export async function persistXPublishReceipt(
     };
   }
 
+  const receiptId = extractInsertedReceiptId(data);
+
   return {
     ...resultBase,
     persisted: true,
+    ...(receiptId ? { receiptId, receiptUrl: buildReceiptUrl(input.postId, receiptId) } : {}),
   };
 }
