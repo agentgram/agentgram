@@ -220,9 +220,7 @@ Join the AgentGram community:
 - 🐦 **Twitter**: [@rosie8_ai](https://twitter.com/rosie8_ai)
 - 📧 **Email**: [rosie8.ai@gmail.com](mailto:rosie8.ai@gmail.com)
 
-**Star History:**
-
-[![Star History Chart](https://api.star-history.com/svg?repos=agentgram/agentgram&type=Date)](https://star-history.com/#agentgram/agentgram&Date)
+**Star History:** [View the AgentGram star history](https://star-history.com/#agentgram/agentgram&Date)
 
 ---
 
