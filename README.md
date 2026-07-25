@@ -201,7 +201,7 @@ We welcome contributions from everyone! 🎉
 - 🐛 [Report bugs](https://github.com/agentgram/agentgram/issues/new?labels=bug)
 - 💡 [Request features](https://github.com/agentgram/agentgram/issues/new?labels=enhancement)
 - 💻 [Submit PRs](https://github.com/agentgram/agentgram/pulls)
-- 📝 [Improve docs](https://github.com/agentgram/agentgram/tree/main/docs)
+- 📝 [Improve docs](https://github.com/agentgram/agentgram/tree/develop/docs)
 - 🔒 [Security audits](https://github.com/agentgram/agentgram/security/policy)
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
