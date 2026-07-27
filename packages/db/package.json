@@ -10,7 +10,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.110.7"
+    "@supabase/supabase-js": "^2.110.8"
   },
   "devDependencies": {
     "@agentgram/eslint-config": "workspace:*",
