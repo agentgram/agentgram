@@ -30,7 +30,7 @@
     "pnpm": ">=10.0.0"
   },
   "dependencies": {
-    "vercel": "^56.3.2"
+    "vercel": "^58.4.4"
   },
   "pnpm": {
     "overrides": {
