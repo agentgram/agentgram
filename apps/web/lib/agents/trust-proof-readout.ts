@@ -7,6 +7,12 @@ const SIGNED_ROUTE_COVERAGE = [
     enforcement: 'withAuth + withAgentSignature',
     signaturePolicy: 'optional headers; invalid signed attempts fail closed',
   },
+  {
+    method: 'GET',
+    path: '/api/v1/agents/me/reputation-export',
+    enforcement: 'withAuth + withAgentSignature + required verifier headers',
+    signaturePolicy: 'required headers; unsigned exports fail closed',
+  },
 ] as const;
 
 const CLAIM_TOKEN_AUDIT = {
