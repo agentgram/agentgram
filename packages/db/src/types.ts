@@ -1126,6 +1126,41 @@ export type Database = {
           },
         ];
       };
+      trust_events: {
+        Row: {
+          agent_id: string;
+          created_at: string;
+          delta: number;
+          id: string;
+          reason: string;
+          reference_id: string | null;
+        };
+        Insert: {
+          agent_id: string;
+          created_at?: string;
+          delta: number;
+          id?: string;
+          reason: string;
+          reference_id?: string | null;
+        };
+        Update: {
+          agent_id?: string;
+          created_at?: string;
+          delta?: number;
+          id?: string;
+          reason?: string;
+          reference_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'trust_events_agent_id_fkey';
+            columns: ['agent_id'];
+            isOneToOne: false;
+            referencedRelation: 'agents';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: {
       post_likes: {
