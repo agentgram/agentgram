@@ -1,0 +1,173 @@
+import { describe, expect, it, vi } from 'vitest';
+import { sweepMcpRegistryCoverage } from '@/lib/ax-score/mcp-registry-audit';
+
+function registryResponse(body: unknown): Response {
+  return new Response(JSON.stringify(body), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+describe('sweepMcpRegistryCoverage', () => {
+  it('builds a full nextCursor page-chain digest and x402-ready receipt', async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        registryResponse({
+          servers: [
+            {
+              server: {
+                name: 'acme/weather',
+                version: '1.0.0',
+                remotes: [{ type: 'streamable-http', url: 'https://weather.example/mcp' }],
+              },
+              _meta: {
+                'io.modelcontextprotocol.registry/official': {
+                  isLatest: false,
+                },
+              },
+            },
+          ],
+          metadata: { count: 1, nextCursor: 'acme/weather:1.0.0' },
+        })
+      )
+      .mockResolvedValueOnce(
+        registryResponse({
+          servers: [
+            {
+              server: {
+                name: 'acme/weather',
+                version: '1.1.0',
+                remotes: [{ type: 'streamable-http', url: 'https://weather.example/mcp' }],
+              },
+              _meta: {
+                'io.modelcontextprotocol.registry/official': {
+                  isLatest: true,
+                },
+              },
+            },
+          ],
+          metadata: { count: 1 },
+        })
+      );
+
+    const audit = await sweepMcpRegistryCoverage({
+      fetcher,
+      endpoint: 'https://registry.example/v0/servers',
+      limit: 1,
+      generatedAt: '2026-08-04T00:00:00.000Z',
+    });
+
+    expect(fetcher).toHaveBeenNthCalledWith(
+      1,
+      'https://registry.example/v0/servers?limit=1'
+    );
+    expect(fetcher).toHaveBeenNthCalledWith(
+      2,
+      'https://registry.example/v0/servers?limit=1&cursor=acme%2Fweather%3A1.0.0'
+    );
+    expect(audit.summary).toMatchObject({
+      totalEntries: 2,
+      uniqueServerVersions: 2,
+      uniqueServerNames: 1,
+      remoteTransportEntries: 2,
+      remoteTransportCoveragePct: 100,
+      latestMarkedNames: 1,
+    });
+    expect(audit.pageChain).toHaveLength(2);
+    expect(audit.anomalies.duplicateServerVersions).toEqual([]);
+    expect(audit.anomalies.truncated).toBe(false);
+    expect(audit.receipt).toMatchObject({
+      kind: 'agentgram.ax-score.mcp-registry.coverage-receipt',
+      registryEndpoint: 'https://registry.example/v0/servers',
+      digestAlgorithm: 'sha256',
+      pageCount: 2,
+      serverVersionCount: 2,
+      uniqueServerVersionCount: 2,
+      anomalyCount: 0,
+      x402: {
+        status: 'ready',
+        paymentPurpose: 'mcp-registry-coverage-audit-report',
+      },
+      signature: {
+        status: 'unsigned',
+        signingAlgorithm: 'ed25519',
+      },
+    });
+    expect(audit.receipt.coverageDigest).toMatch(/^[a-f0-9]{64}$/);
+    expect(audit.receipt.signature.payloadDigest).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it('reports duplicate, remote-coverage, latest-marker, and cursor anomalies', async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        registryResponse({
+          servers: [
+            { server: { name: 'loop/server', version: '1.0.0', remotes: [] } },
+            { server: { name: 'loop/server', version: '1.0.0', remotes: [] } },
+          ],
+          metadata: { count: 2, nextCursor: 'cursor-a' },
+        })
+      )
+      .mockResolvedValueOnce(
+        registryResponse({
+          servers: [],
+          metadata: { count: 0, nextCursor: 'cursor-a' },
+        })
+      );
+
+    const audit = await sweepMcpRegistryCoverage({
+      fetcher,
+      endpoint: 'https://registry.example/v0/servers',
+      limit: 2,
+      generatedAt: '2026-08-04T00:00:00.000Z',
+    });
+
+    expect(audit.summary.remoteTransportCoveragePct).toBe(0);
+    expect(audit.anomalies.duplicateServerVersions).toEqual([
+      'loop/server@1.0.0',
+    ]);
+    expect(audit.anomalies.missingRemoteTransports).toEqual([
+      'loop/server@1.0.0',
+      'loop/server@1.0.0',
+    ]);
+    expect(audit.anomalies.missingLatestMarkers).toEqual(['loop/server']);
+    expect(audit.anomalies.emptyPagesWithCursor).toEqual(['cursor-a']);
+    expect(audit.anomalies.cursorLoops).toEqual(['cursor-a']);
+    expect(audit.receipt.anomalyCount).toBe(6);
+  });
+
+  it('marks a sweep as truncated when maxPages stops before registry exhaustion', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValueOnce(
+      registryResponse({
+        servers: [
+          {
+            server: {
+              name: 'paged/server',
+              version: '1.0.0',
+              remotes: [{ type: 'streamable-http', url: 'https://paged.example/mcp' }],
+            },
+            _meta: {
+              'io.modelcontextprotocol.registry/official': {
+                isLatest: true,
+              },
+            },
+          },
+        ],
+        metadata: { count: 1, nextCursor: 'next-page' },
+      })
+    );
+
+    const audit = await sweepMcpRegistryCoverage({
+      fetcher,
+      endpoint: 'https://registry.example/v0/servers',
+      maxPages: 1,
+      generatedAt: '2026-08-04T00:00:00.000Z',
+    });
+
+    expect(audit.pageChain).toHaveLength(1);
+    expect(audit.anomalies.truncated).toBe(true);
+    expect(audit.receipt.anomalyCount).toBe(1);
+  });
+});
