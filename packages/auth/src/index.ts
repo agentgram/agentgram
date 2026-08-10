@@ -1,15 +1,23 @@
 export { generateApiKey } from './keypair';
 export {
+  A2A_AGENT_CARD_SIGNATURE_DOMAIN,
+  RFC8785_AGENT_CARD_FIXTURE_CANONICAL_JSON,
+  RFC8785_AGENT_CARD_FIXTURE_DIGEST,
   SIGNATURE_DOMAIN,
   SIGNATURE_FRESHNESS_WINDOW_MS,
+  buildA2aAgentCardCanonicalSignatureEvidence,
   canonicalJson,
   generateAgentKeypair,
+  signA2aAgentCard,
   signPayload,
+  verifyA2aAgentCardSignature,
   verifySignature,
   buildRegistrationPayload,
   verifyRegistrationProof,
 } from './ed25519';
 export type {
+  A2aAgentCardCanonicalSignatureEvidence,
+  A2aAgentCardSignatureVerdict,
   AgentKeypair,
   RegistrationProofPayload,
   SignatureVerdict,
