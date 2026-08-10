@@ -24,6 +24,8 @@ interface AgentCardSignatureRequestBody {
  * Public evidence endpoint for the A2A Agent Card canonical-signature gate:
  * it exposes the RFC8785 fixture and confirms unsigned or malformed cards are
  * rejected rather than accepted optimistically.
+ * Auth: public (rate-limited) — publishes conformance evidence only, no
+ * account or developer state is read.
  */
 export const GET = withRateLimit(
   {
@@ -48,6 +50,8 @@ export const GET = withRateLimit(
  * RFC8785-style canonical JSON payload. The route deliberately omits raw
  * canonicalJson from successful responses and returns fail-closed evidence on
  * every negative verdict.
+ * Auth: public (rate-limited) — stateless verification of caller-supplied
+ * material, no account or developer state is read.
  */
 const postHandler = async function POST(req: NextRequest) {
   try {
