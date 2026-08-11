@@ -42,6 +42,8 @@ describe('POST /api/v1/ax-score/mcp-registry/audit', () => {
         remoteTransportEntries: 2,
         remoteTransportCoveragePct: 100,
         latestMarkedNames: 1,
+        schemaCompatibleEntries: 2,
+        schemaCompatibilityPct: 100,
       },
       pageChain: [
         {
@@ -58,6 +60,7 @@ describe('POST /api/v1/ax-score/mcp-registry/audit', () => {
         missingRemoteTransports: [],
         cursorLoops: [],
         emptyPagesWithCursor: [],
+        schemaCompatibilityFailures: [],
         truncated: false,
       },
       receipt: {
@@ -128,6 +131,7 @@ describe('POST /api/v1/ax-score/mcp-registry/audit', () => {
       limit: 50,
       maxPages: 3,
       cursor: null,
+      reportType: 'mcp-registry-coverage-audit',
     });
     expect(json.data).toMatchObject({
       developerId: 'dev-1',
@@ -144,6 +148,79 @@ describe('POST /api/v1/ax-score/mcp-registry/audit', () => {
             signingAlgorithm: 'ed25519',
           },
         },
+      },
+    });
+  });
+
+  it('passes through the paid MCP schema compatibility audit report type', async () => {
+    mockSweepMcpRegistryCoverage.mockResolvedValueOnce({
+      summary: {
+        totalEntries: 2,
+        uniqueServerVersions: 2,
+        uniqueServerNames: 2,
+        remoteTransportEntries: 1,
+        remoteTransportCoveragePct: 50,
+        latestMarkedNames: 2,
+        schemaCompatibleEntries: 1,
+        schemaCompatibilityPct: 50,
+      },
+      pageChain: [],
+      anomalies: {
+        duplicateServerVersions: [],
+        missingLatestMarkers: [],
+        missingRemoteTransports: ['bad/server@0.1.0'],
+        cursorLoops: [],
+        emptyPagesWithCursor: [],
+        schemaCompatibilityFailures: [
+          'bad/server@0.1.0: missing MCP launch surface (https remote or package)',
+        ],
+        truncated: false,
+      },
+      receipt: {
+        kind: 'agentgram.ax-score.mcp-registry.schema-compatibility-receipt',
+        registryEndpoint: 'https://registry.modelcontextprotocol.io/v0/servers',
+        generatedAt: '2026-08-04T00:00:00.000Z',
+        digestAlgorithm: 'sha256',
+        coverageDigest: 'coverage-digest',
+        pageChainDigest: 'page-chain-digest',
+        pageCount: 1,
+        serverVersionCount: 2,
+        uniqueServerVersionCount: 2,
+        anomalyCount: 1,
+        x402: {
+          status: 'ready',
+          paymentPurpose: 'mcp-schema-compatibility-audit-report',
+          recommendedPriceUsd: '79.00',
+          deliverable: 'MCP Registry schema compatibility findings.',
+        },
+        signature: {
+          status: 'unsigned',
+          signingAlgorithm: 'ed25519',
+          payloadDigest: 'payload-digest',
+        },
+      },
+    });
+    const { POST } = await import(
+      '@/app/api/v1/ax-score/mcp-registry/audit/route'
+    );
+
+    const response = await POST(
+      makeRequest({ reportType: 'mcp-schema-compatibility-audit', limit: 25 })
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mockSweepMcpRegistryCoverage).toHaveBeenCalledWith({
+      limit: 25,
+      cursor: null,
+      reportType: 'mcp-schema-compatibility-audit',
+    });
+    expect(json.data).toMatchObject({
+      plan: 'team',
+      reportType: 'mcp-schema-compatibility-audit',
+      payment: {
+        status: 'ready',
+        paymentPurpose: 'mcp-schema-compatibility-audit-report',
       },
     });
   });
