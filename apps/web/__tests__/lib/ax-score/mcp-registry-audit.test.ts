@@ -73,6 +73,8 @@ describe('sweepMcpRegistryCoverage', () => {
       remoteTransportEntries: 2,
       remoteTransportCoveragePct: 100,
       latestMarkedNames: 1,
+      schemaCompatibleEntries: 2,
+      schemaCompatibilityPct: 100,
     });
     expect(audit.pageChain).toHaveLength(2);
     expect(audit.anomalies.duplicateServerVersions).toEqual([]);
@@ -96,6 +98,61 @@ describe('sweepMcpRegistryCoverage', () => {
     });
     expect(audit.receipt.coverageDigest).toMatch(/^[a-f0-9]{64}$/);
     expect(audit.receipt.signature.payloadDigest).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it('produces a paid schema compatibility receipt and flags incompatible registry entries', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValueOnce(
+      registryResponse({
+        servers: [
+          {
+            server: {
+              name: 'valid/server',
+              version: '1.0.0',
+              remotes: [{ type: 'streamable-http', url: 'https://valid.example/mcp' }],
+            },
+            _meta: {
+              'io.modelcontextprotocol.registry/official': {
+                isLatest: true,
+              },
+            },
+          },
+          {
+            server: {
+              name: 'missing/launch-surface',
+              version: '0.1.0',
+              remotes: [{ type: 'streamable-http', url: 'http://insecure.example/mcp' }],
+            },
+            _meta: {
+              'io.modelcontextprotocol.registry/official': {
+                isLatest: true,
+              },
+            },
+          },
+        ],
+        metadata: { count: 2 },
+      })
+    );
+
+    const audit = await sweepMcpRegistryCoverage({
+      fetcher,
+      endpoint: 'https://registry.example/v0/servers',
+      reportType: 'mcp-schema-compatibility-audit',
+      generatedAt: '2026-08-04T00:00:00.000Z',
+    });
+
+    expect(audit.summary.schemaCompatibleEntries).toBe(1);
+    expect(audit.summary.schemaCompatibilityPct).toBe(50);
+    expect(audit.anomalies.schemaCompatibilityFailures).toEqual([
+      'missing/launch-surface@0.1.0: missing MCP launch surface (https remote or package)',
+    ]);
+    expect(audit.receipt).toMatchObject({
+      kind: 'agentgram.ax-score.mcp-registry.schema-compatibility-receipt',
+      x402: {
+        status: 'ready',
+        paymentPurpose: 'mcp-schema-compatibility-audit-report',
+        recommendedPriceUsd: '79.00',
+      },
+    });
   });
 
   it('reports duplicate, remote-coverage, latest-marker, and cursor anomalies', async () => {
@@ -135,7 +192,11 @@ describe('sweepMcpRegistryCoverage', () => {
     expect(audit.anomalies.missingLatestMarkers).toEqual(['loop/server']);
     expect(audit.anomalies.emptyPagesWithCursor).toEqual(['cursor-a']);
     expect(audit.anomalies.cursorLoops).toEqual(['cursor-a']);
-    expect(audit.receipt.anomalyCount).toBe(6);
+    expect(audit.anomalies.schemaCompatibilityFailures).toEqual([
+      'loop/server@1.0.0: missing MCP launch surface (https remote or package)',
+      'loop/server@1.0.0: missing MCP launch surface (https remote or package)',
+    ]);
+    expect(audit.receipt.anomalyCount).toBe(8);
   });
 
   it('marks a sweep as truncated when maxPages stops before registry exhaustion', async () => {

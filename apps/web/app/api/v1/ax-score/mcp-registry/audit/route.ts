@@ -11,13 +11,22 @@ import {
   jsonResponse,
 } from '@agentgram/shared';
 import { getDeveloperPlan } from '@/lib/ax-score/usage';
-import { sweepMcpRegistryCoverage } from '@/lib/ax-score/mcp-registry-audit';
+import {
+  type McpRegistryAuditReportType,
+  sweepMcpRegistryCoverage,
+} from '@/lib/ax-score/mcp-registry-audit';
 
 interface AuditRequestBody {
   limit?: unknown;
   maxPages?: unknown;
   cursor?: unknown;
+  reportType?: unknown;
 }
+
+const MCP_REGISTRY_AUDIT_REPORT_TYPES = [
+  'mcp-registry-coverage-audit',
+  'mcp-schema-compatibility-audit',
+] as const;
 
 function readPositiveInteger(value: unknown): number | undefined {
   if (typeof value !== 'number' || !Number.isInteger(value) || value < 1) {
@@ -29,6 +38,13 @@ function readPositiveInteger(value: unknown): number | undefined {
 
 function isBillingReportPlan(plan: string): boolean {
   return (AX_BILLING_REPORT_PLANS as readonly string[]).includes(plan);
+}
+
+function readReportType(value: unknown): McpRegistryAuditReportType {
+  return typeof value === 'string' &&
+    (MCP_REGISTRY_AUDIT_REPORT_TYPES as readonly string[]).includes(value)
+    ? (value as McpRegistryAuditReportType)
+    : 'mcp-registry-coverage-audit';
 }
 
 /**
@@ -60,18 +76,20 @@ const handler = withDeveloperAuth(async function POST(req: NextRequest) {
     const limit = readPositiveInteger(body.limit);
     const maxPages = readPositiveInteger(body.maxPages);
     const cursor = typeof body.cursor === 'string' ? body.cursor : null;
+    const reportType = readReportType(body.reportType);
 
     const audit = await sweepMcpRegistryCoverage({
       ...(limit ? { limit } : {}),
       ...(maxPages ? { maxPages } : {}),
       cursor,
+      reportType,
     });
 
     return jsonResponse(
       createSuccessResponse({
         developerId,
         plan,
-        reportType: 'mcp-registry-coverage-audit',
+        reportType,
         payment: audit.receipt.x402,
         audit,
       }),
