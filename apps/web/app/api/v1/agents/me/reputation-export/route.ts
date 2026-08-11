@@ -1,5 +1,7 @@
+import { createHash } from 'node:crypto';
 import { NextRequest } from 'next/server';
 import {
+  canonicalJson,
   SIGNATURE_HEADER,
   TIMESTAMP_HEADER,
   withAgentSignature,
@@ -14,6 +16,12 @@ import {
 } from '@agentgram/shared';
 
 const ERC_8004_REPUTATION_EXPORT_VERSION = 'agentgram.reputation.export.v1';
+const REPUTATION_PROVENANCE_BUNDLE_VERSION =
+  'agentgram.reputation.provenance.bundle.v1';
+const REPUTATION_PROVENANCE_SIGNATURE_DOMAIN =
+  'agentgram:v1:reputation-provenance:';
+const SCORING_POLICY_VERSION = 'agentgram.trust-score.policy.v1';
+const VALIDATION_TIER = 'ed25519-verifier-gated-full-ledger';
 const BASELINE_TRUST_SCORE = 0.5;
 
 type TrustEventRow = {
@@ -42,6 +50,10 @@ function roundScore(value: number): number {
 
 function clampTrustScore(value: number): number {
   return Math.min(1, Math.max(0, value));
+}
+
+function sha256Hex(value: string): string {
+  return createHash('sha256').update(value, 'utf8').digest('hex');
 }
 
 function hasSignedVerifierHeaders(req: NextRequest): boolean {
@@ -110,51 +122,117 @@ const handler = withAuth(
         storedTrustScore - projectedTrustScoreFromEvents
       );
 
+      const generatedAt = new Date().toISOString();
+      const eventRows = events.map((event) => ({
+        id: event.id,
+        delta: event.delta ?? 0,
+        reason: event.reason ?? 'unknown',
+        referenceId: event.reference_id,
+        createdAt: event.created_at,
+      }));
+      const subject = {
+        agentId: agent.id,
+        name: agent.name,
+        displayName: agent.display_name,
+        publicKey: agent.public_key,
+        verificationState: agent.verification_state ?? 'unverified',
+        status: agent.status ?? 'unknown',
+      };
+      const signedVerifierGate = {
+        required: true,
+        verified: true,
+        verifier: 'withAuth + withAgentSignature',
+        headers: ['X-AgentGram-Signature', 'X-AgentGram-Timestamp'],
+        canonicalRequestPath: new URL(req.url).pathname,
+      };
+      const storageState = {
+        sourceTable: 'agents',
+        trustScore: storedTrustScore,
+        axp: agent.axp ?? 0,
+        updatedAt: agent.updated_at,
+      };
+      const eventEvidence = {
+        sourceTable: 'trust_events',
+        retention: 'full_ledger',
+        eventCount: events.length,
+        deltaSum,
+        events: eventRows,
+      };
+      const storageEventReconciliation = {
+        baselineTrustScore: BASELINE_TRUST_SCORE,
+        projectedTrustScoreFromEvents,
+        storedTrustScore,
+        storageEventDifference,
+        preservesStorageEventDifference: true,
+      };
+      const provenanceInputs = {
+        subject,
+        signedVerifierGate,
+        storageState,
+        eventEvidence,
+        storageEventReconciliation,
+      };
+      const canonicalInputEvidence = canonicalJson(provenanceInputs);
+      const inputEvidenceDigest = sha256Hex(canonicalInputEvidence);
+      const signaturePayload = {
+        kind: REPUTATION_PROVENANCE_BUNDLE_VERSION,
+        subjectAgentId: agent.id,
+        inputEvidenceDigest,
+        scoringPolicyVersion: SCORING_POLICY_VERSION,
+        validationTier: VALIDATION_TIER,
+        aggregatedAt: generatedAt,
+      };
+      const canonicalSignaturePayload = canonicalJson(signaturePayload);
+
       return jsonResponse(
         createSuccessResponse({
           standard: 'ERC-8004',
           schemaVersion: ERC_8004_REPUTATION_EXPORT_VERSION,
-          generatedAt: new Date().toISOString(),
-          subject: {
-            agentId: agent.id,
-            name: agent.name,
-            displayName: agent.display_name,
-            publicKey: agent.public_key,
-            verificationState: agent.verification_state ?? 'unverified',
-            status: agent.status ?? 'unknown',
-          },
-          signedVerifierGate: {
-            required: true,
-            verified: true,
-            verifier: 'withAuth + withAgentSignature',
-            headers: ['X-AgentGram-Signature', 'X-AgentGram-Timestamp'],
-            canonicalRequestPath: new URL(req.url).pathname,
-          },
-          storageState: {
-            sourceTable: 'agents',
-            trustScore: storedTrustScore,
-            axp: agent.axp ?? 0,
-            updatedAt: agent.updated_at,
-          },
-          eventEvidence: {
-            sourceTable: 'trust_events',
-            retention: 'full_ledger',
-            eventCount: events.length,
-            deltaSum,
-            events: events.map((event) => ({
-              id: event.id,
-              delta: event.delta ?? 0,
-              reason: event.reason ?? 'unknown',
-              referenceId: event.reference_id,
-              createdAt: event.created_at,
-            })),
-          },
-          storageEventReconciliation: {
-            baselineTrustScore: BASELINE_TRUST_SCORE,
-            projectedTrustScoreFromEvents,
-            storedTrustScore,
-            storageEventDifference,
-            preservesStorageEventDifference: true,
+          generatedAt,
+          subject,
+          signedVerifierGate,
+          storageState,
+          eventEvidence,
+          storageEventReconciliation,
+          provenanceBundle: {
+            kind: REPUTATION_PROVENANCE_BUNDLE_VERSION,
+            generatedAt,
+            scoringPolicy: {
+              version: SCORING_POLICY_VERSION,
+              baselineTrustScore: BASELINE_TRUST_SCORE,
+              formula:
+                'clamp(baselineTrustScore + sum(trust_events.delta), 0, 1)',
+              storageEventDifferencePreserved: true,
+            },
+            validation: {
+              tier: VALIDATION_TIER,
+              signingAlgorithm: 'ed25519',
+              signatureDomain: REPUTATION_PROVENANCE_SIGNATURE_DOMAIN,
+              signedVerifierRequestRequired: true,
+            },
+            aggregation: {
+              aggregatedAt: generatedAt,
+              eventCount: events.length,
+              firstEventAt: eventRows[0]?.createdAt ?? null,
+              lastEventAt: eventRows[eventRows.length - 1]?.createdAt ?? null,
+            },
+            evidenceDigest: {
+              digestAlgorithm: 'sha256',
+              inputEvidenceDigest,
+            },
+            signaturePayload: {
+              ...signaturePayload,
+              digestAlgorithm: 'sha256',
+              payloadDigest: sha256Hex(canonicalSignaturePayload),
+              status: 'ed25519-signable',
+            },
+            auditorVerification: {
+              canonicalJsonStandard: 'sorted-key-json',
+              canonicalInputEvidence,
+              canonicalSignaturePayload,
+              verificationCommand:
+                'canonicalize provenance inputs, sha256 them, then Ed25519-sign the signaturePayload with the agent key',
+            },
           },
         })
       );

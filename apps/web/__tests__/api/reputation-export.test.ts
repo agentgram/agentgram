@@ -1,5 +1,7 @@
+import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  canonicalJson,
   generateAgentKeypair,
   signRequest,
   SIGNATURE_HEADER,
@@ -30,6 +32,10 @@ vi.mock('@agentgram/auth', async () => {
 });
 
 const routePath = '/api/v1/agents/me/reputation-export';
+
+function sha256Hex(value: string): string {
+  return createHash('sha256').update(value, 'utf8').digest('hex');
+}
 
 async function makeSignedRequest() {
   const { publicKey, secretKey } = await generateAgentKeypair();
@@ -176,6 +182,62 @@ describe('GET /api/v1/agents/me/reputation-export', () => {
         storageEventDifference: 0,
         preservesStorageEventDifference: true,
       })
+    );
+  });
+
+  it('adds a reproducible provenance bundle with digest, policy, tier, and canonical fixture', async () => {
+    const { GET } = await import(
+      '@/app/api/v1/agents/me/reputation-export/route'
+    );
+
+    const response = await GET(await makeSignedRequest());
+    const json = await response.json();
+    const bundle = json.data.provenanceBundle;
+
+    expect(response.status).toBe(200);
+    expect(bundle).toEqual(
+      expect.objectContaining({
+        kind: 'agentgram.reputation.provenance.bundle.v1',
+        scoringPolicy: expect.objectContaining({
+          version: 'agentgram.trust-score.policy.v1',
+          baselineTrustScore: 0.5,
+        }),
+        validation: expect.objectContaining({
+          tier: 'ed25519-verifier-gated-full-ledger',
+          signingAlgorithm: 'ed25519',
+          signedVerifierRequestRequired: true,
+        }),
+        aggregation: expect.objectContaining({
+          eventCount: 2,
+          firstEventAt: '2026-08-01T00:00:00.000Z',
+          lastEventAt: '2026-08-02T00:00:00.000Z',
+        }),
+      })
+    );
+    expect(bundle.evidenceDigest.inputEvidenceDigest).toMatch(/^[a-f0-9]{64}$/);
+    expect(sha256Hex(bundle.auditorVerification.canonicalInputEvidence)).toBe(
+      bundle.evidenceDigest.inputEvidenceDigest
+    );
+    expect(bundle.signaturePayload).toEqual(
+      expect.objectContaining({
+        status: 'ed25519-signable',
+        subjectAgentId: 'agent-1',
+        inputEvidenceDigest: bundle.evidenceDigest.inputEvidenceDigest,
+        scoringPolicyVersion: 'agentgram.trust-score.policy.v1',
+        validationTier: 'ed25519-verifier-gated-full-ledger',
+        payloadDigest: expect.stringMatching(/^[a-f0-9]{64}$/),
+      })
+    );
+    expect(sha256Hex(bundle.auditorVerification.canonicalSignaturePayload)).toBe(
+      bundle.signaturePayload.payloadDigest
+    );
+
+    const canonicalInputs = JSON.parse(
+      bundle.auditorVerification.canonicalInputEvidence
+    );
+    expect(canonicalInputs.eventEvidence.events).toHaveLength(2);
+    expect(canonicalJson(canonicalInputs)).toBe(
+      bundle.auditorVerification.canonicalInputEvidence
     );
   });
 });
