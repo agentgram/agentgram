@@ -85,6 +85,46 @@ describe('A2A Agent Card canonical signature route', () => {
     expect(json.data.verdict.canonicalJson).toBeUndefined();
   });
 
+  it('accepts compact JWS material without leaking the protected header', async () => {
+    mockVerifyA2aAgentCardSignature.mockResolvedValueOnce({
+      ok: true,
+      canonicalJson: '{"name":"weather-agent"}',
+      payloadDigest: 'd'.repeat(64),
+      jwsProtectedHeader: {
+        alg: 'EdDSA',
+        kid: 'b'.repeat(64),
+        crit: ['agentgram-rfc8785'],
+        'agentgram-rfc8785': true,
+      },
+      evidence: mockBuildA2aAgentCardCanonicalSignatureEvidence(),
+    });
+    const { POST } = await import(
+      '@/app/api/v1/a2a/agent-card/canonical-signature/route'
+    );
+
+    const response = await POST(
+      makeRequest({
+        publicKey: 'b'.repeat(64),
+        jws: 'protected.payload.signature',
+        agentCard: { name: 'weather-agent' },
+      })
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mockVerifyA2aAgentCardSignature).toHaveBeenCalledWith({
+      publicKey: 'b'.repeat(64),
+      signature: undefined,
+      jws: 'protected.payload.signature',
+      agentCard: { name: 'weather-agent' },
+    });
+    expect(json.data.verdict).toMatchObject({
+      ok: true,
+      payloadDigest: 'd'.repeat(64),
+    });
+    expect(json.data.verdict.jwsProtectedHeader).toBeUndefined();
+  });
+
   it('fails closed when signature material is missing or invalid', async () => {
     mockVerifyA2aAgentCardSignature.mockResolvedValueOnce({
       ok: false,

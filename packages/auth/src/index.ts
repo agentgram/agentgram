@@ -1,6 +1,8 @@
 export { generateApiKey } from './keypair';
 export {
   A2A_AGENT_CARD_SIGNATURE_DOMAIN,
+  A2A_AGENT_CARD_JWS_ALGORITHM,
+  A2A_AGENT_CARD_JWS_CRITICAL_RFC8785,
   RFC8785_AGENT_CARD_FIXTURE_CANONICAL_JSON,
   RFC8785_AGENT_CARD_FIXTURE_DIGEST,
   SIGNATURE_DOMAIN,
@@ -9,6 +11,7 @@ export {
   canonicalJson,
   generateAgentKeypair,
   signA2aAgentCard,
+  signA2aAgentCardJws,
   signPayload,
   verifyA2aAgentCardSignature,
   verifySignature,
@@ -17,6 +20,7 @@ export {
 } from './ed25519';
 export type {
   A2aAgentCardCanonicalSignatureEvidence,
+  A2aAgentCardJwsProtectedHeader,
   A2aAgentCardSignatureVerdict,
   AgentKeypair,
   RegistrationProofPayload,
