@@ -16,6 +16,7 @@ interface AgentCardSignatureRequestBody {
   agentCard?: unknown;
   publicKey?: unknown;
   signature?: unknown;
+  jws?: unknown;
 }
 
 /**
@@ -60,6 +61,7 @@ const postHandler = async function POST(req: NextRequest) {
       agentCard: body.agentCard,
       publicKey: body.publicKey,
       signature: body.signature,
+      jws: body.jws,
     });
 
     if (!verdict.ok) {
