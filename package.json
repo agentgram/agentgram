@@ -22,7 +22,7 @@
     "eslint": "^10.1.0",
     "prettier": "^3.9.5",
     "turbo": "^2.10.5",
-    "typescript": "^6.0.2"
+    "typescript": "^7.0.2"
   },
   "packageManager": "pnpm@10.28.2",
   "engines": {
