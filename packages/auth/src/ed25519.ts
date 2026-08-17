@@ -96,6 +96,61 @@ export type A2aAgentCardSignatureVerdict =
       evidence: A2aAgentCardCanonicalSignatureEvidence;
     };
 
+export type A2aAgentCardTransportBindingParityStatus =
+  | 'equivalent'
+  | 'diverged'
+  | 'single-binding';
+
+export type A2aAgentCardTransportBindingDivergenceKind =
+  | 'task-semantics'
+  | 'auth-behavior';
+
+export interface A2aAgentCardTransportBindingProbe {
+  bindingId: string;
+  transport: string;
+  url: string;
+  taskSemanticsDigest: string;
+  authBehaviorDigest: string;
+}
+
+export interface A2aAgentCardTransportBindingDivergence {
+  bindingId: string;
+  kind: A2aAgentCardTransportBindingDivergenceKind;
+  expectedDigest: string;
+  actualDigest: string;
+}
+
+export interface A2aAgentCardTransportBindingParityReport {
+  kind: 'agentgram.a2a.agent-card.transport-binding-parity';
+  signedAgentCardPayloadDigest: string;
+  status: A2aAgentCardTransportBindingParityStatus;
+  bindingCount: number;
+  probes: A2aAgentCardTransportBindingProbe[];
+  divergences: A2aAgentCardTransportBindingDivergence[];
+}
+
+export type A2aAgentCardTransportBindingParityVerdict =
+  | {
+      ok: true;
+      parity: A2aAgentCardTransportBindingParityReport;
+      signature: Extract<A2aAgentCardSignatureVerdict, { ok: true }>;
+    }
+  | {
+      ok: false;
+      code: 'SIGNATURE_INVALID' | 'BINDING_PARITY_DIVERGED';
+      message: string;
+      parity?: A2aAgentCardTransportBindingParityReport;
+      signature: A2aAgentCardSignatureVerdict;
+    };
+
+interface NormalizedA2aAgentCardTransportBinding {
+  bindingId: string;
+  transport: string;
+  url: string;
+  taskSemantics: unknown;
+  authBehavior: unknown;
+}
+
 /**
  * Deterministic JSON serialization: object keys are sorted recursively so
  * that logically identical payloads always produce the same signed bytes.
@@ -146,6 +201,97 @@ async function sha256Hex(data: string): Promise<string> {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function readOptionalString(record: Record<string, unknown>, key: string): string | undefined {
+  const value = record[key];
+  return typeof value === 'string' && value.trim().length > 0 ? value : undefined;
+}
+
+function normalizeTaskSemantics(
+  agentCard: Record<string, unknown>,
+  binding: Record<string, unknown>
+): unknown {
+  return {
+    capabilities: binding.capabilities ?? agentCard.capabilities ?? null,
+    skills: binding.skills ?? agentCard.skills ?? null,
+    supportsAuthenticatedExtendedCard:
+      binding.supportsAuthenticatedExtendedCard ??
+      agentCard.supportsAuthenticatedExtendedCard ??
+      null,
+  };
+}
+
+function normalizeAuthBehavior(
+  agentCard: Record<string, unknown>,
+  binding: Record<string, unknown>
+): unknown {
+  return {
+    securitySchemes: binding.securitySchemes ?? agentCard.securitySchemes ?? null,
+    security: binding.security ?? agentCard.security ?? null,
+    authenticatedExtendedCard:
+      binding.authenticatedExtendedCard ?? agentCard.authenticatedExtendedCard ?? null,
+  };
+}
+
+function normalizeTransportBindings(
+  agentCard: Record<string, unknown>
+): NormalizedA2aAgentCardTransportBinding[] {
+  const bindings: NormalizedA2aAgentCardTransportBinding[] = [];
+  const primaryUrl = readOptionalString(agentCard, 'url');
+  if (primaryUrl !== undefined) {
+    bindings.push({
+      bindingId: 'primary',
+      transport:
+        readOptionalString(agentCard, 'preferredTransport') ??
+        readOptionalString(agentCard, 'transport') ??
+        'unspecified',
+      url: primaryUrl,
+      taskSemantics: normalizeTaskSemantics(agentCard, agentCard),
+      authBehavior: normalizeAuthBehavior(agentCard, agentCard),
+    });
+  }
+
+  const appendBinding = (value: unknown, bindingId: string) => {
+    if (!isRecord(value)) {
+      return;
+    }
+    const url = readOptionalString(value, 'url');
+    if (url === undefined) {
+      return;
+    }
+    bindings.push({
+      bindingId,
+      transport:
+        readOptionalString(value, 'transport') ??
+        readOptionalString(value, 'type') ??
+        readOptionalString(value, 'protocol') ??
+        'unspecified',
+      url,
+      taskSemantics: normalizeTaskSemantics(agentCard, value),
+      authBehavior: normalizeAuthBehavior(agentCard, value),
+    });
+  };
+
+  const additionalInterfaces = agentCard.additionalInterfaces;
+  if (Array.isArray(additionalInterfaces)) {
+    additionalInterfaces.forEach((binding, index) => {
+      appendBinding(binding, `additionalInterfaces[${index}]`);
+    });
+  }
+
+  const transportBindings = agentCard.transportBindings;
+  if (Array.isArray(transportBindings)) {
+    transportBindings.forEach((binding, index) => {
+      const defaultId = `transportBindings[${index}]`;
+      const bindingId = isRecord(binding)
+        ? readOptionalString(binding, 'id') ?? defaultId
+        : defaultId;
+      appendBinding(binding, bindingId);
+    });
+  }
+
+  return bindings;
 }
 
 function base64UrlEncode(data: Uint8Array | string): string {
@@ -503,6 +649,102 @@ export async function verifyA2aAgentCardSignature(input: {
     payloadDigest: await sha256Hex(canonicalPayload),
     evidence,
   };
+}
+
+/**
+ * Verify a signed A2A Agent Card and attest that every declared transport
+ * binding exposes equivalent task semantics and authentication behavior. This
+ * is intentionally a signed-card probe rather than an optimistic URL list: a
+ * binding is compared only after the compact JWS/signature binds the Agent
+ * Card payload, and any semantic/auth mismatch returns a negative verdict.
+ */
+export async function attestA2aAgentCardTransportBindingParity(input: {
+  publicKey?: unknown;
+  signature?: unknown;
+  jws?: unknown;
+  agentCard?: unknown;
+}): Promise<A2aAgentCardTransportBindingParityVerdict> {
+  const signature = await verifyA2aAgentCardSignature(input);
+  if (!signature.ok) {
+    return {
+      ok: false,
+      code: 'SIGNATURE_INVALID',
+      message:
+        'A2A Agent Card transport-binding parity requires a valid signed Agent Card',
+      signature,
+    };
+  }
+
+  if (!isRecord(input.agentCard)) {
+    return {
+      ok: false,
+      code: 'SIGNATURE_INVALID',
+      message:
+        'A2A Agent Card transport-binding parity requires an Agent Card object',
+      signature,
+    };
+  }
+
+  const bindings = normalizeTransportBindings(input.agentCard);
+  const probes = await Promise.all(
+    bindings.map(async (binding) => ({
+      bindingId: binding.bindingId,
+      transport: binding.transport,
+      url: binding.url,
+      taskSemanticsDigest: await sha256Hex(canonicalJson(binding.taskSemantics)),
+      authBehaviorDigest: await sha256Hex(canonicalJson(binding.authBehavior)),
+    }))
+  );
+  const baseline = probes[0];
+  const divergences: A2aAgentCardTransportBindingDivergence[] = [];
+
+  if (baseline !== undefined) {
+    for (const probe of probes.slice(1)) {
+      if (probe.taskSemanticsDigest !== baseline.taskSemanticsDigest) {
+        divergences.push({
+          bindingId: probe.bindingId,
+          kind: 'task-semantics',
+          expectedDigest: baseline.taskSemanticsDigest,
+          actualDigest: probe.taskSemanticsDigest,
+        });
+      }
+      if (probe.authBehaviorDigest !== baseline.authBehaviorDigest) {
+        divergences.push({
+          bindingId: probe.bindingId,
+          kind: 'auth-behavior',
+          expectedDigest: baseline.authBehaviorDigest,
+          actualDigest: probe.authBehaviorDigest,
+        });
+      }
+    }
+  }
+
+  const parity: A2aAgentCardTransportBindingParityReport = {
+    kind: 'agentgram.a2a.agent-card.transport-binding-parity',
+    signedAgentCardPayloadDigest: signature.payloadDigest,
+    status:
+      divergences.length > 0
+        ? 'diverged'
+        : probes.length > 1
+          ? 'equivalent'
+          : 'single-binding',
+    bindingCount: probes.length,
+    probes,
+    divergences,
+  };
+
+  if (divergences.length > 0) {
+    return {
+      ok: false,
+      code: 'BINDING_PARITY_DIVERGED',
+      message:
+        'A2A Agent Card transport bindings diverge on task semantics or authentication behavior',
+      parity,
+      signature,
+    };
+  }
+
+  return { ok: true, parity, signature };
 }
 
 function encodeMessage(domain: string, payload: unknown): Uint8Array {

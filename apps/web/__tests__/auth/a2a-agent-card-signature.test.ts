@@ -4,6 +4,7 @@ import {
   A2A_AGENT_CARD_JWS_ALGORITHM,
   RFC8785_AGENT_CARD_FIXTURE_CANONICAL_JSON,
   RFC8785_AGENT_CARD_FIXTURE_DIGEST,
+  attestA2aAgentCardTransportBindingParity,
   buildA2aAgentCardCanonicalSignatureEvidence,
   canonicalJson,
   generateAgentKeypair,
@@ -214,6 +215,80 @@ describe('A2A Agent Card canonical signature gate', () => {
       code: 'SIGNATURE_INVALID',
       message:
         'A2A Agent Card JWS payload must equal the supplied RFC8785 canonical Agent Card',
+    });
+  });
+
+  it('attests parity for identical semantics and auth across declared transport bindings', async () => {
+    const { publicKey, secretKey } = await generateAgentKeypair();
+    const agentCard = {
+      name: 'weather-agent',
+      url: 'https://weather.example/a2a/jsonrpc',
+      preferredTransport: 'JSONRPC',
+      capabilities: { streaming: true, pushNotifications: false },
+      skills: [{ id: 'forecast', name: 'Forecast' }],
+      securitySchemes: { apiKey: { type: 'apiKey', in: 'header' } },
+      security: [{ apiKey: [] }],
+      additionalInterfaces: [
+        { url: 'https://weather.example/a2a/grpc', transport: 'GRPC' },
+      ],
+    };
+    const jws = await signA2aAgentCardJws(secretKey, publicKey, agentCard);
+
+    const verdict = await attestA2aAgentCardTransportBindingParity({
+      publicKey,
+      jws,
+      agentCard,
+    });
+
+    expect(verdict.ok).toBe(true);
+    if (verdict.ok) {
+      expect(verdict.parity.status).toBe('equivalent');
+      expect(verdict.parity.bindingCount).toBe(2);
+      expect(verdict.parity.probes).toHaveLength(2);
+      expect(verdict.parity.divergences).toEqual([]);
+      expect(verdict.parity.probes[0]?.taskSemanticsDigest).toBe(
+        verdict.parity.probes[1]?.taskSemanticsDigest
+      );
+      expect(verdict.parity.probes[0]?.authBehaviorDigest).toBe(
+        verdict.parity.probes[1]?.authBehaviorDigest
+      );
+    }
+  });
+
+  it('fails closed when a signed Agent Card binding diverges on semantics or auth behavior', async () => {
+    const { publicKey, secretKey } = await generateAgentKeypair();
+    const agentCard = {
+      name: 'weather-agent',
+      url: 'https://weather.example/a2a/jsonrpc',
+      preferredTransport: 'JSONRPC',
+      capabilities: { streaming: true, pushNotifications: false },
+      skills: [{ id: 'forecast', name: 'Forecast' }],
+      securitySchemes: { apiKey: { type: 'apiKey', in: 'header' } },
+      security: [{ apiKey: [] }],
+      additionalInterfaces: [
+        {
+          url: 'https://weather.example/a2a/grpc',
+          transport: 'GRPC',
+          capabilities: { streaming: false, pushNotifications: false },
+          security: [],
+        },
+      ],
+    };
+    const jws = await signA2aAgentCardJws(secretKey, publicKey, agentCard);
+
+    await expect(
+      attestA2aAgentCardTransportBindingParity({ publicKey, jws, agentCard })
+    ).resolves.toMatchObject({
+      ok: false,
+      code: 'BINDING_PARITY_DIVERGED',
+      parity: {
+        status: 'diverged',
+        bindingCount: 2,
+        divergences: [
+          { bindingId: 'additionalInterfaces[0]', kind: 'task-semantics' },
+          { bindingId: 'additionalInterfaces[0]', kind: 'auth-behavior' },
+        ],
+      },
     });
   });
 });
