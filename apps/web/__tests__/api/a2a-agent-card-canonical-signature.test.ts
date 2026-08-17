@@ -1,12 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockVerifyA2aAgentCardSignature = vi.fn();
+const mockAttestA2aAgentCardTransportBindingParity = vi.fn();
 const mockBuildA2aAgentCardCanonicalSignatureEvidence = vi.fn();
 
 vi.mock('@agentgram/auth', () => ({
   withRateLimit: (_config: unknown, handler: unknown) => handler,
   buildA2aAgentCardCanonicalSignatureEvidence:
     mockBuildA2aAgentCardCanonicalSignatureEvidence,
+  attestA2aAgentCardTransportBindingParity:
+    mockAttestA2aAgentCardTransportBindingParity,
   verifyA2aAgentCardSignature: mockVerifyA2aAgentCardSignature,
 }));
 
@@ -38,6 +41,103 @@ describe('A2A Agent Card canonical signature route', () => {
         unsignedCardsAccepted: false,
       },
     });
+  });
+
+  it('exports a transport-binding parity verdict for a signed multi-binding Agent Card', async () => {
+    const parity = {
+      kind: 'agentgram.a2a.agent-card.transport-binding-parity',
+      signedAgentCardPayloadDigest: 'a'.repeat(64),
+      status: 'equivalent',
+      bindingCount: 2,
+      probes: [
+        {
+          bindingId: 'primary',
+          transport: 'JSONRPC',
+          url: 'https://weather.example/a2a/jsonrpc',
+          taskSemanticsDigest: 'b'.repeat(64),
+          authBehaviorDigest: 'c'.repeat(64),
+        },
+        {
+          bindingId: 'additionalInterfaces[0]',
+          transport: 'GRPC',
+          url: 'https://weather.example/a2a/grpc',
+          taskSemanticsDigest: 'b'.repeat(64),
+          authBehaviorDigest: 'c'.repeat(64),
+        },
+      ],
+      divergences: [],
+    };
+    mockAttestA2aAgentCardTransportBindingParity.mockResolvedValueOnce({
+      ok: true,
+      parity,
+      signature: { ok: true },
+    });
+    const { POST } = await import(
+      '@/app/api/v1/a2a/agent-card/transport-binding-parity/route'
+    );
+
+    const response = await POST(
+      makeRequest({
+        publicKey: 'b'.repeat(64),
+        jws: 'protected.payload.signature',
+        agentCard: { name: 'weather-agent' },
+      })
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mockAttestA2aAgentCardTransportBindingParity).toHaveBeenCalledWith({
+      publicKey: 'b'.repeat(64),
+      signature: undefined,
+      jws: 'protected.payload.signature',
+      agentCard: { name: 'weather-agent' },
+    });
+    expect(json.data.reportType).toBe(
+      'a2a-agent-card-transport-binding-parity'
+    );
+    expect(json.data.parity).toEqual(parity);
+  });
+
+  it('fails closed when a transport binding changes task semantics or auth behavior', async () => {
+    const parity = {
+      kind: 'agentgram.a2a.agent-card.transport-binding-parity',
+      signedAgentCardPayloadDigest: 'a'.repeat(64),
+      status: 'diverged',
+      bindingCount: 2,
+      probes: [],
+      divergences: [
+        {
+          bindingId: 'additionalInterfaces[0]',
+          kind: 'task-semantics',
+          expectedDigest: 'b'.repeat(64),
+          actualDigest: 'd'.repeat(64),
+        },
+      ],
+    };
+    mockAttestA2aAgentCardTransportBindingParity.mockResolvedValueOnce({
+      ok: false,
+      code: 'BINDING_PARITY_DIVERGED',
+      message:
+        'A2A Agent Card transport bindings diverge on task semantics or authentication behavior',
+      parity,
+      signature: { ok: true },
+    });
+    const { POST } = await import(
+      '@/app/api/v1/a2a/agent-card/transport-binding-parity/route'
+    );
+
+    const response = await POST(
+      makeRequest({
+        publicKey: 'b'.repeat(64),
+        jws: 'protected.payload.signature',
+        agentCard: { name: 'weather-agent' },
+      })
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(json.error.code).toBe('BINDING_PARITY_DIVERGED');
+    expect(json.error.details.parity).toEqual(parity);
   });
 
   it('publishes public canonical-signature conformance evidence', async () => {

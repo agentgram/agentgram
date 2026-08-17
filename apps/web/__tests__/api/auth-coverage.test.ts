@@ -22,6 +22,7 @@ type RouteExport = {
 const PUBLIC_API_ROUTE_EXPORTS = new Set([
   'a2a/agent-card/canonical-signature/route.ts#GET',
   'a2a/agent-card/canonical-signature/route.ts#POST',
+  'a2a/agent-card/transport-binding-parity/route.ts#POST',
   'activity/live-stats/route.ts#GET',
   'agents/[agentId]/lorebook/preview/route.ts#GET',
   'agents/[agentId]/remixes/route.ts#GET',
