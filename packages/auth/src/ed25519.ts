@@ -143,6 +143,43 @@ export type A2aAgentCardTransportBindingParityVerdict =
       signature: A2aAgentCardSignatureVerdict;
     };
 
+export type Erc8004RevisionPolicyDriftStatus =
+  | 'revision-policy-clean'
+  | 'policy-drift';
+
+export interface Erc8004RevisionPolicyDriftReport {
+  kind: 'agentgram.erc8004.revision-policy-drift-gate';
+  standard: 'ERC-8004';
+  generatedAt: string;
+  revision: {
+    previous: number | null;
+    current: number | null;
+  };
+  policyFieldsTracked: string[];
+  policyFieldsChanged: string[];
+  policyDigest: {
+    algorithm: 'sha256';
+    previous: string;
+    current: string;
+  };
+  policyDigestChanged: boolean;
+  requiredRevisionIncrementObserved: boolean;
+  policyDeltaReasonPresent: boolean;
+  status: Erc8004RevisionPolicyDriftStatus;
+}
+
+export type Erc8004RevisionPolicyDriftVerdict =
+  | {
+      ok: true;
+      report: Erc8004RevisionPolicyDriftReport;
+    }
+  | {
+      ok: false;
+      code: 'REGISTRATION_INVALID' | 'REVISION_POLICY_DRIFT';
+      message: string;
+      report: Erc8004RevisionPolicyDriftReport;
+    };
+
 interface NormalizedA2aAgentCardTransportBinding {
   bindingId: string;
   transport: string;
@@ -206,6 +243,115 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function readOptionalString(record: Record<string, unknown>, key: string): string | undefined {
   const value = record[key];
   return typeof value === 'string' && value.trim().length > 0 ? value : undefined;
+}
+
+function readOptionalSafeInteger(
+  record: Record<string, unknown>,
+  key: string
+): number | null {
+  const value = record[key];
+  return typeof value === 'number' && Number.isSafeInteger(value) ? value : null;
+}
+
+const ERC8004_REGISTRATION_TYPE =
+  'https://eips.ethereum.org/EIPS/eip-8004#registration-v1';
+
+const ERC8004_REVISION_POLICY_FIELDS = [
+  'type',
+  'services',
+  'endpoints',
+  'capabilities',
+  'securitySchemes',
+  'security',
+  'pricing',
+  'reputationPolicy',
+  'validationPolicy',
+  'feedbackPolicy',
+] as const;
+
+function normalizeErc8004PolicyEnvelope(
+  registration: Record<string, unknown>,
+  fields: readonly string[]
+): Record<string, unknown> {
+  return Object.fromEntries(
+    fields.map((field) => [field, registration[field] ?? null])
+  );
+}
+
+function readRevisionPolicyReason(
+  registration: Record<string, unknown>
+): string | undefined {
+  const revisionPolicy = registration.revisionPolicy;
+  if (!isRecord(revisionPolicy)) {
+    return undefined;
+  }
+  return readOptionalString(revisionPolicy, 'policyDeltaReason');
+}
+
+async function buildErc8004RevisionPolicyDriftReport(options: {
+  previousRegistration: Record<string, unknown>;
+  currentRegistration: Record<string, unknown>;
+  generatedAt?: string;
+  policyFields?: readonly string[];
+}): Promise<Erc8004RevisionPolicyDriftReport> {
+  const policyFields = options.policyFields ?? ERC8004_REVISION_POLICY_FIELDS;
+  const previousPolicy = normalizeErc8004PolicyEnvelope(
+    options.previousRegistration,
+    policyFields
+  );
+  const currentPolicy = normalizeErc8004PolicyEnvelope(
+    options.currentRegistration,
+    policyFields
+  );
+  const policyFieldsChanged = policyFields.filter(
+    (field) =>
+      canonicalJson(previousPolicy[field]) !== canonicalJson(currentPolicy[field])
+  );
+  const previousRevision = readOptionalSafeInteger(
+    options.previousRegistration,
+    'revision'
+  );
+  const currentRevision = readOptionalSafeInteger(
+    options.currentRegistration,
+    'revision'
+  );
+  const policyDigestChanged = policyFieldsChanged.length > 0;
+  const requiredRevisionIncrementObserved =
+    !policyDigestChanged ||
+    (previousRevision !== null &&
+      currentRevision !== null &&
+      currentRevision > previousRevision);
+  const policyDeltaReasonPresent =
+    !policyDigestChanged ||
+    readRevisionPolicyReason(options.currentRegistration) !== undefined;
+  const [previousDigest, currentDigest] = await Promise.all([
+    sha256Hex(canonicalJson(previousPolicy)),
+    sha256Hex(canonicalJson(currentPolicy)),
+  ]);
+
+  return {
+    kind: 'agentgram.erc8004.revision-policy-drift-gate',
+    standard: 'ERC-8004',
+    generatedAt: options.generatedAt ?? new Date().toISOString(),
+    revision: {
+      previous: previousRevision,
+      current: currentRevision,
+    },
+    policyFieldsTracked: [...policyFields],
+    policyFieldsChanged,
+    policyDigest: {
+      algorithm: 'sha256',
+      previous: previousDigest,
+      current: currentDigest,
+    },
+    policyDigestChanged,
+    requiredRevisionIncrementObserved,
+    policyDeltaReasonPresent,
+    status:
+      requiredRevisionIncrementObserved && policyDeltaReasonPresent
+        ? 'revision-policy-clean'
+        : 'policy-drift',
+  };
 }
 
 function normalizeTaskSemantics(
@@ -649,6 +795,69 @@ export async function verifyA2aAgentCardSignature(input: {
     payloadDigest: await sha256Hex(canonicalPayload),
     evidence,
   };
+}
+
+/**
+ * Compare two ERC-8004 registration-file snapshots and fail closed when
+ * trust-affecting policy material drifts without a monotonic revision bump.
+ * The report is deterministic enough for external auditors: it names tracked
+ * fields, changed fields, and hashes both canonical policy envelopes.
+ */
+export async function attestErc8004RevisionPolicyDrift(input: {
+  previousRegistration?: unknown;
+  currentRegistration?: unknown;
+  generatedAt?: string;
+  policyFields?: string[];
+}): Promise<Erc8004RevisionPolicyDriftVerdict> {
+  const previousRegistration = input.previousRegistration;
+  const currentRegistration = input.currentRegistration;
+  const safePrevious = isRecord(previousRegistration) ? previousRegistration : {};
+  const safeCurrent = isRecord(currentRegistration) ? currentRegistration : {};
+  const policyFields =
+    input.policyFields !== undefined && input.policyFields.length > 0
+      ? input.policyFields
+      : ERC8004_REVISION_POLICY_FIELDS;
+  const report = await buildErc8004RevisionPolicyDriftReport({
+    previousRegistration: safePrevious,
+    currentRegistration: safeCurrent,
+    generatedAt: input.generatedAt,
+    policyFields,
+  });
+
+  if (!isRecord(previousRegistration) || !isRecord(currentRegistration)) {
+    return {
+      ok: false,
+      code: 'REGISTRATION_INVALID',
+      message:
+        'ERC-8004 revision-policy drift attestation requires previous and current registration objects',
+      report,
+    };
+  }
+
+  if (
+    previousRegistration.type !== ERC8004_REGISTRATION_TYPE ||
+    currentRegistration.type !== ERC8004_REGISTRATION_TYPE
+  ) {
+    return {
+      ok: false,
+      code: 'REGISTRATION_INVALID',
+      message:
+        'ERC-8004 revision-policy drift attestation requires registration-v1 typed files',
+      report,
+    };
+  }
+
+  if (report.status === 'policy-drift') {
+    return {
+      ok: false,
+      code: 'REVISION_POLICY_DRIFT',
+      message:
+        'ERC-8004 registration policy fields changed without a revision increment and policyDeltaReason',
+      report,
+    };
+  }
+
+  return { ok: true, report };
 }
 
 /**

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockVerifyA2aAgentCardSignature = vi.fn();
 const mockAttestA2aAgentCardTransportBindingParity = vi.fn();
+const mockAttestErc8004RevisionPolicyDrift = vi.fn();
 const mockBuildA2aAgentCardCanonicalSignatureEvidence = vi.fn();
 
 vi.mock('@agentgram/auth', () => ({
@@ -10,6 +11,7 @@ vi.mock('@agentgram/auth', () => ({
     mockBuildA2aAgentCardCanonicalSignatureEvidence,
   attestA2aAgentCardTransportBindingParity:
     mockAttestA2aAgentCardTransportBindingParity,
+  attestErc8004RevisionPolicyDrift: mockAttestErc8004RevisionPolicyDrift,
   verifyA2aAgentCardSignature: mockVerifyA2aAgentCardSignature,
 }));
 
@@ -242,5 +244,75 @@ describe('A2A Agent Card canonical signature route', () => {
     expect(response.status).toBe(401);
     expect(json.error.code).toBe('SIGNATURE_INVALID');
     expect(json.error.details.evidence.signature.status).toBe('fail-closed');
+  });
+
+  it('exports an ERC-8004 revision-policy drift report when revisions cover policy changes', async () => {
+    const report = {
+      kind: 'agentgram.erc8004.revision-policy-drift-gate',
+      standard: 'ERC-8004',
+      revision: { previous: 1, current: 2 },
+      policyDigestChanged: true,
+      requiredRevisionIncrementObserved: true,
+      policyDeltaReasonPresent: true,
+      status: 'revision-policy-clean',
+    };
+    mockAttestErc8004RevisionPolicyDrift.mockResolvedValueOnce({
+      ok: true,
+      report,
+    });
+    const { POST } = await import(
+      '@/app/api/v1/erc-8004/revision-policy-drift/route'
+    );
+
+    const response = await POST(
+      makeRequest({
+        previousRegistration: { revision: 1 },
+        currentRegistration: { revision: 2 },
+      })
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mockAttestErc8004RevisionPolicyDrift).toHaveBeenCalledWith({
+      previousRegistration: { revision: 1 },
+      currentRegistration: { revision: 2 },
+      policyFields: undefined,
+    });
+    expect(json.data.reportType).toBe('erc-8004-revision-policy-drift');
+    expect(json.data.report).toEqual(report);
+  });
+
+  it('fails closed when the ERC-8004 revision-policy drift gate reports drift', async () => {
+    const report = {
+      kind: 'agentgram.erc8004.revision-policy-drift-gate',
+      standard: 'ERC-8004',
+      revision: { previous: 1, current: 1 },
+      policyFieldsChanged: ['services'],
+      requiredRevisionIncrementObserved: false,
+      policyDeltaReasonPresent: false,
+      status: 'policy-drift',
+    };
+    mockAttestErc8004RevisionPolicyDrift.mockResolvedValueOnce({
+      ok: false,
+      code: 'REVISION_POLICY_DRIFT',
+      message:
+        'ERC-8004 registration policy fields changed without a revision increment and policyDeltaReason',
+      report,
+    });
+    const { POST } = await import(
+      '@/app/api/v1/erc-8004/revision-policy-drift/route'
+    );
+
+    const response = await POST(
+      makeRequest({
+        previousRegistration: { revision: 1 },
+        currentRegistration: { revision: 1 },
+      })
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(422);
+    expect(json.error.code).toBe('REVISION_POLICY_DRIFT');
+    expect(json.error.details.report).toEqual(report);
   });
 });

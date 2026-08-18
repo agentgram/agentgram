@@ -10,6 +10,7 @@ import {
   generateAgentKeypair,
   signA2aAgentCard,
   signA2aAgentCardJws,
+  attestErc8004RevisionPolicyDrift,
   verifyA2aAgentCardSignature,
 } from '@agentgram/auth/src/ed25519';
 
@@ -288,6 +289,72 @@ describe('A2A Agent Card canonical signature gate', () => {
           { bindingId: 'additionalInterfaces[0]', kind: 'task-semantics' },
           { bindingId: 'additionalInterfaces[0]', kind: 'auth-behavior' },
         ],
+      },
+    });
+  });
+
+  it('passes ERC-8004 revision-policy drift when policy changes increment the registration revision', async () => {
+    const verdict = await attestErc8004RevisionPolicyDrift({
+      previousRegistration: {
+        type: 'https://eips.ethereum.org/EIPS/eip-8004#registration-v1',
+        name: 'weather-agent',
+        revision: 7,
+        services: [{ name: 'web', url: 'https://weather.example/a2a' }],
+        reputationPolicy: { scoring: 'trust-score-v1' },
+      },
+      currentRegistration: {
+        type: 'https://eips.ethereum.org/EIPS/eip-8004#registration-v1',
+        name: 'weather-agent',
+        revision: 8,
+        services: [{ name: 'web', url: 'https://weather.example/a2a-v2' }],
+        reputationPolicy: { scoring: 'trust-score-v2' },
+        revisionPolicy: {
+          policyDeltaReason: 'rotated A2A URL and scoring rubric together',
+        },
+      },
+    });
+
+    expect(verdict.ok).toBe(true);
+    if (verdict.ok) {
+      expect(verdict.report.status).toBe('revision-policy-clean');
+      expect(verdict.report.revision.previous).toBe(7);
+      expect(verdict.report.revision.current).toBe(8);
+      expect(verdict.report.policyDigestChanged).toBe(true);
+      expect(verdict.report.requiredRevisionIncrementObserved).toBe(true);
+      expect(verdict.report.policyDeltaReasonPresent).toBe(true);
+      expect(verdict.report.policyFieldsChanged).toEqual([
+        'services',
+        'reputationPolicy',
+      ]);
+    }
+  });
+
+  it('fails closed when ERC-8004 policy fields drift without a revision increment', async () => {
+    await expect(
+      attestErc8004RevisionPolicyDrift({
+        previousRegistration: {
+          type: 'https://eips.ethereum.org/EIPS/eip-8004#registration-v1',
+          name: 'weather-agent',
+          revision: 3,
+          services: [{ name: 'web', url: 'https://weather.example/a2a' }],
+          validationPolicy: { tier: 'operator-attested' },
+        },
+        currentRegistration: {
+          type: 'https://eips.ethereum.org/EIPS/eip-8004#registration-v1',
+          name: 'weather-agent',
+          revision: 3,
+          services: [{ name: 'web', url: 'https://weather.example/a2a-v2' }],
+          validationPolicy: { tier: 'self-attested' },
+        },
+      })
+    ).resolves.toMatchObject({
+      ok: false,
+      code: 'REVISION_POLICY_DRIFT',
+      report: {
+        status: 'policy-drift',
+        requiredRevisionIncrementObserved: false,
+        policyDeltaReasonPresent: false,
+        policyFieldsChanged: ['services', 'validationPolicy'],
       },
     });
   });
