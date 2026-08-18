@@ -6,7 +6,8 @@ const DEFAULT_MAX_PAGES = 100;
 
 export type McpRegistryAuditReportType =
   | 'mcp-registry-coverage-audit'
-  | 'mcp-schema-compatibility-audit';
+  | 'mcp-schema-compatibility-audit'
+  | 'mcp-registry-lifecycle-chronology-audit';
 
 export interface McpRegistrySweepOptions {
   fetcher?: typeof fetch;
@@ -60,13 +61,15 @@ export interface McpRegistryCoverageAnomalies {
   cursorLoops: string[];
   emptyPagesWithCursor: string[];
   schemaCompatibilityFailures: string[];
+  lifecycleChronologyGaps: string[];
   truncated: boolean;
 }
 
 export interface McpRegistryCoverageReceipt {
   kind:
     | 'agentgram.ax-score.mcp-registry.coverage-receipt'
-    | 'agentgram.ax-score.mcp-registry.schema-compatibility-receipt';
+    | 'agentgram.ax-score.mcp-registry.schema-compatibility-receipt'
+    | 'agentgram.ax-score.mcp-registry.lifecycle-chronology-receipt';
   registryEndpoint: string;
   generatedAt: string;
   digestAlgorithm: 'sha256';
@@ -80,7 +83,8 @@ export interface McpRegistryCoverageReceipt {
     status: 'ready';
     paymentPurpose:
       | 'mcp-registry-coverage-audit-report'
-      | 'mcp-schema-compatibility-audit-report';
+      | 'mcp-schema-compatibility-audit-report'
+      | 'mcp-registry-lifecycle-chronology-audit-report';
     recommendedPriceUsd: string;
     deliverable: string;
   };
@@ -101,10 +105,24 @@ export interface McpRegistryCoverageAudit {
     latestMarkedNames: number;
     schemaCompatibleEntries: number;
     schemaCompatibilityPct: number;
+    lifecycleChronologyEntries: number;
+    lifecycleTimestampCoveragePct: number;
   };
   pageChain: McpRegistryPageDigest[];
+  lifecycleChronology: McpRegistryLifecycleChronologyEntry[];
   anomalies: McpRegistryCoverageAnomalies;
   receipt: McpRegistryCoverageReceipt;
+}
+
+export interface McpRegistryLifecycleChronologyEntry {
+  id: string;
+  name: string;
+  version: string;
+  status: string | null;
+  publishedAt: string | null;
+  updatedAt: string | null;
+  isLatest: boolean;
+  eventDigest: string;
 }
 
 interface NormalizedServerVersion {
@@ -112,6 +130,9 @@ interface NormalizedServerVersion {
   name: string;
   version: string;
   isLatest: boolean;
+  status: string | null;
+  publishedAt: string | null;
+  updatedAt: string | null;
   hasRemoteTransport: boolean;
   schemaCompatible: boolean;
   schemaCompatibilityErrors: string[];
@@ -139,6 +160,10 @@ function sha256(value: unknown): string {
 
 function getString(value: unknown, fallback: string): string {
   return typeof value === 'string' && value.trim() ? value : fallback;
+}
+
+function getOptionalString(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value : null;
 }
 
 function hasRemoteTransport(server: McpRegistryServerDocument): boolean {
@@ -196,10 +221,40 @@ function normalizeServer(entry: McpRegistryEntry): NormalizedServerVersion {
     name,
     version,
     isLatest: official?.isLatest === true,
+    status: getOptionalString(official?.status),
+    publishedAt: getOptionalString(official?.publishedAt),
+    updatedAt: getOptionalString(official?.updatedAt),
     hasRemoteTransport: hasRemote,
     schemaCompatible: schemaCompatibilityErrors.length === 0,
     schemaCompatibilityErrors,
   };
+}
+
+function buildLifecycleChronology(
+  servers: NormalizedServerVersion[]
+): McpRegistryLifecycleChronologyEntry[] {
+  return servers
+    .map((server) => ({
+      id: server.id,
+      name: server.name,
+      version: server.version,
+      status: server.status,
+      publishedAt: server.publishedAt,
+      updatedAt: server.updatedAt,
+      isLatest: server.isLatest,
+      eventDigest: sha256({
+        id: server.id,
+        status: server.status,
+        publishedAt: server.publishedAt,
+        updatedAt: server.updatedAt,
+        isLatest: server.isLatest,
+      }),
+    }))
+    .sort((a, b) => {
+      const aTime = a.updatedAt ?? a.publishedAt ?? '';
+      const bTime = b.updatedAt ?? b.publishedAt ?? '';
+      return aTime.localeCompare(bTime) || a.id.localeCompare(b.id);
+    });
 }
 
 function buildUrl(endpoint: string, cursor: string | null, limit: number): string {
@@ -217,6 +272,7 @@ function countAnomalies(anomalies: McpRegistryCoverageAnomalies): number {
     anomalies.cursorLoops.length +
     anomalies.emptyPagesWithCursor.length +
     anomalies.schemaCompatibilityFailures.length +
+    anomalies.lifecycleChronologyGaps.length +
     (anomalies.truncated ? 1 : 0)
   );
 }
@@ -249,11 +305,15 @@ function buildReceipt(input: {
   const signaturePayloadDigest = sha256({ coverageDigest, pageChainDigest });
   const isSchemaCompatibilityReport =
     input.reportType === 'mcp-schema-compatibility-audit';
+  const isLifecycleChronologyReport =
+    input.reportType === 'mcp-registry-lifecycle-chronology-audit';
 
   return {
-    kind: isSchemaCompatibilityReport
-      ? 'agentgram.ax-score.mcp-registry.schema-compatibility-receipt'
-      : 'agentgram.ax-score.mcp-registry.coverage-receipt',
+    kind: isLifecycleChronologyReport
+      ? 'agentgram.ax-score.mcp-registry.lifecycle-chronology-receipt'
+      : isSchemaCompatibilityReport
+        ? 'agentgram.ax-score.mcp-registry.schema-compatibility-receipt'
+        : 'agentgram.ax-score.mcp-registry.coverage-receipt',
     registryEndpoint: input.endpoint,
     generatedAt: input.generatedAt,
     digestAlgorithm: 'sha256',
@@ -265,13 +325,21 @@ function buildReceipt(input: {
     anomalyCount,
     x402: {
       status: 'ready',
-      paymentPurpose: isSchemaCompatibilityReport
-        ? 'mcp-schema-compatibility-audit-report'
-        : 'mcp-registry-coverage-audit-report',
-      recommendedPriceUsd: isSchemaCompatibilityReport ? '79.00' : '49.00',
-      deliverable: isSchemaCompatibilityReport
-        ? 'MCP Registry schema compatibility findings, launch-surface gate results, and Ed25519-signable receipt payload.'
-        : 'Full nextCursor sweep digest, coverage anomaly report, and Ed25519-signable receipt payload.',
+      paymentPurpose: isLifecycleChronologyReport
+        ? 'mcp-registry-lifecycle-chronology-audit-report'
+        : isSchemaCompatibilityReport
+          ? 'mcp-schema-compatibility-audit-report'
+          : 'mcp-registry-coverage-audit-report',
+      recommendedPriceUsd: isLifecycleChronologyReport
+        ? '99.00'
+        : isSchemaCompatibilityReport
+          ? '79.00'
+          : '49.00',
+      deliverable: isLifecycleChronologyReport
+        ? 'MCP Registry server-version lifecycle chronology, timestamp gap analysis, and Ed25519-signable receipt payload.'
+        : isSchemaCompatibilityReport
+          ? 'MCP Registry schema compatibility findings, launch-surface gate results, and Ed25519-signable receipt payload.'
+          : 'Full nextCursor sweep digest, coverage anomaly report, and Ed25519-signable receipt payload.',
     },
     signature: {
       status: 'unsigned',
@@ -364,6 +432,19 @@ export async function sweepMcpRegistryCoverage(
     .filter((server) => !server.schemaCompatible)
     .map((server) => `${server.id}: ${server.schemaCompatibilityErrors.join('; ')}`)
     .sort();
+  const lifecycleChronology = buildLifecycleChronology(servers);
+  const lifecycleChronologyGaps =
+    reportType === 'mcp-registry-lifecycle-chronology-audit'
+      ? servers
+          .flatMap((server) => {
+            const gaps: string[] = [];
+            if (!server.status) gaps.push('missing lifecycle status');
+            if (!server.publishedAt) gaps.push('missing publishedAt');
+            if (!server.updatedAt) gaps.push('missing updatedAt');
+            return gaps.map((gap) => `${server.id}: ${gap}`);
+          })
+          .sort()
+      : [];
 
   const anomalies = {
     duplicateServerVersions,
@@ -372,6 +453,7 @@ export async function sweepMcpRegistryCoverage(
     cursorLoops,
     emptyPagesWithCursor,
     schemaCompatibilityFailures,
+    lifecycleChronologyGaps,
     truncated,
   };
   const remoteTransportEntries = servers.filter(
@@ -381,6 +463,9 @@ export async function sweepMcpRegistryCoverage(
   const uniqueServerNames = names.size;
   const schemaCompatibleEntries = servers.filter(
     (server) => server.schemaCompatible
+  ).length;
+  const lifecycleTimestampEntries = servers.filter(
+    (server) => server.publishedAt && server.updatedAt
   ).length;
 
   return {
@@ -401,8 +486,14 @@ export async function sweepMcpRegistryCoverage(
         servers.length === 0
           ? 0
           : Math.round((schemaCompatibleEntries / servers.length) * 10000) / 100,
+      lifecycleChronologyEntries: lifecycleChronology.length,
+      lifecycleTimestampCoveragePct:
+        servers.length === 0
+          ? 0
+          : Math.round((lifecycleTimestampEntries / servers.length) * 10000) / 100,
     },
     pageChain,
+    lifecycleChronology,
     anomalies,
     receipt: buildReceipt({
       endpoint,

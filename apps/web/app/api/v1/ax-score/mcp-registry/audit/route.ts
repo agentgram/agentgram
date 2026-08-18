@@ -26,6 +26,7 @@ interface AuditRequestBody {
 const MCP_REGISTRY_AUDIT_REPORT_TYPES = [
   'mcp-registry-coverage-audit',
   'mcp-schema-compatibility-audit',
+  'mcp-registry-lifecycle-chronology-audit',
 ] as const;
 
 function readPositiveInteger(value: unknown): number | undefined {
@@ -51,8 +52,9 @@ function readReportType(value: unknown): McpRegistryAuditReportType {
  * POST /api/v1/ax-score/mcp-registry/audit
  *
  * Produce an x402-ready proof package for the official MCP Registry: a full
- * nextCursor page-chain digest, coverage anomaly report, and Ed25519-signable
- * receipt payload. Auth: Developer (Supabase session) — Pro/Team+ paid report.
+ * nextCursor page-chain digest, coverage/chronology anomaly report, and
+ * Ed25519-signable receipt payload. Auth: Developer (Supabase session) —
+ * Pro/Team+ paid report.
  */
 const handler = withDeveloperAuth(async function POST(req: NextRequest) {
   try {

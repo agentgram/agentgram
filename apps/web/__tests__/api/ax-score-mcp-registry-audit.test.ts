@@ -44,6 +44,8 @@ describe('POST /api/v1/ax-score/mcp-registry/audit', () => {
         latestMarkedNames: 1,
         schemaCompatibleEntries: 2,
         schemaCompatibilityPct: 100,
+        lifecycleChronologyEntries: 1,
+        lifecycleTimestampCoveragePct: 100,
       },
       pageChain: [
         {
@@ -54,6 +56,18 @@ describe('POST /api/v1/ax-score/mcp-registry/audit', () => {
           digest: 'page-digest',
         },
       ],
+      lifecycleChronology: [
+        {
+          id: 'acme/weather@1.0.0',
+          name: 'acme/weather',
+          version: '1.0.0',
+          status: 'active',
+          publishedAt: '2026-08-01T00:00:00.000Z',
+          updatedAt: '2026-08-04T00:00:00.000Z',
+          isLatest: true,
+          eventDigest: 'event-digest',
+        },
+      ],
       anomalies: {
         duplicateServerVersions: [],
         missingLatestMarkers: [],
@@ -61,6 +75,7 @@ describe('POST /api/v1/ax-score/mcp-registry/audit', () => {
         cursorLoops: [],
         emptyPagesWithCursor: [],
         schemaCompatibilityFailures: [],
+        lifecycleChronologyGaps: [],
         truncated: false,
       },
       receipt: {
@@ -163,8 +178,11 @@ describe('POST /api/v1/ax-score/mcp-registry/audit', () => {
         latestMarkedNames: 2,
         schemaCompatibleEntries: 1,
         schemaCompatibilityPct: 50,
+        lifecycleChronologyEntries: 0,
+        lifecycleTimestampCoveragePct: 0,
       },
       pageChain: [],
+      lifecycleChronology: [],
       anomalies: {
         duplicateServerVersions: [],
         missingLatestMarkers: [],
@@ -174,6 +192,7 @@ describe('POST /api/v1/ax-score/mcp-registry/audit', () => {
         schemaCompatibilityFailures: [
           'bad/server@0.1.0: missing MCP launch surface (https remote or package)',
         ],
+        lifecycleChronologyGaps: [],
         truncated: false,
       },
       receipt: {
@@ -221,6 +240,96 @@ describe('POST /api/v1/ax-score/mcp-registry/audit', () => {
       payment: {
         status: 'ready',
         paymentPurpose: 'mcp-schema-compatibility-audit-report',
+      },
+    });
+  });
+
+  it('passes through the paid MCP registry lifecycle chronology report type', async () => {
+    mockSweepMcpRegistryCoverage.mockResolvedValueOnce({
+      summary: {
+        totalEntries: 1,
+        uniqueServerVersions: 1,
+        uniqueServerNames: 1,
+        remoteTransportEntries: 1,
+        remoteTransportCoveragePct: 100,
+        latestMarkedNames: 1,
+        schemaCompatibleEntries: 1,
+        schemaCompatibilityPct: 100,
+        lifecycleChronologyEntries: 1,
+        lifecycleTimestampCoveragePct: 100,
+      },
+      pageChain: [],
+      lifecycleChronology: [
+        {
+          id: 'chrono/server@1.0.0',
+          name: 'chrono/server',
+          version: '1.0.0',
+          status: 'active',
+          publishedAt: '2026-08-01T00:00:00.000Z',
+          updatedAt: '2026-08-04T00:00:00.000Z',
+          isLatest: true,
+          eventDigest: 'event-digest',
+        },
+      ],
+      anomalies: {
+        duplicateServerVersions: [],
+        missingLatestMarkers: [],
+        missingRemoteTransports: [],
+        cursorLoops: [],
+        emptyPagesWithCursor: [],
+        schemaCompatibilityFailures: [],
+        lifecycleChronologyGaps: [],
+        truncated: false,
+      },
+      receipt: {
+        kind: 'agentgram.ax-score.mcp-registry.lifecycle-chronology-receipt',
+        registryEndpoint: 'https://registry.modelcontextprotocol.io/v0/servers',
+        generatedAt: '2026-08-04T00:00:00.000Z',
+        digestAlgorithm: 'sha256',
+        coverageDigest: 'coverage-digest',
+        pageChainDigest: 'page-chain-digest',
+        pageCount: 1,
+        serverVersionCount: 1,
+        uniqueServerVersionCount: 1,
+        anomalyCount: 0,
+        x402: {
+          status: 'ready',
+          paymentPurpose: 'mcp-registry-lifecycle-chronology-audit-report',
+          recommendedPriceUsd: '99.00',
+          deliverable: 'MCP Registry lifecycle chronology findings.',
+        },
+        signature: {
+          status: 'unsigned',
+          signingAlgorithm: 'ed25519',
+          payloadDigest: 'payload-digest',
+        },
+      },
+    });
+    const { POST } = await import(
+      '@/app/api/v1/ax-score/mcp-registry/audit/route'
+    );
+
+    const response = await POST(
+      makeRequest({
+        reportType: 'mcp-registry-lifecycle-chronology-audit',
+        limit: 10,
+      })
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mockSweepMcpRegistryCoverage).toHaveBeenCalledWith({
+      limit: 10,
+      cursor: null,
+      reportType: 'mcp-registry-lifecycle-chronology-audit',
+    });
+    expect(json.data).toMatchObject({
+      plan: 'team',
+      reportType: 'mcp-registry-lifecycle-chronology-audit',
+      payment: {
+        status: 'ready',
+        paymentPurpose: 'mcp-registry-lifecycle-chronology-audit-report',
+        recommendedPriceUsd: '99.00',
       },
     });
   });

@@ -155,6 +155,85 @@ describe('sweepMcpRegistryCoverage', () => {
     });
   });
 
+  it('produces a paid lifecycle chronology receipt with timestamp gap evidence', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValueOnce(
+      registryResponse({
+        servers: [
+          {
+            server: {
+              name: 'chrono/server',
+              version: '1.0.0',
+              remotes: [{ type: 'streamable-http', url: 'https://chrono.example/mcp' }],
+            },
+            _meta: {
+              'io.modelcontextprotocol.registry/official': {
+                status: 'active',
+                publishedAt: '2026-08-01T00:00:00.000Z',
+                updatedAt: '2026-08-03T00:00:00.000Z',
+                isLatest: true,
+              },
+            },
+          },
+          {
+            server: {
+              name: 'chrono/server',
+              version: '0.9.0',
+              remotes: [{ type: 'streamable-http', url: 'https://chrono.example/mcp' }],
+            },
+            _meta: {
+              'io.modelcontextprotocol.registry/official': {
+                publishedAt: '2026-07-01T00:00:00.000Z',
+                isLatest: false,
+              },
+            },
+          },
+        ],
+        metadata: { count: 2 },
+      })
+    );
+
+    const audit = await sweepMcpRegistryCoverage({
+      fetcher,
+      endpoint: 'https://registry.example/v0/servers',
+      reportType: 'mcp-registry-lifecycle-chronology-audit',
+      generatedAt: '2026-08-04T00:00:00.000Z',
+    });
+
+    expect(audit.summary.lifecycleChronologyEntries).toBe(2);
+    expect(audit.summary.lifecycleTimestampCoveragePct).toBe(50);
+    expect([
+      audit.lifecycleChronology[0].id,
+      audit.lifecycleChronology[1].id,
+    ]).toEqual([
+      'chrono/server@0.9.0',
+      'chrono/server@1.0.0',
+    ]);
+    expect(audit.lifecycleChronology[0]).toMatchObject({
+      status: null,
+      publishedAt: '2026-07-01T00:00:00.000Z',
+      updatedAt: null,
+      isLatest: false,
+    });
+    expect(audit.lifecycleChronology[0].eventDigest).toMatch(/^[a-f0-9]{64}$/);
+    expect(audit.anomalies.lifecycleChronologyGaps).toEqual([
+      'chrono/server@0.9.0: missing lifecycle status',
+      'chrono/server@0.9.0: missing updatedAt',
+    ]);
+    expect(audit.receipt).toMatchObject({
+      kind: 'agentgram.ax-score.mcp-registry.lifecycle-chronology-receipt',
+      anomalyCount: 2,
+      x402: {
+        status: 'ready',
+        paymentPurpose: 'mcp-registry-lifecycle-chronology-audit-report',
+        recommendedPriceUsd: '99.00',
+      },
+      signature: {
+        status: 'unsigned',
+        signingAlgorithm: 'ed25519',
+      },
+    });
+  });
+
   it('reports duplicate, remote-coverage, latest-marker, and cursor anomalies', async () => {
     const fetcher = vi
       .fn<typeof fetch>()
