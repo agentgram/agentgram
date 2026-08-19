@@ -29,6 +29,10 @@ export const RFC8785_AGENT_CARD_FIXTURE_DIGEST =
 /** Maximum allowed clock skew between signer and server, in milliseconds. */
 export const SIGNATURE_FRESHNESS_WINDOW_MS = 5 * 60 * 1000;
 
+/** Maximum age for exported A2A Agent Card retrieval evidence. */
+export const A2A_AGENT_CARD_RETRIEVAL_FRESHNESS_WINDOW_MS =
+  24 * 60 * 60 * 1000;
+
 const PUBLIC_KEY_HEX_REGEX = /^[0-9a-f]{64}$/i;
 const SECRET_KEY_HEX_REGEX = /^[0-9a-f]{64}$/i;
 const SIGNATURE_HEX_REGEX = /^[0-9a-f]{128}$/i;
@@ -140,6 +144,62 @@ export type A2aAgentCardTransportBindingParityVerdict =
       code: 'SIGNATURE_INVALID' | 'BINDING_PARITY_DIVERGED';
       message: string;
       parity?: A2aAgentCardTransportBindingParityReport;
+      signature: A2aAgentCardSignatureVerdict;
+    };
+
+export type A2aAgentCardRetrievalFreshnessStatus =
+  | 'fresh'
+  | 'stale'
+  | 'indeterminate';
+
+export type A2aAgentCardStaleCacheVerdict = 'accept' | 'reject' | 'review';
+
+export interface A2aAgentCardRetrievalFreshnessReport {
+  kind: 'agentgram.a2a.agent-card.retrieval-freshness';
+  generatedAt: string;
+  agentCardUrl: string;
+  signedAgentCardPayloadDigest: string;
+  retrieval: {
+    fetchedAt: string;
+    etag: string | null;
+    lastModified: string | null;
+    cacheControl: string | null;
+  };
+  signature: {
+    status: 'verified';
+    signingAlgorithm: 'ed25519';
+    publicKey: string;
+    keyVersion: string | null;
+  };
+  freshness: {
+    status: A2aAgentCardRetrievalFreshnessStatus;
+    staleCacheVerdict: A2aAgentCardStaleCacheVerdict;
+    maxEvidenceAgeSeconds: number;
+    fetchAgeSeconds: number | null;
+    cacheMaxAgeSeconds: number | null;
+    lastModifiedAgeSeconds: number | null;
+    validators: {
+      etag: boolean;
+      lastModified: boolean;
+    };
+    reasons: string[];
+  };
+}
+
+export type A2aAgentCardRetrievalFreshnessVerdict =
+  | {
+      ok: true;
+      freshness: A2aAgentCardRetrievalFreshnessReport;
+      signature: Extract<A2aAgentCardSignatureVerdict, { ok: true }>;
+    }
+  | {
+      ok: false;
+      code:
+        | 'SIGNATURE_INVALID'
+        | 'RETRIEVAL_METADATA_INVALID'
+        | 'AGENT_CARD_STALE';
+      message: string;
+      freshness?: A2aAgentCardRetrievalFreshnessReport;
       signature: A2aAgentCardSignatureVerdict;
     };
 
@@ -745,6 +805,192 @@ export async function attestA2aAgentCardTransportBindingParity(input: {
   }
 
   return { ok: true, parity, signature };
+}
+
+function readOptionalHeaderString(value: unknown): string | null {
+  return typeof value === 'string' && value.trim().length > 0
+    ? value.trim()
+    : null;
+}
+
+function parseIsoDate(value: unknown): Date | null {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return null;
+  }
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function parseHttpsUrl(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+function parseCacheMaxAgeSeconds(cacheControl: string | null): number | null {
+  if (cacheControl === null) {
+    return null;
+  }
+  const maxAge = cacheControl
+    .split(',')
+    .map((part) => part.trim().toLowerCase())
+    .find((part) => part.startsWith('max-age='));
+  if (maxAge === undefined) {
+    return null;
+  }
+  const seconds = Number(maxAge.slice('max-age='.length));
+  return Number.isSafeInteger(seconds) && seconds >= 0 ? seconds : null;
+}
+
+function secondsBetween(later: Date, earlier: Date): number {
+  return Math.floor((later.getTime() - earlier.getTime()) / 1000);
+}
+
+/**
+ * Verify a signed A2A Agent Card and export retrieval freshness evidence. The
+ * report binds ETag/Last-Modified/Cache-Control/fetch-time metadata to the
+ * Ed25519-verified payload digest so discovery clients can reject valid-but-
+ * stale cards before showing trust UI.
+ */
+export async function attestA2aAgentCardRetrievalFreshness(input: {
+  agentCardUrl?: unknown;
+  agentCard?: unknown;
+  publicKey?: unknown;
+  signature?: unknown;
+  jws?: unknown;
+  fetchedAt?: unknown;
+  etag?: unknown;
+  lastModified?: unknown;
+  cacheControl?: unknown;
+  signatureKeyVersion?: unknown;
+  now?: Date;
+  maxEvidenceAgeMs?: number;
+}): Promise<A2aAgentCardRetrievalFreshnessVerdict> {
+  const signature = await verifyA2aAgentCardSignature(input);
+  if (!signature.ok) {
+    return {
+      ok: false,
+      code: 'SIGNATURE_INVALID',
+      message:
+        'A2A Agent Card retrieval freshness requires a valid signed Agent Card',
+      signature,
+    };
+  }
+
+  const agentCardUrl = parseHttpsUrl(input.agentCardUrl);
+  const fetchedAt = parseIsoDate(input.fetchedAt);
+  if (agentCardUrl === null || fetchedAt === null) {
+    return {
+      ok: false,
+      code: 'RETRIEVAL_METADATA_INVALID',
+      message:
+        'A2A Agent Card retrieval freshness requires an HTTPS agentCardUrl and ISO fetchedAt timestamp',
+      signature,
+    };
+  }
+
+  const now = input.now ?? new Date();
+  const maxEvidenceAgeMs =
+    typeof input.maxEvidenceAgeMs === 'number' && input.maxEvidenceAgeMs > 0
+      ? input.maxEvidenceAgeMs
+      : A2A_AGENT_CARD_RETRIEVAL_FRESHNESS_WINDOW_MS;
+  const etag = readOptionalHeaderString(input.etag);
+  const lastModified = readOptionalHeaderString(input.lastModified);
+  const cacheControl = readOptionalHeaderString(input.cacheControl);
+  const cacheMaxAgeSeconds = parseCacheMaxAgeSeconds(cacheControl);
+  const fetchAgeSeconds = secondsBetween(now, fetchedAt);
+  const lastModifiedAt = parseIsoDate(lastModified);
+  const lastModifiedAgeSeconds =
+    lastModifiedAt === null ? null : secondsBetween(now, lastModifiedAt);
+  const maxEvidenceAgeSeconds = Math.floor(maxEvidenceAgeMs / 1000);
+  const hasValidator = etag !== null || lastModified !== null;
+  const reasons: string[] = [];
+
+  if (fetchAgeSeconds < 0) {
+    reasons.push('fetchedAt is in the future');
+  }
+  if (fetchAgeSeconds > maxEvidenceAgeSeconds) {
+    reasons.push('retrieval evidence exceeds the freshness window');
+  }
+  if (cacheMaxAgeSeconds !== null && fetchAgeSeconds > cacheMaxAgeSeconds) {
+    reasons.push('retrieval evidence exceeds Cache-Control max-age');
+  }
+  if (!hasValidator) {
+    reasons.push('ETag or Last-Modified validator is required for cache replay');
+  }
+  if (lastModified !== null && lastModifiedAt === null) {
+    reasons.push('Last-Modified header is not a parseable HTTP timestamp');
+  }
+
+  const stale = reasons.some(
+    (reason) =>
+      reason === 'retrieval evidence exceeds the freshness window' ||
+      reason === 'retrieval evidence exceeds Cache-Control max-age'
+  );
+  const status: A2aAgentCardRetrievalFreshnessStatus = stale
+    ? 'stale'
+    : reasons.length > 0
+      ? 'indeterminate'
+      : 'fresh';
+  const staleCacheVerdict: A2aAgentCardStaleCacheVerdict = stale
+    ? 'reject'
+    : status === 'fresh'
+      ? 'accept'
+      : 'review';
+
+  const freshness: A2aAgentCardRetrievalFreshnessReport = {
+    kind: 'agentgram.a2a.agent-card.retrieval-freshness',
+    generatedAt: now.toISOString(),
+    agentCardUrl,
+    signedAgentCardPayloadDigest: signature.payloadDigest,
+    retrieval: {
+      fetchedAt: fetchedAt.toISOString(),
+      etag,
+      lastModified,
+      cacheControl,
+    },
+    signature: {
+      status: 'verified',
+      signingAlgorithm: 'ed25519',
+      publicKey: String(input.publicKey).toLowerCase(),
+      keyVersion: readOptionalHeaderString(input.signatureKeyVersion),
+    },
+    freshness: {
+      status,
+      staleCacheVerdict,
+      maxEvidenceAgeSeconds,
+      fetchAgeSeconds: fetchAgeSeconds < 0 ? null : fetchAgeSeconds,
+      cacheMaxAgeSeconds,
+      lastModifiedAgeSeconds:
+        lastModifiedAgeSeconds === null || lastModifiedAgeSeconds < 0
+          ? null
+          : lastModifiedAgeSeconds,
+      validators: {
+        etag: etag !== null,
+        lastModified: lastModified !== null,
+      },
+      reasons,
+    },
+  };
+
+  if (stale) {
+    return {
+      ok: false,
+      code: 'AGENT_CARD_STALE',
+      message:
+        'A2A Agent Card retrieval evidence is stale and should not be trusted for discovery display',
+      freshness,
+      signature,
+    };
+  }
+
+  return { ok: true, freshness, signature };
 }
 
 function encodeMessage(domain: string, payload: unknown): Uint8Array {
