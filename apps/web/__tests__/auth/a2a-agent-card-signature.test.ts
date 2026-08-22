@@ -4,6 +4,7 @@ import {
   A2A_AGENT_CARD_JWS_ALGORITHM,
   RFC8785_AGENT_CARD_FIXTURE_CANONICAL_JSON,
   RFC8785_AGENT_CARD_FIXTURE_DIGEST,
+  attestA2aExtendedAgentCardAuthorizationDowngrade,
   attestA2aAgentCardTransportBindingParity,
   buildA2aAgentCardCanonicalSignatureEvidence,
   canonicalJson,
@@ -288,6 +289,139 @@ describe('A2A Agent Card canonical signature gate', () => {
           { bindingId: 'additionalInterfaces[0]', kind: 'task-semantics' },
           { bindingId: 'additionalInterfaces[0]', kind: 'auth-behavior' },
         ],
+      },
+    });
+  });
+
+  it('proves Extended Agent Card capabilities are cleared after authorization downgrades', async () => {
+    const { publicKey, secretKey } = await generateAgentKeypair();
+    const agentCard = {
+      name: 'weather-agent',
+      url: 'https://weather.example/a2a/jsonrpc',
+      capabilities: { streaming: true },
+      supportsAuthenticatedExtendedCard: true,
+    };
+    const jws = await signA2aAgentCardJws(secretKey, publicKey, agentCard);
+    const disclosureDigest = 'd'.repeat(64);
+
+    const verdict = await attestA2aExtendedAgentCardAuthorizationDowngrade({
+      publicKey,
+      jws,
+      agentCard,
+      sessionId: 'session-123',
+      cardVersion: 'card-v9',
+      disclosureDigest,
+      now: new Date('2026-08-21T00:00:00.000Z'),
+      transitions: [
+        {
+          phase: 'initial-public',
+          authorization: 'public',
+          sessionId: 'session-123',
+          cardVersion: 'card-v9',
+          fetchedAt: '2026-08-20T23:59:00.000Z',
+          extendedCapabilities: null,
+        },
+        {
+          phase: 'authenticated',
+          authorization: 'authenticated',
+          sessionId: 'session-123',
+          cardVersion: 'card-v9',
+          disclosureDigest,
+          fetchedAt: '2026-08-21T00:00:00.000Z',
+          authenticatedExtendedCard: {
+            capabilities: { streaming: true, privateTools: ['billing.read'] },
+          },
+        },
+        {
+          phase: 'downgraded-public',
+          authorization: 'public',
+          sessionId: 'session-123',
+          cardVersion: 'card-v9',
+          fetchedAt: '2026-08-21T00:01:00.000Z',
+          extendedCapabilities: null,
+        },
+      ],
+    });
+
+    expect(verdict.ok).toBe(true);
+    if (verdict.ok) {
+      expect(verdict.clearance).toMatchObject({
+        kind: 'agentgram.a2a.extended-agent-card.authorization-downgrade-cache-clearance',
+        generatedAt: '2026-08-21T00:00:00.000Z',
+        sessionId: 'session-123',
+        cardVersion: 'card-v9',
+        disclosureDigest,
+        downgrade: {
+          status: 'cleared',
+          authenticatedDisclosureObserved: true,
+          weakenedAuthorizationObserved: true,
+          reasons: [],
+        },
+      });
+      expect(verdict.clearance.signedAgentCardPayloadDigest).toMatch(/^[a-f0-9]{64}$/);
+      expect(verdict.clearance.transitions[1]?.extendedCapabilitiesDigest).toMatch(
+        /^[a-f0-9]{64}$/
+      );
+      expect(verdict.clearance.transitions[2]).toMatchObject({
+        authorization: 'public',
+        disclosureDigest: null,
+        extendedCapabilitiesDigest: null,
+        clearedExtendedCapabilities: true,
+      });
+    }
+  });
+
+  it('fails closed when downgraded public retrieval retains authenticated Extended Agent Card material', async () => {
+    const { publicKey, secretKey } = await generateAgentKeypair();
+    const agentCard = {
+      name: 'weather-agent',
+      url: 'https://weather.example/a2a/jsonrpc',
+      supportsAuthenticatedExtendedCard: true,
+    };
+    const jws = await signA2aAgentCardJws(secretKey, publicKey, agentCard);
+    const disclosureDigest = 'e'.repeat(64);
+
+    await expect(
+      attestA2aExtendedAgentCardAuthorizationDowngrade({
+        publicKey,
+        jws,
+        agentCard,
+        sessionId: 'session-456',
+        cardVersion: 'card-v10',
+        disclosureDigest,
+        transitions: [
+          {
+            authorization: 'public',
+            sessionId: 'session-456',
+            cardVersion: 'card-v10',
+          },
+          {
+            authorization: 'authenticated',
+            sessionId: 'session-456',
+            cardVersion: 'card-v10',
+            disclosureDigest,
+            extendedCapabilities: { privateTools: ['billing.read'] },
+          },
+          {
+            authorization: 'expired',
+            sessionId: 'session-456',
+            cardVersion: 'card-v10',
+            disclosureDigest,
+            extendedCapabilities: { privateTools: ['billing.read'] },
+          },
+        ],
+      })
+    ).resolves.toMatchObject({
+      ok: false,
+      code: 'EXTENDED_CAPABILITIES_CACHE_LEAK',
+      clearance: {
+        downgrade: {
+          status: 'leaked',
+          reasons: [
+            'transition[2] weakened retrieval retained authenticated disclosure digest',
+            'transition[2] weakened retrieval retained extended capabilities',
+          ],
+        },
       },
     });
   });

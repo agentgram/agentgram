@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mockVerifyA2aAgentCardSignature = vi.fn();
 const mockAttestA2aAgentCardTransportBindingParity = vi.fn();
 const mockAttestA2aAgentCardRetrievalFreshness = vi.fn();
+const mockAttestA2aExtendedAgentCardAuthorizationDowngrade = vi.fn();
 const mockBuildA2aAgentCardCanonicalSignatureEvidence = vi.fn();
 
 vi.mock('@agentgram/auth', () => ({
@@ -13,6 +14,8 @@ vi.mock('@agentgram/auth', () => ({
     mockAttestA2aAgentCardTransportBindingParity,
   attestA2aAgentCardRetrievalFreshness:
     mockAttestA2aAgentCardRetrievalFreshness,
+  attestA2aExtendedAgentCardAuthorizationDowngrade:
+    mockAttestA2aExtendedAgentCardAuthorizationDowngrade,
   verifyA2aAgentCardSignature: mockVerifyA2aAgentCardSignature,
 }));
 
@@ -251,6 +254,99 @@ describe('A2A Agent Card canonical signature route', () => {
     expect(json.error.details.freshness.freshness.staleCacheVerdict).toBe(
       'reject'
     );
+  });
+
+  it('exports Extended Agent Card authorization-downgrade cache clearance evidence', async () => {
+    const clearance = {
+      kind: 'agentgram.a2a.extended-agent-card.authorization-downgrade-cache-clearance',
+      generatedAt: '2026-08-21T00:00:00.000Z',
+      signedAgentCardPayloadDigest: 'a'.repeat(64),
+      sessionId: 'session-123',
+      cardVersion: 'card-v9',
+      disclosureDigest: 'd'.repeat(64),
+      transitions: [],
+      downgrade: {
+        status: 'cleared',
+        authenticatedDisclosureObserved: true,
+        weakenedAuthorizationObserved: true,
+        reasons: [],
+      },
+    };
+    mockAttestA2aExtendedAgentCardAuthorizationDowngrade.mockResolvedValueOnce({
+      ok: true,
+      clearance,
+      signature: { ok: true },
+    });
+    const { POST } = await import(
+      '@/app/api/v1/a2a/agent-card/authorization-downgrade-cache-clearance/route'
+    );
+
+    const response = await POST(
+      makeRequest({
+        publicKey: 'b'.repeat(64),
+        jws: 'protected.payload.signature',
+        agentCard: { name: 'weather-agent' },
+        sessionId: 'session-123',
+        cardVersion: 'card-v9',
+        disclosureDigest: 'd'.repeat(64),
+        transitions: [{ authorization: 'public' }],
+      })
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mockAttestA2aExtendedAgentCardAuthorizationDowngrade).toHaveBeenCalledWith({
+      publicKey: 'b'.repeat(64),
+      signature: undefined,
+      jws: 'protected.payload.signature',
+      agentCard: { name: 'weather-agent' },
+      sessionId: 'session-123',
+      cardVersion: 'card-v9',
+      disclosureDigest: 'd'.repeat(64),
+      transitions: [{ authorization: 'public' }],
+    });
+    expect(json.data.reportType).toBe(
+      'a2a-extended-agent-card-authorization-downgrade-cache-clearance'
+    );
+    expect(json.data.clearance).toEqual(clearance);
+  });
+
+  it('fails closed when downgraded retrieval leaks Extended Agent Card capabilities', async () => {
+    const clearance = {
+      kind: 'agentgram.a2a.extended-agent-card.authorization-downgrade-cache-clearance',
+      downgrade: {
+        status: 'leaked',
+        reasons: ['transition[2] weakened retrieval retained extended capabilities'],
+      },
+    };
+    mockAttestA2aExtendedAgentCardAuthorizationDowngrade.mockResolvedValueOnce({
+      ok: false,
+      code: 'EXTENDED_CAPABILITIES_CACHE_LEAK',
+      message:
+        'A2A Extended Agent Card cache retained authenticated capabilities after authorization weakened or expired',
+      clearance,
+      signature: { ok: true },
+    });
+    const { POST } = await import(
+      '@/app/api/v1/a2a/agent-card/authorization-downgrade-cache-clearance/route'
+    );
+
+    const response = await POST(
+      makeRequest({
+        publicKey: 'b'.repeat(64),
+        signature: 'c'.repeat(128),
+        agentCard: { name: 'weather-agent' },
+        sessionId: 'session-456',
+        cardVersion: 'card-v10',
+        disclosureDigest: 'e'.repeat(64),
+        transitions: [],
+      })
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(json.error.code).toBe('EXTENDED_CAPABILITIES_CACHE_LEAK');
+    expect(json.error.details.clearance.downgrade.status).toBe('leaked');
   });
 
   it('publishes public canonical-signature conformance evidence', async () => {
