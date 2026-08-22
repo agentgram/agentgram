@@ -203,6 +203,68 @@ export type A2aAgentCardRetrievalFreshnessVerdict =
       signature: A2aAgentCardSignatureVerdict;
     };
 
+export type A2aExtendedAgentCardAuthorizationState =
+  | 'public'
+  | 'authenticated'
+  | 'expired';
+
+export interface A2aExtendedAgentCardAuthorizationTransitionProbe {
+  phase: string;
+  authorization: A2aExtendedAgentCardAuthorizationState;
+  sessionId: string;
+  cardVersion: string;
+  disclosureDigest: string | null;
+  extendedCapabilitiesDigest: string | null;
+  clearedExtendedCapabilities: boolean;
+  fetchedAt: string | null;
+}
+
+export interface A2aExtendedAgentCardAuthorizationDowngradeReport {
+  kind: 'agentgram.a2a.extended-agent-card.authorization-downgrade-cache-clearance';
+  generatedAt: string;
+  signedAgentCardPayloadDigest: string;
+  sessionId: string;
+  cardVersion: string;
+  disclosureDigest: string;
+  transitions: A2aExtendedAgentCardAuthorizationTransitionProbe[];
+  downgrade: {
+    status: 'cleared' | 'leaked' | 'indeterminate';
+    authenticatedDisclosureObserved: boolean;
+    weakenedAuthorizationObserved: boolean;
+    reasons: string[];
+  };
+}
+
+export type A2aExtendedAgentCardAuthorizationDowngradeVerdict =
+  | {
+      ok: true;
+      clearance: A2aExtendedAgentCardAuthorizationDowngradeReport;
+      signature: Extract<A2aAgentCardSignatureVerdict, { ok: true }>;
+    }
+  | {
+      ok: false;
+      code:
+        | 'SIGNATURE_INVALID'
+        | 'AUTHORIZATION_TRANSITIONS_INVALID'
+        | 'EXTENDED_CAPABILITIES_CACHE_LEAK';
+      message: string;
+      clearance?: A2aExtendedAgentCardAuthorizationDowngradeReport;
+      signature: A2aAgentCardSignatureVerdict;
+    };
+
+interface A2aExtendedAgentCardAuthorizationTransitionInput {
+  phase?: unknown;
+  authorization?: unknown;
+  sessionId?: unknown;
+  cardVersion?: unknown;
+  disclosureDigest?: unknown;
+  fetchedAt?: unknown;
+  agentCard?: unknown;
+  extendedAgentCard?: unknown;
+  authenticatedExtendedCard?: unknown;
+  extendedCapabilities?: unknown;
+}
+
 interface NormalizedA2aAgentCardTransportBinding {
   bindingId: string;
   transport: string;
@@ -813,6 +875,55 @@ function readOptionalHeaderString(value: unknown): string | null {
     : null;
 }
 
+function readRequiredString(value: unknown): string | null {
+  return typeof value === 'string' && value.trim().length > 0
+    ? value.trim()
+    : null;
+}
+
+function readAuthorizationState(
+  value: unknown
+): A2aExtendedAgentCardAuthorizationState | null {
+  return value === 'public' || value === 'authenticated' || value === 'expired'
+    ? value
+    : null;
+}
+
+function readExtendedCapabilityMaterial(
+  retrieval: A2aExtendedAgentCardAuthorizationTransitionInput
+): unknown {
+  if (retrieval.extendedCapabilities !== undefined) {
+    return retrieval.extendedCapabilities;
+  }
+  if (retrieval.authenticatedExtendedCard !== undefined) {
+    return retrieval.authenticatedExtendedCard;
+  }
+  if (retrieval.extendedAgentCard !== undefined) {
+    return retrieval.extendedAgentCard;
+  }
+  if (isRecord(retrieval.agentCard)) {
+    return (
+      retrieval.agentCard.authenticatedExtendedCard ??
+      retrieval.agentCard.extendedAgentCard ??
+      retrieval.agentCard.extendedCapabilities
+    );
+  }
+  return undefined;
+}
+
+function hasExtendedCapabilityMaterial(value: unknown): boolean {
+  if (value === undefined || value === null) {
+    return false;
+  }
+  if (Array.isArray(value)) {
+    return value.length > 0;
+  }
+  if (isRecord(value)) {
+    return Object.keys(value).length > 0;
+  }
+  return true;
+}
+
 function parseIsoDate(value: unknown): Date | null {
   if (typeof value !== 'string' || value.trim().length === 0) {
     return null;
@@ -991,6 +1102,180 @@ export async function attestA2aAgentCardRetrievalFreshness(input: {
   }
 
   return { ok: true, freshness, signature };
+}
+
+/**
+ * Verify a signed base A2A Agent Card and attest that a discovery client clears
+ * authenticated Extended Agent Card material when authorization weakens or a
+ * session expires. The report binds every public/authenticated/public retrieval
+ * transition to the same session id, card version, and disclosure digest so a
+ * cached authenticated card cannot bleed privileged capabilities back into a
+ * public discovery view.
+ */
+export async function attestA2aExtendedAgentCardAuthorizationDowngrade(input: {
+  agentCard?: unknown;
+  publicKey?: unknown;
+  signature?: unknown;
+  jws?: unknown;
+  sessionId?: unknown;
+  cardVersion?: unknown;
+  disclosureDigest?: unknown;
+  transitions?: unknown;
+  now?: Date;
+}): Promise<A2aExtendedAgentCardAuthorizationDowngradeVerdict> {
+  const signature = await verifyA2aAgentCardSignature(input);
+  if (!signature.ok) {
+    return {
+      ok: false,
+      code: 'SIGNATURE_INVALID',
+      message:
+        'A2A Extended Agent Card authorization-downgrade clearance requires a valid signed base Agent Card',
+      signature,
+    };
+  }
+
+  const sessionId = readRequiredString(input.sessionId);
+  const cardVersion = readRequiredString(input.cardVersion);
+  const disclosureDigest = readRequiredString(input.disclosureDigest);
+  if (
+    sessionId === null ||
+    cardVersion === null ||
+    disclosureDigest === null ||
+    !/^[0-9a-f]{64}$/i.test(disclosureDigest) ||
+    !Array.isArray(input.transitions) ||
+    input.transitions.length < 3
+  ) {
+    return {
+      ok: false,
+      code: 'AUTHORIZATION_TRANSITIONS_INVALID',
+      message:
+        'A2A Extended Agent Card clearance requires sessionId, cardVersion, 64-hex disclosureDigest, and at least public→authenticated→weakened transitions',
+      signature,
+    };
+  }
+
+  const reasons: string[] = [];
+  let authenticatedDisclosureObserved = false;
+  let authenticatedSeen = false;
+  let weakenedAuthorizationObserved = false;
+
+  const probes = await Promise.all(
+    input.transitions.map(async (transition, index) => {
+      const record = isRecord(transition) ? transition : {};
+      const authorization = readAuthorizationState(record.authorization);
+      const transitionSessionId = readRequiredString(record.sessionId);
+      const transitionCardVersion = readRequiredString(record.cardVersion);
+      const transitionDisclosureDigest = readOptionalHeaderString(
+        record.disclosureDigest
+      );
+      const extendedMaterial = readExtendedCapabilityMaterial(record);
+      const hasExtendedMaterial = hasExtendedCapabilityMaterial(extendedMaterial);
+
+      if (authorization === null) {
+        reasons.push(`transition[${index}] has invalid authorization state`);
+      }
+      if (transitionSessionId !== sessionId) {
+        reasons.push(`transition[${index}] session id does not match`);
+      }
+      if (transitionCardVersion !== cardVersion) {
+        reasons.push(`transition[${index}] card version does not match`);
+      }
+      if (authorization === 'authenticated') {
+        authenticatedSeen = true;
+        if (transitionDisclosureDigest === disclosureDigest && hasExtendedMaterial) {
+          authenticatedDisclosureObserved = true;
+        } else {
+          reasons.push(
+            `transition[${index}] authenticated retrieval is not bound to disclosure digest and extended capabilities`
+          );
+        }
+      }
+      if (
+        authenticatedSeen &&
+        (authorization === 'public' || authorization === 'expired')
+      ) {
+        weakenedAuthorizationObserved = true;
+        if (transitionDisclosureDigest !== null) {
+          reasons.push(
+            `transition[${index}] weakened retrieval retained authenticated disclosure digest`
+          );
+        }
+        if (hasExtendedMaterial) {
+          reasons.push(
+            `transition[${index}] weakened retrieval retained extended capabilities`
+          );
+        }
+      }
+
+      return {
+        phase:
+          readRequiredString(record.phase) ??
+          `${authorization ?? 'invalid'}-${index}`,
+        authorization: authorization ?? 'public',
+        sessionId: transitionSessionId ?? '',
+        cardVersion: transitionCardVersion ?? '',
+        disclosureDigest: transitionDisclosureDigest,
+        extendedCapabilitiesDigest: hasExtendedMaterial
+          ? await sha256Hex(canonicalJson(extendedMaterial))
+          : null,
+        clearedExtendedCapabilities: !hasExtendedMaterial,
+        fetchedAt: readOptionalHeaderString(record.fetchedAt),
+      } satisfies A2aExtendedAgentCardAuthorizationTransitionProbe;
+    })
+  );
+
+  if (!authenticatedDisclosureObserved) {
+    reasons.push('authenticated extended disclosure was not observed');
+  }
+  if (!weakenedAuthorizationObserved) {
+    reasons.push('no public or expired retrieval after authenticated disclosure');
+  }
+
+  const leaked = reasons.some(
+    (reason) =>
+      reason.includes('retained authenticated disclosure digest') ||
+      reason.includes('retained extended capabilities')
+  );
+  const status =
+    leaked ? 'leaked' : reasons.length > 0 ? 'indeterminate' : 'cleared';
+  const clearance: A2aExtendedAgentCardAuthorizationDowngradeReport = {
+    kind: 'agentgram.a2a.extended-agent-card.authorization-downgrade-cache-clearance',
+    generatedAt: (input.now ?? new Date()).toISOString(),
+    signedAgentCardPayloadDigest: signature.payloadDigest,
+    sessionId,
+    cardVersion,
+    disclosureDigest: disclosureDigest.toLowerCase(),
+    transitions: probes,
+    downgrade: {
+      status,
+      authenticatedDisclosureObserved,
+      weakenedAuthorizationObserved,
+      reasons,
+    },
+  };
+
+  if (status === 'leaked') {
+    return {
+      ok: false,
+      code: 'EXTENDED_CAPABILITIES_CACHE_LEAK',
+      message:
+        'A2A Extended Agent Card cache retained authenticated capabilities after authorization weakened or expired',
+      clearance,
+      signature,
+    };
+  }
+  if (status === 'indeterminate') {
+    return {
+      ok: false,
+      code: 'AUTHORIZATION_TRANSITIONS_INVALID',
+      message:
+        'A2A Extended Agent Card authorization transitions do not prove public→authenticated→weakened cache clearance',
+      clearance,
+      signature,
+    };
+  }
+
+  return { ok: true, clearance, signature };
 }
 
 function encodeMessage(domain: string, payload: unknown): Uint8Array {
