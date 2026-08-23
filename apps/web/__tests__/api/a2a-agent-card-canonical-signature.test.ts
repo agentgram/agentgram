@@ -4,6 +4,7 @@ const mockVerifyA2aAgentCardSignature = vi.fn();
 const mockAttestA2aAgentCardTransportBindingParity = vi.fn();
 const mockAttestA2aAgentCardRetrievalFreshness = vi.fn();
 const mockAttestA2aExtendedAgentCardAuthorizationDowngrade = vi.fn();
+const mockAttestA2aProtocolVersionDowngradeProof = vi.fn();
 const mockBuildA2aAgentCardCanonicalSignatureEvidence = vi.fn();
 
 vi.mock('@agentgram/auth', () => ({
@@ -16,6 +17,8 @@ vi.mock('@agentgram/auth', () => ({
     mockAttestA2aAgentCardRetrievalFreshness,
   attestA2aExtendedAgentCardAuthorizationDowngrade:
     mockAttestA2aExtendedAgentCardAuthorizationDowngrade,
+  attestA2aProtocolVersionDowngradeProof:
+    mockAttestA2aProtocolVersionDowngradeProof,
   verifyA2aAgentCardSignature: mockVerifyA2aAgentCardSignature,
 }));
 
@@ -347,6 +350,102 @@ describe('A2A Agent Card canonical signature route', () => {
     expect(response.status).toBe(409);
     expect(json.error.code).toBe('EXTENDED_CAPABILITIES_CACHE_LEAK');
     expect(json.error.details.clearance.downgrade.status).toBe('leaked');
+  });
+
+  it('exports protocol-version downgrade-proof negotiation evidence', async () => {
+    const downgradeProof = {
+      kind: 'agentgram.a2a.agent-card.protocol-version-downgrade-proof',
+      generatedAt: '2026-08-22T00:01:00.000Z',
+      signedAgentCardPayloadDigest: 'a'.repeat(64),
+      transcriptDigest: 'f'.repeat(64),
+      transcriptSignature: {
+        status: 'verified',
+        signingAlgorithm: 'ed25519',
+        publicKey: 'b'.repeat(64),
+      },
+      transcript: {
+        requestedProtocolVersion: '0.3.0',
+        negotiatedProtocolVersion: '0.3.0',
+      },
+      negotiation: {
+        status: 'matched',
+        silentFallbackBlocked: false,
+        reasons: [],
+      },
+    };
+    mockAttestA2aProtocolVersionDowngradeProof.mockResolvedValueOnce({
+      ok: true,
+      downgradeProof,
+      signature: { ok: true },
+    });
+    const { POST } = await import(
+      '@/app/api/v1/a2a/agent-card/protocol-version-downgrade-proof/route'
+    );
+
+    const transcript = {
+      sessionId: 'session-789',
+      requestedProtocolVersion: '0.3.0',
+      negotiatedProtocolVersion: '0.3.0',
+    };
+    const response = await POST(
+      makeRequest({
+        publicKey: 'b'.repeat(64),
+        jws: 'protected.payload.signature',
+        agentCard: { name: 'weather-agent' },
+        transcript,
+        transcriptSignature: 'd'.repeat(128),
+      })
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mockAttestA2aProtocolVersionDowngradeProof).toHaveBeenCalledWith({
+      publicKey: 'b'.repeat(64),
+      signature: undefined,
+      jws: 'protected.payload.signature',
+      agentCard: { name: 'weather-agent' },
+      transcript,
+      transcriptSignature: 'd'.repeat(128),
+    });
+    expect(json.data.reportType).toBe('a2a-protocol-version-downgrade-proof');
+    expect(json.data.downgradeProof).toEqual(downgradeProof);
+  });
+
+  it('fails closed when protocol negotiation silently downgrades the requested version', async () => {
+    const downgradeProof = {
+      kind: 'agentgram.a2a.agent-card.protocol-version-downgrade-proof',
+      negotiation: {
+        status: 'downgraded',
+        silentFallbackBlocked: true,
+        reasons: ['negotiated protocol version differs from requested version without explicit fallback authorization'],
+      },
+    };
+    mockAttestA2aProtocolVersionDowngradeProof.mockResolvedValueOnce({
+      ok: false,
+      code: 'PROTOCOL_VERSION_DOWNGRADE',
+      message:
+        'A2A protocol-version negotiation silently fell back from the requested version',
+      downgradeProof,
+      signature: { ok: true },
+    });
+    const { POST } = await import(
+      '@/app/api/v1/a2a/agent-card/protocol-version-downgrade-proof/route'
+    );
+
+    const response = await POST(
+      makeRequest({
+        publicKey: 'b'.repeat(64),
+        signature: 'c'.repeat(128),
+        agentCard: { name: 'weather-agent' },
+        transcript: {},
+        transcriptSignature: 'd'.repeat(128),
+      })
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(json.error.code).toBe('PROTOCOL_VERSION_DOWNGRADE');
+    expect(json.error.details.downgradeProof.negotiation.silentFallbackBlocked).toBe(true);
   });
 
   it('publishes public canonical-signature conformance evidence', async () => {

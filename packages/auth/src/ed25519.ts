@@ -17,6 +17,10 @@ export const SIGNATURE_DOMAIN = 'agentgram:v1:';
 export const A2A_AGENT_CARD_SIGNATURE_DOMAIN =
   'agentgram:v1:a2a-agent-card:';
 
+/** Domain prefix for signed A2A protocol-version negotiation transcripts. */
+export const A2A_PROTOCOL_VERSION_NEGOTIATION_TRANSCRIPT_DOMAIN =
+  'agentgram:v1:a2a-protocol-version-negotiation:';
+
 export const A2A_AGENT_CARD_JWS_ALGORITHM = 'EdDSA';
 export const A2A_AGENT_CARD_JWS_CRITICAL_RFC8785 = 'agentgram-rfc8785';
 
@@ -235,6 +239,59 @@ export interface A2aExtendedAgentCardAuthorizationDowngradeReport {
   };
 }
 
+export interface A2aProtocolVersionNegotiationTranscript {
+  sessionId: string;
+  interfaceId: string;
+  transport: string;
+  url: string;
+  requestedProtocolVersion: string;
+  negotiatedProtocolVersion: string;
+  supportedProtocolVersions: string[];
+  fallbackAllowed: boolean;
+  fallbackReason: string | null;
+  negotiatedAt: string;
+}
+
+export interface A2aProtocolVersionDowngradeProofReport {
+  kind: 'agentgram.a2a.agent-card.protocol-version-downgrade-proof';
+  generatedAt: string;
+  signedAgentCardPayloadDigest: string;
+  transcriptDigest: string;
+  transcriptSignature: {
+    status: 'verified';
+    signingAlgorithm: 'ed25519';
+    signatureDomain: typeof A2A_PROTOCOL_VERSION_NEGOTIATION_TRANSCRIPT_DOMAIN;
+    publicKey: string;
+  };
+  transcript: A2aProtocolVersionNegotiationTranscript;
+  negotiation: {
+    status: 'matched' | 'authorized-fallback' | 'downgraded' | 'invalid';
+    requestedProtocolVersion: string;
+    negotiatedProtocolVersion: string;
+    requestedVersionSupported: boolean;
+    negotiatedVersionSupported: boolean;
+    silentFallbackBlocked: boolean;
+    reasons: string[];
+  };
+}
+
+export type A2aProtocolVersionDowngradeProofVerdict =
+  | {
+      ok: true;
+      downgradeProof: A2aProtocolVersionDowngradeProofReport;
+      signature: Extract<A2aAgentCardSignatureVerdict, { ok: true }>;
+    }
+  | {
+      ok: false;
+      code:
+        | 'SIGNATURE_INVALID'
+        | 'NEGOTIATION_TRANSCRIPT_INVALID'
+        | 'PROTOCOL_VERSION_DOWNGRADE';
+      message: string;
+      downgradeProof?: A2aProtocolVersionDowngradeProofReport;
+      signature: A2aAgentCardSignatureVerdict;
+    };
+
 export type A2aExtendedAgentCardAuthorizationDowngradeVerdict =
   | {
       ok: true;
@@ -263,6 +320,21 @@ interface A2aExtendedAgentCardAuthorizationTransitionInput {
   extendedAgentCard?: unknown;
   authenticatedExtendedCard?: unknown;
   extendedCapabilities?: unknown;
+}
+
+interface A2aProtocolVersionNegotiationTranscriptInput {
+  sessionId?: unknown;
+  interfaceId?: unknown;
+  transport?: unknown;
+  url?: unknown;
+  requestedProtocolVersion?: unknown;
+  requestedVersion?: unknown;
+  negotiatedProtocolVersion?: unknown;
+  negotiatedVersion?: unknown;
+  supportedProtocolVersions?: unknown;
+  fallbackAllowed?: unknown;
+  fallbackReason?: unknown;
+  negotiatedAt?: unknown;
 }
 
 interface NormalizedA2aAgentCardTransportBinding {
@@ -414,6 +486,122 @@ function normalizeTransportBindings(
   }
 
   return bindings;
+}
+
+function readStringList(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .filter((item): item is string => typeof item === 'string')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+}
+
+function readDeclaredProtocolVersions(record: Record<string, unknown>): string[] {
+  return [
+    ...readStringList(record.protocolVersions),
+    ...readStringList(record.supportedProtocolVersions),
+    ...readStringList(record.interfaceVersions),
+    ...readStringList(record.versions),
+  ];
+}
+
+function findAgentCardInterface(
+  agentCard: Record<string, unknown>,
+  interfaceId: string
+): Record<string, unknown> | null {
+  if (interfaceId === 'primary') {
+    return agentCard;
+  }
+  const additionalMatch = interfaceId.match(/^additionalInterfaces\[(\d+)\]$/);
+  if (additionalMatch !== null && Array.isArray(agentCard.additionalInterfaces)) {
+    const binding = agentCard.additionalInterfaces[Number(additionalMatch[1])];
+    return isRecord(binding) ? binding : null;
+  }
+  if (Array.isArray(agentCard.transportBindings)) {
+    for (let index = 0; index < agentCard.transportBindings.length; index += 1) {
+      const binding = agentCard.transportBindings[index];
+      if (!isRecord(binding)) {
+        continue;
+      }
+      const bindingId = readOptionalString(binding, 'id') ?? `transportBindings[${index}]`;
+      if (bindingId === interfaceId) {
+        return binding;
+      }
+    }
+  }
+  return null;
+}
+
+function normalizeA2aProtocolVersionNegotiationTranscript(
+  input: unknown,
+  agentCard: Record<string, unknown>
+): A2aProtocolVersionNegotiationTranscript | null {
+  if (!isRecord(input)) {
+    return null;
+  }
+  const transcript = input as A2aProtocolVersionNegotiationTranscriptInput;
+  const sessionId = readRequiredString(transcript.sessionId);
+  const interfaceId = readRequiredString(transcript.interfaceId);
+  const requestedProtocolVersion = readRequiredString(
+    transcript.requestedProtocolVersion ?? transcript.requestedVersion
+  );
+  const negotiatedProtocolVersion = readRequiredString(
+    transcript.negotiatedProtocolVersion ?? transcript.negotiatedVersion
+  );
+  const negotiatedAt = parseIsoDate(transcript.negotiatedAt);
+  if (
+    sessionId === null ||
+    interfaceId === null ||
+    requestedProtocolVersion === null ||
+    negotiatedProtocolVersion === null ||
+    negotiatedAt === null
+  ) {
+    return null;
+  }
+
+  const declaredInterface = findAgentCardInterface(agentCard, interfaceId);
+  const supportedProtocolVersions = Array.from(
+    new Set([
+      ...readDeclaredProtocolVersions(agentCard),
+      ...(declaredInterface === null
+        ? []
+        : readDeclaredProtocolVersions(declaredInterface)),
+      ...readStringList(transcript.supportedProtocolVersions),
+    ])
+  ).sort();
+
+  const transport =
+    readRequiredString(transcript.transport) ??
+    (declaredInterface === null
+      ? null
+      : readOptionalString(declaredInterface, 'transport') ??
+        readOptionalString(declaredInterface, 'type') ??
+        readOptionalString(declaredInterface, 'protocol')) ??
+    readOptionalString(agentCard, 'preferredTransport') ??
+    readOptionalString(agentCard, 'transport') ??
+    'unspecified';
+  const url =
+    parseHttpsUrl(transcript.url) ??
+    (declaredInterface === null ? null : parseHttpsUrl(declaredInterface.url)) ??
+    parseHttpsUrl(agentCard.url);
+  if (url === null) {
+    return null;
+  }
+
+  return {
+    sessionId,
+    interfaceId,
+    transport,
+    url,
+    requestedProtocolVersion,
+    negotiatedProtocolVersion,
+    supportedProtocolVersions,
+    fallbackAllowed: transcript.fallbackAllowed === true,
+    fallbackReason: readOptionalHeaderString(transcript.fallbackReason),
+    negotiatedAt: negotiatedAt.toISOString(),
+  };
 }
 
 function base64UrlEncode(data: Uint8Array | string): string {
@@ -613,6 +801,20 @@ export async function signA2aAgentCardJws(
     ed25519.etc.hexToBytes(secretKeyHex)
   );
   return `${signingInput}.${base64UrlEncode(signature)}`;
+}
+
+export async function signA2aProtocolVersionNegotiationTranscript(
+  secretKeyHex: string,
+  transcript: A2aProtocolVersionNegotiationTranscript
+): Promise<string> {
+  if (!SECRET_KEY_HEX_REGEX.test(secretKeyHex)) {
+    throw new Error('Secret key must be 64 hex characters');
+  }
+  const signature = await ed25519.signAsync(
+    encodeMessage(A2A_PROTOCOL_VERSION_NEGOTIATION_TRANSCRIPT_DOMAIN, transcript),
+    ed25519.etc.hexToBytes(secretKeyHex)
+  );
+  return ed25519.etc.bytesToHex(signature);
 }
 
 /**
@@ -1102,6 +1304,150 @@ export async function attestA2aAgentCardRetrievalFreshness(input: {
   }
 
   return { ok: true, freshness, signature };
+}
+
+/**
+ * Verify a signed A2A Agent Card plus an Ed25519-signed protocol negotiation
+ * transcript. Discovery clients can attach this report to Agent Card evidence
+ * to prove the requested protocol version was the negotiated version, or that
+ * any fallback was explicit rather than a silent downgrade.
+ */
+export async function attestA2aProtocolVersionDowngradeProof(input: {
+  agentCard?: unknown;
+  publicKey?: unknown;
+  signature?: unknown;
+  jws?: unknown;
+  transcript?: unknown;
+  transcriptSignature?: unknown;
+  now?: Date;
+}): Promise<A2aProtocolVersionDowngradeProofVerdict> {
+  const signature = await verifyA2aAgentCardSignature(input);
+  if (!signature.ok) {
+    return {
+      ok: false,
+      code: 'SIGNATURE_INVALID',
+      message:
+        'A2A protocol-version downgrade proof requires a valid signed Agent Card',
+      signature,
+    };
+  }
+  if (!isRecord(input.agentCard)) {
+    return {
+      ok: false,
+      code: 'SIGNATURE_INVALID',
+      message: 'A2A protocol-version downgrade proof requires an Agent Card object',
+      signature,
+    };
+  }
+
+  const transcript = normalizeA2aProtocolVersionNegotiationTranscript(
+    input.transcript,
+    input.agentCard
+  );
+  if (
+    transcript === null ||
+    typeof input.transcriptSignature !== 'string' ||
+    !SIGNATURE_HEX_REGEX.test(input.transcriptSignature)
+  ) {
+    return {
+      ok: false,
+      code: 'NEGOTIATION_TRANSCRIPT_INVALID',
+      message:
+        'A2A protocol-version downgrade proof requires a normalized negotiation transcript and 128-hex transcriptSignature',
+      signature,
+    };
+  }
+
+  let transcriptSignatureValid = false;
+  try {
+    transcriptSignatureValid = await ed25519.verifyAsync(
+      ed25519.etc.hexToBytes(input.transcriptSignature),
+      encodeMessage(A2A_PROTOCOL_VERSION_NEGOTIATION_TRANSCRIPT_DOMAIN, transcript),
+      ed25519.etc.hexToBytes(String(input.publicKey))
+    );
+  } catch {
+    transcriptSignatureValid = false;
+  }
+  if (!transcriptSignatureValid) {
+    return {
+      ok: false,
+      code: 'NEGOTIATION_TRANSCRIPT_INVALID',
+      message:
+        'A2A protocol-version negotiation transcript signature does not match the supplied public key',
+      signature,
+    };
+  }
+
+  const supported = transcript.supportedProtocolVersions;
+  const requestedVersionSupported =
+    supported.length === 0 || supported.includes(transcript.requestedProtocolVersion);
+  const negotiatedVersionSupported =
+    supported.length === 0 || supported.includes(transcript.negotiatedProtocolVersion);
+  const versionChanged =
+    transcript.requestedProtocolVersion !== transcript.negotiatedProtocolVersion;
+  const silentFallbackBlocked = versionChanged && !transcript.fallbackAllowed;
+  const reasons: string[] = [];
+
+  if (!requestedVersionSupported) {
+    reasons.push('requested protocol version is not declared by the Agent Card interface');
+  }
+  if (!negotiatedVersionSupported) {
+    reasons.push('negotiated protocol version is not declared by the Agent Card interface');
+  }
+  if (silentFallbackBlocked) {
+    reasons.push('negotiated protocol version differs from requested version without explicit fallback authorization');
+  }
+  if (versionChanged && transcript.fallbackAllowed && transcript.fallbackReason === null) {
+    reasons.push('authorized protocol fallback must include a fallbackReason');
+  }
+
+  const invalid = !requestedVersionSupported || !negotiatedVersionSupported;
+  const downgraded = silentFallbackBlocked;
+  const status = invalid
+    ? 'invalid'
+    : downgraded
+      ? 'downgraded'
+      : versionChanged
+        ? 'authorized-fallback'
+        : 'matched';
+  const downgradeProof: A2aProtocolVersionDowngradeProofReport = {
+    kind: 'agentgram.a2a.agent-card.protocol-version-downgrade-proof',
+    generatedAt: (input.now ?? new Date()).toISOString(),
+    signedAgentCardPayloadDigest: signature.payloadDigest,
+    transcriptDigest: await sha256Hex(canonicalJson(transcript)),
+    transcriptSignature: {
+      status: 'verified',
+      signingAlgorithm: 'ed25519',
+      signatureDomain: A2A_PROTOCOL_VERSION_NEGOTIATION_TRANSCRIPT_DOMAIN,
+      publicKey: String(input.publicKey).toLowerCase(),
+    },
+    transcript,
+    negotiation: {
+      status,
+      requestedProtocolVersion: transcript.requestedProtocolVersion,
+      negotiatedProtocolVersion: transcript.negotiatedProtocolVersion,
+      requestedVersionSupported,
+      negotiatedVersionSupported,
+      silentFallbackBlocked,
+      reasons,
+    },
+  };
+
+  if (invalid || downgraded || reasons.length > 0) {
+    return {
+      ok: false,
+      code: invalid
+        ? 'NEGOTIATION_TRANSCRIPT_INVALID'
+        : 'PROTOCOL_VERSION_DOWNGRADE',
+      message: invalid
+        ? 'A2A protocol-version negotiation transcript does not match declared Agent Card interface versions'
+        : 'A2A protocol-version negotiation silently fell back from the requested version',
+      downgradeProof,
+      signature,
+    };
+  }
+
+  return { ok: true, downgradeProof, signature };
 }
 
 /**

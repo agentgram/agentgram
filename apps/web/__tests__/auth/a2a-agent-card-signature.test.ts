@@ -2,15 +2,18 @@ import { describe, expect, it } from 'vitest';
 import {
   A2A_AGENT_CARD_SIGNATURE_DOMAIN,
   A2A_AGENT_CARD_JWS_ALGORITHM,
+  A2A_PROTOCOL_VERSION_NEGOTIATION_TRANSCRIPT_DOMAIN,
   RFC8785_AGENT_CARD_FIXTURE_CANONICAL_JSON,
   RFC8785_AGENT_CARD_FIXTURE_DIGEST,
   attestA2aExtendedAgentCardAuthorizationDowngrade,
   attestA2aAgentCardTransportBindingParity,
+  attestA2aProtocolVersionDowngradeProof,
   buildA2aAgentCardCanonicalSignatureEvidence,
   canonicalJson,
   generateAgentKeypair,
   signA2aAgentCard,
   signA2aAgentCardJws,
+  signA2aProtocolVersionNegotiationTranscript,
   verifyA2aAgentCardSignature,
 } from '@agentgram/auth/src/ed25519';
 
@@ -420,6 +423,111 @@ describe('A2A Agent Card canonical signature gate', () => {
           reasons: [
             'transition[2] weakened retrieval retained authenticated disclosure digest',
             'transition[2] weakened retrieval retained extended capabilities',
+          ],
+        },
+      },
+    });
+  });
+
+  it('attests signed protocol negotiation transcripts without silent fallback', async () => {
+    const { publicKey, secretKey } = await generateAgentKeypair();
+    const agentCard = {
+      name: 'weather-agent',
+      url: 'https://weather.example/a2a/jsonrpc',
+      preferredTransport: 'JSONRPC',
+      protocolVersions: ['0.2.5', '0.3.0'],
+    };
+    const jws = await signA2aAgentCardJws(secretKey, publicKey, agentCard);
+    const transcript = {
+      sessionId: 'session-789',
+      interfaceId: 'primary',
+      transport: 'JSONRPC',
+      url: 'https://weather.example/a2a/jsonrpc',
+      requestedProtocolVersion: '0.3.0',
+      negotiatedProtocolVersion: '0.3.0',
+      supportedProtocolVersions: ['0.2.5', '0.3.0'],
+      fallbackAllowed: false,
+      fallbackReason: null,
+      negotiatedAt: '2026-08-22T00:00:00.000Z',
+    };
+    const transcriptSignature =
+      await signA2aProtocolVersionNegotiationTranscript(secretKey, transcript);
+
+    const verdict = await attestA2aProtocolVersionDowngradeProof({
+      publicKey,
+      jws,
+      agentCard,
+      transcript,
+      transcriptSignature,
+      now: new Date('2026-08-22T00:01:00.000Z'),
+    });
+
+    expect(verdict.ok).toBe(true);
+    if (verdict.ok) {
+      expect(verdict.downgradeProof).toMatchObject({
+        kind: 'agentgram.a2a.agent-card.protocol-version-downgrade-proof',
+        generatedAt: '2026-08-22T00:01:00.000Z',
+        transcriptSignature: {
+          status: 'verified',
+          signingAlgorithm: 'ed25519',
+          signatureDomain: A2A_PROTOCOL_VERSION_NEGOTIATION_TRANSCRIPT_DOMAIN,
+          publicKey,
+        },
+        negotiation: {
+          status: 'matched',
+          requestedProtocolVersion: '0.3.0',
+          negotiatedProtocolVersion: '0.3.0',
+          requestedVersionSupported: true,
+          negotiatedVersionSupported: true,
+          silentFallbackBlocked: false,
+          reasons: [],
+        },
+      });
+      expect(verdict.downgradeProof.signedAgentCardPayloadDigest).toMatch(/^[a-f0-9]{64}$/);
+      expect(verdict.downgradeProof.transcriptDigest).toMatch(/^[a-f0-9]{64}$/);
+    }
+  });
+
+  it('fails closed when protocol negotiation silently falls back from the requested version', async () => {
+    const { publicKey, secretKey } = await generateAgentKeypair();
+    const agentCard = {
+      name: 'weather-agent',
+      url: 'https://weather.example/a2a/jsonrpc',
+      protocolVersions: ['0.2.5', '0.3.0'],
+    };
+    const jws = await signA2aAgentCardJws(secretKey, publicKey, agentCard);
+    const transcript = {
+      sessionId: 'session-999',
+      interfaceId: 'primary',
+      transport: 'JSONRPC',
+      url: 'https://weather.example/a2a/jsonrpc',
+      requestedProtocolVersion: '0.3.0',
+      negotiatedProtocolVersion: '0.2.5',
+      supportedProtocolVersions: ['0.2.5', '0.3.0'],
+      fallbackAllowed: false,
+      fallbackReason: null,
+      negotiatedAt: '2026-08-22T00:00:00.000Z',
+    };
+    const transcriptSignature =
+      await signA2aProtocolVersionNegotiationTranscript(secretKey, transcript);
+
+    await expect(
+      attestA2aProtocolVersionDowngradeProof({
+        publicKey,
+        jws,
+        agentCard,
+        transcript,
+        transcriptSignature,
+      })
+    ).resolves.toMatchObject({
+      ok: false,
+      code: 'PROTOCOL_VERSION_DOWNGRADE',
+      downgradeProof: {
+        negotiation: {
+          status: 'downgraded',
+          silentFallbackBlocked: true,
+          reasons: [
+            'negotiated protocol version differs from requested version without explicit fallback authorization',
           ],
         },
       },
