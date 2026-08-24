@@ -20,6 +20,10 @@ export const A2A_AGENT_CARD_SIGNATURE_DOMAIN =
 export const A2A_AGENT_CARD_JWS_ALGORITHM = 'EdDSA';
 export const A2A_AGENT_CARD_JWS_CRITICAL_RFC8785 = 'agentgram-rfc8785';
 
+/** Domain prefix for A2A task-history retention attestation signatures. */
+export const A2A_TASK_HISTORY_RETENTION_SIGNATURE_DOMAIN =
+  'agentgram:v1:a2a-task-history-retention:';
+
 export const RFC8785_AGENT_CARD_FIXTURE_CANONICAL_JSON =
   '{"literals":[null,true,false],"numbers":[333333333.3333333,1e+30,4.5,0.002,1e-27],"string":"€$\\u000f\\nA\'B\\"\\\\\\"/"}';
 
@@ -252,6 +256,84 @@ export type A2aExtendedAgentCardAuthorizationDowngradeVerdict =
       signature: A2aAgentCardSignatureVerdict;
     };
 
+export type A2aTaskHistoryRetentionStatus =
+  | 'reproducible'
+  | 'truncated'
+  | 'non-reproducible';
+
+export type A2aTaskHistoryRetentionComparison =
+  | 'complete'
+  | 'truncated'
+  | 'over-returned';
+
+export interface A2aTaskHistoryRetentionPayload {
+  kind: 'agentgram.a2a.task-history.retention-attestation-payload';
+  taskId: string;
+  taskVersion: string;
+  cardVersion: string;
+  requestedHistoryLength: number;
+  returnedHistoryLength: number;
+  returnedHistoryDigest: string;
+  truncationReason: string | null;
+}
+
+export interface A2aTaskHistoryRetentionVerifierFixture {
+  name: 'a2a-task-history-retention-requested-vs-returned';
+  canonicalJson: string;
+  digestAlgorithm: 'sha256';
+  digest: string;
+  payload: A2aTaskHistoryRetentionPayload;
+}
+
+export interface A2aTaskHistoryRetentionReport {
+  kind: 'agentgram.a2a.task-history.retention-attestation';
+  generatedAt: string;
+  signedAgentCardPayloadDigest: string;
+  taskId: string;
+  taskVersion: string;
+  cardVersion: string;
+  request: {
+    requestedHistoryLength: number;
+  };
+  response: {
+    returnedHistoryLength: number;
+    returnedHistoryDigest: string;
+    truncated: boolean;
+    truncationReason: string | null;
+  };
+  retention: {
+    status: A2aTaskHistoryRetentionStatus;
+    requestedVsReturned: A2aTaskHistoryRetentionComparison;
+    reasons: string[];
+  };
+  signature: {
+    status: 'verified';
+    signingAlgorithm: 'ed25519';
+    signatureDomain: typeof A2A_TASK_HISTORY_RETENTION_SIGNATURE_DOMAIN;
+    publicKey: string;
+    payloadDigest: string;
+    verifierFixture: A2aTaskHistoryRetentionVerifierFixture;
+  };
+}
+
+export type A2aTaskHistoryRetentionVerdict =
+  | {
+      ok: true;
+      retention: A2aTaskHistoryRetentionReport;
+      signature: Extract<A2aAgentCardSignatureVerdict, { ok: true }>;
+    }
+  | {
+      ok: false;
+      code:
+        | 'SIGNATURE_INVALID'
+        | 'TASK_HISTORY_RETENTION_METADATA_INVALID'
+        | 'TASK_HISTORY_RETENTION_SIGNATURE_INVALID'
+        | 'TASK_HISTORY_RETENTION_NON_REPRODUCIBLE';
+      message: string;
+      retention?: A2aTaskHistoryRetentionReport;
+      signature: A2aAgentCardSignatureVerdict;
+    };
+
 interface A2aExtendedAgentCardAuthorizationTransitionInput {
   phase?: unknown;
   authorization?: unknown;
@@ -263,6 +345,16 @@ interface A2aExtendedAgentCardAuthorizationTransitionInput {
   extendedAgentCard?: unknown;
   authenticatedExtendedCard?: unknown;
   extendedCapabilities?: unknown;
+}
+
+interface A2aTaskHistoryRetentionMetadata {
+  taskId: string;
+  taskVersion: string;
+  cardVersion: string;
+  requestedHistoryLength: number;
+  returnedHistoryLength: number;
+  returnedHistoryDigest: string;
+  truncationReason: string | null;
 }
 
 interface NormalizedA2aAgentCardTransportBinding {
@@ -881,6 +973,62 @@ function readRequiredString(value: unknown): string | null {
     : null;
 }
 
+function readSafeNonNegativeInteger(value: unknown): number | null {
+  return Number.isSafeInteger(value) && (value as number) >= 0
+    ? (value as number)
+    : null;
+}
+
+function normalizeA2aTaskHistoryRetentionMetadata(input: {
+  taskId?: unknown;
+  taskVersion?: unknown;
+  cardVersion?: unknown;
+  requestedHistoryLength?: unknown;
+  returnedHistory?: unknown;
+  truncationReason?: unknown;
+}): A2aTaskHistoryRetentionMetadata | null {
+  const taskId = readRequiredString(input.taskId);
+  const taskVersion = readRequiredString(input.taskVersion);
+  const cardVersion = readRequiredString(input.cardVersion);
+  const requestedHistoryLength = readSafeNonNegativeInteger(
+    input.requestedHistoryLength
+  );
+  if (
+    taskId === null ||
+    taskVersion === null ||
+    cardVersion === null ||
+    requestedHistoryLength === null ||
+    !Array.isArray(input.returnedHistory)
+  ) {
+    return null;
+  }
+
+  return {
+    taskId,
+    taskVersion,
+    cardVersion,
+    requestedHistoryLength,
+    returnedHistoryLength: input.returnedHistory.length,
+    returnedHistoryDigest: '',
+    truncationReason: readOptionalHeaderString(input.truncationReason),
+  };
+}
+
+function buildA2aTaskHistoryRetentionPayloadFromMetadata(
+  metadata: A2aTaskHistoryRetentionMetadata
+): A2aTaskHistoryRetentionPayload {
+  return {
+    kind: 'agentgram.a2a.task-history.retention-attestation-payload',
+    taskId: metadata.taskId,
+    taskVersion: metadata.taskVersion,
+    cardVersion: metadata.cardVersion,
+    requestedHistoryLength: metadata.requestedHistoryLength,
+    returnedHistoryLength: metadata.returnedHistoryLength,
+    returnedHistoryDigest: metadata.returnedHistoryDigest,
+    truncationReason: metadata.truncationReason,
+  };
+}
+
 function readAuthorizationState(
   value: unknown
 ): A2aExtendedAgentCardAuthorizationState | null {
@@ -1276,6 +1424,232 @@ export async function attestA2aExtendedAgentCardAuthorizationDowngrade(input: {
   }
 
   return { ok: true, clearance, signature };
+}
+
+async function buildA2aTaskHistoryRetentionMetadata(input: {
+  taskId?: unknown;
+  taskVersion?: unknown;
+  cardVersion?: unknown;
+  requestedHistoryLength?: unknown;
+  returnedHistory?: unknown;
+  truncationReason?: unknown;
+}): Promise<A2aTaskHistoryRetentionMetadata | null> {
+  const metadata = normalizeA2aTaskHistoryRetentionMetadata(input);
+  if (metadata === null || !Array.isArray(input.returnedHistory)) {
+    return null;
+  }
+  return {
+    ...metadata,
+    returnedHistoryDigest: await sha256Hex(canonicalJson(input.returnedHistory)),
+  };
+}
+
+export async function buildA2aTaskHistoryRetentionVerifierFixture(): Promise<A2aTaskHistoryRetentionVerifierFixture> {
+  const payload: A2aTaskHistoryRetentionPayload = {
+    kind: 'agentgram.a2a.task-history.retention-attestation-payload',
+    taskId: 'task-weather-42',
+    taskVersion: 'task-v7',
+    cardVersion: 'card-v3',
+    requestedHistoryLength: 5,
+    returnedHistoryLength: 3,
+    returnedHistoryDigest: await sha256Hex(
+      canonicalJson([
+        { id: 'event-1', role: 'user', digest: 'a'.repeat(64) },
+        { id: 'event-2', role: 'agent', digest: 'b'.repeat(64) },
+        { id: 'event-3', role: 'tool', digest: 'c'.repeat(64) },
+      ])
+    ),
+    truncationReason: 'server-retention-policy',
+  };
+  const fixtureCanonicalJson = canonicalJson(payload);
+  return {
+    name: 'a2a-task-history-retention-requested-vs-returned',
+    canonicalJson: fixtureCanonicalJson,
+    digestAlgorithm: 'sha256',
+    digest: await sha256Hex(fixtureCanonicalJson),
+    payload,
+  };
+}
+
+export async function buildA2aTaskHistoryRetentionPayload(input: {
+  taskId?: unknown;
+  taskVersion?: unknown;
+  cardVersion?: unknown;
+  requestedHistoryLength?: unknown;
+  returnedHistory?: unknown;
+  truncationReason?: unknown;
+}): Promise<A2aTaskHistoryRetentionPayload> {
+  const metadata = await buildA2aTaskHistoryRetentionMetadata(input);
+  if (metadata === null) {
+    throw new Error(
+      'A2A task-history retention attestation requires taskId, taskVersion, cardVersion, requestedHistoryLength, and returnedHistory[]'
+    );
+  }
+  return buildA2aTaskHistoryRetentionPayloadFromMetadata(metadata);
+}
+
+export async function signA2aTaskHistoryRetentionAttestation(
+  secretKeyHex: string,
+  input: {
+    taskId?: unknown;
+    taskVersion?: unknown;
+    cardVersion?: unknown;
+    requestedHistoryLength?: unknown;
+    returnedHistory?: unknown;
+    truncationReason?: unknown;
+  }
+): Promise<string> {
+  if (!SECRET_KEY_HEX_REGEX.test(secretKeyHex)) {
+    throw new Error('Secret key must be 64 hex characters');
+  }
+  const payload = await buildA2aTaskHistoryRetentionPayload(input);
+  const signature = await ed25519.signAsync(
+    encodeMessage(A2A_TASK_HISTORY_RETENTION_SIGNATURE_DOMAIN, payload),
+    ed25519.etc.hexToBytes(secretKeyHex)
+  );
+  return ed25519.etc.bytesToHex(signature);
+}
+
+/**
+ * Verify a signed A2A task-history retention transcript. The report binds the
+ * requested history length, returned history length/digest, task version, Agent
+ * Card version, and truncation reason so clients can reject non-reproducible
+ * audit trails instead of silently trusting shortened task history.
+ */
+export async function attestA2aTaskHistoryRetention(input: {
+  agentCard?: unknown;
+  publicKey?: unknown;
+  signature?: unknown;
+  jws?: unknown;
+  taskId?: unknown;
+  taskVersion?: unknown;
+  cardVersion?: unknown;
+  requestedHistoryLength?: unknown;
+  returnedHistory?: unknown;
+  truncationReason?: unknown;
+  retentionSignature?: unknown;
+  now?: Date;
+}): Promise<A2aTaskHistoryRetentionVerdict> {
+  const signature = await verifyA2aAgentCardSignature(input);
+  if (!signature.ok) {
+    return {
+      ok: false,
+      code: 'SIGNATURE_INVALID',
+      message:
+        'A2A task-history retention attestation requires a valid signed Agent Card',
+      signature,
+    };
+  }
+
+  const metadata = await buildA2aTaskHistoryRetentionMetadata(input);
+  if (metadata === null) {
+    return {
+      ok: false,
+      code: 'TASK_HISTORY_RETENTION_METADATA_INVALID',
+      message:
+        'A2A task-history retention attestation requires taskId, taskVersion, cardVersion, requestedHistoryLength, and returnedHistory[]',
+      signature,
+    };
+  }
+
+  const payload = buildA2aTaskHistoryRetentionPayloadFromMetadata(metadata);
+  if (
+    typeof input.retentionSignature !== 'string' ||
+    !SIGNATURE_HEX_REGEX.test(input.retentionSignature)
+  ) {
+    return {
+      ok: false,
+      code: 'TASK_HISTORY_RETENTION_SIGNATURE_INVALID',
+      message:
+        'A2A task-history retention attestation requires a 128-hex Ed25519 retentionSignature',
+      signature,
+    };
+  }
+
+  let validRetentionSignature = false;
+  try {
+    validRetentionSignature = await ed25519.verifyAsync(
+      ed25519.etc.hexToBytes(input.retentionSignature),
+      encodeMessage(A2A_TASK_HISTORY_RETENTION_SIGNATURE_DOMAIN, payload),
+      ed25519.etc.hexToBytes(String(input.publicKey))
+    );
+  } catch {
+    validRetentionSignature = false;
+  }
+
+  if (!validRetentionSignature) {
+    return {
+      ok: false,
+      code: 'TASK_HISTORY_RETENTION_SIGNATURE_INVALID',
+      message:
+        'A2A task-history retention signature does not match requested/returned history metadata',
+      signature,
+    };
+  }
+
+  const reasons: string[] = [];
+  let requestedVsReturned: A2aTaskHistoryRetentionComparison = 'complete';
+  if (metadata.returnedHistoryLength < metadata.requestedHistoryLength) {
+    requestedVsReturned = 'truncated';
+    if (metadata.truncationReason === null) {
+      reasons.push('truncated history requires an explicit truncation reason');
+    }
+  }
+  if (metadata.returnedHistoryLength > metadata.requestedHistoryLength) {
+    requestedVsReturned = 'over-returned';
+    reasons.push('returned history length exceeds requested history length');
+  }
+
+  const status: A2aTaskHistoryRetentionStatus =
+    reasons.length > 0
+      ? 'non-reproducible'
+      : requestedVsReturned === 'truncated'
+        ? 'truncated'
+        : 'reproducible';
+  const payloadCanonicalJson = canonicalJson(payload);
+  const retention: A2aTaskHistoryRetentionReport = {
+    kind: 'agentgram.a2a.task-history.retention-attestation',
+    generatedAt: (input.now ?? new Date()).toISOString(),
+    signedAgentCardPayloadDigest: signature.payloadDigest,
+    taskId: metadata.taskId,
+    taskVersion: metadata.taskVersion,
+    cardVersion: metadata.cardVersion,
+    request: {
+      requestedHistoryLength: metadata.requestedHistoryLength,
+    },
+    response: {
+      returnedHistoryLength: metadata.returnedHistoryLength,
+      returnedHistoryDigest: metadata.returnedHistoryDigest,
+      truncated: requestedVsReturned === 'truncated',
+      truncationReason: metadata.truncationReason,
+    },
+    retention: {
+      status,
+      requestedVsReturned,
+      reasons,
+    },
+    signature: {
+      status: 'verified',
+      signingAlgorithm: 'ed25519',
+      signatureDomain: A2A_TASK_HISTORY_RETENTION_SIGNATURE_DOMAIN,
+      publicKey: String(input.publicKey).toLowerCase(),
+      payloadDigest: await sha256Hex(payloadCanonicalJson),
+      verifierFixture: await buildA2aTaskHistoryRetentionVerifierFixture(),
+    },
+  };
+
+  if (status === 'non-reproducible') {
+    return {
+      ok: false,
+      code: 'TASK_HISTORY_RETENTION_NON_REPRODUCIBLE',
+      message:
+        'A2A task-history retention attestation is non-reproducible from requested versus returned history metadata',
+      retention,
+      signature,
+    };
+  }
+
+  return { ok: true, retention, signature };
 }
 
 function encodeMessage(domain: string, payload: unknown): Uint8Array {
