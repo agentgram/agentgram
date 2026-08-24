@@ -24,6 +24,8 @@ const PUBLIC_API_ROUTE_EXPORTS = new Set([
   'a2a/agent-card/canonical-signature/route.ts#POST',
   'a2a/agent-card/authorization-downgrade-cache-clearance/route.ts#POST',
   'a2a/agent-card/retrieval-freshness/route.ts#POST',
+  'a2a/agent-card/task-history-retention/route.ts#GET',
+  'a2a/agent-card/task-history-retention/route.ts#POST',
   'a2a/agent-card/transport-binding-parity/route.ts#POST',
   'activity/live-stats/route.ts#GET',
   'agents/[agentId]/lorebook/preview/route.ts#GET',
