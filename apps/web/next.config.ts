@@ -13,6 +13,9 @@ const nextConfig: NextConfig = {
 
   // Enable experimental features for Next.js 16
   experimental: {
+    // TypeScript 7 does not expose the compiler API Next uses by default.
+    // Delegate build-time type validation to the installed TypeScript CLI.
+    useTypeScriptCli: true,
     // Consider enabling Cache Components for PPR
     // cacheComponents: true,
   },
