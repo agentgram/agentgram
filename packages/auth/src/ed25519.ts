@@ -24,6 +24,10 @@ export const A2A_AGENT_CARD_JWS_CRITICAL_RFC8785 = 'agentgram-rfc8785';
 export const A2A_TASK_HISTORY_RETENTION_SIGNATURE_DOMAIN =
   'agentgram:v1:a2a-task-history-retention:';
 
+/** Domain prefix for A2A security-requirement satisfiability attestations. */
+export const A2A_SECURITY_REQUIREMENT_SATISFIABILITY_SIGNATURE_DOMAIN =
+  'agentgram:v1:a2a-security-requirement-satisfiability:';
+
 export const RFC8785_AGENT_CARD_FIXTURE_CANONICAL_JSON =
   '{"literals":[null,true,false],"numbers":[333333333.3333333,1e+30,4.5,0.002,1e-27],"string":"€$\\u000f\\nA\'B\\"\\\\\\"/"}';
 
@@ -334,6 +338,59 @@ export type A2aTaskHistoryRetentionVerdict =
       signature: A2aAgentCardSignatureVerdict;
     };
 
+export type A2aSecurityRequirementSatisfiabilityStatus =
+  | 'satisfiable'
+  | 'unsatisfiable';
+
+export interface A2aSecurityRequirementProbe {
+  scope: 'agent-card' | 'skill';
+  skillId: string | null;
+  requirementIndex: number;
+  schemeNames: string[];
+  status: A2aSecurityRequirementSatisfiabilityStatus;
+  reasons: string[];
+}
+
+export interface A2aSecurityRequirementSatisfiabilityReport {
+  kind: 'agentgram.a2a.agent-card.security-requirement-satisfiability';
+  generatedAt: string;
+  signedAgentCardPayloadDigest: string;
+  securitySchemeNames: string[];
+  requirementCount: number;
+  satisfiableRequirementCount: number;
+  unsatisfiableRequirementCount: number;
+  probes: A2aSecurityRequirementProbe[];
+  satisfiability: {
+    status: A2aSecurityRequirementSatisfiabilityStatus;
+    publicAccessDeclared: boolean;
+    reasons: string[];
+  };
+  signature: {
+    status: 'verified';
+    signingAlgorithm: 'ed25519';
+    signatureDomain: typeof A2A_SECURITY_REQUIREMENT_SATISFIABILITY_SIGNATURE_DOMAIN;
+    publicKey: string;
+    payloadDigest: string;
+  };
+}
+
+export type A2aSecurityRequirementSatisfiabilityVerdict =
+  | {
+      ok: true;
+      satisfiability: A2aSecurityRequirementSatisfiabilityReport;
+      signature: Extract<A2aAgentCardSignatureVerdict, { ok: true }>;
+    }
+  | {
+      ok: false;
+      code:
+        | 'SIGNATURE_INVALID'
+        | 'SECURITY_REQUIREMENTS_INVALID'
+        | 'SECURITY_REQUIREMENTS_UNSATISFIABLE';
+      message: string;
+      satisfiability?: A2aSecurityRequirementSatisfiabilityReport;
+      signature: A2aAgentCardSignatureVerdict;
+    };
+
 interface A2aExtendedAgentCardAuthorizationTransitionInput {
   phase?: unknown;
   authorization?: unknown;
@@ -364,6 +421,21 @@ interface NormalizedA2aAgentCardTransportBinding {
   taskSemantics: unknown;
   authBehavior: unknown;
 }
+
+type A2aSecuritySchemeKind =
+  | 'apiKeySecurityScheme'
+  | 'httpAuthSecurityScheme'
+  | 'oauth2SecurityScheme'
+  | 'openIdConnectSecurityScheme'
+  | 'mtlsSecurityScheme';
+
+const A2A_SECURITY_SCHEME_KEYS: A2aSecuritySchemeKind[] = [
+  'apiKeySecurityScheme',
+  'httpAuthSecurityScheme',
+  'oauth2SecurityScheme',
+  'openIdConnectSecurityScheme',
+  'mtlsSecurityScheme',
+];
 
 /**
  * Deterministic JSON serialization: object keys are sorted recursively so
@@ -506,6 +578,301 @@ function normalizeTransportBindings(
   }
 
   return bindings;
+}
+
+function readSecurityRequirementScopes(value: unknown): string[] | null {
+  if (!Array.isArray(value)) {
+    return null;
+  }
+  return value.every((scope) => typeof scope === 'string') ? value : null;
+}
+
+function validateHttpsUrl(value: unknown): boolean {
+  if (typeof value !== 'string') {
+    return false;
+  }
+  try {
+    return new URL(value).protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function collectOAuth2Scopes(scheme: Record<string, unknown>): Set<string> {
+  const scopes = new Set<string>();
+  const oauth2 = scheme.oauth2SecurityScheme;
+  if (!isRecord(oauth2) || !isRecord(oauth2.flows)) {
+    return scopes;
+  }
+  for (const flow of Object.values(oauth2.flows)) {
+    if (!isRecord(flow) || !isRecord(flow.scopes)) {
+      continue;
+    }
+    for (const scope of Object.keys(flow.scopes)) {
+      scopes.add(scope);
+    }
+  }
+  return scopes;
+}
+
+function validateSecurityScheme(
+  schemeName: string,
+  value: unknown
+): { kind: A2aSecuritySchemeKind | null; reasons: string[] } {
+  if (!isRecord(value)) {
+    return {
+      kind: null,
+      reasons: [`security scheme "${schemeName}" must be an object`],
+    };
+  }
+
+  const presentKinds = A2A_SECURITY_SCHEME_KEYS.filter((key) =>
+    isRecord(value[key])
+  );
+  if (presentKinds.length !== 1) {
+    return {
+      kind: null,
+      reasons: [
+        `security scheme "${schemeName}" must define exactly one A2A security scheme kind`,
+      ],
+    };
+  }
+
+  const kind = presentKinds[0];
+  const scheme = value[kind];
+  const reasons: string[] = [];
+  if (kind === 'apiKeySecurityScheme' && isRecord(scheme)) {
+    if (!['query', 'header', 'cookie'].includes(String(scheme.location))) {
+      reasons.push(
+        `apiKeySecurityScheme "${schemeName}" requires location query/header/cookie`
+      );
+    }
+    if (readRequiredString(scheme.name) === null) {
+      reasons.push(`apiKeySecurityScheme "${schemeName}" requires name`);
+    }
+  }
+  if (kind === 'httpAuthSecurityScheme' && isRecord(scheme)) {
+    if (readRequiredString(scheme.scheme) === null) {
+      reasons.push(`httpAuthSecurityScheme "${schemeName}" requires scheme`);
+    }
+  }
+  if (kind === 'oauth2SecurityScheme' && isRecord(scheme)) {
+    if (!isRecord(scheme.flows) || Object.keys(scheme.flows).length === 0) {
+      reasons.push(`oauth2SecurityScheme "${schemeName}" requires flows`);
+    }
+    if (
+      scheme.oauth2MetadataUrl !== undefined &&
+      !validateHttpsUrl(scheme.oauth2MetadataUrl)
+    ) {
+      reasons.push(
+        `oauth2SecurityScheme "${schemeName}" metadata URL must be HTTPS`
+      );
+    }
+  }
+  if (kind === 'openIdConnectSecurityScheme' && isRecord(scheme)) {
+    if (!validateHttpsUrl(scheme.openIdConnectUrl)) {
+      reasons.push(
+        `openIdConnectSecurityScheme "${schemeName}" discovery URL must be HTTPS`
+      );
+    }
+  }
+
+  return { kind, reasons };
+}
+
+function collectSecurityRequirementInputs(
+  agentCard: Record<string, unknown>
+):
+  | { ok: true; inputs: Array<{ scope: 'agent-card' | 'skill'; skillId: string | null; requirements: unknown }> }
+  | { ok: false; reasons: string[] } {
+  const inputs: Array<{
+    scope: 'agent-card' | 'skill';
+    skillId: string | null;
+    requirements: unknown;
+  }> = [];
+  const reasons: string[] = [];
+
+  if (agentCard.securityRequirements !== undefined) {
+    inputs.push({
+      scope: 'agent-card',
+      skillId: null,
+      requirements: agentCard.securityRequirements,
+    });
+  }
+
+  if (agentCard.skills !== undefined) {
+    if (!Array.isArray(agentCard.skills)) {
+      reasons.push('Agent Card skills must be an array when present');
+    } else {
+      agentCard.skills.forEach((skill, index) => {
+        if (!isRecord(skill)) {
+          reasons.push(`skill[${index}] must be an object`);
+          return;
+        }
+        if (skill.securityRequirements !== undefined) {
+          inputs.push({
+            scope: 'skill',
+            skillId: readOptionalString(skill, 'id') ?? `skill[${index}]`,
+            requirements: skill.securityRequirements,
+          });
+        }
+      });
+    }
+  }
+
+  return reasons.length > 0 ? { ok: false, reasons } : { ok: true, inputs };
+}
+
+async function buildSecurityRequirementReport(input: {
+  agentCard: Record<string, unknown>;
+  signature: Extract<A2aAgentCardSignatureVerdict, { ok: true }>;
+  publicKey: unknown;
+  now?: Date;
+}): Promise<A2aSecurityRequirementSatisfiabilityReport | { invalid: string[] }> {
+  const agentCard = input.agentCard;
+  if (
+    agentCard.securitySchemes !== undefined &&
+    !isRecord(agentCard.securitySchemes)
+  ) {
+    return { invalid: ['Agent Card securitySchemes must be an object when present'] };
+  }
+  const requirementInputs = collectSecurityRequirementInputs(agentCard);
+  if (!requirementInputs.ok) {
+    return { invalid: requirementInputs.reasons };
+  }
+
+  const securitySchemes = isRecord(agentCard.securitySchemes)
+    ? agentCard.securitySchemes
+    : {};
+  const probes: A2aSecurityRequirementProbe[] = [];
+  let publicAccessDeclared = requirementInputs.inputs.length === 0;
+  for (const inputRequirements of requirementInputs.inputs) {
+    if (!Array.isArray(inputRequirements.requirements)) {
+      return {
+        invalid: [
+          `${inputRequirements.scope}${
+            inputRequirements.skillId === null ? '' : ` ${inputRequirements.skillId}`
+          } securityRequirements must be an array`,
+        ],
+      };
+    }
+    inputRequirements.requirements.forEach((requirement, requirementIndex) => {
+      if (!isRecord(requirement)) {
+        probes.push({
+          scope: inputRequirements.scope,
+          skillId: inputRequirements.skillId,
+          requirementIndex,
+          schemeNames: [],
+          status: 'unsatisfiable',
+          reasons: ['security requirement must be an object'],
+        });
+        return;
+      }
+      const schemeNames = Object.keys(requirement).sort();
+      if (schemeNames.length === 0) {
+        publicAccessDeclared = true;
+        probes.push({
+          scope: inputRequirements.scope,
+          skillId: inputRequirements.skillId,
+          requirementIndex,
+          schemeNames,
+          status: 'satisfiable',
+          reasons: [],
+        });
+        return;
+      }
+
+      const reasons: string[] = [];
+      for (const schemeName of schemeNames) {
+        const scopes = readSecurityRequirementScopes(requirement[schemeName]);
+        if (scopes === null) {
+          reasons.push(
+            `security requirement "${schemeName}" scopes must be an array of strings`
+          );
+          continue;
+        }
+        if (!(schemeName in securitySchemes)) {
+          reasons.push(
+            `security requirement references missing scheme "${schemeName}"`
+          );
+          continue;
+        }
+        const schemeVerdict = validateSecurityScheme(
+          schemeName,
+          securitySchemes[schemeName]
+        );
+        reasons.push(...schemeVerdict.reasons);
+        if (
+          scopes.length > 0 &&
+          schemeVerdict.kind !== 'oauth2SecurityScheme' &&
+          schemeVerdict.kind !== 'openIdConnectSecurityScheme'
+        ) {
+          reasons.push(
+            `security requirement "${schemeName}" declares scopes for a non-OAuth scheme`
+          );
+        }
+        if (schemeVerdict.kind === 'oauth2SecurityScheme') {
+          const availableScopes = collectOAuth2Scopes(
+            securitySchemes[schemeName] as Record<string, unknown>
+          );
+          for (const scope of scopes) {
+            if (!availableScopes.has(scope)) {
+              reasons.push(
+                `security requirement "${schemeName}" references undeclared OAuth2 scope "${scope}"`
+              );
+            }
+          }
+        }
+      }
+      probes.push({
+        scope: inputRequirements.scope,
+        skillId: inputRequirements.skillId,
+        requirementIndex,
+        schemeNames,
+        status: reasons.length > 0 ? 'unsatisfiable' : 'satisfiable',
+        reasons,
+      });
+    });
+  }
+
+  const unsatisfiableProbes = probes.filter(
+    (probe) => probe.status === 'unsatisfiable'
+  );
+  const reportReasons = unsatisfiableProbes.flatMap((probe) =>
+    probe.reasons.map(
+      (reason) =>
+        `${probe.scope}${probe.skillId === null ? '' : ` ${probe.skillId}`} requirement[${probe.requirementIndex}]: ${reason}`
+    )
+  );
+  const payload = {
+    kind: 'agentgram.a2a.agent-card.security-requirement-satisfiability-payload',
+    signedAgentCardPayloadDigest: input.signature.payloadDigest,
+    securitySchemeNames: Object.keys(securitySchemes).sort(),
+    probes,
+  };
+
+  return {
+    kind: 'agentgram.a2a.agent-card.security-requirement-satisfiability',
+    generatedAt: (input.now ?? new Date()).toISOString(),
+    signedAgentCardPayloadDigest: input.signature.payloadDigest,
+    securitySchemeNames: Object.keys(securitySchemes).sort(),
+    requirementCount: probes.length,
+    satisfiableRequirementCount: probes.length - unsatisfiableProbes.length,
+    unsatisfiableRequirementCount: unsatisfiableProbes.length,
+    probes,
+    satisfiability: {
+      status: unsatisfiableProbes.length > 0 ? 'unsatisfiable' : 'satisfiable',
+      publicAccessDeclared,
+      reasons: reportReasons,
+    },
+    signature: {
+      status: 'verified',
+      signingAlgorithm: 'ed25519',
+      signatureDomain: A2A_SECURITY_REQUIREMENT_SATISFIABILITY_SIGNATURE_DOMAIN,
+      publicKey: String(input.publicKey).toLowerCase(),
+      payloadDigest: await sha256Hex(canonicalJson(payload)),
+    },
+  };
 }
 
 function base64UrlEncode(data: Uint8Array | string): string {
@@ -1424,6 +1791,69 @@ export async function attestA2aExtendedAgentCardAuthorizationDowngrade(input: {
   }
 
   return { ok: true, clearance, signature };
+}
+
+/**
+ * Verify a signed A2A Agent Card and attest that every declared Agent Card and
+ * skill-level security requirement is satisfiable from the declared
+ * securitySchemes. The verifier follows OpenAPI/A2A security semantics: each
+ * requirement object is an AND of named schemes, the requirements array is an
+ * OR list, and an empty requirement object is an explicit public alternative.
+ */
+export async function attestA2aSecurityRequirementSatisfiability(input: {
+  agentCard?: unknown;
+  publicKey?: unknown;
+  signature?: unknown;
+  jws?: unknown;
+  now?: Date;
+}): Promise<A2aSecurityRequirementSatisfiabilityVerdict> {
+  const signature = await verifyA2aAgentCardSignature(input);
+  if (!signature.ok) {
+    return {
+      ok: false,
+      code: 'SIGNATURE_INVALID',
+      message:
+        'A2A security-requirement satisfiability requires a valid signed Agent Card',
+      signature,
+    };
+  }
+
+  if (!isRecord(input.agentCard)) {
+    return {
+      ok: false,
+      code: 'SECURITY_REQUIREMENTS_INVALID',
+      message:
+        'A2A security-requirement satisfiability requires an Agent Card object',
+      signature,
+    };
+  }
+
+  const report = await buildSecurityRequirementReport({
+    agentCard: input.agentCard,
+    publicKey: input.publicKey,
+    signature,
+    now: input.now,
+  });
+  if ('invalid' in report) {
+    return {
+      ok: false,
+      code: 'SECURITY_REQUIREMENTS_INVALID',
+      message: report.invalid.join('; '),
+      signature,
+    };
+  }
+  if (report.satisfiability.status === 'unsatisfiable') {
+    return {
+      ok: false,
+      code: 'SECURITY_REQUIREMENTS_UNSATISFIABLE',
+      message:
+        'A2A Agent Card declares security requirements that cannot be satisfied from its securitySchemes',
+      satisfiability: report,
+      signature,
+    };
+  }
+
+  return { ok: true, satisfiability: report, signature };
 }
 
 async function buildA2aTaskHistoryRetentionMetadata(input: {

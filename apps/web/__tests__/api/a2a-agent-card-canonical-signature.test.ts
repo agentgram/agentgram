@@ -4,6 +4,7 @@ const mockVerifyA2aAgentCardSignature = vi.fn();
 const mockAttestA2aAgentCardTransportBindingParity = vi.fn();
 const mockAttestA2aAgentCardRetrievalFreshness = vi.fn();
 const mockAttestA2aExtendedAgentCardAuthorizationDowngrade = vi.fn();
+const mockAttestA2aSecurityRequirementSatisfiability = vi.fn();
 const mockBuildA2aAgentCardCanonicalSignatureEvidence = vi.fn();
 
 vi.mock('@agentgram/auth', () => ({
@@ -16,6 +17,8 @@ vi.mock('@agentgram/auth', () => ({
     mockAttestA2aAgentCardRetrievalFreshness,
   attestA2aExtendedAgentCardAuthorizationDowngrade:
     mockAttestA2aExtendedAgentCardAuthorizationDowngrade,
+  attestA2aSecurityRequirementSatisfiability:
+    mockAttestA2aSecurityRequirementSatisfiability,
   verifyA2aAgentCardSignature: mockVerifyA2aAgentCardSignature,
 }));
 
@@ -144,6 +147,98 @@ describe('A2A Agent Card canonical signature route', () => {
     expect(response.status).toBe(401);
     expect(json.error.code).toBe('BINDING_PARITY_DIVERGED');
     expect(json.error.details.parity).toEqual(parity);
+  });
+
+  it('exports signed security-requirement satisfiability evidence', async () => {
+    const satisfiability = {
+      kind: 'agentgram.a2a.agent-card.security-requirement-satisfiability',
+      generatedAt: '2026-08-25T00:00:00.000Z',
+      signedAgentCardPayloadDigest: 'a'.repeat(64),
+      securitySchemeNames: ['apiKey'],
+      requirementCount: 1,
+      satisfiableRequirementCount: 1,
+      unsatisfiableRequirementCount: 0,
+      probes: [
+        {
+          scope: 'agent-card',
+          skillId: null,
+          requirementIndex: 0,
+          schemeNames: ['apiKey'],
+          status: 'satisfiable',
+          reasons: [],
+        },
+      ],
+      satisfiability: {
+        status: 'satisfiable',
+        publicAccessDeclared: false,
+        reasons: [],
+      },
+    };
+    mockAttestA2aSecurityRequirementSatisfiability.mockResolvedValueOnce({
+      ok: true,
+      satisfiability,
+      signature: { ok: true },
+    });
+    const { POST } = await import(
+      '@/app/api/v1/a2a/agent-card/security-requirement-satisfiability/route'
+    );
+
+    const response = await POST(
+      makeRequest({
+        publicKey: 'b'.repeat(64),
+        jws: 'protected.payload.signature',
+        agentCard: { name: 'weather-agent' },
+      })
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mockAttestA2aSecurityRequirementSatisfiability).toHaveBeenCalledWith({
+      publicKey: 'b'.repeat(64),
+      signature: undefined,
+      jws: 'protected.payload.signature',
+      agentCard: { name: 'weather-agent' },
+    });
+    expect(json.data.reportType).toBe(
+      'a2a-security-requirement-satisfiability'
+    );
+    expect(json.data.satisfiability).toEqual(satisfiability);
+  });
+
+  it('fails closed when security requirements cannot be satisfied from declared schemes', async () => {
+    const satisfiability = {
+      kind: 'agentgram.a2a.agent-card.security-requirement-satisfiability',
+      satisfiability: {
+        status: 'unsatisfiable',
+        reasons: ['agent-card requirement[0]: missing scheme'],
+      },
+    };
+    mockAttestA2aSecurityRequirementSatisfiability.mockResolvedValueOnce({
+      ok: false,
+      code: 'SECURITY_REQUIREMENTS_UNSATISFIABLE',
+      message:
+        'A2A Agent Card declares security requirements that cannot be satisfied from its securitySchemes',
+      satisfiability,
+      signature: { ok: true },
+    });
+    const { POST } = await import(
+      '@/app/api/v1/a2a/agent-card/security-requirement-satisfiability/route'
+    );
+
+    const response = await POST(
+      makeRequest({
+        publicKey: 'b'.repeat(64),
+        signature: 'c'.repeat(128),
+        agentCard: { name: 'weather-agent' },
+      })
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(json.error.code).toBe('SECURITY_REQUIREMENTS_UNSATISFIABLE');
+    expect(json.error.details.satisfiability.satisfiability.status).toBe(
+      'unsatisfiable'
+    );
   });
 
   it('exports signed retrieval freshness evidence with stale-cache metadata', async () => {
