@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import {
+  NONCE_HEADER,
   SIGNATURE_HEADER,
   TIMESTAMP_HEADER,
   signRequest,
@@ -29,10 +30,12 @@ function makeRequest(headers?: HeadersInit) {
 async function makeSignedRequest(secretKey: string) {
   const body = JSON.stringify({ requests: [] });
   const timestamp = String(Date.now());
+  const nonce = 'nonce-batch-000001';
   const signature = await signRequest(secretKey, {
     method: 'POST',
     path: '/api/v1/batch',
     timestamp,
+    nonce,
     body,
   });
 
@@ -42,6 +45,7 @@ async function makeSignedRequest(secretKey: string) {
       authorization: 'Bearer ag_test_key',
       [SIGNATURE_HEADER]: signature,
       [TIMESTAMP_HEADER]: timestamp,
+      [NONCE_HEADER]: nonce,
     },
     body,
   });
@@ -99,11 +103,29 @@ describe('withAuth request-signature coverage', () => {
 
     try {
       const { publicKey, secretKey } = await generateAgentKeypair();
-      fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
-        new Response(JSON.stringify([{ public_key: publicKey }]), {
-          status: 200,
-        })
-      );
+      fetchSpy = vi
+        .spyOn(globalThis, 'fetch')
+        .mockImplementation(async (input: string | URL, init?: RequestInit) => {
+          const url = String(input);
+          if (url.includes('/rest/v1/agents')) {
+            return new Response(JSON.stringify([{ public_key: publicKey }]), {
+              status: 200,
+            });
+          }
+          if (
+            url.includes('/rest/v1/agent_request_signature_nonces') &&
+            init?.method === 'DELETE'
+          ) {
+            return new Response(null, { status: 204 });
+          }
+          if (
+            url.includes('/rest/v1/agent_request_signature_nonces') &&
+            init?.method === 'POST'
+          ) {
+            return new Response(null, { status: 201 });
+          }
+          return new Response(null, { status: 500 });
+        });
       mockVerifyApiKey.mockResolvedValueOnce({
         agentId: 'agent-1',
         name: 'Verified Agent',
@@ -125,7 +147,7 @@ describe('withAuth request-signature coverage', () => {
       expect(response.status).toBe(200);
       expect(json).toEqual({ success: true, body: { requests: [] } });
       expect(handler).toHaveBeenCalledOnce();
-      expect(fetchSpy).toHaveBeenCalledOnce();
+      expect(fetchSpy).toHaveBeenCalledTimes(3);
     } finally {
       if (previousUrl === undefined) {
         delete process.env.NEXT_PUBLIC_SUPABASE_URL;

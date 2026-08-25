@@ -70,13 +70,7 @@ async function registerHandler(req: NextRequest) {
       memoryConsent?: unknown;
       relationshipPreset?: unknown;
     };
-    const {
-      name,
-      displayName,
-      description,
-      email,
-      publicKey,
-    } = body;
+    const { name, displayName, description, email, publicKey } = body;
     const memoryConsent = body.memoryConsent;
     const relationshipPreset = body.relationshipPreset;
 
@@ -92,7 +86,10 @@ async function registerHandler(req: NextRequest) {
     if (
       relationshipPreset !== undefined &&
       (typeof relationshipPreset !== 'string' ||
-        !Object.prototype.hasOwnProperty.call(RELATIONSHIP_PRESET_ROLES, relationshipPreset))
+        !Object.prototype.hasOwnProperty.call(
+          RELATIONSHIP_PRESET_ROLES,
+          relationshipPreset
+        ))
     ) {
       return jsonResponse(
         ErrorResponses.invalidInput(
@@ -127,7 +124,9 @@ async function registerHandler(req: NextRequest) {
       );
     }
 
-    // Validate public key if provided
+    // Validate and normalize public key if provided. Hex casing does not
+    // change the key bytes, but storage and future lookup invariants should
+    // not depend on client casing.
     if (publicKey && !validatePublicKey(publicKey)) {
       return jsonResponse(
         ErrorResponses.invalidInput(
@@ -136,12 +135,14 @@ async function registerHandler(req: NextRequest) {
         400
       );
     }
+    const normalizedPublicKey =
+      typeof publicKey === 'string' ? publicKey.toLowerCase() : undefined;
 
     // Proof-of-possession: registering a public key requires an Ed25519
     // signature over the canonical registration payload, proving control
     // of the matching secret key. Registration without a public key is
     // unchanged.
-    if (publicKey) {
+    if (normalizedPublicKey) {
       const { signature, timestamp } = body;
       if (typeof signature !== 'string' || typeof timestamp !== 'number') {
         return jsonResponse(
@@ -155,7 +156,7 @@ async function registerHandler(req: NextRequest) {
 
       const verdict = await verifyRegistrationProof({
         name,
-        publicKey,
+        publicKey: normalizedPublicKey,
         timestamp,
         signature,
       });
@@ -210,7 +211,7 @@ async function registerHandler(req: NextRequest) {
         display_name: sanitizedDisplayName,
         description: sanitizedDescription,
         email: email || null,
-        public_key: publicKey || null,
+        public_key: normalizedPublicKey || null,
         trust_score: TRUST_SCORE.NEW_AGENT,
         developer_id: developer.id,
         ...(relationshipPreset !== undefined
@@ -254,13 +255,18 @@ async function registerHandler(req: NextRequest) {
     }
 
     // Create starter persona if relationshipPreset provided
-    if (typeof relationshipPreset === 'string' && RELATIONSHIP_PRESET_ROLES[relationshipPreset]) {
-      const { error: personaError } = await supabase.from('agent_personas').insert({
-        agent_id: agent.id,
-        is_active: true,
-        name: relationshipPreset,
-        role: RELATIONSHIP_PRESET_ROLES[relationshipPreset],
-      });
+    if (
+      typeof relationshipPreset === 'string' &&
+      RELATIONSHIP_PRESET_ROLES[relationshipPreset]
+    ) {
+      const { error: personaError } = await supabase
+        .from('agent_personas')
+        .insert({
+          agent_id: agent.id,
+          is_active: true,
+          name: relationshipPreset,
+          role: RELATIONSHIP_PRESET_ROLES[relationshipPreset],
+        });
       if (personaError) {
         console.error('Persona creation error:', personaError);
         await supabase.from('agents').delete().eq('id', agent.id);
@@ -300,7 +306,9 @@ async function registerHandler(req: NextRequest) {
           category: 'profile_fact',
         },
       ];
-      const { error: memoriesError } = await supabase.from('agent_memories').insert(memories);
+      const { error: memoriesError } = await supabase
+        .from('agent_memories')
+        .insert(memories);
       if (memoriesError) {
         console.error('Memory creation error:', memoriesError);
         await supabase.from('agents').delete().eq('id', agent.id);
@@ -311,7 +319,11 @@ async function registerHandler(req: NextRequest) {
         );
       }
       backstorySeedEnabled = true;
-      memoryKeys.push('pinned_identity', 'pinned_backstory', 'pinned_origin_context');
+      memoryKeys.push(
+        'pinned_identity',
+        'pinned_backstory',
+        'pinned_origin_context'
+      );
     }
 
     const backstorySeed = {
@@ -346,7 +358,9 @@ async function registerHandler(req: NextRequest) {
       ],
     };
 
-    const trustProof = buildRegistrationTrustProofReadout(Boolean(publicKey));
+    const trustProof = buildRegistrationTrustProofReadout(
+      Boolean(normalizedPublicKey)
+    );
 
     return jsonResponse(
       createSuccessResponse({

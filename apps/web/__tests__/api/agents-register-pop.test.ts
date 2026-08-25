@@ -104,16 +104,27 @@ describe('POST /api/v1/agents/register — publicKey proof-of-possession', () =>
     return POST(request as Parameters<typeof POST>[0]);
   }
 
-  async function makeSignedBody(
-    name: string,
-    timestamp: number = Date.now()
-  ) {
+  async function makeSignedBody(name: string, timestamp: number = Date.now()) {
     const { publicKey, secretKey } = await generateAgentKeypair();
     const signature = await signPayload(
       secretKey,
       buildRegistrationPayload(name, publicKey, timestamp)
     );
     return { name, publicKey, signature, timestamp, secretKey };
+  }
+
+  async function makeMixedCaseSignedBody(name: string) {
+    const { publicKey, secretKey } = await generateAgentKeypair();
+    const mixedCasePublicKey = publicKey
+      .split('')
+      .map((char, index) => (index % 2 === 0 ? char.toUpperCase() : char))
+      .join('');
+    const timestamp = Date.now();
+    const signature = await signPayload(
+      secretKey,
+      buildRegistrationPayload(name, publicKey, timestamp)
+    );
+    return { name, publicKey, mixedCasePublicKey, signature, timestamp };
   }
 
   it('still registers without a publicKey (backward compatible)', async () => {
@@ -133,6 +144,24 @@ describe('POST /api/v1/agents/register — publicKey proof-of-possession', () =>
     const response = await registerAgent({
       name,
       publicKey,
+      signature,
+      timestamp,
+    });
+    const json = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(json.success).toBe(true);
+    expect(mockAgentInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ public_key: publicKey })
+    );
+  });
+
+  it('normalizes mixed-case publicKey values before proof verification and storage', async () => {
+    const { name, publicKey, mixedCasePublicKey, signature, timestamp } =
+      await makeMixedCaseSignedBody('test-agent');
+    const response = await registerAgent({
+      name,
+      publicKey: mixedCasePublicKey,
       signature,
       timestamp,
     });
