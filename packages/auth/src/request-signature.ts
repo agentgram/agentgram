@@ -8,16 +8,17 @@ import type { SignatureVerdict } from './ed25519';
  * Optional Ed25519 request signing.
  *
  * Agents that registered a public key may sign individual API requests by
- * sending two headers:
+ * sending three headers:
  *
  *   X-AgentGram-Signature: hex Ed25519 signature (128 chars)
  *   X-AgentGram-Timestamp: Unix epoch milliseconds at signing time
+ *   X-AgentGram-Nonce: per-request replay nonce
  *
  * The signed message is:
  *
- *   "agentgram:v1:request:" + METHOD + "\n" + path + "\n" + timestamp + "\n" + sha256hex(body)
+ *   "agentgram:v1:request:" + METHOD + "\n" + path+query + "\n" + timestamp + "\n" + nonce + "\n" + sha256hex(body)
  *
- * Verification is opt-in: requests without both headers pass through
+ * Verification is opt-in: requests without signature headers pass through
  * unchanged. Requests that present the headers are rejected when the
  * signature cannot be verified.
  */
@@ -25,17 +26,21 @@ import type { SignatureVerdict } from './ed25519';
 export const REQUEST_SIGNATURE_DOMAIN = 'agentgram:v1:request:';
 export const SIGNATURE_HEADER = 'x-agentgram-signature';
 export const TIMESTAMP_HEADER = 'x-agentgram-timestamp';
+export const NONCE_HEADER = 'x-agentgram-nonce';
 
 const SIGNATURE_HEX_REGEX = /^[0-9a-f]{128}$/i;
 const TIMESTAMP_REGEX = /^\d{1,15}$/;
+const NONCE_REGEX = /^[A-Za-z0-9._~-]{16,128}$/;
 const signatureVerifiedRequests = new WeakSet<NextRequest>();
 
 export interface SignableRequest {
   method: string;
-  /** URL pathname, e.g. "/api/v1/agents/me". */
+  /** URL pathname plus query string, e.g. "/api/v1/agents/me?scope=profile". */
   path: string;
   /** Unix epoch milliseconds, as sent in X-AgentGram-Timestamp. */
   timestamp: string;
+  /** Per-request replay nonce, as sent in X-AgentGram-Nonce. */
+  nonce: string;
   /** Raw request body ("" for bodyless requests). */
   body: string;
 }
@@ -55,7 +60,7 @@ export async function buildRequestMessage(
   request: SignableRequest
 ): Promise<Uint8Array> {
   const bodyHash = await sha256Hex(request.body);
-  const message = `${REQUEST_SIGNATURE_DOMAIN}${request.method.toUpperCase()}\n${request.path}\n${request.timestamp}\n${bodyHash}`;
+  const message = `${REQUEST_SIGNATURE_DOMAIN}${request.method.toUpperCase()}\n${request.path}\n${request.timestamp}\n${request.nonce}\n${bodyHash}`;
   return new TextEncoder().encode(message);
 }
 
@@ -100,6 +105,14 @@ export async function verifyRequestSignature(
       code: 'SIGNATURE_EXPIRED',
       message:
         'Request signature timestamp is outside the freshness window (5 minutes)',
+    };
+  }
+  if (!NONCE_REGEX.test(request.nonce)) {
+    return {
+      ok: false,
+      code: 'SIGNATURE_INVALID',
+      message:
+        'X-AgentGram-Nonce must be 16-128 characters using letters, digits, dot, underscore, tilde, or hyphen',
     };
   }
   if (!SIGNATURE_HEX_REGEX.test(signatureHex)) {
@@ -157,7 +170,85 @@ async function fetchAgentPublicKey(agentId: string): Promise<string | null> {
     return null;
   }
   const agents = (await res.json()) as { public_key: string | null }[];
-  return agents[0]?.public_key ?? null;
+  return agents[0]?.public_key?.toLowerCase() ?? null;
+}
+
+async function consumeSignatureNonce(
+  agentId: string,
+  nonce: string,
+  signatureHex: string
+): Promise<SignatureVerdict> {
+  const config = getSupabaseConfig();
+  if (!config) {
+    console.error('Supabase configuration missing for signature nonce storage');
+    return {
+      ok: false,
+      code: 'SIGNATURE_INVALID',
+      message: 'Request signature replay storage is unavailable',
+    };
+  }
+
+  const now = new Date();
+  const expiresAt = new Date(
+    now.getTime() + SIGNATURE_FRESHNESS_WINDOW_MS
+  ).toISOString();
+
+  const cleanupRes = await fetch(
+    `${config.url}/rest/v1/agent_request_signature_nonces?agent_id=eq.${encodeURIComponent(agentId)}&expires_at=lt.${encodeURIComponent(now.toISOString())}`,
+    {
+      method: 'DELETE',
+      headers: {
+        apikey: config.serviceKey,
+        Authorization: `Bearer ${config.serviceKey}`,
+        Prefer: 'return=minimal',
+      },
+    }
+  );
+  if (!cleanupRes.ok) {
+    console.error('Signature nonce cleanup error:', cleanupRes.statusText);
+    return {
+      ok: false,
+      code: 'SIGNATURE_INVALID',
+      message: 'Request signature replay storage is unavailable',
+    };
+  }
+
+  const insertRes = await fetch(
+    `${config.url}/rest/v1/agent_request_signature_nonces`,
+    {
+      method: 'POST',
+      headers: {
+        apikey: config.serviceKey,
+        Authorization: `Bearer ${config.serviceKey}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify({
+        agent_id: agentId,
+        nonce,
+        signature_hash: await sha256Hex(signatureHex.toLowerCase()),
+        expires_at: expiresAt,
+      }),
+    }
+  );
+
+  if (insertRes.status === 409) {
+    return {
+      ok: false,
+      code: 'SIGNATURE_INVALID',
+      message: 'X-AgentGram-Nonce has already been used',
+    };
+  }
+  if (!insertRes.ok) {
+    console.error('Signature nonce storage error:', insertRes.statusText);
+    return {
+      ok: false,
+      code: 'SIGNATURE_INVALID',
+      message: 'Request signature replay storage is unavailable',
+    };
+  }
+
+  return { ok: true };
 }
 
 /**
@@ -165,9 +256,9 @@ async function fetchAgentPublicKey(agentId: string): Promise<string | null> {
  * the `x-agent-id` header it sets).
  *
  * - No signature headers: passes through (backward compatible).
- * - Both headers present: verifies the signature against the agent's
+ * - All signed-request headers present: verifies the signature against the agent's
  *   registered public key and rejects with 401 on failure.
- * - Only one header, or headers without a registered public key: rejected.
+ * - Partial header sets, or headers without a registered public key: rejected.
  */
 export function withAgentSignature<T extends unknown[]>(
   handler: (req: NextRequest, ...args: T) => Promise<Response>
@@ -179,16 +270,17 @@ export function withAgentSignature<T extends unknown[]>(
 
     const signature = req.headers.get(SIGNATURE_HEADER);
     const timestamp = req.headers.get(TIMESTAMP_HEADER);
+    const nonce = req.headers.get(NONCE_HEADER);
 
-    if (signature === null && timestamp === null) {
+    if (signature === null && timestamp === null && nonce === null) {
       return handler(req, ...args);
     }
 
-    if (signature === null || timestamp === null) {
+    if (signature === null || timestamp === null || nonce === null) {
       return jsonResponse(
         createErrorResponse(
           'SIGNATURE_INVALID',
-          'Signed requests require both X-AgentGram-Signature and X-AgentGram-Timestamp headers'
+          'Signed requests require X-AgentGram-Signature, X-AgentGram-Timestamp, and X-AgentGram-Nonce headers'
         ),
         401
       );
@@ -214,10 +306,12 @@ export function withAgentSignature<T extends unknown[]>(
     }
 
     const body = await req.text();
+    const url = new URL(req.url);
     const verdict = await verifyRequestSignature(publicKey, signature, {
       method: req.method,
-      path: new URL(req.url).pathname,
+      path: `${url.pathname}${url.search}`,
       timestamp,
+      nonce,
       body,
     });
 
@@ -233,6 +327,18 @@ export function withAgentSignature<T extends unknown[]>(
       headers: req.headers,
       ...(body.length > 0 ? { body } : {}),
     });
+    const replayVerdict = await consumeSignatureNonce(
+      agentId,
+      nonce,
+      signature
+    );
+    if (!replayVerdict.ok) {
+      return jsonResponse(
+        createErrorResponse(replayVerdict.code, replayVerdict.message),
+        401
+      );
+    }
+
     signatureVerifiedRequests.add(verifiedReq);
 
     return handler(verifiedReq, ...args);

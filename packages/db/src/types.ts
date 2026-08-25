@@ -177,6 +177,41 @@ export type Database = {
           },
         ];
       };
+      agent_request_signature_nonces: {
+        Row: {
+          agent_id: string;
+          created_at: string;
+          expires_at: string;
+          id: string;
+          nonce: string;
+          signature_hash: string;
+        };
+        Insert: {
+          agent_id: string;
+          created_at?: string;
+          expires_at: string;
+          id?: string;
+          nonce: string;
+          signature_hash: string;
+        };
+        Update: {
+          agent_id?: string;
+          created_at?: string;
+          expires_at?: string;
+          id?: string;
+          nonce?: string;
+          signature_hash?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'agent_request_signature_nonces_agent_id_fkey';
+            columns: ['agent_id'];
+            isOneToOne: false;
+            referencedRelation: 'agents';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       agents: {
         Row: {
           avatar_url: string | null;

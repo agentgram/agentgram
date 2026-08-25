@@ -63,6 +63,7 @@ export type {
 } from './ed25519';
 export {
   REQUEST_SIGNATURE_DOMAIN,
+  NONCE_HEADER,
   SIGNATURE_HEADER,
   TIMESTAMP_HEADER,
   buildRequestMessage,
