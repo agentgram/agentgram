@@ -1,0 +1,132 @@
+name: Deployment Status Alert
+
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch ref to simulate
+        required: true
+        default: develop
+      state:
+        description: Deployment state to simulate
+        required: true
+        default: failure
+      environment:
+        description: Deployment environment to simulate
+        required: true
+        default: Preview
+      target_url:
+        description: Deployment URL to include in the alert
+        required: false
+        default: https://example.invalid/deployment-status-alert-smoke
+      sha:
+        description: Commit SHA to include in the alert
+        required: false
+        default: manual-dispatch
+
+permissions:
+  contents: read
+  deployments: read
+  issues: write
+
+jobs:
+  alert-deploy-failure:
+    name: Alert on failed main/develop deployments
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.deployment_status.state != 'success' }}
+
+    steps:
+      - name: Create or update deploy-broken issue
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const isManual = context.eventName === 'workflow_dispatch';
+            const deployment = isManual ? {} : context.payload.deployment;
+            const status = isManual ? {} : context.payload.deployment_status;
+            const inputs = context.payload.inputs || {};
+
+            const rawRef = String(isManual ? inputs.ref : deployment.ref || '');
+            const ref = rawRef.replace(/^refs\/heads\//, '');
+            const targetBranches = new Set(['main', 'develop']);
+            if (!targetBranches.has(ref)) {
+              core.info(`Skipping deployment alert for non-target ref: ${rawRef}`);
+              return;
+            }
+
+            const state = String(isManual ? inputs.state : status.state || 'unknown');
+            if (state === 'success') {
+              core.info('Skipping successful deployment status.');
+              return;
+            }
+
+            const environment = String(
+              isManual ? inputs.environment : deployment.environment || status.environment || 'unknown'
+            );
+            const targetUrl = String(isManual ? inputs.target_url || '' : status.target_url || '');
+            const sha = String(isManual ? inputs.sha || '' : deployment.sha || '');
+            const deploymentId = String(isManual ? `manual-${context.runId}` : deployment.id || 'unknown');
+            const statusUrl = String(isManual ? context.serverUrl + '/' + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId : status.url || '');
+            const label = 'deploy-broken';
+            const marker = `<!-- deploy-status-alert:${environment}:${ref} -->`;
+            const title = `deploy-broken: ${environment} ${ref} deployment ${state}`;
+            const details = [
+              marker,
+              '## Deployment failure detected',
+              '',
+              `- Ref: ${ref}`,
+              `- Environment: ${environment}`,
+              `- State: ${state}`,
+              `- Commit: ${sha || 'unknown'}`,
+              `- Deployment id: ${deploymentId}`,
+              `- Target URL: ${targetUrl || 'none'}`,
+              `- Status API URL: ${statusUrl || 'none'}`,
+              `- Workflow run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              '',
+              '## Required follow-up',
+              '',
+              'Investigate the failed deployment, fix the branch, and keep release promotion blocked until a newer deployment for the target ref reports `success`.',
+            ].join('\n');
+
+            try {
+              await github.rest.issues.createLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: label,
+                color: 'd73a4a',
+                description: 'Deployment failure requiring release-gate attention',
+              });
+              core.info(`Created ${label} label.`);
+            } catch (error) {
+              if (error.status !== 422) throw error;
+              core.info(`${label} label already exists.`);
+            }
+
+            const openIssues = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: label,
+              per_page: 100,
+            });
+            const existing = openIssues.find((issue) => !issue.pull_request && issue.body && issue.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body: details,
+              });
+              core.notice(`Commented on existing deployment alert issue #${existing.number}.`);
+              return;
+            }
+
+            const created = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body: details,
+              labels: [label],
+            });
+            core.notice(`Created deployment alert issue #${created.data.number}.`);
