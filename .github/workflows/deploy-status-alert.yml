@@ -1,0 +1,193 @@
+name: Deployment Status Alert
+
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch ref to simulate
+        required: true
+        default: develop
+      state:
+        description: Deployment state to simulate
+        required: true
+        default: failure
+      environment:
+        description: Deployment environment to simulate
+        required: true
+        default: Preview
+      target_url:
+        description: Deployment URL to include in the alert
+        required: false
+        default: https://example.invalid/deployment-status-alert-smoke
+      sha:
+        description: Commit SHA to include in the alert
+        required: false
+        default: manual-dispatch
+
+permissions:
+  contents: read
+  deployments: read
+  issues: write
+
+# Serialize runs per environment so two near-simultaneous status events
+# cannot both pass the list-then-create dedup check and open duplicates.
+concurrency:
+  group: deploy-status-alert-${{ github.event.deployment.environment || github.event.inputs.environment || 'manual' }}
+  cancel-in-progress: false
+
+jobs:
+  alert-deploy-failure:
+    name: Alert on failed main/develop deployments
+    runs-on: ubuntu-latest
+    # success events are let through on purpose: they reconcile (close) any
+    # open deploy-broken issue for the recovered branch/environment.
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(fromJSON('["error","failure","success"]'), github.event.deployment_status.state) }}
+
+    steps:
+      - name: Create, update, or resolve deploy-broken issue
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const isManual = context.eventName === 'workflow_dispatch';
+            const deployment = isManual ? {} : context.payload.deployment;
+            const status = isManual ? {} : context.payload.deployment_status;
+            const inputs = context.payload.inputs || {};
+
+            const state = String(isManual ? inputs.state : status.state || 'unknown');
+            // 'inactive' is auto-posted to superseded deployments on every
+            // healthy redeploy, and pending/queued/in_progress are not
+            // terminal — only error/failure alert, and success reconciles.
+            const failureStates = new Set(['error', 'failure']);
+            const isFailure = failureStates.has(state);
+            const isRecovery = state === 'success';
+            if (!isFailure && !isRecovery) {
+              core.info(`Skipping non-terminal deployment state: ${state}`);
+              return;
+            }
+
+            const sha = String(isManual ? inputs.sha || '' : deployment.sha || '');
+
+            // Vercel-created deployments carry ref === sha (verified across
+            // the repository's deployment history: no literal branch names),
+            // so the branch must be resolved by commit reachability, not by
+            // reading deployment.ref.
+            const targetBranches = ['develop', 'main'];
+            let branch = '';
+            if (isManual) {
+              branch = String(inputs.ref || '').replace(/^refs\/heads\//, '');
+            } else {
+              for (const candidate of targetBranches) {
+                try {
+                  const cmp = await github.rest.repos.compareCommitsWithBasehead({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    basehead: `${candidate}...${sha}`,
+                  });
+                  // identical: sha is the branch head; behind: sha is an
+                  // ancestor of the branch head (branch advanced meanwhile).
+                  if (['identical', 'behind'].includes(cmp.data.status)) {
+                    branch = candidate;
+                    break;
+                  }
+                } catch (error) {
+                  if (error.status !== 404) throw error;
+                }
+              }
+            }
+            if (!targetBranches.includes(branch)) {
+              core.info(`Skipping deployment alert: commit ${sha || '(none)'} is not on ${targetBranches.join('/')}. PR preview failures surface via PR checks.`);
+              return;
+            }
+
+            const environment = String(
+              isManual ? inputs.environment : deployment.environment || status.environment || 'unknown'
+            );
+            const label = 'deploy-broken';
+            const marker = `<!-- deploy-status-alert:${environment}:${branch} -->`;
+
+            const openIssues = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: label,
+              per_page: 100,
+            });
+            const existing = openIssues.find((issue) => !issue.pull_request && issue.body && issue.body.includes(marker));
+
+            if (isRecovery) {
+              if (!existing) {
+                core.info(`Recovery for ${environment}/${branch}: no open ${label} issue to resolve.`);
+                return;
+              }
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body: `${marker}\nRecovered: deployment for \`${branch}\` (${environment}) reported \`success\` at commit \`${sha || 'unknown'}\`. Closing.`,
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                state: 'closed',
+              });
+              core.notice(`Closed recovered deployment alert issue #${existing.number}.`);
+              return;
+            }
+
+            const targetUrl = String(isManual ? inputs.target_url || '' : status.target_url || '');
+            const deploymentId = String(isManual ? `manual-${context.runId}` : deployment.id || 'unknown');
+            const statusUrl = String(isManual ? context.serverUrl + '/' + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId : status.url || '');
+            const title = `deploy-broken: ${environment} ${branch} deployment ${state}`;
+            const details = [
+              marker,
+              '## Deployment failure detected',
+              '',
+              `- Branch: ${branch}`,
+              `- Environment: ${environment}`,
+              `- State: ${state}`,
+              `- Commit: ${sha || 'unknown'}`,
+              `- Deployment id: ${deploymentId}`,
+              `- Target URL: ${targetUrl || 'none'}`,
+              `- Status API URL: ${statusUrl || 'none'}`,
+              `- Workflow run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              '',
+              '## Required follow-up',
+              '',
+              'Investigate the failed deployment, fix the branch, and keep release promotion blocked until a newer deployment for the target branch reports `success`. This issue closes automatically on the next successful deployment for the same branch/environment.',
+            ].join('\n');
+
+            try {
+              await github.rest.issues.createLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: label,
+                color: 'd73a4a',
+                description: 'Deployment failure requiring release-gate attention',
+              });
+              core.info(`Created ${label} label.`);
+            } catch (error) {
+              if (error.status !== 422) throw error;
+              core.info(`${label} label already exists.`);
+            }
+
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body: details,
+              });
+              core.notice(`Commented on existing deployment alert issue #${existing.number}.`);
+              return;
+            }
+
+            const created = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body: details,
+              labels: [label],
+            });
+            core.notice(`Created deployment alert issue #${created.data.number}.`);
