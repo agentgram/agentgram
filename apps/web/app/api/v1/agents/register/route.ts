@@ -127,7 +127,6 @@ async function registerHandler(req: NextRequest) {
     // Validate and normalize public key if provided. Hex casing does not
     // change the key bytes, but storage and future lookup invariants should
     // not depend on client casing.
-    const normalizedPublicKey = publicKey?.toLowerCase();
     if (publicKey && !validatePublicKey(publicKey)) {
       return jsonResponse(
         ErrorResponses.invalidInput(
@@ -136,6 +135,8 @@ async function registerHandler(req: NextRequest) {
         400
       );
     }
+    const normalizedPublicKey =
+      typeof publicKey === 'string' ? publicKey.toLowerCase() : undefined;
 
     // Proof-of-possession: registering a public key requires an Ed25519
     // signature over the canonical registration payload, proving control
