@@ -6,6 +6,7 @@ import {
   RFC8785_AGENT_CARD_FIXTURE_DIGEST,
   attestA2aExtendedAgentCardAuthorizationDowngrade,
   attestA2aAgentCardTransportBindingParity,
+  attestA2aSecurityRequirementSatisfiability,
   buildA2aAgentCardCanonicalSignatureEvidence,
   canonicalJson,
   generateAgentKeypair,
@@ -288,6 +289,135 @@ describe('A2A Agent Card canonical signature gate', () => {
         divergences: [
           { bindingId: 'additionalInterfaces[0]', kind: 'task-semantics' },
           { bindingId: 'additionalInterfaces[0]', kind: 'auth-behavior' },
+        ],
+      },
+    });
+  });
+
+  it('attests Agent Card and skill security requirements are satisfiable from declared schemes', async () => {
+    const { publicKey, secretKey } = await generateAgentKeypair();
+    const agentCard = {
+      name: 'weather-agent',
+      url: 'https://weather.example/a2a/jsonrpc',
+      securitySchemes: {
+        apiKey: {
+          apiKeySecurityScheme: { location: 'header', name: 'X-AgentGram-Key' },
+        },
+        weatherOAuth: {
+          oauth2SecurityScheme: {
+            flows: {
+              clientCredentials: {
+                tokenUrl: 'https://weather.example/oauth/token',
+                scopes: { 'forecast.read': 'Read forecasts' },
+              },
+            },
+          },
+        },
+      },
+      securityRequirements: [{ apiKey: [] }],
+      skills: [
+        {
+          id: 'forecast',
+          name: 'Forecast',
+          securityRequirements: [{ weatherOAuth: ['forecast.read'] }],
+        },
+      ],
+    };
+    const jws = await signA2aAgentCardJws(secretKey, publicKey, agentCard);
+
+    const verdict = await attestA2aSecurityRequirementSatisfiability({
+      publicKey,
+      jws,
+      agentCard,
+      now: new Date('2026-08-25T00:00:00.000Z'),
+    });
+
+    expect(verdict.ok).toBe(true);
+    if (verdict.ok) {
+      expect(verdict.satisfiability).toMatchObject({
+        kind: 'agentgram.a2a.agent-card.security-requirement-satisfiability',
+        generatedAt: '2026-08-25T00:00:00.000Z',
+        securitySchemeNames: ['apiKey', 'weatherOAuth'],
+        requirementCount: 2,
+        satisfiableRequirementCount: 2,
+        unsatisfiableRequirementCount: 0,
+        satisfiability: {
+          status: 'satisfiable',
+          publicAccessDeclared: false,
+          reasons: [],
+        },
+      });
+      expect(verdict.satisfiability.signedAgentCardPayloadDigest).toMatch(
+        /^[a-f0-9]{64}$/
+      );
+      expect(verdict.satisfiability.signature).toMatchObject({
+        status: 'verified',
+        signingAlgorithm: 'ed25519',
+        publicKey,
+      });
+      expect(verdict.satisfiability.probes).toEqual([
+        {
+          scope: 'agent-card',
+          skillId: null,
+          requirementIndex: 0,
+          schemeNames: ['apiKey'],
+          status: 'satisfiable',
+          reasons: [],
+        },
+        {
+          scope: 'skill',
+          skillId: 'forecast',
+          requirementIndex: 0,
+          schemeNames: ['weatherOAuth'],
+          status: 'satisfiable',
+          reasons: [],
+        },
+      ]);
+    }
+  });
+
+  it('fails closed when security requirements reference missing schemes or impossible scopes', async () => {
+    const { publicKey, secretKey } = await generateAgentKeypair();
+    const agentCard = {
+      name: 'weather-agent',
+      url: 'https://weather.example/a2a/jsonrpc',
+      securitySchemes: {
+        apiKey: {
+          apiKeySecurityScheme: { location: 'header', name: 'X-AgentGram-Key' },
+        },
+      },
+      securityRequirements: [
+        { apiKey: ['forecast.read'] },
+        { missingOAuth: ['forecast.read'] },
+      ],
+    };
+    const jws = await signA2aAgentCardJws(secretKey, publicKey, agentCard);
+
+    await expect(
+      attestA2aSecurityRequirementSatisfiability({ publicKey, jws, agentCard })
+    ).resolves.toMatchObject({
+      ok: false,
+      code: 'SECURITY_REQUIREMENTS_UNSATISFIABLE',
+      satisfiability: {
+        satisfiability: { status: 'unsatisfiable' },
+        unsatisfiableRequirementCount: 2,
+        probes: [
+          {
+            requirementIndex: 0,
+            schemeNames: ['apiKey'],
+            status: 'unsatisfiable',
+            reasons: [
+              'security requirement "apiKey" declares scopes for a non-OAuth scheme',
+            ],
+          },
+          {
+            requirementIndex: 1,
+            schemeNames: ['missingOAuth'],
+            status: 'unsatisfiable',
+            reasons: [
+              'security requirement references missing scheme "missingOAuth"',
+            ],
+          },
         ],
       },
     });
