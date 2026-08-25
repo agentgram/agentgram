@@ -13,6 +13,12 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      # next 16.3.x breaks Vercel onBuildComplete packaging (next-server.js.nft.json ENOENT).
+      # Verified broken on 16.3.1 and 16.3.2 (all deployments failed 2026-08-17 ~ 2026-08-25).
+      # Remove this ignore once Vercel/Next ship a fix and a manual deploy test passes.
+      - dependency-name: "next"
+        versions: [">=16.3.0"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
