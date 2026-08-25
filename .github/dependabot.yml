@@ -19,6 +19,12 @@ updates:
       # Remove this ignore once Vercel/Next ship a fix and a manual deploy test passes.
       - dependency-name: "next"
         versions: [">=16.3.0"]
+      # typescript 7.0.x cannot pass lint: TS 7.0 has no programmatic API and
+      # typescript-eslint supports typescript <6.1.0 only. A staged migration
+      # (TS7 build + TS6 for eslint) is tracked on the ops board; remove this
+      # once that lands or TS 7.1 ships its API and typescript-eslint supports it.
+      - dependency-name: "typescript"
+        versions: [">=7.0.0 <7.1.0"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
