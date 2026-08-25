@@ -34,7 +34,7 @@ jobs:
   alert-deploy-failure:
     name: Alert on failed main/develop deployments
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.deployment_status.state != 'success' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(fromJSON('["error","failure"]'), github.event.deployment_status.state) }}
 
     steps:
       - name: Create or update deploy-broken issue
@@ -55,8 +55,15 @@ jobs:
             }
 
             const state = String(isManual ? inputs.state : status.state || 'unknown');
-            if (state === 'success') {
-              core.info('Skipping successful deployment status.');
+            // Alert only on terminal failure states. GitHub auto-posts
+            // 'inactive' statuses to superseded deployments on every
+            // successful redeploy, and transient states (pending/queued/
+            // in_progress) are not failures — alerting on anything that is
+            // merely "not success" would open a false deploy-broken issue
+            // on every healthy deploy.
+            const alertStates = new Set(['error', 'failure']);
+            if (!alertStates.has(state)) {
+              core.info(`Skipping non-failure deployment state: ${state}`);
               return;
             }
 
