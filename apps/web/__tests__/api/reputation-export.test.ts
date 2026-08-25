@@ -4,6 +4,7 @@ import {
   canonicalJson,
   generateAgentKeypair,
   signRequest,
+  NONCE_HEADER,
   SIGNATURE_HEADER,
   TIMESTAMP_HEADER,
 } from '@agentgram/auth';
@@ -21,9 +22,8 @@ vi.mock('@agentgram/db', () => ({
 }));
 
 vi.mock('@agentgram/auth', async () => {
-  const actual = await vi.importActual<typeof import('@agentgram/auth')>(
-    '@agentgram/auth'
-  );
+  const actual =
+    await vi.importActual<typeof import('@agentgram/auth')>('@agentgram/auth');
 
   return {
     ...actual,
@@ -40,10 +40,12 @@ function sha256Hex(value: string): string {
 async function makeSignedRequest() {
   const { publicKey, secretKey } = await generateAgentKeypair();
   const timestamp = String(Date.now());
+  const nonce = 'nonce-reputation-1';
   const signature = await signRequest(secretKey, {
     method: 'GET',
     path: routePath,
     timestamp,
+    nonce,
     body: '',
   });
 
@@ -51,7 +53,25 @@ async function makeSignedRequest() {
   vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'service-key');
   vi.stubGlobal(
     'fetch',
-    vi.fn(async () => Response.json([{ public_key: publicKey }]))
+    vi.fn(async (input: string | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes('/rest/v1/agents')) {
+        return Response.json([{ public_key: publicKey }]);
+      }
+      if (
+        url.includes('/rest/v1/agent_request_signature_nonces') &&
+        init?.method === 'DELETE'
+      ) {
+        return new Response(null, { status: 204 });
+      }
+      if (
+        url.includes('/rest/v1/agent_request_signature_nonces') &&
+        init?.method === 'POST'
+      ) {
+        return new Response(null, { status: 201 });
+      }
+      return new Response(null, { status: 500 });
+    })
   );
 
   return new Request(`http://localhost${routePath}`, {
@@ -60,6 +80,7 @@ async function makeSignedRequest() {
       'x-agent-id': 'agent-1',
       [SIGNATURE_HEADER]: signature,
       [TIMESTAMP_HEADER]: timestamp,
+      [NONCE_HEADER]: nonce,
     },
   }) as unknown as import('next/server').NextRequest;
 }
@@ -124,9 +145,8 @@ describe('GET /api/v1/agents/me/reputation-export', () => {
   });
 
   it('requires the Ed25519 signed verifier gate before exporting reputation evidence', async () => {
-    const { GET } = await import(
-      '@/app/api/v1/agents/me/reputation-export/route'
-    );
+    const { GET } =
+      await import('@/app/api/v1/agents/me/reputation-export/route');
 
     const response = await GET(makeUnsignedRequest());
     const json = await response.json();
@@ -138,9 +158,8 @@ describe('GET /api/v1/agents/me/reputation-export', () => {
   });
 
   it('preserves storage state and trust-event evidence as separate ERC-8004 export sections', async () => {
-    const { GET } = await import(
-      '@/app/api/v1/agents/me/reputation-export/route'
-    );
+    const { GET } =
+      await import('@/app/api/v1/agents/me/reputation-export/route');
 
     const response = await GET(await makeSignedRequest());
     const json = await response.json();
@@ -186,9 +205,8 @@ describe('GET /api/v1/agents/me/reputation-export', () => {
   });
 
   it('adds a reproducible provenance bundle with digest, policy, tier, and canonical fixture', async () => {
-    const { GET } = await import(
-      '@/app/api/v1/agents/me/reputation-export/route'
-    );
+    const { GET } =
+      await import('@/app/api/v1/agents/me/reputation-export/route');
 
     const response = await GET(await makeSignedRequest());
     const json = await response.json();
@@ -228,9 +246,9 @@ describe('GET /api/v1/agents/me/reputation-export', () => {
         payloadDigest: expect.stringMatching(/^[a-f0-9]{64}$/),
       })
     );
-    expect(sha256Hex(bundle.auditorVerification.canonicalSignaturePayload)).toBe(
-      bundle.signaturePayload.payloadDigest
-    );
+    expect(
+      sha256Hex(bundle.auditorVerification.canonicalSignaturePayload)
+    ).toBe(bundle.signaturePayload.payloadDigest);
 
     const canonicalInputs = JSON.parse(
       bundle.auditorVerification.canonicalInputEvidence

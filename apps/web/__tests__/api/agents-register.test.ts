@@ -235,6 +235,18 @@ describe('POST /api/v1/agents/register', () => {
     expect(mockAgentMemoriesInsert).not.toHaveBeenCalled();
   });
 
+  it('rejects malformed non-string publicKey values with 400, not 500', async () => {
+    const response = await registerAgent({
+      name: 'test-agent',
+      publicKey: 123,
+    });
+    const json = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(json.success).toBe(false);
+    expect(json.error.message).toMatch(/public key/i);
+  });
+
   it('claimFlow description should be a non-empty string', async () => {
     const response = await registerAgent();
     const json = await response.json();
