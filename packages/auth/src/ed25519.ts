@@ -351,6 +351,21 @@ export interface A2aSecurityRequirementProbe {
   reasons: string[];
 }
 
+export type A2aSkillAuthorizationInterfaceStatus = 'accepted' | 'rejected';
+
+export interface A2aSkillAuthorizationInterfaceProbe {
+  skillId: string;
+  bindingId: string | null;
+  transport: string | null;
+  url: string | null;
+  protocolVersion: string | null;
+  requirementIndex: number;
+  requiredSchemeNames: string[];
+  acceptedSchemeNames: string[];
+  status: A2aSkillAuthorizationInterfaceStatus;
+  reasons: string[];
+}
+
 export interface A2aSecurityRequirementSatisfiabilityReport {
   kind: 'agentgram.a2a.agent-card.security-requirement-satisfiability';
   generatedAt: string;
@@ -360,6 +375,14 @@ export interface A2aSecurityRequirementSatisfiabilityReport {
   satisfiableRequirementCount: number;
   unsatisfiableRequirementCount: number;
   probes: A2aSecurityRequirementProbe[];
+  skillAuthorization: {
+    status: 'accepted' | 'rejected' | 'not-declared';
+    probeCount: number;
+    acceptedProbeCount: number;
+    rejectedProbeCount: number;
+    probes: A2aSkillAuthorizationInterfaceProbe[];
+    reasons: string[];
+  };
   satisfiability: {
     status: A2aSecurityRequirementSatisfiabilityStatus;
     publicAccessDeclared: boolean;
@@ -723,6 +746,174 @@ function collectSecurityRequirementInputs(
   return reasons.length > 0 ? { ok: false, reasons } : { ok: true, inputs };
 }
 
+function readRequirementSchemeNames(requirements: unknown): string[] {
+  if (!Array.isArray(requirements)) {
+    return [];
+  }
+  const schemeNames = new Set<string>();
+  for (const requirement of requirements) {
+    if (!isRecord(requirement)) {
+      continue;
+    }
+    for (const schemeName of Object.keys(requirement)) {
+      schemeNames.add(schemeName);
+    }
+  }
+  return [...schemeNames].sort();
+}
+
+function readInterfaceAcceptedSchemeNames(
+  agentCard: Record<string, unknown>,
+  binding: Record<string, unknown>
+): string[] {
+  if (binding.securityRequirements !== undefined) {
+    return readRequirementSchemeNames(binding.securityRequirements);
+  }
+  if (binding.security !== undefined) {
+    return readRequirementSchemeNames(binding.security);
+  }
+  if (agentCard.securityRequirements !== undefined) {
+    return readRequirementSchemeNames(agentCard.securityRequirements);
+  }
+  if (agentCard.security !== undefined) {
+    return readRequirementSchemeNames(agentCard.security);
+  }
+  return [];
+}
+
+function collectCallableInterfaces(agentCard: Record<string, unknown>): Array<{
+  bindingId: string;
+  transport: string;
+  url: string;
+  protocolVersion: string | null;
+  acceptedSchemeNames: string[];
+}> {
+  const interfaces: Array<{
+    bindingId: string;
+    transport: string;
+    url: string;
+    protocolVersion: string | null;
+    acceptedSchemeNames: string[];
+  }> = [];
+
+  const appendInterface = (binding: Record<string, unknown>, bindingId: string) => {
+    const url = readOptionalString(binding, 'url');
+    if (url === undefined) {
+      return;
+    }
+    interfaces.push({
+      bindingId,
+      transport:
+        readOptionalString(binding, 'transport') ??
+        readOptionalString(binding, 'type') ??
+        readOptionalString(binding, 'protocol') ??
+        readOptionalString(agentCard, 'preferredTransport') ??
+        'unspecified',
+      url,
+      protocolVersion:
+        readOptionalString(binding, 'protocolVersion') ??
+        readOptionalString(binding, 'version') ??
+        readOptionalString(agentCard, 'protocolVersion') ??
+        null,
+      acceptedSchemeNames: readInterfaceAcceptedSchemeNames(agentCard, binding),
+    });
+  };
+
+  if (readOptionalString(agentCard, 'url') !== undefined) {
+    appendInterface(agentCard, 'primary');
+  }
+
+  if (Array.isArray(agentCard.additionalInterfaces)) {
+    agentCard.additionalInterfaces.forEach((binding, index) => {
+      if (isRecord(binding)) {
+        appendInterface(binding, `additionalInterfaces[${index}]`);
+      }
+    });
+  }
+
+  if (Array.isArray(agentCard.transportBindings)) {
+    agentCard.transportBindings.forEach((binding, index) => {
+      if (!isRecord(binding)) {
+        return;
+      }
+      appendInterface(
+        binding,
+        readOptionalString(binding, 'id') ?? `transportBindings[${index}]`
+      );
+    });
+  }
+
+  return interfaces;
+}
+
+function buildSkillAuthorizationInterfaceProbes(
+  agentCard: Record<string, unknown>,
+  requirementInputs: Array<{
+    scope: 'agent-card' | 'skill';
+    skillId: string | null;
+    requirements: unknown;
+  }>
+): A2aSkillAuthorizationInterfaceProbe[] {
+  const skillRequirements = requirementInputs.filter(
+    (input) => input.scope === 'skill' && input.skillId !== null
+  );
+  if (skillRequirements.length === 0) {
+    return [];
+  }
+
+  const callableInterfaces = collectCallableInterfaces(agentCard);
+  const probes: A2aSkillAuthorizationInterfaceProbe[] = [];
+
+  for (const inputRequirements of skillRequirements) {
+    if (!Array.isArray(inputRequirements.requirements)) {
+      continue;
+    }
+    inputRequirements.requirements.forEach((requirement, requirementIndex) => {
+      const requiredSchemeNames = isRecord(requirement)
+        ? Object.keys(requirement).sort()
+        : [];
+      if (callableInterfaces.length === 0) {
+        probes.push({
+          skillId: inputRequirements.skillId ?? 'unknown-skill',
+          bindingId: null,
+          transport: null,
+          url: null,
+          protocolVersion: null,
+          requirementIndex,
+          requiredSchemeNames,
+          acceptedSchemeNames: [],
+          status: 'rejected',
+          reasons: ['skill securityRequirements cannot be probed without a callable AgentInterface URL'],
+        });
+        return;
+      }
+
+      for (const callableInterface of callableInterfaces) {
+        const missingSchemeNames = requiredSchemeNames.filter(
+          (schemeName) => !callableInterface.acceptedSchemeNames.includes(schemeName)
+        );
+        probes.push({
+          skillId: inputRequirements.skillId ?? 'unknown-skill',
+          bindingId: callableInterface.bindingId,
+          transport: callableInterface.transport,
+          url: callableInterface.url,
+          protocolVersion: callableInterface.protocolVersion,
+          requirementIndex,
+          requiredSchemeNames,
+          acceptedSchemeNames: callableInterface.acceptedSchemeNames,
+          status: missingSchemeNames.length === 0 ? 'accepted' : 'rejected',
+          reasons: missingSchemeNames.map(
+            (schemeName) =>
+              `callable interface does not accept required scheme "${schemeName}"`
+          ),
+        });
+      }
+    });
+  }
+
+  return probes;
+}
+
 async function buildSecurityRequirementReport(input: {
   agentCard: Record<string, unknown>;
   signature: Extract<A2aAgentCardSignatureVerdict, { ok: true }>;
@@ -838,6 +1029,19 @@ async function buildSecurityRequirementReport(input: {
   const unsatisfiableProbes = probes.filter(
     (probe) => probe.status === 'unsatisfiable'
   );
+  const skillAuthorizationProbes = buildSkillAuthorizationInterfaceProbes(
+    agentCard,
+    requirementInputs.inputs
+  );
+  const rejectedSkillAuthorizationProbes = skillAuthorizationProbes.filter(
+    (probe) => probe.status === 'rejected'
+  );
+  const skillAuthorizationReasons = rejectedSkillAuthorizationProbes.flatMap((probe) =>
+    probe.reasons.map(
+      (reason) =>
+        `skill ${probe.skillId} interface ${probe.bindingId ?? 'missing'} requirement[${probe.requirementIndex}]: ${reason}`
+    )
+  );
   const reportReasons = unsatisfiableProbes.flatMap((probe) =>
     probe.reasons.map(
       (reason) =>
@@ -849,6 +1053,10 @@ async function buildSecurityRequirementReport(input: {
     signedAgentCardPayloadDigest: input.signature.payloadDigest,
     securitySchemeNames: Object.keys(securitySchemes).sort(),
     probes,
+    skillAuthorization: {
+      probes: skillAuthorizationProbes,
+      reasons: skillAuthorizationReasons,
+    },
   };
 
   return {
@@ -860,10 +1068,28 @@ async function buildSecurityRequirementReport(input: {
     satisfiableRequirementCount: probes.length - unsatisfiableProbes.length,
     unsatisfiableRequirementCount: unsatisfiableProbes.length,
     probes,
+    skillAuthorization: {
+      status:
+        skillAuthorizationProbes.length === 0
+          ? 'not-declared'
+          : rejectedSkillAuthorizationProbes.length > 0
+            ? 'rejected'
+            : 'accepted',
+      probeCount: skillAuthorizationProbes.length,
+      acceptedProbeCount:
+        skillAuthorizationProbes.length - rejectedSkillAuthorizationProbes.length,
+      rejectedProbeCount: rejectedSkillAuthorizationProbes.length,
+      probes: skillAuthorizationProbes,
+      reasons: skillAuthorizationReasons,
+    },
     satisfiability: {
-      status: unsatisfiableProbes.length > 0 ? 'unsatisfiable' : 'satisfiable',
+      status:
+        unsatisfiableProbes.length > 0 ||
+        rejectedSkillAuthorizationProbes.length > 0
+          ? 'unsatisfiable'
+          : 'satisfiable',
       publicAccessDeclared,
-      reasons: reportReasons,
+      reasons: [...reportReasons, ...skillAuthorizationReasons],
     },
     signature: {
       status: 'verified',
