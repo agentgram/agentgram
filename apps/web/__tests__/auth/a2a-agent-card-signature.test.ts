@@ -314,7 +314,7 @@ describe('A2A Agent Card canonical signature gate', () => {
           },
         },
       },
-      securityRequirements: [{ apiKey: [] }],
+      securityRequirements: [{ weatherOAuth: ['forecast.read'] }],
       skills: [
         {
           id: 'forecast',
@@ -360,7 +360,7 @@ describe('A2A Agent Card canonical signature gate', () => {
           scope: 'agent-card',
           skillId: null,
           requirementIndex: 0,
-          schemeNames: ['apiKey'],
+          schemeNames: ['weatherOAuth'],
           status: 'satisfiable',
           reasons: [],
         },
@@ -373,7 +373,100 @@ describe('A2A Agent Card canonical signature gate', () => {
           reasons: [],
         },
       ]);
+      expect(verdict.satisfiability.skillAuthorization).toMatchObject({
+        status: 'accepted',
+        probeCount: 1,
+        acceptedProbeCount: 1,
+        rejectedProbeCount: 0,
+        probes: [
+          {
+            skillId: 'forecast',
+            bindingId: 'primary',
+            transport: 'unspecified',
+            url: 'https://weather.example/a2a/jsonrpc',
+            protocolVersion: null,
+            requirementIndex: 0,
+            requiredSchemeNames: ['weatherOAuth'],
+            acceptedSchemeNames: ['weatherOAuth'],
+            status: 'accepted',
+            reasons: [],
+          },
+        ],
+      });
     }
+  });
+
+  it('fails closed when a skill-level requirement is not accepted by its callable interface', async () => {
+    const { publicKey, secretKey } = await generateAgentKeypair();
+    const agentCard = {
+      name: 'weather-agent',
+      url: 'https://weather.example/a2a/jsonrpc',
+      protocolVersion: '0.3.0',
+      securitySchemes: {
+        apiKey: {
+          apiKeySecurityScheme: { location: 'header', name: 'X-AgentGram-Key' },
+        },
+        weatherOAuth: {
+          oauth2SecurityScheme: {
+            flows: {
+              clientCredentials: {
+                tokenUrl: 'https://weather.example/oauth/token',
+                scopes: { 'forecast.read': 'Read forecasts' },
+              },
+            },
+          },
+        },
+      },
+      securityRequirements: [{ apiKey: [] }],
+      skills: [
+        {
+          id: 'forecast',
+          name: 'Forecast',
+          securityRequirements: [{ weatherOAuth: ['forecast.read'] }],
+        },
+      ],
+    };
+    const jws = await signA2aAgentCardJws(secretKey, publicKey, agentCard);
+
+    await expect(
+      attestA2aSecurityRequirementSatisfiability({
+        publicKey,
+        jws,
+        agentCard,
+        now: new Date('2026-08-25T00:00:00.000Z'),
+      })
+    ).resolves.toMatchObject({
+      ok: false,
+      code: 'SECURITY_REQUIREMENTS_UNSATISFIABLE',
+      satisfiability: {
+        satisfiability: {
+          status: 'unsatisfiable',
+          reasons: [
+            'skill forecast interface primary requirement[0]: callable interface does not accept required scheme "weatherOAuth"',
+          ],
+        },
+        skillAuthorization: {
+          status: 'rejected',
+          rejectedProbeCount: 1,
+          probes: [
+            {
+              skillId: 'forecast',
+              bindingId: 'primary',
+              transport: 'unspecified',
+              url: 'https://weather.example/a2a/jsonrpc',
+              protocolVersion: '0.3.0',
+              requirementIndex: 0,
+              requiredSchemeNames: ['weatherOAuth'],
+              acceptedSchemeNames: ['apiKey'],
+              status: 'rejected',
+              reasons: [
+                'callable interface does not accept required scheme "weatherOAuth"',
+              ],
+            },
+          ],
+        },
+      },
+    });
   });
 
   it('fails closed when security requirements reference missing schemes or impossible scopes', async () => {
