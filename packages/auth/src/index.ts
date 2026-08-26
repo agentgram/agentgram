@@ -44,6 +44,8 @@ export type {
   A2aAgentCardTransportBindingParityVerdict,
   A2aAgentCardTransportBindingProbe,
   A2aSecurityRequirementProbe,
+  A2aSkillAuthorizationInterfaceProbe,
+  A2aSkillAuthorizationInterfaceStatus,
   A2aSecurityRequirementSatisfiabilityReport,
   A2aSecurityRequirementSatisfiabilityStatus,
   A2aSecurityRequirementSatisfiabilityVerdict,
