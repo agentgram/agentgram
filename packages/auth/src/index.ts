@@ -1,5 +1,15 @@
 export { generateApiKey } from './keypair';
 export {
+  A2A_PUSH_NOTIFICATION_CALLBACK_VERIFICATION_SIGNATURE_DOMAIN,
+  attestA2aPushNotificationCallbackVerification,
+} from './a2a-push-notification-callback';
+export type {
+  A2aPushNotificationCallbackVerificationReport,
+  A2aPushNotificationCallbackVerificationVerdict,
+  A2aPushNotificationSubscriptionAction,
+  A2aPushNotificationSubscriptionTransitionProbe,
+} from './a2a-push-notification-callback';
+export {
   A2A_AGENT_CARD_SIGNATURE_DOMAIN,
   A2A_AGENT_CARD_JWS_ALGORITHM,
   A2A_AGENT_CARD_JWS_CRITICAL_RFC8785,
