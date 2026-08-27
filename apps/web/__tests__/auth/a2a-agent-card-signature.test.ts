@@ -5,6 +5,7 @@ import {
   RFC8785_AGENT_CARD_FIXTURE_CANONICAL_JSON,
   RFC8785_AGENT_CARD_FIXTURE_DIGEST,
   attestA2aExtendedAgentCardAuthorizationDowngrade,
+  attestA2aAgentCardMcpServiceLink,
   attestA2aAgentCardTransportBindingParity,
   attestA2aSecurityRequirementSatisfiability,
   buildA2aAgentCardCanonicalSignatureEvidence,
@@ -647,5 +648,104 @@ describe('A2A Agent Card canonical signature gate', () => {
         },
       },
     });
+  });
+
+  it('signs A2A Agent Card to MCP Registry service-link verdicts for linked, redirected, mismatched, and unregistered services', async () => {
+    const { publicKey, secretKey } = await generateAgentKeypair();
+    const agentCard = {
+      name: 'weather-agent',
+      url: 'https://weather.example/a2a/jsonrpc',
+      mcpServices: [
+        {
+          id: 'weather-live',
+          registryServer: 'acme/weather',
+          url: 'https://weather.example/mcp',
+        },
+        {
+          id: 'weather-legacy',
+          registryServer: 'acme/weather',
+          url: 'https://old-weather.example/mcp',
+        },
+        {
+          id: 'billing',
+          registryServer: 'acme/billing',
+          url: 'https://billing-preview.example/mcp',
+        },
+        {
+          id: 'unlisted',
+          registryServer: 'acme/unlisted',
+          url: 'https://unlisted.example/mcp',
+        },
+      ],
+    };
+    const jws = await signA2aAgentCardJws(secretKey, publicKey, agentCard);
+
+    const verdict = await attestA2aAgentCardMcpServiceLink({
+      publicKey,
+      jws,
+      agentCard,
+      registryServers: [
+        {
+          server: {
+            name: 'acme/weather',
+            remotes: [
+              { type: 'streamable-http', url: 'https://weather.example/mcp' },
+            ],
+          },
+        },
+        {
+          server: {
+            name: 'acme/billing',
+            remotes: [
+              { type: 'streamable-http', url: 'https://billing.example/mcp' },
+            ],
+          },
+        },
+      ],
+      endpointObservations: [
+        {
+          serviceId: 'weather-legacy',
+          requestedUrl: 'https://old-weather.example/mcp',
+          finalUrl: 'https://weather.example/mcp',
+        },
+      ],
+      now: new Date('2026-08-18T00:00:00.000Z'),
+    });
+
+    expect(verdict.ok).toBe(false);
+    if (verdict.ok) {
+      throw new Error('expected non-linked MCP service verdicts to fail closed');
+    }
+    expect(verdict.code).toBe('MCP_SERVICE_LINK_REVIEW_REQUIRED');
+    expect(verdict.serviceLink).toMatchObject({
+      kind: 'agentgram.a2a.agent-card.mcp-service-link-attestation',
+      generatedAt: '2026-08-18T00:00:00.000Z',
+      serviceCount: 4,
+      linkedCount: 1,
+      redirectedCount: 1,
+      mismatchedCount: 1,
+      unregisteredCount: 1,
+      verdict: {
+        status: 'review-required',
+      },
+      probes: [
+        { serviceId: 'weather-live', status: 'linked' },
+        { serviceId: 'weather-legacy', status: 'redirected' },
+        { serviceId: 'billing', status: 'mismatched' },
+        { serviceId: 'unlisted', status: 'unregistered' },
+      ],
+      signature: {
+        status: 'verified',
+        signingAlgorithm: 'ed25519',
+        publicKey,
+      },
+    });
+    expect(verdict.serviceLink.signedAgentCardPayloadDigest).toMatch(/^[a-f0-9]{64}$/);
+    expect(verdict.serviceLink.signature.payloadDigest).toMatch(/^[a-f0-9]{64}$/);
+    expect(verdict.serviceLink.verdict.reasons).toEqual([
+      'service weather-legacy redirected from old-weather.example to weather.example',
+      'service billing endpoint authority billing-preview.example is not declared by registry server acme/billing',
+      'service unlisted registry server acme/unlisted is not registered',
+    ]);
   });
 });

@@ -211,6 +211,65 @@ export type A2aAgentCardRetrievalFreshnessVerdict =
       signature: A2aAgentCardSignatureVerdict;
     };
 
+export type A2aAgentCardMcpServiceLinkStatus =
+  | 'linked'
+  | 'redirected'
+  | 'mismatched'
+  | 'unregistered';
+
+export interface A2aAgentCardMcpServiceLinkProbe {
+  serviceId: string;
+  registryServerName: string;
+  namespace: string;
+  declaredEndpointUrl: string;
+  observedEndpointUrl: string | null;
+  declaredEndpointAuthority: string;
+  observedEndpointAuthority: string | null;
+  registryRemoteUrls: string[];
+  registryEndpointAuthorities: string[];
+  status: A2aAgentCardMcpServiceLinkStatus;
+  reasons: string[];
+}
+
+export interface A2aAgentCardMcpServiceLinkReport {
+  kind: 'agentgram.a2a.agent-card.mcp-service-link-attestation';
+  generatedAt: string;
+  signedAgentCardPayloadDigest: string;
+  serviceCount: number;
+  linkedCount: number;
+  redirectedCount: number;
+  mismatchedCount: number;
+  unregisteredCount: number;
+  probes: A2aAgentCardMcpServiceLinkProbe[];
+  verdict: {
+    status: 'linked' | 'review-required';
+    reasons: string[];
+  };
+  signature: {
+    status: 'verified';
+    signingAlgorithm: 'ed25519';
+    publicKey: string;
+    payloadDigest: string;
+  };
+}
+
+export type A2aAgentCardMcpServiceLinkVerdict =
+  | {
+      ok: true;
+      serviceLink: A2aAgentCardMcpServiceLinkReport;
+      signature: Extract<A2aAgentCardSignatureVerdict, { ok: true }>;
+    }
+  | {
+      ok: false;
+      code:
+        | 'SIGNATURE_INVALID'
+        | 'MCP_SERVICE_LINKS_INVALID'
+        | 'MCP_SERVICE_LINK_REVIEW_REQUIRED';
+      message: string;
+      serviceLink?: A2aAgentCardMcpServiceLinkReport;
+      signature: A2aAgentCardSignatureVerdict;
+    };
+
 export type A2aExtendedAgentCardAuthorizationState =
   | 'public'
   | 'authenticated'
@@ -443,6 +502,29 @@ interface NormalizedA2aAgentCardTransportBinding {
   url: string;
   taskSemantics: unknown;
   authBehavior: unknown;
+}
+
+interface NormalizedA2aMcpServiceLink {
+  serviceId: string;
+  registryServerName: string;
+  namespace: string;
+  endpointUrl: string;
+  endpointAuthority: string;
+}
+
+interface NormalizedMcpRegistryServer {
+  name: string;
+  namespace: string;
+  remoteUrls: string[];
+  remoteAuthorities: string[];
+}
+
+interface NormalizedA2aMcpEndpointObservation {
+  serviceId: string | null;
+  requestedUrl: string;
+  requestedAuthority: string;
+  finalUrl: string;
+  finalAuthority: string;
 }
 
 type A2aSecuritySchemeKind =
@@ -844,6 +926,253 @@ function collectCallableInterfaces(agentCard: Record<string, unknown>): Array<{
   }
 
   return interfaces;
+}
+
+function readMcpServiceRegistryServerName(value: Record<string, unknown>): string | null {
+  const explicitServer =
+    readRequiredString(value.registryServer) ??
+    readRequiredString(value.registryServerName) ??
+    readRequiredString(value.serverName) ??
+    readRequiredString(value.name);
+  const namespace =
+    readRequiredString(value.registryNamespace) ?? readRequiredString(value.namespace);
+  const server = readRequiredString(value.server);
+  if (explicitServer !== null && explicitServer.includes('/')) {
+    return explicitServer;
+  }
+  if (namespace !== null && server !== null) {
+    return `${namespace}/${server}`;
+  }
+  return explicitServer;
+}
+
+function readMcpServiceEndpointUrl(value: Record<string, unknown>): string | null {
+  return (
+    parseHttpsUrl(value.url) ??
+    parseHttpsUrl(value.endpointUrl) ??
+    parseHttpsUrl(value.remoteUrl) ??
+    parseHttpsUrl(value.serviceUrl)
+  );
+}
+
+function isMcpServiceCandidate(value: Record<string, unknown>): boolean {
+  const markers = [value.protocol, value.transport, value.type, value.kind]
+    .filter((marker): marker is string => typeof marker === 'string')
+    .map((marker) => marker.toLowerCase());
+  return (
+    markers.some((marker) => marker.includes('mcp')) ||
+    value.registryServer !== undefined ||
+    value.registryServerName !== undefined ||
+    value.registryNamespace !== undefined
+  );
+}
+
+function appendMcpServicesFromArray(
+  services: NormalizedA2aMcpServiceLink[],
+  value: unknown,
+  sourceName: string
+): void {
+  if (!Array.isArray(value)) {
+    return;
+  }
+  value.forEach((service, index) => {
+    if (!isRecord(service) || !isMcpServiceCandidate(service)) {
+      return;
+    }
+    const endpointUrl = readMcpServiceEndpointUrl(service);
+    const registryServerName = readMcpServiceRegistryServerName(service);
+    if (endpointUrl === null || registryServerName === null) {
+      return;
+    }
+    services.push({
+      serviceId:
+        readRequiredString(service.id) ??
+        readRequiredString(service.serviceId) ??
+        `${sourceName}[${index}]`,
+      registryServerName,
+      namespace: registryServerName.split('/')[0] ?? registryServerName,
+      endpointUrl,
+      endpointAuthority: new URL(endpointUrl).host,
+    });
+  });
+}
+
+function collectA2aMcpServiceLinks(
+  agentCard: Record<string, unknown>
+): NormalizedA2aMcpServiceLink[] {
+  const services: NormalizedA2aMcpServiceLink[] = [];
+  appendMcpServicesFromArray(services, agentCard.mcpServices, 'mcpServices');
+  appendMcpServicesFromArray(services, agentCard.mcpServers, 'mcpServers');
+  appendMcpServicesFromArray(services, agentCard.serviceLinks, 'serviceLinks');
+  appendMcpServicesFromArray(services, agentCard.services, 'services');
+  return services;
+}
+
+function normalizeMcpRegistryServers(value: unknown): NormalizedMcpRegistryServer[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  const servers: NormalizedMcpRegistryServer[] = [];
+  for (const entry of value) {
+    if (!isRecord(entry)) {
+      continue;
+    }
+    const server = isRecord(entry.server) ? entry.server : entry;
+    const name = readRequiredString(server.name);
+    if (name === null) {
+      continue;
+    }
+    const remoteUrls = Array.isArray(server.remotes)
+      ? server.remotes.flatMap((remote) => {
+          if (!isRecord(remote)) {
+            return [];
+          }
+          const remoteUrl = parseHttpsUrl(remote.url);
+          return remoteUrl === null ? [] : [remoteUrl];
+        })
+      : [];
+    servers.push({
+      name,
+      namespace: name.split('/')[0] ?? name,
+      remoteUrls: remoteUrls.sort(),
+      remoteAuthorities: [...new Set(remoteUrls.map((url) => new URL(url).host))].sort(),
+    });
+  }
+  return servers;
+}
+
+function normalizeMcpEndpointObservations(
+  value: unknown
+): NormalizedA2aMcpEndpointObservation[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  const observations: NormalizedA2aMcpEndpointObservation[] = [];
+  for (const observation of value) {
+    if (!isRecord(observation)) {
+      continue;
+    }
+    const requestedUrl =
+      parseHttpsUrl(observation.requestedUrl) ?? parseHttpsUrl(observation.url);
+    const finalUrl =
+      parseHttpsUrl(observation.finalUrl) ?? parseHttpsUrl(observation.location);
+    if (requestedUrl === null || finalUrl === null) {
+      continue;
+    }
+    observations.push({
+      serviceId: readRequiredString(observation.serviceId),
+      requestedUrl,
+      requestedAuthority: new URL(requestedUrl).host,
+      finalUrl,
+      finalAuthority: new URL(finalUrl).host,
+    });
+  }
+  return observations;
+}
+
+function findMcpEndpointObservation(
+  service: NormalizedA2aMcpServiceLink,
+  observations: NormalizedA2aMcpEndpointObservation[]
+): NormalizedA2aMcpEndpointObservation | undefined {
+  return observations.find(
+    (observation) =>
+      observation.serviceId === service.serviceId ||
+      observation.requestedUrl === service.endpointUrl
+  );
+}
+
+async function buildA2aMcpServiceLinkReport(input: {
+  agentCard: Record<string, unknown>;
+  signature: Extract<A2aAgentCardSignatureVerdict, { ok: true }>;
+  publicKey: unknown;
+  registryServers?: unknown;
+  endpointObservations?: unknown;
+  now?: Date;
+}): Promise<A2aAgentCardMcpServiceLinkReport | { invalid: string[] }> {
+  const services = collectA2aMcpServiceLinks(input.agentCard);
+  if (services.length === 0) {
+    return { invalid: ['Agent Card must declare at least one MCP service link'] };
+  }
+  const registryServers = normalizeMcpRegistryServers(input.registryServers);
+  if (registryServers.length === 0) {
+    return { invalid: ['MCP Registry evidence must include at least one server'] };
+  }
+  const observations = normalizeMcpEndpointObservations(input.endpointObservations);
+  const registryByName = new Map(
+    registryServers.map((server) => [server.name, server] as const)
+  );
+  const probes: A2aAgentCardMcpServiceLinkProbe[] = services.map((service) => {
+    const registryServer = registryByName.get(service.registryServerName);
+    const observation = findMcpEndpointObservation(service, observations);
+    const observedEndpointUrl = observation?.finalUrl ?? null;
+    const observedEndpointAuthority = observation?.finalAuthority ?? null;
+    const effectiveAuthority = observedEndpointAuthority ?? service.endpointAuthority;
+    const reasons: string[] = [];
+    let status: A2aAgentCardMcpServiceLinkStatus = 'linked';
+
+    if (registryServer === undefined) {
+      status = 'unregistered';
+      reasons.push(
+        `service ${service.serviceId} registry server ${service.registryServerName} is not registered`
+      );
+    } else if (!registryServer.remoteAuthorities.includes(effectiveAuthority)) {
+      status = 'mismatched';
+      reasons.push(
+        `service ${service.serviceId} endpoint authority ${effectiveAuthority} is not declared by registry server ${registryServer.name}`
+      );
+    } else if (
+      observation !== undefined &&
+      observation.finalAuthority !== observation.requestedAuthority
+    ) {
+      status = 'redirected';
+      reasons.push(
+        `service ${service.serviceId} redirected from ${observation.requestedAuthority} to ${observation.finalAuthority}`
+      );
+    }
+
+    return {
+      serviceId: service.serviceId,
+      registryServerName: service.registryServerName,
+      namespace: service.namespace,
+      declaredEndpointUrl: service.endpointUrl,
+      observedEndpointUrl,
+      declaredEndpointAuthority: service.endpointAuthority,
+      observedEndpointAuthority,
+      registryRemoteUrls: registryServer?.remoteUrls ?? [],
+      registryEndpointAuthorities: registryServer?.remoteAuthorities ?? [],
+      status,
+      reasons,
+    };
+  });
+  const reasons = probes.flatMap((probe) => probe.reasons);
+  const payload = {
+    kind: 'agentgram.a2a.agent-card.mcp-service-link-attestation-payload',
+    signedAgentCardPayloadDigest: input.signature.payloadDigest,
+    probes,
+    verdictStatus: reasons.length === 0 ? 'linked' : 'review-required',
+  };
+
+  return {
+    kind: 'agentgram.a2a.agent-card.mcp-service-link-attestation',
+    generatedAt: (input.now ?? new Date()).toISOString(),
+    signedAgentCardPayloadDigest: input.signature.payloadDigest,
+    serviceCount: probes.length,
+    linkedCount: probes.filter((probe) => probe.status === 'linked').length,
+    redirectedCount: probes.filter((probe) => probe.status === 'redirected').length,
+    mismatchedCount: probes.filter((probe) => probe.status === 'mismatched').length,
+    unregisteredCount: probes.filter((probe) => probe.status === 'unregistered').length,
+    probes,
+    verdict: {
+      status: reasons.length === 0 ? 'linked' : 'review-required',
+      reasons,
+    },
+    signature: {
+      status: 'verified',
+      signingAlgorithm: 'ed25519',
+      publicKey: String(input.publicKey).toLowerCase(),
+      payloadDigest: await sha256Hex(canonicalJson(payload)),
+    },
+  };
 }
 
 function buildSkillAuthorizationInterfaceProbes(
@@ -1843,6 +2172,73 @@ export async function attestA2aAgentCardRetrievalFreshness(input: {
   }
 
   return { ok: true, freshness, signature };
+}
+
+/**
+ * Verify a signed A2A Agent Card and attest that every Card-declared MCP
+ * service link resolves to the same MCP Registry namespace/server and HTTPS
+ * remote endpoint authority. Linked, redirected, mismatched, and unregistered
+ * verdicts are bound to the signed Agent Card payload digest for external
+ * discovery evidence.
+ */
+export async function attestA2aAgentCardMcpServiceLink(input: {
+  agentCard?: unknown;
+  publicKey?: unknown;
+  signature?: unknown;
+  jws?: unknown;
+  registryServers?: unknown;
+  endpointObservations?: unknown;
+  now?: Date;
+}): Promise<A2aAgentCardMcpServiceLinkVerdict> {
+  const signature = await verifyA2aAgentCardSignature(input);
+  if (!signature.ok) {
+    return {
+      ok: false,
+      code: 'SIGNATURE_INVALID',
+      message:
+        'A2A Agent Card MCP service-link attestation requires a valid signed Agent Card',
+      signature,
+    };
+  }
+
+  if (!isRecord(input.agentCard)) {
+    return {
+      ok: false,
+      code: 'MCP_SERVICE_LINKS_INVALID',
+      message:
+        'A2A Agent Card MCP service-link attestation requires an Agent Card object',
+      signature,
+    };
+  }
+
+  const serviceLink = await buildA2aMcpServiceLinkReport({
+    agentCard: input.agentCard,
+    publicKey: input.publicKey,
+    signature,
+    registryServers: input.registryServers,
+    endpointObservations: input.endpointObservations,
+    now: input.now,
+  });
+  if ('invalid' in serviceLink) {
+    return {
+      ok: false,
+      code: 'MCP_SERVICE_LINKS_INVALID',
+      message: serviceLink.invalid.join('; '),
+      signature,
+    };
+  }
+  if (serviceLink.verdict.status === 'review-required') {
+    return {
+      ok: false,
+      code: 'MCP_SERVICE_LINK_REVIEW_REQUIRED',
+      message:
+        'A2A Agent Card declares MCP service links that are redirected, mismatched, or unregistered in the MCP Registry evidence',
+      serviceLink,
+      signature,
+    };
+  }
+
+  return { ok: true, serviceLink, signature };
 }
 
 /**
