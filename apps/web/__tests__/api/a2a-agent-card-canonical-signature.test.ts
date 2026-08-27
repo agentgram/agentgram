@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mockVerifyA2aAgentCardSignature = vi.fn();
 const mockAttestA2aAgentCardTransportBindingParity = vi.fn();
 const mockAttestA2aAgentCardRetrievalFreshness = vi.fn();
+const mockAttestA2aAgentCardMcpServiceLink = vi.fn();
 const mockAttestA2aExtendedAgentCardAuthorizationDowngrade = vi.fn();
 const mockAttestA2aSecurityRequirementSatisfiability = vi.fn();
 const mockBuildA2aAgentCardCanonicalSignatureEvidence = vi.fn();
@@ -15,6 +16,7 @@ vi.mock('@agentgram/auth', () => ({
     mockAttestA2aAgentCardTransportBindingParity,
   attestA2aAgentCardRetrievalFreshness:
     mockAttestA2aAgentCardRetrievalFreshness,
+  attestA2aAgentCardMcpServiceLink: mockAttestA2aAgentCardMcpServiceLink,
   attestA2aExtendedAgentCardAuthorizationDowngrade:
     mockAttestA2aExtendedAgentCardAuthorizationDowngrade,
   attestA2aSecurityRequirementSatisfiability:
@@ -309,6 +311,115 @@ describe('A2A Agent Card canonical signature route', () => {
     });
     expect(json.data.reportType).toBe('a2a-agent-card-retrieval-freshness');
     expect(json.data.freshness).toEqual(freshness);
+  });
+
+  it('exports signed A2A MCP service-link evidence against registry remotes', async () => {
+    const serviceLink = {
+      kind: 'agentgram.a2a.agent-card.mcp-service-link-attestation',
+      generatedAt: '2026-08-18T00:00:00.000Z',
+      signedAgentCardPayloadDigest: 'a'.repeat(64),
+      serviceCount: 1,
+      linkedCount: 1,
+      redirectedCount: 0,
+      mismatchedCount: 0,
+      unregisteredCount: 0,
+      probes: [
+        {
+          serviceId: 'weather-live',
+          registryServerName: 'acme/weather',
+          namespace: 'acme',
+          declaredEndpointUrl: 'https://weather.example/mcp',
+          observedEndpointUrl: null,
+          declaredEndpointAuthority: 'weather.example',
+          observedEndpointAuthority: null,
+          registryRemoteUrls: ['https://weather.example/mcp'],
+          registryEndpointAuthorities: ['weather.example'],
+          status: 'linked',
+          reasons: [],
+        },
+      ],
+      verdict: { status: 'linked', reasons: [] },
+      signature: {
+        status: 'verified',
+        signingAlgorithm: 'ed25519',
+        publicKey: 'b'.repeat(64),
+        payloadDigest: 'd'.repeat(64),
+      },
+    };
+    mockAttestA2aAgentCardMcpServiceLink.mockResolvedValueOnce({
+      ok: true,
+      serviceLink,
+      signature: { ok: true },
+    });
+    const { POST } = await import(
+      '@/app/api/v1/a2a/agent-card/mcp-service-link/route'
+    );
+
+    const registryServers = [
+      {
+        server: {
+          name: 'acme/weather',
+          remotes: [{ url: 'https://weather.example/mcp' }],
+        },
+      },
+    ];
+    const response = await POST(
+      makeRequest({
+        publicKey: 'b'.repeat(64),
+        jws: 'protected.payload.signature',
+        agentCard: { name: 'weather-agent' },
+        registryServers,
+        endpointObservations: [],
+      })
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mockAttestA2aAgentCardMcpServiceLink).toHaveBeenCalledWith({
+      publicKey: 'b'.repeat(64),
+      signature: undefined,
+      jws: 'protected.payload.signature',
+      agentCard: { name: 'weather-agent' },
+      registryServers,
+      endpointObservations: [],
+    });
+    expect(json.data.reportType).toBe('a2a-agent-card-mcp-service-link');
+    expect(json.data.serviceLink).toEqual(serviceLink);
+  });
+
+  it('fails closed when A2A MCP service links are redirected, mismatched, or unregistered', async () => {
+    const serviceLink = {
+      kind: 'agentgram.a2a.agent-card.mcp-service-link-attestation',
+      verdict: {
+        status: 'review-required',
+        reasons: ['service billing registry server acme/billing is not registered'],
+      },
+    };
+    mockAttestA2aAgentCardMcpServiceLink.mockResolvedValueOnce({
+      ok: false,
+      code: 'MCP_SERVICE_LINK_REVIEW_REQUIRED',
+      message:
+        'A2A Agent Card declares MCP service links that are redirected, mismatched, or unregistered in the MCP Registry evidence',
+      serviceLink,
+      signature: { ok: true },
+    });
+    const { POST } = await import(
+      '@/app/api/v1/a2a/agent-card/mcp-service-link/route'
+    );
+
+    const response = await POST(
+      makeRequest({
+        publicKey: 'b'.repeat(64),
+        signature: 'c'.repeat(128),
+        agentCard: { name: 'weather-agent' },
+        registryServers: [],
+      })
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(json.error.code).toBe('MCP_SERVICE_LINK_REVIEW_REQUIRED');
+    expect(json.error.details.serviceLink.verdict.status).toBe('review-required');
   });
 
   it('fails closed when signed retrieval freshness evidence is stale', async () => {
