@@ -28,6 +28,10 @@ export const A2A_TASK_HISTORY_RETENTION_SIGNATURE_DOMAIN =
 export const A2A_SECURITY_REQUIREMENT_SATISFIABILITY_SIGNATURE_DOMAIN =
   'agentgram:v1:a2a-security-requirement-satisfiability:';
 
+/** Domain prefix for A2A extension governance provenance attestations. */
+export const A2A_EXTENSION_GOVERNANCE_SIGNATURE_DOMAIN =
+  'agentgram:v1:a2a-extension-governance:';
+
 export const RFC8785_AGENT_CARD_FIXTURE_CANONICAL_JSON =
   '{"literals":[null,true,false],"numbers":[333333333.3333333,1e+30,4.5,0.002,1e-27],"string":"€$\\u000f\\nA\'B\\"\\\\\\"/"}';
 
@@ -267,6 +271,76 @@ export type A2aAgentCardMcpServiceLinkVerdict =
         | 'MCP_SERVICE_LINK_REVIEW_REQUIRED';
       message: string;
       serviceLink?: A2aAgentCardMcpServiceLinkReport;
+      signature: A2aAgentCardSignatureVerdict;
+    };
+
+export type A2aExtensionGovernancePromotionTier =
+  | 'core'
+  | 'promoted'
+  | 'experimental'
+  | 'vendor'
+  | 'retired'
+  | 'unknown';
+
+export type A2aExtensionGovernanceSupportPolicyVerdict =
+  | 'supported'
+  | 'unpromoted'
+  | 'retired'
+  | 'unknown';
+
+export interface A2aExtensionGovernanceProbe {
+  extensionUri: string;
+  version: string;
+  required: boolean;
+  canonicalSpecUrl: string | null;
+  canonicalSpecDigest: string | null;
+  promotionTier: A2aExtensionGovernancePromotionTier;
+  observedAt: string | null;
+  supportPolicyVerdict: A2aExtensionGovernanceSupportPolicyVerdict;
+  discoveryConfidence: {
+    status: 'full' | 'lowered';
+    score: number;
+    reasons: string[];
+  };
+}
+
+export interface A2aExtensionGovernanceReport {
+  kind: 'agentgram.a2a.agent-card.extension-governance-provenance-attestation';
+  generatedAt: string;
+  signedAgentCardPayloadDigest: string;
+  extensionCount: number;
+  supportedCount: number;
+  loweredCount: number;
+  requiredUnsupportedCount: number;
+  probes: A2aExtensionGovernanceProbe[];
+  verdict: {
+    status: 'supported' | 'lowered-confidence' | 'unsupported-required';
+    reasons: string[];
+  };
+  signature: {
+    status: 'verified';
+    signingAlgorithm: 'ed25519';
+    signatureDomain: typeof A2A_EXTENSION_GOVERNANCE_SIGNATURE_DOMAIN;
+    publicKey: string;
+    payloadDigest: string;
+  };
+}
+
+export type A2aExtensionGovernanceVerdict =
+  | {
+      ok: true;
+      governance: A2aExtensionGovernanceReport;
+      signature: Extract<A2aAgentCardSignatureVerdict, { ok: true }>;
+    }
+  | {
+      ok: false;
+      code:
+        | 'SIGNATURE_INVALID'
+        | 'EXTENSIONS_INVALID'
+        | 'EXTENSION_GOVERNANCE_UNSUPPORTED'
+        | 'EXTENSION_GOVERNANCE_CONFIDENCE_LOWERED';
+      message: string;
+      governance?: A2aExtensionGovernanceReport;
       signature: A2aAgentCardSignatureVerdict;
     };
 
@@ -525,6 +599,22 @@ interface NormalizedA2aMcpEndpointObservation {
   requestedAuthority: string;
   finalUrl: string;
   finalAuthority: string;
+}
+
+interface NormalizedA2aExtensionDeclaration {
+  extensionUri: string;
+  version: string;
+  required: boolean;
+}
+
+interface NormalizedA2aExtensionGovernanceEntry {
+  extensionUri: string;
+  version: string;
+  canonicalSpecUrl: string;
+  canonicalSpecDigest: string;
+  promotionTier: A2aExtensionGovernancePromotionTier;
+  observedAt: string;
+  supportPolicyVerdict: A2aExtensionGovernanceSupportPolicyVerdict;
 }
 
 type A2aSecuritySchemeKind =
@@ -1068,6 +1158,137 @@ function normalizeMcpEndpointObservations(
     });
   }
   return observations;
+}
+
+function readExtensionUri(value: Record<string, unknown>): string | null {
+  return (
+    readRequiredString(value.uri) ??
+    readRequiredString(value.extensionUri) ??
+    readRequiredString(value.url)
+  );
+}
+
+function readExtensionVersion(value: Record<string, unknown>): string | null {
+  return readRequiredString(value.version) ?? readRequiredString(value.extensionVersion);
+}
+
+function normalizeA2aExtensions(value: unknown):
+  | { ok: true; extensions: NormalizedA2aExtensionDeclaration[] }
+  | { ok: false; reasons: string[] } {
+  if (!Array.isArray(value)) {
+    return { ok: false, reasons: ['Agent Card extensions must be an array'] };
+  }
+  const extensions: NormalizedA2aExtensionDeclaration[] = [];
+  const reasons: string[] = [];
+  value.forEach((extension, index) => {
+    if (!isRecord(extension)) {
+      reasons.push(`extensions[${index}] must be an object`);
+      return;
+    }
+    const extensionUri = readExtensionUri(extension);
+    const version = readExtensionVersion(extension);
+    if (extensionUri === null || version === null) {
+      reasons.push(`extensions[${index}] requires uri and version`);
+      return;
+    }
+    extensions.push({
+      extensionUri,
+      version,
+      required: extension.required === true,
+    });
+  });
+  return reasons.length > 0 ? { ok: false, reasons } : { ok: true, extensions };
+}
+
+function readPromotionTier(value: unknown): A2aExtensionGovernancePromotionTier {
+  return value === 'core' ||
+    value === 'promoted' ||
+    value === 'experimental' ||
+    value === 'vendor' ||
+    value === 'retired'
+    ? value
+    : 'unknown';
+}
+
+function readSupportPolicyVerdict(
+  value: unknown
+): A2aExtensionGovernanceSupportPolicyVerdict {
+  return value === 'supported' || value === 'unpromoted' || value === 'retired'
+    ? value
+    : 'unknown';
+}
+
+function normalizeA2aExtensionGovernanceRegistry(
+  value: unknown
+): NormalizedA2aExtensionGovernanceEntry[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.flatMap((entry) => {
+    if (!isRecord(entry)) {
+      return [];
+    }
+    const extensionUri = readExtensionUri(entry);
+    const version = readExtensionVersion(entry);
+    const canonicalSpecUrl = parseHttpsUrl(entry.canonicalSpecUrl ?? entry.specUrl);
+    const canonicalSpecDigest = readRequiredString(entry.canonicalSpecDigest);
+    const observedAtDate = parseIsoDate(entry.observedAt);
+    if (
+      extensionUri === null ||
+      version === null ||
+      canonicalSpecUrl === null ||
+      canonicalSpecDigest === null ||
+      !/^[0-9a-f]{64}$/i.test(canonicalSpecDigest) ||
+      observedAtDate === null
+    ) {
+      return [];
+    }
+    return [
+      {
+        extensionUri,
+        version,
+        canonicalSpecUrl,
+        canonicalSpecDigest: canonicalSpecDigest.toLowerCase(),
+        promotionTier: readPromotionTier(entry.promotionTier),
+        observedAt: observedAtDate.toISOString(),
+        supportPolicyVerdict: readSupportPolicyVerdict(entry.supportPolicyVerdict),
+      },
+    ];
+  });
+}
+
+function buildExtensionGovernanceProbe(
+  extension: NormalizedA2aExtensionDeclaration,
+  registry: Map<string, NormalizedA2aExtensionGovernanceEntry>
+): A2aExtensionGovernanceProbe {
+  const evidence = registry.get(`${extension.extensionUri}\u0000${extension.version}`);
+  const promotionTier = evidence?.promotionTier ?? 'unknown';
+  const supportPolicyVerdict = evidence?.supportPolicyVerdict ?? 'unknown';
+  const reasons: string[] = [];
+  if (evidence === undefined) {
+    reasons.push('extension governance provenance is unknown');
+  }
+  if (promotionTier !== 'core' && promotionTier !== 'promoted') {
+    reasons.push('extension is not promoted into a stable governance tier');
+  }
+  if (supportPolicyVerdict !== 'supported') {
+    reasons.push(`extension support policy verdict is ${supportPolicyVerdict}`);
+  }
+  return {
+    extensionUri: extension.extensionUri,
+    version: extension.version,
+    required: extension.required,
+    canonicalSpecUrl: evidence?.canonicalSpecUrl ?? null,
+    canonicalSpecDigest: evidence?.canonicalSpecDigest ?? null,
+    promotionTier,
+    observedAt: evidence?.observedAt ?? null,
+    supportPolicyVerdict,
+    discoveryConfidence: {
+      status: reasons.length === 0 ? 'full' : 'lowered',
+      score: reasons.length === 0 ? 1 : extension.required ? 0.25 : 0.5,
+      reasons,
+    },
+  };
 }
 
 function findMcpEndpointObservation(
@@ -2239,6 +2460,125 @@ export async function attestA2aAgentCardMcpServiceLink(input: {
   }
 
   return { ok: true, serviceLink, signature };
+}
+
+/**
+ * Verify a signed A2A Agent Card and attest each declared AgentExtension against
+ * governance provenance. Each URI/version is bound to a canonical spec
+ * URL/digest, promotion tier, observation time, and support-policy verdict so
+ * discovery clients can lower confidence for unknown, unpromoted, or retired
+ * extension claims instead of presenting them as core interoperable capability.
+ */
+export async function attestA2aAgentCardExtensionGovernance(input: {
+  agentCard?: unknown;
+  publicKey?: unknown;
+  signature?: unknown;
+  jws?: unknown;
+  governanceRegistry?: unknown;
+  now?: Date;
+}): Promise<A2aExtensionGovernanceVerdict> {
+  const signature = await verifyA2aAgentCardSignature(input);
+  if (!signature.ok) {
+    return {
+      ok: false,
+      code: 'SIGNATURE_INVALID',
+      message:
+        'A2A extension governance attestation requires a valid signed Agent Card',
+      signature,
+    };
+  }
+
+  if (!isRecord(input.agentCard)) {
+    return {
+      ok: false,
+      code: 'EXTENSIONS_INVALID',
+      message: 'A2A extension governance attestation requires an Agent Card object',
+      signature,
+    };
+  }
+  const normalizedExtensions = normalizeA2aExtensions(input.agentCard.extensions);
+  if (!normalizedExtensions.ok) {
+    return {
+      ok: false,
+      code: 'EXTENSIONS_INVALID',
+      message: normalizedExtensions.reasons.join('; '),
+      signature,
+    };
+  }
+
+  const registry = new Map(
+    normalizeA2aExtensionGovernanceRegistry(input.governanceRegistry).map((entry) =>
+      [`${entry.extensionUri}\u0000${entry.version}`, entry] as const
+    )
+  );
+  const probes = normalizedExtensions.extensions.map((extension) =>
+    buildExtensionGovernanceProbe(extension, registry)
+  );
+  const loweredProbes = probes.filter(
+    (probe) => probe.discoveryConfidence.status === 'lowered'
+  );
+  const requiredUnsupportedProbes = loweredProbes.filter((probe) => probe.required);
+  const reasons = loweredProbes.flatMap((probe) =>
+    probe.discoveryConfidence.reasons.map(
+      (reason) => `extension ${probe.extensionUri}@${probe.version}: ${reason}`
+    )
+  );
+  const verdictStatus: A2aExtensionGovernanceReport['verdict']['status'] =
+    requiredUnsupportedProbes.length > 0
+      ? 'unsupported-required'
+      : loweredProbes.length > 0
+        ? 'lowered-confidence'
+        : 'supported';
+  const payload = {
+    kind: 'agentgram.a2a.agent-card.extension-governance-provenance-attestation-payload',
+    signedAgentCardPayloadDigest: signature.payloadDigest,
+    probes,
+    verdictStatus,
+  };
+  const governance: A2aExtensionGovernanceReport = {
+    kind: 'agentgram.a2a.agent-card.extension-governance-provenance-attestation',
+    generatedAt: (input.now ?? new Date()).toISOString(),
+    signedAgentCardPayloadDigest: signature.payloadDigest,
+    extensionCount: probes.length,
+    supportedCount: probes.length - loweredProbes.length,
+    loweredCount: loweredProbes.length,
+    requiredUnsupportedCount: requiredUnsupportedProbes.length,
+    probes,
+    verdict: {
+      status: verdictStatus,
+      reasons,
+    },
+    signature: {
+      status: 'verified',
+      signingAlgorithm: 'ed25519',
+      signatureDomain: A2A_EXTENSION_GOVERNANCE_SIGNATURE_DOMAIN,
+      publicKey: String(input.publicKey).toLowerCase(),
+      payloadDigest: await sha256Hex(canonicalJson(payload)),
+    },
+  };
+
+  if (requiredUnsupportedProbes.length > 0) {
+    return {
+      ok: false,
+      code: 'EXTENSION_GOVERNANCE_UNSUPPORTED',
+      message:
+        'A2A Agent Card declares required extensions with unknown, unpromoted, or retired governance provenance',
+      governance,
+      signature,
+    };
+  }
+  if (loweredProbes.length > 0) {
+    return {
+      ok: false,
+      code: 'EXTENSION_GOVERNANCE_CONFIDENCE_LOWERED',
+      message:
+        'A2A Agent Card declares optional extensions with unknown, unpromoted, or retired governance provenance; discovery confidence was lowered',
+      governance,
+      signature,
+    };
+  }
+
+  return { ok: true, governance, signature };
 }
 
 /**
