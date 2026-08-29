@@ -23,6 +23,7 @@ export {
   SIGNATURE_FRESHNESS_WINDOW_MS,
   attestA2aExtendedAgentCardAuthorizationDowngrade,
   attestA2aAgentCardExtensionGovernance,
+  attestA2aAgentCardDomainControl,
   attestA2aAgentCardMcpServiceLink,
   attestA2aAgentCardRetrievalFreshness,
   attestA2aAgentCardTransportBindingParity,
@@ -44,6 +45,12 @@ export {
 } from './ed25519';
 export type {
   A2aAgentCardCanonicalSignatureEvidence,
+  A2aAgentCardDomainControlObservation,
+  A2aAgentCardDomainControlProbe,
+  A2aAgentCardDomainControlReport,
+  A2aAgentCardDomainControlStatus,
+  A2aAgentCardDomainControlTargetKind,
+  A2aAgentCardDomainControlVerdict,
   A2aAgentCardJwsProtectedHeader,
   A2aAgentCardRetrievalFreshnessReport,
   A2aAgentCardRetrievalFreshnessStatus,
