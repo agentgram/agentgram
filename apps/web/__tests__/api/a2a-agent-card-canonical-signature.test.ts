@@ -4,6 +4,7 @@ const mockVerifyA2aAgentCardSignature = vi.fn();
 const mockAttestA2aAgentCardTransportBindingParity = vi.fn();
 const mockAttestA2aAgentCardRetrievalFreshness = vi.fn();
 const mockAttestA2aAgentCardMcpServiceLink = vi.fn();
+const mockAttestA2aAgentCardDomainControl = vi.fn();
 const mockAttestA2aExtendedAgentCardAuthorizationDowngrade = vi.fn();
 const mockAttestA2aSecurityRequirementSatisfiability = vi.fn();
 const mockBuildA2aAgentCardCanonicalSignatureEvidence = vi.fn();
@@ -17,6 +18,7 @@ vi.mock('@agentgram/auth', () => ({
   attestA2aAgentCardRetrievalFreshness:
     mockAttestA2aAgentCardRetrievalFreshness,
   attestA2aAgentCardMcpServiceLink: mockAttestA2aAgentCardMcpServiceLink,
+  attestA2aAgentCardDomainControl: mockAttestA2aAgentCardDomainControl,
   attestA2aExtendedAgentCardAuthorizationDowngrade:
     mockAttestA2aExtendedAgentCardAuthorizationDowngrade,
   attestA2aSecurityRequirementSatisfiability:
@@ -420,6 +422,110 @@ describe('A2A Agent Card canonical signature route', () => {
     expect(response.status).toBe(409);
     expect(json.error.code).toBe('MCP_SERVICE_LINK_REVIEW_REQUIRED');
     expect(json.error.details.serviceLink.verdict.status).toBe('review-required');
+  });
+
+  it('exports provider/documentation domain-control evidence for external discovery', async () => {
+    const domainControl = {
+      kind: 'agentgram.a2a.agent-card.provider-documentation-domain-control-attestation',
+      generatedAt: '2026-08-23T00:00:00.000Z',
+      signedAgentCardPayloadDigest: 'a'.repeat(64),
+      agentCardUrl: 'https://weather.example/.well-known/agent-card.json',
+      agentCardOrigin: 'https://weather.example',
+      canonicalOrigins: ['https://weather.example'],
+      probeCount: 2,
+      verifiedCount: 2,
+      redirectedCount: 0,
+      mismatchedCount: 0,
+      missingCount: 0,
+      probes: [],
+      verdict: { status: 'verified', reasons: [] },
+      signature: {
+        status: 'verified',
+        signingAlgorithm: 'ed25519',
+        publicKey: 'b'.repeat(64),
+        payloadDigest: 'd'.repeat(64),
+      },
+    };
+    mockAttestA2aAgentCardDomainControl.mockResolvedValueOnce({
+      ok: true,
+      domainControl,
+      signature: { ok: true },
+    });
+    const { POST } = await import(
+      '@/app/api/v1/a2a/agent-card/domain-control/route'
+    );
+    const originObservations = [
+      {
+        target: 'provider-url',
+        requestedUrl: 'https://weather.example/provider',
+        finalUrl: 'https://weather.example/provider',
+        tlsVerified: true,
+        domainControlVerified: true,
+      },
+    ];
+
+    const response = await POST(
+      makeRequest({
+        agentCardUrl: 'https://weather.example/.well-known/agent-card.json',
+        publicKey: 'b'.repeat(64),
+        jws: 'protected.payload.signature',
+        agentCard: { name: 'weather-agent' },
+        originObservations,
+      })
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mockAttestA2aAgentCardDomainControl).toHaveBeenCalledWith({
+      agentCardUrl: 'https://weather.example/.well-known/agent-card.json',
+      publicKey: 'b'.repeat(64),
+      signature: undefined,
+      jws: 'protected.payload.signature',
+      agentCard: { name: 'weather-agent' },
+      originObservations,
+    });
+    expect(json.data.reportType).toBe('a2a-agent-card-domain-control');
+    expect(json.data.domainControl).toEqual(domainControl);
+  });
+
+  it('fails closed when provider/documentation origins mismatch external discovery policy', async () => {
+    const domainControl = {
+      kind: 'agentgram.a2a.agent-card.provider-documentation-domain-control-attestation',
+      verdict: {
+        status: 'external-discovery-mismatch',
+        reasons: [
+          'provider-url canonical origin https://vendor.example does not match Agent Card origin https://weather.example',
+        ],
+      },
+    };
+    mockAttestA2aAgentCardDomainControl.mockResolvedValueOnce({
+      ok: false,
+      code: 'EXTERNAL_DISCOVERY_MISMATCH',
+      message:
+        'A2A Agent Card provider/documentation origins failed redirect, TLS, domain-control, or signed-card origin checks',
+      domainControl,
+      signature: { ok: true },
+    });
+    const { POST } = await import(
+      '@/app/api/v1/a2a/agent-card/domain-control/route'
+    );
+
+    const response = await POST(
+      makeRequest({
+        agentCardUrl: 'https://weather.example/.well-known/agent-card.json',
+        publicKey: 'b'.repeat(64),
+        signature: 'c'.repeat(128),
+        agentCard: { name: 'weather-agent' },
+        originObservations: [],
+      })
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(json.error.code).toBe('EXTERNAL_DISCOVERY_MISMATCH');
+    expect(json.error.details.domainControl.verdict.status).toBe(
+      'external-discovery-mismatch'
+    );
   });
 
   it('fails closed when signed retrieval freshness evidence is stale', async () => {
