@@ -23,6 +23,7 @@ const PUBLIC_API_ROUTE_EXPORTS = new Set([
   'a2a/agent-card/canonical-signature/route.ts#GET',
   'a2a/agent-card/canonical-signature/route.ts#POST',
   'a2a/agent-card/authorization-downgrade-cache-clearance/route.ts#POST',
+  'a2a/agent-card/domain-control/route.ts#POST',
   'a2a/agent-card/extension-governance/route.ts#POST',
   'a2a/agent-card/mcp-service-link/route.ts#POST',
   'a2a/agent-card/push-notification-callback/route.ts#POST',

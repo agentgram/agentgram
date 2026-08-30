@@ -274,6 +274,79 @@ export type A2aAgentCardMcpServiceLinkVerdict =
       signature: A2aAgentCardSignatureVerdict;
     };
 
+export type A2aAgentCardDomainControlTargetKind =
+  | 'provider-url'
+  | 'documentation-url';
+
+export type A2aAgentCardDomainControlStatus =
+  | 'verified'
+  | 'redirected'
+  | 'mismatched'
+  | 'missing';
+
+export interface A2aAgentCardDomainControlObservation {
+  target: A2aAgentCardDomainControlTargetKind;
+  requestedUrl: string;
+  finalUrl: string;
+  tlsVerified: boolean;
+  domainControlVerified: boolean;
+}
+
+export interface A2aAgentCardDomainControlProbe {
+  target: A2aAgentCardDomainControlTargetKind;
+  declaredUrl: string;
+  declaredOrigin: string;
+  observedFinalUrl: string | null;
+  canonicalOrigin: string | null;
+  tlsVerified: boolean;
+  domainControlVerified: boolean;
+  externalDiscoveryMismatch: boolean;
+  status: A2aAgentCardDomainControlStatus;
+  reasons: string[];
+}
+
+export interface A2aAgentCardDomainControlReport {
+  kind: 'agentgram.a2a.agent-card.provider-documentation-domain-control-attestation';
+  generatedAt: string;
+  signedAgentCardPayloadDigest: string;
+  agentCardUrl: string;
+  agentCardOrigin: string;
+  canonicalOrigins: string[];
+  probeCount: number;
+  verifiedCount: number;
+  redirectedCount: number;
+  mismatchedCount: number;
+  missingCount: number;
+  probes: A2aAgentCardDomainControlProbe[];
+  verdict: {
+    status: 'verified' | 'external-discovery-mismatch';
+    reasons: string[];
+  };
+  signature: {
+    status: 'verified';
+    signingAlgorithm: 'ed25519';
+    publicKey: string;
+    payloadDigest: string;
+  };
+}
+
+export type A2aAgentCardDomainControlVerdict =
+  | {
+      ok: true;
+      domainControl: A2aAgentCardDomainControlReport;
+      signature: Extract<A2aAgentCardSignatureVerdict, { ok: true }>;
+    }
+  | {
+      ok: false;
+      code:
+        | 'SIGNATURE_INVALID'
+        | 'DOMAIN_CONTROL_METADATA_INVALID'
+        | 'EXTERNAL_DISCOVERY_MISMATCH';
+      message: string;
+      domainControl?: A2aAgentCardDomainControlReport;
+      signature: A2aAgentCardSignatureVerdict;
+    };
+
 export type A2aExtensionGovernancePromotionTier =
   | 'core'
   | 'promoted'
@@ -599,6 +672,21 @@ interface NormalizedA2aMcpEndpointObservation {
   requestedAuthority: string;
   finalUrl: string;
   finalAuthority: string;
+}
+
+interface NormalizedA2aDomainControlTarget {
+  target: A2aAgentCardDomainControlTargetKind;
+  declaredUrl: string;
+  declaredOrigin: string;
+}
+
+interface NormalizedA2aDomainControlObservation {
+  target: A2aAgentCardDomainControlTargetKind;
+  requestedUrl: string;
+  finalUrl: string;
+  canonicalOrigin: string;
+  tlsVerified: boolean;
+  domainControlVerified: boolean;
 }
 
 interface NormalizedA2aExtensionDeclaration {
@@ -1158,6 +1246,76 @@ function normalizeMcpEndpointObservations(
     });
   }
   return observations;
+}
+
+function collectA2aDomainControlTargets(
+  agentCard: Record<string, unknown>
+): NormalizedA2aDomainControlTarget[] {
+  const targets: NormalizedA2aDomainControlTarget[] = [];
+  const provider = isRecord(agentCard.provider) ? agentCard.provider : null;
+  const providerUrl = provider === null ? null : parseHttpsUrl(provider.url);
+  const documentationUrl = parseHttpsUrl(agentCard.documentationUrl);
+
+  if (providerUrl !== null) {
+    targets.push({
+      target: 'provider-url',
+      declaredUrl: providerUrl,
+      declaredOrigin: new URL(providerUrl).origin,
+    });
+  }
+  if (documentationUrl !== null) {
+    targets.push({
+      target: 'documentation-url',
+      declaredUrl: documentationUrl,
+      declaredOrigin: new URL(documentationUrl).origin,
+    });
+  }
+
+  return targets;
+}
+
+function normalizeA2aDomainControlObservations(
+  value: unknown
+): NormalizedA2aDomainControlObservation[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.flatMap((observation) => {
+    if (!isRecord(observation)) {
+      return [];
+    }
+    const target = observation.target;
+    if (target !== 'provider-url' && target !== 'documentation-url') {
+      return [];
+    }
+    const requestedUrl = parseHttpsUrl(observation.requestedUrl);
+    const finalUrl =
+      parseHttpsUrl(observation.finalUrl) ?? parseHttpsUrl(observation.location);
+    if (requestedUrl === null || finalUrl === null) {
+      return [];
+    }
+    return [
+      {
+        target,
+        requestedUrl,
+        finalUrl,
+        canonicalOrigin: new URL(finalUrl).origin,
+        tlsVerified: observation.tlsVerified === true,
+        domainControlVerified: observation.domainControlVerified === true,
+      },
+    ];
+  });
+}
+
+function findA2aDomainControlObservation(
+  target: NormalizedA2aDomainControlTarget,
+  observations: NormalizedA2aDomainControlObservation[]
+): NormalizedA2aDomainControlObservation | undefined {
+  return observations.find(
+    (observation) =>
+      observation.target === target.target &&
+      observation.requestedUrl === target.declaredUrl
+  );
 }
 
 function readExtensionUri(value: Record<string, unknown>): string | null {
@@ -2460,6 +2618,188 @@ export async function attestA2aAgentCardMcpServiceLink(input: {
   }
 
   return { ok: true, serviceLink, signature };
+}
+
+/**
+ * Verify a signed A2A Agent Card and attest that provider.url and
+ * documentationUrl resolve under the external-discovery policy: HTTPS only,
+ * TLS observed as valid, domain-control proof observed, and no silent origin
+ * drift away from the signed Agent Card origin. Canonical origins and mismatch
+ * verdicts are bound to the signed Card digest for discovery clients.
+ */
+export async function attestA2aAgentCardDomainControl(input: {
+  agentCardUrl?: unknown;
+  agentCard?: unknown;
+  publicKey?: unknown;
+  signature?: unknown;
+  jws?: unknown;
+  originObservations?: unknown;
+  now?: Date;
+}): Promise<A2aAgentCardDomainControlVerdict> {
+  const signature = await verifyA2aAgentCardSignature(input);
+  if (!signature.ok) {
+    return {
+      ok: false,
+      code: 'SIGNATURE_INVALID',
+      message:
+        'A2A Agent Card provider/documentation domain-control attestation requires a valid signed Agent Card',
+      signature,
+    };
+  }
+
+  if (!isRecord(input.agentCard)) {
+    return {
+      ok: false,
+      code: 'DOMAIN_CONTROL_METADATA_INVALID',
+      message:
+        'A2A provider/documentation domain-control attestation requires an Agent Card object',
+      signature,
+    };
+  }
+
+  const agentCardUrl = parseHttpsUrl(input.agentCardUrl) ?? parseHttpsUrl(input.agentCard.url);
+  if (agentCardUrl === null) {
+    return {
+      ok: false,
+      code: 'DOMAIN_CONTROL_METADATA_INVALID',
+      message:
+        'A2A provider/documentation domain-control attestation requires an HTTPS agentCardUrl or Agent Card url',
+      signature,
+    };
+  }
+
+  const provider = isRecord(input.agentCard.provider) ? input.agentCard.provider : null;
+  if (provider?.url !== undefined && parseHttpsUrl(provider.url) === null) {
+    return {
+      ok: false,
+      code: 'DOMAIN_CONTROL_METADATA_INVALID',
+      message: 'A2A provider.url must be HTTPS for domain-control attestation',
+      signature,
+    };
+  }
+  if (
+    input.agentCard.documentationUrl !== undefined &&
+    parseHttpsUrl(input.agentCard.documentationUrl) === null
+  ) {
+    return {
+      ok: false,
+      code: 'DOMAIN_CONTROL_METADATA_INVALID',
+      message:
+        'A2A documentationUrl must be HTTPS for domain-control attestation',
+      signature,
+    };
+  }
+
+  const targets = collectA2aDomainControlTargets(input.agentCard);
+  if (targets.length === 0) {
+    return {
+      ok: false,
+      code: 'DOMAIN_CONTROL_METADATA_INVALID',
+      message:
+        'A2A provider/documentation domain-control attestation requires provider.url or documentationUrl HTTPS targets',
+      signature,
+    };
+  }
+
+  const agentCardOrigin = new URL(agentCardUrl).origin;
+  const observations = normalizeA2aDomainControlObservations(input.originObservations);
+  const probes = targets.map((target) => {
+    const observation = findA2aDomainControlObservation(target, observations);
+    const canonicalOrigin = observation?.canonicalOrigin ?? null;
+    const reasons: string[] = [];
+    if (observation === undefined) {
+      reasons.push(`${target.target} requires redirect/TLS/domain-control observation`);
+    }
+    if (observation !== undefined && !observation.tlsVerified) {
+      reasons.push(`${target.target} TLS chain was not verified`);
+    }
+    if (observation !== undefined && !observation.domainControlVerified) {
+      reasons.push(`${target.target} domain-control proof was not verified`);
+    }
+    if (canonicalOrigin !== null && canonicalOrigin !== target.declaredOrigin) {
+      reasons.push(
+        `${target.target} redirected from ${target.declaredOrigin} to ${canonicalOrigin}`
+      );
+    }
+    const externalDiscoveryMismatch =
+      canonicalOrigin !== null && canonicalOrigin !== agentCardOrigin;
+    if (externalDiscoveryMismatch) {
+      reasons.push(
+        `${target.target} canonical origin ${canonicalOrigin} does not match Agent Card origin ${agentCardOrigin}`
+      );
+    }
+    const status: A2aAgentCardDomainControlStatus =
+      observation === undefined
+        ? 'missing'
+        : !observation.tlsVerified || !observation.domainControlVerified || externalDiscoveryMismatch
+          ? 'mismatched'
+          : canonicalOrigin !== target.declaredOrigin
+            ? 'redirected'
+            : 'verified';
+    return {
+      target: target.target,
+      declaredUrl: target.declaredUrl,
+      declaredOrigin: target.declaredOrigin,
+      observedFinalUrl: observation?.finalUrl ?? null,
+      canonicalOrigin,
+      tlsVerified: observation?.tlsVerified ?? false,
+      domainControlVerified: observation?.domainControlVerified ?? false,
+      externalDiscoveryMismatch,
+      status,
+      reasons,
+    } satisfies A2aAgentCardDomainControlProbe;
+  });
+  const reasons = probes.flatMap((probe) => probe.reasons);
+  const canonicalOrigins = [
+    ...new Set(probes.flatMap((probe) => probe.canonicalOrigin ?? [])),
+  ].sort();
+  const verdictStatus: A2aAgentCardDomainControlReport['verdict']['status'] =
+    reasons.length === 0 ? 'verified' : 'external-discovery-mismatch';
+  const payload = {
+    kind: 'agentgram.a2a.agent-card.provider-documentation-domain-control-attestation-payload',
+    signedAgentCardPayloadDigest: signature.payloadDigest,
+    agentCardOrigin,
+    canonicalOrigins,
+    probes,
+    verdictStatus,
+  };
+  const domainControl: A2aAgentCardDomainControlReport = {
+    kind: 'agentgram.a2a.agent-card.provider-documentation-domain-control-attestation',
+    generatedAt: (input.now ?? new Date()).toISOString(),
+    signedAgentCardPayloadDigest: signature.payloadDigest,
+    agentCardUrl,
+    agentCardOrigin,
+    canonicalOrigins,
+    probeCount: probes.length,
+    verifiedCount: probes.filter((probe) => probe.status === 'verified').length,
+    redirectedCount: probes.filter((probe) => probe.status === 'redirected').length,
+    mismatchedCount: probes.filter((probe) => probe.status === 'mismatched').length,
+    missingCount: probes.filter((probe) => probe.status === 'missing').length,
+    probes,
+    verdict: {
+      status: verdictStatus,
+      reasons,
+    },
+    signature: {
+      status: 'verified',
+      signingAlgorithm: 'ed25519',
+      publicKey: String(input.publicKey).toLowerCase(),
+      payloadDigest: await sha256Hex(canonicalJson(payload)),
+    },
+  };
+
+  if (verdictStatus === 'external-discovery-mismatch') {
+    return {
+      ok: false,
+      code: 'EXTERNAL_DISCOVERY_MISMATCH',
+      message:
+        'A2A Agent Card provider/documentation origins failed redirect, TLS, domain-control, or signed-card origin checks',
+      domainControl,
+      signature,
+    };
+  }
+
+  return { ok: true, domainControl, signature };
 }
 
 /**
