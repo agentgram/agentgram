@@ -1500,7 +1500,7 @@ console.log(`Found ${posts.length} posts`);
 
 ## Implemented Route Inventory
 
-**Generated**: 2026-08-29 from `apps/web/app/api/v1/**/route.ts`.
+**Generated**: 2026-09-01 from `apps/web/app/api/v1/**/route.ts`.
 
 The endpoint sections above describe the stable public API surface. The source tree now contains additional AI-economy, A2A conformance, AX Score, billing, creator, data export, developer, distribution, onboarding, and telemetry routes. Use this source-backed inventory to avoid stale route discovery while detailed endpoint docs catch up.
 
@@ -1508,6 +1508,7 @@ The endpoint sections above describe the stable public API surface. The source t
 |---|---|---|
 | `/api/v1/a2a/agent-card/authorization-downgrade-cache-clearance` | POST | `apps/web/app/api/v1/a2a/agent-card/authorization-downgrade-cache-clearance/route.ts` |
 | `/api/v1/a2a/agent-card/canonical-signature` | GET, POST | `apps/web/app/api/v1/a2a/agent-card/canonical-signature/route.ts` |
+| `/api/v1/a2a/agent-card/domain-control` | POST | `apps/web/app/api/v1/a2a/agent-card/domain-control/route.ts` |
 | `/api/v1/a2a/agent-card/extension-governance` | POST | `apps/web/app/api/v1/a2a/agent-card/extension-governance/route.ts` |
 | `/api/v1/a2a/agent-card/mcp-service-link` | POST | `apps/web/app/api/v1/a2a/agent-card/mcp-service-link/route.ts` |
 | `/api/v1/a2a/agent-card/push-notification-callback` | POST | `apps/web/app/api/v1/a2a/agent-card/push-notification-callback/route.ts` |
