@@ -13,6 +13,13 @@ function clearVariantEnv() {
   for (const key of TEAM_ENV) delete process.env[key];
 }
 
+function makeJwt(payload: Record<string, unknown>): string {
+  const encode = (value: unknown) =>
+    Buffer.from(JSON.stringify(value), 'utf8').toString('base64url');
+
+  return `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode(payload)}.signature`;
+}
+
 describe('lemonsqueezy variant mapping', () => {
   beforeEach(() => {
     vi.resetModules();
@@ -84,6 +91,70 @@ describe('lemonsqueezy variant mapping', () => {
   it('exposes Free / Team / Enterprise as the only plan tiers', async () => {
     const { PLANS } = await import('@/lib/billing/lemonsqueezy');
     expect(Object.keys(PLANS).sort()).toEqual(['enterprise', 'free', 'team']);
+  });
+});
+
+describe('Lemon Squeezy API key expiry telemetry', () => {
+  const ORIGINAL_KEY = process.env.LEMONSQUEEZY_API_KEY;
+
+  beforeEach(() => {
+    vi.resetModules();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-02T00:00:00.000Z'));
+    delete process.env.LEMONSQUEEZY_API_KEY;
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    if (ORIGINAL_KEY === undefined) {
+      delete process.env.LEMONSQUEEZY_API_KEY;
+    } else {
+      process.env.LEMONSQUEEZY_API_KEY = ORIGINAL_KEY;
+    }
+  });
+
+  it('decodes a valid JWT exp without returning the key material', async () => {
+    process.env.LEMONSQUEEZY_API_KEY = makeJwt({
+      exp: Date.parse('2026-09-04T00:00:00.000Z') / 1000,
+    });
+    const { getApiKeyExpiry } = await import('@/lib/billing/lemonsqueezy');
+
+    expect(getApiKeyExpiry()).toEqual({
+      expiresAt: '2026-09-04T00:00:00.000Z',
+      daysLeft: 2,
+    });
+  });
+
+  it('returns a negative daysLeft for an expired JWT', async () => {
+    process.env.LEMONSQUEEZY_API_KEY = makeJwt({
+      exp: Date.parse('2026-08-31T00:00:00.000Z') / 1000,
+    });
+    const { getApiKeyExpiry } = await import('@/lib/billing/lemonsqueezy');
+
+    expect(getApiKeyExpiry()).toEqual({
+      expiresAt: '2026-08-31T00:00:00.000Z',
+      daysLeft: -2,
+    });
+  });
+
+  it('returns null telemetry when the API key env is missing', async () => {
+    const { getApiKeyExpiry } = await import('@/lib/billing/lemonsqueezy');
+
+    expect(getApiKeyExpiry()).toEqual({ expiresAt: null, daysLeft: null });
+  });
+
+  it('returns null telemetry for a non-JWT API key string', async () => {
+    process.env.LEMONSQUEEZY_API_KEY = 'not-a-jwt';
+    const { getApiKeyExpiry } = await import('@/lib/billing/lemonsqueezy');
+
+    expect(getApiKeyExpiry()).toEqual({ expiresAt: null, daysLeft: null });
+  });
+
+  it('returns null telemetry for a JWT payload with no exp', async () => {
+    process.env.LEMONSQUEEZY_API_KEY = makeJwt({ sub: 'api-key' });
+    const { getApiKeyExpiry } = await import('@/lib/billing/lemonsqueezy');
+
+    expect(getApiKeyExpiry()).toEqual({ expiresAt: null, daysLeft: null });
   });
 });
 

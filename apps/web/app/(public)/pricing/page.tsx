@@ -17,6 +17,29 @@ import {
 import { PricingCard } from '@/components/pricing';
 import { Button } from '@/components/ui/button';
 import { analytics } from '@/lib/analytics';
+import { useToast } from '@/hooks/use-toast';
+
+type BillingErrorResponse = {
+  error?: {
+    code?: unknown;
+    message?: unknown;
+  };
+};
+
+function getBillingErrorDescription(
+  data: BillingErrorResponse | null,
+  fallback: string
+) {
+  const code = typeof data?.error?.code === 'string' ? data.error.code : null;
+  const message =
+    typeof data?.error?.message === 'string' ? data.error.message : null;
+
+  if (code && message) {
+    return `${code}: ${message}`;
+  }
+
+  return message ?? fallback;
+}
 
 function getPlans(billingEnabled: boolean) {
   return [
@@ -100,10 +123,14 @@ const GOVERNANCE_PILLARS = [
 
 export default function PricingPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const billingEnabled = process.env.NEXT_PUBLIC_ENABLE_BILLING === 'true';
   const plans = getPlans(billingEnabled);
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>(
     'monthly'
+  );
+  const [checkoutLoadingPlan, setCheckoutLoadingPlan] = useState<string | null>(
+    null
   );
 
   useEffect(() => {
@@ -133,6 +160,7 @@ export default function PricingPage() {
       billingPeriod,
       'pricing_plan_grid'
     );
+    setCheckoutLoadingPlan(planName);
 
     try {
       const res = await fetch('/api/v1/billing/checkout', {
@@ -143,17 +171,53 @@ export default function PricingPage() {
           billingPeriod,
         }),
       });
-      const data = await res.json();
+      let data: BillingErrorResponse & {
+        success?: boolean;
+        data?: { url?: string };
+      };
+      try {
+        data = await res.json();
+      } catch (error) {
+        console.error('Failed to parse checkout response:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Checkout unavailable',
+          description: 'Unable to read billing response. Please try again.',
+        });
+        return;
+      }
 
       if (data.success && data.data?.url) {
         window.location.assign(data.data.url);
       } else if (res.status === 401) {
+        toast({
+          variant: 'destructive',
+          title: 'Checkout unavailable',
+          description: getBillingErrorDescription(
+            data,
+            'Unable to create checkout. Please try again.'
+          ),
+        });
         router.push('/auth/login?redirect=/pricing');
       } else {
-        alert(data.error?.message || 'Failed to create checkout. Please try again.');
+        toast({
+          variant: 'destructive',
+          title: 'Checkout unavailable',
+          description: getBillingErrorDescription(
+            data,
+            'Unable to create checkout. Please try again.'
+          ),
+        });
       }
-    } catch {
-      console.error('Failed to create checkout session');
+    } catch (error) {
+      console.error('Failed to create checkout session', error);
+      toast({
+        variant: 'destructive',
+        title: 'Checkout unavailable',
+        description: 'Unable to create checkout. Please try again.',
+      });
+    } finally {
+      setCheckoutLoadingPlan(null);
     }
   };
 
@@ -189,6 +253,7 @@ export default function PricingPage() {
               size="lg"
               className="w-full gap-2 sm:w-auto"
               onClick={() => handleSubscribe('Team')}
+              disabled={checkoutLoadingPlan === 'Team'}
             >
               Start with Team
               <ArrowRight className="h-4 w-4" />
@@ -272,6 +337,7 @@ export default function PricingPage() {
                 ctaVariant={plan.ctaVariant}
                 popular={plan.popular}
                 onSubscribe={() => handleSubscribe(plan.name)}
+                disabled={checkoutLoadingPlan === plan.name}
                 delay={index * 0.1}
               />
             );
