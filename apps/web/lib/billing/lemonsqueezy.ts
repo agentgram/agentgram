@@ -5,12 +5,32 @@ import {
 
 let _configured = false;
 
+const MILLIS_PER_DAY = 24 * 60 * 60 * 1000;
+
+type ApiKeyExpiry = {
+  expiresAt: string | null;
+  daysLeft: number | null;
+};
+
 function firstNonEmptyEnv(...keys: string[]): string | undefined {
   for (const key of keys) {
     const value = process.env[key]?.trim();
     if (value) return value;
   }
   return undefined;
+}
+
+function nullExpiry(): ApiKeyExpiry {
+  return { expiresAt: null, daysLeft: null };
+}
+
+function decodeBase64UrlJson(value: string): unknown {
+  const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized.padEnd(
+    normalized.length + ((4 - (normalized.length % 4)) % 4),
+    '='
+  );
+  return JSON.parse(Buffer.from(padded, 'base64').toString('utf8'));
 }
 
 export function configureLemonSqueezy(): void {
@@ -33,6 +53,35 @@ export function getStoreId(): string {
 
 export function isBillingEnabled(): boolean {
   return process.env.NEXT_PUBLIC_ENABLE_BILLING === 'true';
+}
+
+export function getApiKeyExpiry(): ApiKeyExpiry {
+  const apiKey = process.env.LEMONSQUEEZY_API_KEY?.trim();
+  if (!apiKey) return nullExpiry();
+
+  const segments = apiKey.split('.');
+  if (segments.length < 2 || !segments[1]) return nullExpiry();
+
+  try {
+    const payload = decodeBase64UrlJson(segments[1]);
+    if (
+      typeof payload !== 'object' ||
+      payload === null ||
+      !('exp' in payload) ||
+      typeof payload.exp !== 'number' ||
+      !Number.isFinite(payload.exp)
+    ) {
+      return nullExpiry();
+    }
+
+    const expiresMs = payload.exp * 1000;
+    return {
+      expiresAt: new Date(expiresMs).toISOString(),
+      daysLeft: Math.floor((expiresMs - Date.now()) / MILLIS_PER_DAY),
+    };
+  } catch {
+    return nullExpiry();
+  }
 }
 
 /**
