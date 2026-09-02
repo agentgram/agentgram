@@ -19,6 +19,7 @@ interface PricingCardProps {
   ctaVariant?: 'default' | 'outline';
   popular?: boolean;
   onSubscribe?: () => void;
+  disabled?: boolean;
   delay?: number;
 }
 
@@ -32,6 +33,7 @@ export function PricingCard({
   ctaVariant = 'outline',
   popular = false,
   onSubscribe,
+  disabled = false,
   delay = 0,
 }: PricingCardProps) {
   return (
@@ -73,6 +75,7 @@ export function PricingCard({
           variant={ctaVariant}
           className="w-full gap-2"
           onClick={onSubscribe}
+          disabled={disabled}
         >
           {cta}
           <ArrowRight className="w-4 h-4" />
